@@ -97,13 +97,41 @@ program
   .command("search")
   .description("Search through flattened JSON paths")
   .argument("<file>", "JSON file to search")
-  .argument("<term>", "Search term")
-  .action((file: string, searchTerm: string) => {
+  .argument("<term>", "Search term or regex pattern")
+  .option("-r, --regex", "Use regex pattern matching")
+  .option("-c, --case-sensitive", "Case sensitive search")
+  .option("--count", "Show only the count of matches")
+  .action((file: string, searchTerm: string, options: {
+    regex?: boolean;
+    caseSensitive?: boolean;
+    count?: boolean;
+  }) => {
     validateFile(file);
+
+    // Build grep arguments based on options
+    const grepArgs: string[] = [];
+    
+    // Case sensitivity (default is case-insensitive)
+    if (!options.caseSensitive) {
+      grepArgs.push("-i");
+    }
+    
+    // Count only
+    if (options.count) {
+      grepArgs.push("-c");
+    }
+    
+    // Regex support
+    if (options.regex) {
+      grepArgs.push("-E"); // Extended regex
+    }
+    
+    // Add the search term
+    grepArgs.push(searchTerm);
 
     // For search: flatten first, then grep
     const p = spawn("fastgron", [file], { stdio: "pipe" });
-    const grep = spawn("grep", ["-i", searchTerm], { stdio: ["pipe", "inherit", "inherit"] });
+    const grep = spawn("grep", grepArgs, { stdio: ["pipe", "inherit", "inherit"] });
     
     p.stdout?.pipe(grep.stdin);
     
@@ -135,7 +163,9 @@ program
     
     grep.on("exit", (code) => {
       if (code === 1) {
-        console.error(`No matches found for '${searchTerm}'`);
+        if (!options.count) {
+          console.error(`No matches found for '${searchTerm}'`);
+        }
         process.exit(0); // This is not an error, just no matches
       } else if (code && code > 1) {
         console.error(`Error: grep exited with code ${code}`);
