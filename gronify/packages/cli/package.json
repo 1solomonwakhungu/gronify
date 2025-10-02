@@ -1,0 +1,21 @@
+{
+  "name": "gronify",
+  "version": "1.0.0",
+  "description": "Make big JSON easy to search, inspect, and diff",
+  "main": "dist/index.js",
+  "bin": {
+    "gronify": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "typescript": "^5.9.2"
+  }
+}
