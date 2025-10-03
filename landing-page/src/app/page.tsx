@@ -340,16 +340,16 @@ cat data.gron | gronify unflatten`}
               <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Resources</h4>
               <ul className="space-y-2">
                 <li><a href="https://github.com/1solomonwakhungu/gronify" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Documentation</a></li>
-                <li><a href="#" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Examples</a></li>
-                <li><a href="#" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">CLI Reference</a></li>
+                <li><a href="#examples" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Examples</a></li>
+                <li><a href="#install" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">CLI Reference</a></li>
               </ul>
             </div>
             <div>
               <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Community</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">GitHub</a></li>
-                <li><a href="#" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Issues</a></li>
-                <li><a href="#" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Discussions</a></li>
+                <li><a href="https://github.com/1solomonwakhungu/gronify" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">GitHub</a></li>
+                <li><a href="https://github.com/1solomonwakhungu/gronify/issues" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Issues</a></li>
+                <li><a href="https://github.com/1solomonwakhungu/gronify/discussions" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Discussions</a></li>
               </ul>
             </div>
           </div>
