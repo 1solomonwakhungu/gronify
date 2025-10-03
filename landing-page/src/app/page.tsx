@@ -329,11 +329,11 @@ cat data.gron | gronify unflatten`}
       {/* Footer */}
       <footer className="bg-gray-50 dark:bg-gray-800 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Gronify</h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Make big JSON easy to search, inspect, and diff.
+                Make big JSON easy to search, inspect, and diff. Transform complex nested data into greppable paths for faster development workflows.
               </p>
             </div>
             <div>
