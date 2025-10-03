@@ -339,7 +339,7 @@ cat data.gron | gronify unflatten`}
             <div>
               <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Resources</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Documentation</a></li>
+                <li><a href="https://github.com/1solomonwakhungu/gronify" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Documentation</a></li>
                 <li><a href="#" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Examples</a></li>
                 <li><a href="#" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">CLI Reference</a></li>
               </ul>
@@ -352,18 +352,10 @@ cat data.gron | gronify unflatten`}
                 <li><a href="#" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Discussions</a></li>
               </ul>
             </div>
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Legal</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">License</a></li>
-                <li><a href="#" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Privacy</a></li>
-                <li><a href="#" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Terms</a></li>
-              </ul>
-            </div>
           </div>
           <div className="border-t border-gray-200 dark:border-gray-700 mt-8 pt-8 text-center">
             <p className="text-gray-600 dark:text-gray-300">
-              © 2025 Gronify. Built with ❤️ for developers who love JSON.
+              © {new Date().getFullYear() === 2025 ? '2025' : `2025-${new Date().getFullYear()}`} Gronify. Built with ❤️ for developers who love JSON.
             </p>
           </div>
         </div>
