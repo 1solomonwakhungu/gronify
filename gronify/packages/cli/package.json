@@ -1,0 +1,29 @@
+{
+  "name": "gronify",
+  "version": "1.0.0",
+  "description": "Make big JSON easy to search, inspect, and diff",
+  "main": "dist/index.js",
+  "bin": {
+    "gronify": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.5.2",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.4",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "commander": "^14.0.1"
+  }
+}
