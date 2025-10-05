@@ -1,0 +1,38 @@
+{
+  "user": {
+    "id": 12345,
+    "name": "Alice",
+    "profile": {
+      "email": "alice@example.com",
+      "preferences": {
+        "theme": "dark",
+        "notifications": {
+          "email": true,
+          "sms": false
+        }
+      }
+    },
+    "tags": ["dev", "json", "tool"]
+  },
+  "posts": [
+    {
+      "id": "p1",
+      "title": "Hello World",
+      "content": {
+        "text": "This is a test post.",
+        "images": []
+      }
+    },
+    {
+      "id": "p2",
+      "title": "Second Post",
+      "content": {
+        "text": "Another post.",
+        "images": [{
+          "url": "https://example.com/img.png",
+          "caption": "An example image"
+        }]
+      }
+    }
+  ]
+}
