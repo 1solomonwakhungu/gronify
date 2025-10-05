@@ -1,7 +1,3 @@
-<div align="center">
-  <img src="branding/logo.svg" alt="Gronify Logo" width="200" height="200">
-</div>
-
 # Gronify# Gronify
 
 Make big JSON easy to search, inspect, and diff — in your terminal and VS Code — powered by [fastgron](https://github.com/adamritter/fastgron).Make big JSON easy to search, inspect, and diff — in your terminal and VS Code — powered by [fastgron].

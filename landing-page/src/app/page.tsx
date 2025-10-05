@@ -92,7 +92,7 @@ export default function Home() {
               Developers constantly work with large or deeply nested JSON data. Gronify makes it greppable, searchable, and manageable.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FeatureCard
               icon="🚀"
@@ -144,7 +144,7 @@ export default function Home() {
             <div>
               <h3 className="text-xl font-semibold mb-4">Input JSON</h3>
               <CodeBlock title="example.json">
-{`{
+                {`{
   "users": [
     { "name": "Alice", "age": 30, "active": true },
     { "name": "Bob", "age": 25, "active": false }
@@ -159,7 +159,7 @@ export default function Home() {
             <div>
               <h3 className="text-xl font-semibold mb-4">Flattened Output</h3>
               <CodeBlock title="$ gronify flatten example.json">
-{`json = {}
+                {`json = {}
 json.users = []
 json.users[0] = {}
 json.users[0].name = "Alice"
@@ -180,14 +180,14 @@ json.meta.page = 1`}
             <div>
               <h3 className="text-xl font-semibold mb-4">Search Users</h3>
               <CodeBlock title="$ gronify search example.json 'name'">
-{`json.users[0].name = "Alice"
+                {`json.users[0].name = "Alice"
 json.users[1].name = "Bob"`}
               </CodeBlock>
             </div>
             <div>
               <h3 className="text-xl font-semibold mb-4">Pipeline Processing</h3>
               <CodeBlock title="$ cat data.json | gronify flatten | grep user">
-{`json.users = []
+                {`json.users = []
 json.users[0] = {}
 json.users[0].name = "Alice"
 json.users[1] = {}`}
@@ -196,7 +196,7 @@ json.users[1] = {}`}
             <div>
               <h3 className="text-xl font-semibold mb-4">Round Trip</h3>
               <CodeBlock title="$ gronify flatten data.json | gronify unflatten">
-{`{
+                {`{
   "users": [...],
   "meta": {...}
 }`}
@@ -223,7 +223,7 @@ json.users[1] = {}`}
               <div>
                 <h3 className="text-xl font-semibold mb-4">1. Install fastgron</h3>
                 <CodeBlock>
-{`# macOS/Linux (Homebrew)
+                  {`# macOS/Linux (Homebrew)
 brew install fastgron
 
 # Or visit:
@@ -233,9 +233,9 @@ brew install fastgron
               <div>
                 <h3 className="text-xl font-semibold mb-4">2. Install Gronify</h3>
                 <CodeBlock>
-{`# Clone and install
+                  {`# Clone and install
 git clone https://github.com/1solomonwakhungu/gronify.git
-cd gronify/packages/cli
+cd src/packages/cli
 npm install && npm run build
 npm link`}
                 </CodeBlock>
@@ -245,7 +245,7 @@ npm link`}
             <div className="mt-12">
               <h3 className="text-xl font-semibold mb-4 text-center">Start Using Gronify</h3>
               <CodeBlock>
-{`# Flatten JSON
+                {`# Flatten JSON
 gronify flatten data.json
 
 # Search through JSON
@@ -276,7 +276,7 @@ cat data.json | gronify flatten | grep "name"`}
               <h3 className="text-lg font-semibold mb-3">Flatten JSON</h3>
               <p className="text-gray-600 dark:text-gray-300 mb-4">Convert JSON to gron format</p>
               <CodeBlock>
-{`gronify flatten data.json
+                {`gronify flatten data.json
 cat data.json | gronify flatten`}
               </CodeBlock>
             </div>
@@ -284,7 +284,7 @@ cat data.json | gronify flatten`}
               <h3 className="text-lg font-semibold mb-3">Search & Filter</h3>
               <p className="text-gray-600 dark:text-gray-300 mb-4">Find patterns with regex support</p>
               <CodeBlock>
-{`gronify search data.json "user"
+                {`gronify search data.json "user"
 gronify search -r "user\\.\\w+"`}
               </CodeBlock>
             </div>
@@ -292,7 +292,7 @@ gronify search -r "user\\.\\w+"`}
               <h3 className="text-lg font-semibold mb-3">Unflatten</h3>
               <p className="text-gray-600 dark:text-gray-300 mb-4">Convert gron back to JSON</p>
               <CodeBlock>
-{`gronify unflatten data.gron
+                {`gronify unflatten data.gron
 cat data.gron | gronify unflatten`}
               </CodeBlock>
             </div>
