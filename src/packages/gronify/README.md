@@ -1,71 +1,149 @@
-# gronify README
+# Gronify for VS Code
 
-This is the README for your extension "gronify". After writing up a brief description, we recommend including the following sections.
+> Transform JSON into a searchable, greppable format directly in your editor
+
+Gronify is a professional VS Code extension that makes working with large, complex JSON files effortless. Convert JSON to "gron" format for easy searching, diffing, and understanding of nested structures.
+
+![VS Code Extension Version](https://img.shields.io/badge/version-0.0.1-blue)
+![VS Code](https://img.shields.io/badge/VS%20Code-1.104.0+-brightgreen)
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### Flatten JSON to Gron
+Transform complex nested JSON into a flat, line-by-line format that's easy to search and understand.
 
-For example if there is an image subfolder under your extension project workspace:
+**Before (JSON):**
+```json
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "address": {
+        "street": "123 Main St",
+        "city": "Boston"
+      }
+    }
+  ]
+}
+```
 
-\!\[feature X\]\(images/feature-x.png\)
+**After (Gron):**
+```
+json = {}
+json.users = []
+json.users[0] = {}
+json.users[0].id = 1
+json.users[0].name = "John Doe"
+json.users[0].email = "john@example.com"
+json.users[0].address = {}
+json.users[0].address.street = "123 Main St"
+json.users[0].address.city = "Boston"
+```
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+### Unflatten Gron to JSON
+Convert gron format back to properly formatted JSON for editing and viewing.
+
+### Search JSON with Regex
+Powerful search functionality using regex patterns to find specific data in large JSON structures:
+- Find all email fields: `.*email.*`
+- Search user data: `users\[.*\]\.name`
+- Locate configuration values: `config\..*\.enabled`
+
+## Quick Start
+
+### Installation
+1. Open VS Code
+2. Go to Extensions (`Ctrl+Shift+X` / `Cmd+Shift+X`)
+3. Search for "Gronify"
+4. Click Install
+
+### Usage
+
+#### Method 1: Right-Click Context Menu
+1. Open any JSON file
+2. Right-click in the editor
+3. Select from Gronify options:
+   - **Gronify: Flatten JSON to Gron**
+   - **Gronify: Unflatten Gron to JSON**
+   - **Gronify: Search JSON**
+
+#### Method 2: Command Palette
+1. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
+2. Type "Gronify"
+3. Select your desired command
+
+#### Method 3: Selected Text
+1. Select JSON text in any file
+2. Right-click on selection
+3. Choose appropriate Gronify command
+
+## Use Cases
+
+### Debugging API Responses
+```bash
+# Instead of scrolling through nested JSON
+curl api.example.com/users | gronify flatten
+# Now you can grep for specific fields
+grep "email" flattened.gron
+```
+
+### Analyzing Configuration Files
+- Quickly locate specific settings in large config files
+- Compare configuration differences between environments
+- Search for all instances of a particular setting
+
+### Data Processing
+- Extract specific fields from complex JSON structures
+- Transform data for further processing
+- Validate JSON structure and content
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- **VS Code**: Version 1.104.0 or higher
+- **Gronify CLI**: The extension integrates with the Gronify command-line tool
+- **Operating System**: Windows, macOS, or Linux
 
-## Extension Settings
+## Commands
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+| Command | Description | Context Menu | Keyboard Shortcut |
+|---------|-------------|--------------|-------------------|
+| `gronify.flatten` | Convert JSON to Gron format | Available for JSON files | - |
+| `gronify.unflatten` | Convert Gron to JSON format | Available for all files | - |
+| `gronify.search` | Search JSON using regex | Available for JSON files | - |
 
-For example:
+## Configuration
 
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+This extension works out of the box with no configuration required. It automatically detects and integrates with your project's Gronify CLI installation.
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- Large JSON files (>10MB) may take longer to process
+- Complex regex patterns in search may require escaping
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.1 (Initial Release)
+- JSON to Gron flattening
+- Gron to JSON unflattening  
+- Regex-powered JSON search
+- Right-click context menu integration
+- Command palette support
+- Comprehensive error handling
+- Input validation for JSON and Gron formats
 
-### 1.0.0
+## Contributing
 
-Initial release of ...
+Found a bug or have a feature request? 
 
-### 1.0.1
+- **Issues**: [GitHub Issues](https://github.com/1solomonwakhungu/gronify/issues)
+- **Source Code**: [GitHub Repository](https://github.com/1solomonwakhungu/gronify)
 
-Fixed issue #.
+## License
 
-### 1.1.0
-
-Added features X, Y, and Z.
+This extension is part of the Gronify project. See the [LICENSE](https://github.com/1solomonwakhungu/gronify/blob/main/LICENSE) file for details.
 
 ---
 
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+**Professional JSON processing tools for developers working with complex data structures.**
