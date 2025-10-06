@@ -1,0 +1,73 @@
+{
+  "name": "gronify",
+  "displayName": "Gronify",
+  "description": "VS Code extension for Gronify JSON formatter - flatten, unflatten, and search JSON using gron format",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.104.0"
+  },
+  "categories": [
+    "Formatters",
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gronify.flatten",
+        "title": "Gronify: Flatten JSON to Gron"
+      },
+      {
+        "command": "gronify.unflatten",
+        "title": "Gronify: Unflatten Gron to JSON"
+      },
+      {
+        "command": "gronify.search",
+        "title": "Gronify: Search JSON"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "gronify.flatten",
+          "group": "gronify@1"
+        },
+        {
+          "command": "gronify.unflatten",
+          "group": "gronify@2"
+        },
+        {
+          "command": "gronify.search",
+          "group": "gronify@3"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "gronify.flatten",
+          "when": "resourceExtname == .json",
+          "group": "gronify"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.104.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
+    "eslint": "^9.36.0",
+    "typescript": "^5.9.3",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
