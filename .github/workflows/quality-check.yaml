@@ -10,8 +10,8 @@ on:
       - 'src/**'
   pull_request:
     branches: '*'
-    # paths:
-    #   - 'src/**'
+    paths:
+      - 'src/**'
 
 jobs:
   discover-packages:
