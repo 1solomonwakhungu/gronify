@@ -1,0 +1,72 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: Node.js CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'src/**'
+  pull_request:
+    branches: '*'
+    paths:
+      - 'src/**'
+
+jobs:
+  discover-packages:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.find-packages.outputs.packages }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Find packages with package-lock.json in src folder
+      id: find-packages
+      run: |
+        # Find all directories in src that contain package-lock.json
+        packages=$(find src -name "package-lock.json" -type f | xargs dirname | jq -R -s -c 'split("\n")[:-1]')
+        echo "Found packages: $packages"
+        echo "packages=$packages" >> $GITHUB_OUTPUT
+
+  quality:
+    name: Test ${{ matrix.package }} (Node ${{ matrix.node-version }} on ${{ matrix.os }})
+    needs: discover-packages
+    if: needs.discover-packages.outputs.packages != '[]'
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        package: ${{ fromJson(needs.discover-packages.outputs.packages) }}
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: ${{ matrix.package }}/package-lock.json
+    
+    - name: Install dependencies in ${{ matrix.package }}
+      working-directory: ${{ matrix.package }}
+      run: |
+        echo "📦 Installing dependencies for $(basename ${{ matrix.package }})..."
+        npm ci
+    
+    - name: Build project in ${{ matrix.package }}
+      working-directory: ${{ matrix.package }}
+      run: |
+        echo "🏗️ Building $(basename ${{ matrix.package }})..."
+        npm run build --if-present
+    
+    - name: Run tests in ${{ matrix.package }}
+      working-directory: ${{ matrix.package }}
+      run: |
+        echo "🧪 Running tests for $(basename ${{ matrix.package }})..."
+        npm test
