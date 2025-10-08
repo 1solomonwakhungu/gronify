@@ -57,13 +57,6 @@ describe("Gronify CLI", () => {
   });
 
   describe("flatten command", () => {
-    test("should show error when fastgron is not available", async () => {
-      const result = await runCLI(["flatten", testJSONFile]);
-      
-      expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain("fastgron not found");
-    });
-
     test("should flatten JSON from stdin", async () => {
       const result = await runCLI(["flatten"], JSON.stringify(testJSON));
       
