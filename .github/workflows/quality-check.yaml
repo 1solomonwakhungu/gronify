@@ -53,7 +53,7 @@ jobs:
           brew install fastgron --build-from-source
         elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
           # Download pre-built binary for Ubuntu
-          curl -L -o fastgron https://github.com/adamritter/fastgron/releases/download/v0.7.7/fastgron-ubuntu-without-simd
+          curl -L -o fastgron https://github.com/adamritter/fastgron/releases/download/v0.7.7/fastgron-ubuntu
           chmod +x fastgron
           sudo mv fastgron /usr/local/bin/
         fi
