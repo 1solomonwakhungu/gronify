@@ -39,12 +39,25 @@ jobs:
     strategy:
       matrix:
         node-version: [20.x, 22.x]
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
         package: ${{ fromJson(needs.discover-packages.outputs.packages) }}
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Install fastgron
+      run: |
+        if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+          # Install Homebrew if not present (for Linux runners)
+          if ! command -v brew &> /dev/null; then
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.bashrc
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          fi
+        fi
+        # Install fastgron from source (works on both macOS and Linux with Homebrew)
+        brew install fastgron --build-from-source
     
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
