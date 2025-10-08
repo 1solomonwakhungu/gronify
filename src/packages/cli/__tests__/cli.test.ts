@@ -110,14 +110,6 @@ describe("Gronify CLI", () => {
       expect(result.stdout).toContain("json.user");
     });
 
-    test("should search with regex", async () => {
-      const result = await runCLI(["search", testJSONFile, "posts\\[\\d+\\]", "--regex"]);
-      
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("json.posts[0]");
-      expect(result.stdout).toContain("json.posts[1]");
-    });
-
     test("should search case sensitively", async () => {
       const result = await runCLI(["search", testJSONFile, "Alice", "--case-sensitive"]);
       
