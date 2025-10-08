@@ -48,16 +48,15 @@ jobs:
     
     - name: Install fastgron
       run: |
-        if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-          # Install Homebrew if not present (for Linux runners)
-          if ! command -v brew &> /dev/null; then
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-            echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.bashrc
-            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          fi
+        if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+          # Install fastgron using Homebrew on macOS
+          brew install fastgron --build-from-source
+        elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+          # Download pre-built binary for Ubuntu
+          curl -L -o fastgron https://github.com/adamritter/fastgron/releases/download/v0.7.7/fastgron-ubuntu-without-simd
+          chmod +x fastgron
+          sudo mv fastgron /usr/local/bin/
         fi
-        # Install fastgron from source (works on both macOS and Linux with Homebrew)
-        brew install fastgron --build-from-source
     
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
