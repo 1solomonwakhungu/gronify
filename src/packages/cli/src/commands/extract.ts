@@ -58,13 +58,13 @@ export function createExtractCommand(): Command {
     `
 Examples:
   # Extract to CSV
-  $ gronify extract data.json -p "users[*].{name,email}" -f csv
+  $ gronify extract data.json -p "users[*].{name: name, email: email}" -f csv
 
   # Extract to TSV without header
-  $ gronify extract data.json -p "items[*].{id,price}" -f tsv --no-header
+  $ gronify extract data.json -p "items[*].{id: id, price: price}" -f tsv --no-header
 
   # Extract to Markdown table
-  $ gronify extract data.json -p "orders[*].{id,status,total}" -f markdown
+  $ gronify extract data.json -p "orders[*].{id: id, status: status, total: total}" -f markdown
 
   # Extract with custom template
   $ gronify extract data.json -p "users[*]" -f template -t "{{name}}: {{email}}"
@@ -79,8 +79,7 @@ Path Syntax:
   Uses JMESPath for powerful querying. Learn more at https://jmespath.org/
   - Select array elements: users[*]
   - Project fields: users[*].{name: name, email: email}
-  - Shorthand: users[*].{name,email}
-  - Functions: users[*].{name, skills: join(',', skills)}
+  - Functions: users[*].{name: name, skills: join(',', skills)}
 
 Why Extract?
   - Fastgron only outputs gron format

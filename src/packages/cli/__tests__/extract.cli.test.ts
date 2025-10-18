@@ -56,7 +56,7 @@ describe("Extract Command - CSV Format", () => {
       "extract",
       join(FIXTURES_PATH, "users.json"),
       "-p",
-      "users[*].{name,email}",
+      "users[*].{name: name, email: email}",
       "-f",
       "csv",
     ]);
@@ -72,7 +72,7 @@ describe("Extract Command - CSV Format", () => {
       "extract",
       join(FIXTURES_PATH, "users.json"),
       "-p",
-      "users[*].{name,email,age}",
+      "users[*].{name: name, email: email, age: age}",
       "-f",
       "csv",
     ]);
@@ -88,7 +88,7 @@ describe("Extract Command - CSV Format", () => {
       "extract",
       join(FIXTURES_PATH, "users.json"),
       "-p",
-      "users[*].{name,email}",
+      "users[*].{name: name, email: email}",
       "-f",
       "csv",
       "--no-header",
@@ -124,7 +124,7 @@ describe("Extract Command - CSV Format", () => {
     });
 
     const result = await execCli(
-      ["extract", "-p", "items[*].{id,name}", "-f", "csv"],
+      ["extract", "-p", "items[*].{id: id, name: name}", "-f", "csv"],
       data
     );
 
@@ -140,7 +140,7 @@ describe("Extract Command - CSV Format", () => {
         "extract",
         join(FIXTURES_PATH, "users.json"),
         "-p",
-        "users[*].{name,email}",
+        "users[*].{name: name, email: email}",
         "-f",
         "csv",
         "-o",
@@ -179,7 +179,7 @@ describe("Extract Command - CSV Format", () => {
       "extract",
       join(FIXTURES_PATH, "users.json"),
       "-p",
-      "users[*].{name,email}",
+      "users[*].{name: name, email: email}",
       "-f",
       "csv",
       "--delimiter",
@@ -198,7 +198,7 @@ describe("Extract Command - TSV Format", () => {
       "extract",
       join(FIXTURES_PATH, "users.json"),
       "-p",
-      "users[*].{name,email}",
+      "users[*].{name: name, email: email}",
       "-f",
       "tsv",
     ]);
@@ -214,7 +214,7 @@ describe("Extract Command - TSV Format", () => {
       "extract",
       join(FIXTURES_PATH, "users.json"),
       "-p",
-      "users[*].{name,email}",
+      "users[*].{name: name, email: email}",
       "-f",
       "tsv",
       "--no-header",
@@ -232,7 +232,7 @@ describe("Extract Command - Markdown Format", () => {
       "extract",
       join(FIXTURES_PATH, "users.json"),
       "-p",
-      "users[*].{name,email}",
+      "users[*].{name: name, email: email}",
       "-f",
       "markdown",
     ]);
@@ -248,7 +248,7 @@ describe("Extract Command - Markdown Format", () => {
       "extract",
       join(FIXTURES_PATH, "users.json"),
       "-p",
-      "users[*].{name,email}",
+      "users[*].{name: name, email: email}",
       "-f",
       "markdown",
       "--pretty",
@@ -263,7 +263,7 @@ describe("Extract Command - Markdown Format", () => {
       "extract",
       join(FIXTURES_PATH, "users.json"),
       "-p",
-      "users[*].{name,email}",
+      "users[*].{name: name, email: email}",
       "-f",
       "markdown",
       "--no-header",
@@ -358,7 +358,7 @@ describe("Extract Command - JMESPath Features", () => {
       "extract",
       join(FIXTURES_PATH, "users.json"),
       "-p",
-      "users[*].{name, skills: join(',', meta.skills)}",
+      "users[*].{name: name, skills: join(',', meta.skills)}",
       "-f",
       "csv",
     ]);
@@ -373,7 +373,7 @@ describe("Extract Command - JMESPath Features", () => {
       "extract",
       join(FIXTURES_PATH, "nested.json"),
       "-p",
-      "company.departments[*].employees[*].{name, title: position.title, salary: position.salary}",
+      "company.departments[*].employees[*].{name: name, title: position.title, salary: position.salary}",
       "-f",
       "csv",
     ]);
@@ -472,7 +472,7 @@ describe("Extract Command - Error Handling", () => {
       "extract",
       join(FIXTURES_PATH, "users.json"),
       "-p",
-      "users[*].{name,email,age}",
+      "users[*].{name: name, email: email, age: age}",
       "-f",
       "csv",
       "--strict",
@@ -504,7 +504,7 @@ describe("Extract Command - Edge Cases", () => {
       "extract",
       join(FIXTURES_PATH, "nested.json"),
       "-p",
-      "company.departments[0].employees[*].{name, projects}",
+      "company.departments[0].employees[*].{name: name, projects: projects}",
       "-f",
       "csv",
     ]);
@@ -524,7 +524,7 @@ describe("Extract Command - Edge Cases", () => {
     });
 
     const result = await execCli(
-      ["extract", "-p", "items[*].{id,value}", "-f", "csv"],
+      ["extract", "-p", "items[*].{id: id, value: value}", "-f", "csv"],
       data
     );
 
@@ -540,7 +540,7 @@ describe("Extract Command - Edge Cases", () => {
     });
 
     const result = await execCli(
-      ["extract", "-p", "items[*].{emoji,text}", "-f", "csv"],
+      ["extract", "-p", "items[*].{emoji: emoji, text: text}", "-f", "csv"],
       data
     );
 
