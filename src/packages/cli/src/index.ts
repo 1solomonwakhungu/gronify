@@ -5,6 +5,7 @@ import { existsSync, accessSync, constants, writeFileSync, mkdirSync } from "nod
 import { extname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { createFormatter, shouldUseColor, type FormatOptions } from "./formatter.js";
+import { createExtractCommand } from "./commands/extract.js";
 
 const program = new Command();
 
@@ -403,6 +404,9 @@ program
       process.exit(0);
     });
   });
+
+// Add extract command
+program.addCommand(createExtractCommand());
 
 // Parse arguments
 program.parse();
