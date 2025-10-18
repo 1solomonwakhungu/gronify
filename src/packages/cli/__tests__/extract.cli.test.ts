@@ -358,14 +358,15 @@ describe("Extract Command - JMESPath Features", () => {
       "extract",
       join(FIXTURES_PATH, "users.json"),
       "-p",
-      "users[*].{name: name, skills: join(',', meta.skills)}",
+      "users[?meta.skills].{name: name, skills: join(',', meta.skills)}",
       "-f",
       "csv",
     ]);
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("name,skills");
-    expect(result.stdout).toContain("Chen,Go,Node");
+    // Joined value contains comma so it's CSV-quoted
+    expect(result.stdout).toContain('Chen,"Go,Node"');
   });
 
   it("should handle complex nested queries", async () => {
@@ -373,7 +374,7 @@ describe("Extract Command - JMESPath Features", () => {
       "extract",
       join(FIXTURES_PATH, "nested.json"),
       "-p",
-      "company.departments[*].employees[*].{name: name, title: position.title, salary: position.salary}",
+      "company.departments[].employees[].{name: name, title: position.title, salary: position.salary}",
       "-f",
       "csv",
     ]);
@@ -511,8 +512,8 @@ describe("Extract Command - Edge Cases", () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("name,projects");
-    // Arrays should be JSON stringified
-    expect(result.stdout).toContain('["Project A","Project B"]');
+    // Arrays should be JSON stringified and CSV-escaped (quotes are doubled)
+    expect(result.stdout).toContain('"[""Project A"",""Project B""]"');
   });
 
   it("should handle null values", async () => {
