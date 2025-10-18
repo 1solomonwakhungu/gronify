@@ -1,0 +1,11 @@
+{
+  "nums": [1, 2, 3, 4, 5],
+  "labels": ["alpha", "beta", "gamma"],
+  "mixed": {
+    "count": 42,
+    "active": true,
+    "description": "Test data",
+    "tags": ["tag1", "tag2", "tag3"]
+  }
+}
+

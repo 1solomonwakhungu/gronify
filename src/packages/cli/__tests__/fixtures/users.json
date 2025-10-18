@@ -1,0 +1,22 @@
+{
+  "users": [
+    {
+      "name": "Asha",
+      "email": "asha@example.com",
+      "age": 29
+    },
+    {
+      "name": "Brian",
+      "email": "brian@example.com"
+    },
+    {
+      "name": "Chen",
+      "email": "chen@example.com",
+      "meta": {
+        "city": "Nairobi",
+        "skills": ["Go", "Node"]
+      }
+    }
+  ]
+}
+

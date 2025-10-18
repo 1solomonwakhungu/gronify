@@ -16,4 +16,9 @@ module.exports = {
       }
     }],
   },
+  // Map .js extensions to .ts files for ES module imports
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
+  extensionsToTreatAsEsm: ['.ts'],
 };

@@ -1,0 +1,48 @@
+{
+  "company": {
+    "name": "Tech Corp",
+    "departments": [
+      {
+        "name": "Engineering",
+        "employees": [
+          {
+            "id": 1,
+            "name": "Alice",
+            "position": {
+              "title": "Senior Engineer",
+              "level": 5,
+              "salary": 150000
+            },
+            "projects": ["Project A", "Project B"]
+          },
+          {
+            "id": 2,
+            "name": "Bob",
+            "position": {
+              "title": "Engineer",
+              "level": 3,
+              "salary": 100000
+            },
+            "projects": ["Project C"]
+          }
+        ]
+      },
+      {
+        "name": "Sales",
+        "employees": [
+          {
+            "id": 3,
+            "name": "Carol",
+            "position": {
+              "title": "Sales Manager",
+              "level": 4,
+              "salary": 120000
+            },
+            "projects": []
+          }
+        ]
+      }
+    ]
+  }
+}
+

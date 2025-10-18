@@ -23,7 +23,10 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@types/jmespath": "^0.15.2",
     "chalk": "^5.6.2",
-    "commander": "^14.0.1"
+    "commander": "^14.0.1",
+    "handlebars": "^4.7.8",
+    "jmespath": "^0.16.0"
   }
 }
