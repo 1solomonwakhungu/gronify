@@ -50,28 +50,28 @@ export function normalizeRecords(
   if (Array.isArray(data)) {
     const processedRows = flattenNested
       ? data.map((item) => {
-          if (typeof item === "object" && !Array.isArray(item)) {
-            return flatten(item);
-          }
-          return { [columnName]: item };
-        })
+        if (typeof item === "object" && !Array.isArray(item)) {
+          return flatten(item);
+        }
+        return { [columnName]: item };
+      })
       : data.map((item) => {
-          if (typeof item === "object" && !Array.isArray(item)) {
-            // Don't flatten, but stringify nested arrays
-            const result: Record<string, any> = {};
-            for (const [key, value] of Object.entries(item)) {
-              if (Array.isArray(value)) {
-                result[key] = JSON.stringify(value);
-              } else if (typeof value === "object" && value !== null) {
-                result[key] = JSON.stringify(value);
-              } else {
-                result[key] = value;
-              }
+        if (typeof item === "object" && !Array.isArray(item)) {
+          // Don't flatten, but stringify nested arrays
+          const result: Record<string, any> = {};
+          for (const [key, value] of Object.entries(item)) {
+            if (Array.isArray(value)) {
+              result[key] = JSON.stringify(value);
+            } else if (typeof value === "object" && value !== null) {
+              result[key] = JSON.stringify(value);
+            } else {
+              result[key] = value;
             }
-            return result;
           }
-          return { [columnName]: item };
-        });
+          return result;
+        }
+        return { [columnName]: item };
+      });
 
     // Derive headers as union of keys across all rows (stable order)
     const headers = deriveHeaders(processedRows);
@@ -81,7 +81,12 @@ export function normalizeRecords(
       const normalizedRow: Record<string, any> = {};
       for (const header of headers) {
         if (header in row) {
-          normalizedRow[header] = row[header];
+          const value = row[header];
+          // In strict mode, treat null/undefined as missing
+          if (strict && (value === null || value === undefined)) {
+            throw new Error(`Missing field '${header}' in row`);
+          }
+          normalizedRow[header] = value ?? "";
         } else {
           if (strict) {
             throw new Error(`Missing field '${header}' in row`);

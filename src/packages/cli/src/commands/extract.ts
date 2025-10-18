@@ -45,9 +45,9 @@ export function createExtractCommand(): Command {
     .option("-o, --output <file>", "Write output to file (default: stdout)")
     .option("--column <name>", "Column name for primitive values", "value")
     .option("--delimiter <char>", "CSV delimiter character (auto-set to tab for TSV)")
-    .option("--strict", "Error on missing fields instead of using empty string", false)
-    .option("--pretty", "Pretty-align markdown tables", false)
-    .option("--quiet", "Suppress non-fatal warnings", false)
+    .option("--strict", "Error on missing fields instead of using empty string")
+    .option("--pretty", "Pretty-align markdown tables")
+    .option("--quiet", "Suppress non-fatal warnings")
     .action(async (input: string | undefined, options: ExtractOptions) => {
       await executeExtract(input, options);
     });
@@ -159,7 +159,8 @@ async function executeExtract(
           console.error(`Output written to ${options.output}`);
         }
       } else {
-        console.log(output);
+        // Use process.stdout.write to avoid adding extra newline
+        process.stdout.write(output);
       }
     } catch (error: any) {
       console.error(`Error writing output: ${error.message}`);

@@ -15,8 +15,7 @@ program
   .description("Make big JSON easy to search, inspect, and diff")
   .version("1.0.0")
   .option("--color", "Enable colored output (default: auto-detect)")
-  .option("--no-color", "Disable colored output")
-  .option("--pretty", "Enable pretty formatting with better readability");
+  .option("--no-color", "Disable colored output");
 
 // Helper function to check if stdin has data
 function hasStdinData(): boolean {
@@ -27,31 +26,31 @@ function hasStdinData(): boolean {
 async function readStdinToTempFile(): Promise<string> {
   return new Promise((resolve, reject) => {
     let data = '';
-    
+
     process.stdin.setEncoding('utf8');
-    
+
     process.stdin.on('data', (chunk) => {
       data += chunk;
     });
-    
+
     process.stdin.on('end', () => {
       try {
         // Create temp file
         const tempDir = tmpdir();
         const tempFile = join(tempDir, `gronify-stdin-${Date.now()}.json`);
-        
+
         // Ensure temp directory exists
         mkdirSync(tempDir, { recursive: true });
-        
+
         // Write stdin data to temp file
         writeFileSync(tempFile, data, 'utf8');
-        
+
         resolve(tempFile);
       } catch (error) {
         reject(error);
       }
     });
-    
+
     process.stdin.on('error', (error) => {
       reject(error);
     });
@@ -62,7 +61,7 @@ async function readStdinToTempFile(): Promise<string> {
 function createFormatterFromOptions(globalOptions: any): import("./formatter.js").OutputFormatter {
   const formatOptions: FormatOptions = {
     color: globalOptions.color ?? shouldUseColor(),
-    pretty: globalOptions.pretty ?? false,
+    pretty: false,
     format: 'gron'
   };
   return createFormatter(formatOptions);
@@ -123,7 +122,7 @@ function runFastgron(args: string[], formatter: import("./formatter.js").OutputF
     if (stdout) {
       // Check if this is gron output (flatten) or JSON output (unflatten)
       const isGronOutput = args.includes("-u") ? false : true;
-      
+
       if (isGronOutput) {
         console.log(formatter.formatGron(stdout.trim()));
       } else {
@@ -147,7 +146,7 @@ program
   .action(async (file?: string, options?: any, command?: any) => {
     const globalOptions = command?.parent?.opts() || {};
     const formatter = createFormatterFromOptions(globalOptions);
-    
+
     let inputFile: string;
     let isTemporary = false;
 
@@ -170,7 +169,7 @@ program
     } else {
       inputFile = file;
       validateFile(inputFile);
-      
+
       // Warn about non-JSON extensions
       if (![".json", ".jsonl"].includes(extname(inputFile).toLowerCase())) {
         console.warn(formatter.formatWarning(`File '${inputFile}' doesn't have a .json extension`));
@@ -203,7 +202,7 @@ program
   .action(async (file?: string, options?: any, command?: any) => {
     const globalOptions = command?.parent?.opts() || {};
     const formatter = createFormatterFromOptions(globalOptions);
-    
+
     let inputFile: string;
     let isTemporary = false;
 
@@ -262,7 +261,7 @@ program
   }, command?: any) => {
     const globalOptions = command?.parent?.opts() || {};
     const formatter = createFormatterFromOptions(globalOptions);
-    
+
     let inputFile: string;
     let searchTerm: string;
     let isTemporary = false;
@@ -276,7 +275,7 @@ program
     } else {
       // One argument provided: it's the search term, read from stdin
       searchTerm = fileOrTerm;
-      
+
       // Check if stdin has data
       if (!hasStdinData()) {
         console.error(formatter.formatError("No search term provided or no data piped to stdin"));
@@ -296,46 +295,46 @@ program
 
     // Build grep arguments based on options
     const grepArgs: string[] = [];
-    
+
     // Case sensitivity (default is case-insensitive)
     if (!options.caseSensitive) {
       grepArgs.push("-i");
     }
-    
+
     // Count only
     if (options.count) {
       grepArgs.push("-c");
     }
-    
+
     // Regex support
     if (options.regex) {
       grepArgs.push("-E"); // Extended regex
     }
-    
+
     // Add the search term
     grepArgs.push(searchTerm);
 
     // For search: flatten first, then grep
     const p = spawn("fastgron", [inputFile], { stdio: "pipe" });
     const grep = spawn("grep", grepArgs, { stdio: ["pipe", "pipe", "pipe"] });
-    
+
     let grepOutput = "";
     let grepError = "";
-    
+
     p.stdout?.pipe(grep.stdin);
-    
+
     if (grep.stdout) {
       grep.stdout.on("data", (data) => {
         grepOutput += data.toString();
       });
     }
-    
+
     if (grep.stderr) {
       grep.stderr.on("data", (data) => {
         grepError += data.toString();
       });
     }
-    
+
     const cleanupTempFile = () => {
       if (isTemporary) {
         try {
@@ -345,7 +344,7 @@ program
         }
       }
     };
-    
+
     p.on("error", (error: any) => {
       cleanupTempFile();
       if (error.code === "ENOENT") {
@@ -357,7 +356,7 @@ program
       }
       process.exit(1);
     });
-    
+
     p.on("exit", (code) => {
       if (code !== 0) {
         cleanupTempFile();
@@ -368,20 +367,20 @@ program
         process.exit(code);
       }
     });
-    
+
     grep.on("error", (error) => {
       cleanupTempFile();
       console.error(formatter.formatError(`running grep: ${error.message}`));
       process.exit(1);
     });
-    
+
     grep.on("exit", (code) => {
       cleanupTempFile();
-      
+
       if (grepError) {
         console.error(formatter.formatError(grepError.trim()));
       }
-      
+
       if (code === 1) {
         if (!options.count) {
           console.error(formatter.formatWarning(`No matches found for '${searchTerm}'`));
@@ -391,7 +390,7 @@ program
         console.error(formatter.formatError(`grep exited with code ${code}`));
         process.exit(code);
       }
-      
+
       if (grepOutput) {
         if (options.count) {
           console.log(formatter.formatSuccess(grepOutput.trim()));
@@ -400,7 +399,7 @@ program
           console.log(formatter.formatSearchResults(grepOutput.trim(), searchTerm));
         }
       }
-      
+
       process.exit(0);
     });
   });
