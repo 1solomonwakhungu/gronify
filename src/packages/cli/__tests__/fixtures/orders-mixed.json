@@ -1,0 +1,27 @@
+{
+  "orders": [
+    {
+      "id": 1,
+      "customer": "Alice",
+      "total": 99.99,
+      "status": "completed",
+      "items": ["book", "pen"],
+      "website": "https://example.com",
+      "date": "2023-01-15T10:30:00Z"
+    },
+    {
+      "id": 2,
+      "customer": "Bob",
+      "total": 150.50,
+      "status": "pending",
+      "items": ["laptop"],
+      "website": "https://shop.example.com",
+      "date": "2023-01-16T14:20:00Z"
+    }
+  ],
+  "meta": {
+    "total": 2,
+    "page": 1
+  }
+}
+
