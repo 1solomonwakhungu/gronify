@@ -5,6 +5,8 @@ import { existsSync, accessSync, constants, writeFileSync, mkdirSync } from "nod
 import { extname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { createFormatter, shouldUseColor, type FormatOptions } from "./formatter.js";
+import { validateCommand } from "./commands/validate.js";
+import { schemaGenerateCommand } from "./commands/schema-generate.js";
 
 const program = new Command();
 
@@ -401,6 +403,72 @@ program
       }
       
       process.exit(0);
+    });
+  });
+
+// Validate command
+program
+  .command("validate")
+  .description("Validate JSON against a JSON Schema")
+  .argument("[input]", "JSON file to validate (or read from stdin if not provided or '-')")
+  .requiredOption("-s, --schema <file>", "JSON Schema file")
+  .option("--draft <version>", "JSON Schema draft version (2020-12, 2019-09, 07)", "2020-12")
+  .option("--all-errors", "Report all validation errors (default: true)", true)
+  .option("--no-all-errors", "Stop at first validation error")
+  .option("--formats", "Enable format validation (email, uri, date-time, etc.)", true)
+  .option("--no-formats", "Disable format validation")
+  .option("--strict", "Enable Ajv strict mode", false)
+  .option("-o, --output <file>", "Write validation report to file")
+  .option("--report <type>", "Report format: pretty, ndjson, or json", "pretty")
+  .option("--quiet", "Suppress non-error output", false)
+  .action(async (input?: string, options?: any, command?: any) => {
+    const globalOptions = command?.parent?.opts() || {};
+    
+    await validateCommand(input, {
+      ...options,
+      color: globalOptions.color ?? shouldUseColor(),
+    });
+  });
+
+// Schema generate command
+const schemaCommand = program
+  .command("schema")
+  .description("JSON Schema operations");
+
+schemaCommand
+  .command("generate")
+  .description("Generate JSON Schema from example JSON files")
+  .argument("[inputs...]", "JSON files to analyze (or read from stdin if not provided or '-')")
+  .option("-o, --output <file>", "Write schema to file (default: stdout)")
+  .option("--title <string>", "Schema title")
+  .option("--id <uri>", "Schema $id")
+  .option("--draft <version>", "JSON Schema draft version (2020-12, 2019-09, 07)", "2020-12")
+  .option("--additional-properties <bool>", "Allow additional properties (true/false)", "true")
+  .option("--enum-threshold <n>", "Maximum distinct values for enum inference", "8")
+  .option("--detect-formats", "Detect string formats (email, uri, date-time, etc.)", true)
+  .option("--no-detect-formats", "Disable format detection")
+  .option("--minmax", "Infer min/max constraints from samples", true)
+  .option("--no-minmax", "Disable min/max inference")
+  .option("--examples", "Include example values in schema", true)
+  .option("--no-examples", "Exclude example values")
+  .option(
+    "--required-policy <policy>",
+    "Required field policy: loose, observed, or strict",
+    "observed"
+  )
+  .option("--quiet", "Suppress success messages", false)
+  .action(async (inputs: string[], options: any, command?: any) => {
+    const globalOptions = command?.parent?.parent?.opts() || {};
+    
+    // Parse boolean options
+    const additionalProperties = options.additionalProperties === "true" || options.additionalProperties === true;
+    const enumThreshold = parseInt(options.enumThreshold, 10);
+    
+    await schemaGenerateCommand(inputs || [], {
+      ...options,
+      additionalProperties,
+      enumThreshold,
+      color: globalOptions.color ?? shouldUseColor(),
     });
   });
 
