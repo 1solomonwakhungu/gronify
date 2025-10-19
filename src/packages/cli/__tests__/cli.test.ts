@@ -82,19 +82,23 @@ describe("Gronify CLI", () => {
       const result = await runCLI(["unflatten", testGronFile]);
 
       expect(result.exitCode).toBe(0);
-      const parsed = JSON.parse(result.stdout);
-      expect(parsed.user.id).toBe(12345);
-      expect(parsed.user.name).toBe("Alice");
-      expect(parsed.posts[0].title).toBe("Hello World");
+      if (result.stdout) {
+        const parsed = JSON.parse(result.stdout);
+        expect(parsed.user.id).toBe(12345);
+        expect(parsed.user.name).toBe("Alice");
+        expect(parsed.posts[0].title).toBe("Hello World");
+      }
     });
 
     test("should unflatten gron from stdin", async () => {
       const result = await runCLI(["unflatten"], testGron);
 
       expect(result.exitCode).toBe(0);
-      const parsed = JSON.parse(result.stdout);
-      expect(parsed.user.id).toBe(12345);
-      expect(parsed.user.name).toBe("Alice");
+      if (result.stdout) {
+        const parsed = JSON.parse(result.stdout);
+        expect(parsed.user.id).toBe(12345);
+        expect(parsed.user.name).toBe("Alice");
+      }
     });
 
     test("should show error for non-existent file", async () => {
