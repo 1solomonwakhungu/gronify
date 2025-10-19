@@ -13,7 +13,11 @@ module.exports = {
       tsconfig: {
         module: 'commonjs',
         target: 'es2020',
-      }
+      },
+      useESM: false,
     }],
+  },
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
 };
