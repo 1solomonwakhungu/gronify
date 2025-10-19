@@ -63,7 +63,7 @@ export function validateWithAjv(
   const ajvOptions = {
     ...getDraftConfig(draft),
     allErrors,
-    strict,
+    strict: false, // Disable strict mode to allow $schema in data schemas
     verbose: true, // Include schema and data in errors
   };
 
@@ -77,7 +77,10 @@ export function validateWithAjv(
   // Compile and validate
   let validate;
   try {
-    validate = ajv.compile(schema);
+    // Remove $schema from the schema object if present to avoid validation issues
+    const schemaToCompile = { ...schema };
+    delete schemaToCompile.$schema;
+    validate = ajv.compile(schemaToCompile);
   } catch (error: any) {
     throw new Error(`Invalid JSON Schema: ${error.message}`);
   }
