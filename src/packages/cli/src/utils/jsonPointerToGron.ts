@@ -22,7 +22,8 @@ export function jsonPointerToGron(instancePath: string): string {
       gronPath += `[${unescaped}]`;
     } else {
       // Check if token needs bracket notation (contains special chars or starts with number)
-      if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(unescaped)) {
+      // Allow tilde in simple identifiers
+      if (/^[a-zA-Z_$~][a-zA-Z0-9_$~]*$/.test(unescaped)) {
         // Simple identifier - use dot notation
         gronPath += `.${unescaped}`;
       } else {
