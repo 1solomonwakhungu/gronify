@@ -109,8 +109,10 @@ export function collectValueStats(
       stats.arrayItems = createStats();
     }
 
-    // Collect stats from each item
+    // Collect stats from each item, track presence for required field inference
     for (const item of value) {
+      // Increment presence count for the array items themselves
+      stats.arrayItems.presenceCount = (stats.arrayItems.presenceCount || 0) + 1;
       collectValueStats(item, stats.arrayItems, opts);
     }
   } else if (type === "object") {

@@ -137,14 +137,17 @@ function statsToSchema(
 
     const required: string[] = [];
 
+    // Count how many samples had this object level
+    const objectSampleCount = stats.presenceCount || totalSamples;
+
     for (const [key, keyStats] of stats.objectKeys.entries()) {
-      schema.properties[key] = statsToSchema(keyStats, totalSamples, opts);
+      schema.properties[key] = statsToSchema(keyStats, objectSampleCount, opts);
 
       // Determine if required based on policy
       const presenceCount = keyStats.presenceCount || 0;
       if (opts.requiredPolicy === "strict" && presenceCount > 0) {
         required.push(key);
-      } else if (opts.requiredPolicy === "observed" && presenceCount === totalSamples) {
+      } else if (opts.requiredPolicy === "observed" && presenceCount === objectSampleCount) {
         required.push(key);
       }
       // loose policy adds no required fields
