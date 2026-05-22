@@ -1,310 +1,265 @@
 <div align="center">
-  <img src="branding/logo.svg" alt="Gronify Logo" width="200" height="200">
+  <img src="branding/logo.svg" alt="Gronify logo" width="180" height="180">
 </div>
 
-# Gronify# Gronify
+# Gronify
 
-Make big JSON easy to search, inspect, and diff — in your terminal and VS Code — powered by [fastgron](https://github.com/adamritter/fastgron).Make big JSON easy to search, inspect, and diff — in your terminal and VS Code — powered by [fastgron].
+Gronify is a local-first CLI for turning JSON into greppable paths, searching those paths, and round-tripping gron output back to JSON. It is built as a thin TypeScript wrapper around [fastgron](https://github.com/adamritter/fastgron) with colored terminal output and stdin/stdout support.
 
-## Why## Why
+For platform and developer-experience teams, Gronify is useful when large JSON payloads show up in CI logs, service responses, support bundles, generated config, or incident debugging sessions and need to be inspected with familiar shell tools.
 
-Developers constantly poke at large or deeply nested JSON. Gronify flattens JSON into greppable “paths” (gron-style), lets you search/filter quickly, and round-trips back to JSON.
+## Features
 
-Developers constantly work with large or deeply nested JSON data. Gronify flattens JSON into greppable "paths" (gron-style), lets you search and filter quickly with powerful regex support, and round-trips back to JSON. All with beautiful colored output and Unix pipeline support.
+- Flatten JSON files or stdin into gron-style path assignments.
+- Unflatten gron files or stdin back into JSON through `fastgron -u`.
+- Search flattened paths with plain text, extended regex, case-sensitive matching, and match counts.
+- Use stdin/stdout workflows so Gronify can sit inside shell pipelines.
+- Format terminal output with optional colors and pretty indentation.
 
-## Features (MVP)
+## Requirements
 
-## Features- Flatten JSON → gron lines
+- Node.js 20 or newer.
+- npm 10 or newer.
+- `fastgron` on `PATH`.
+- `grep` on `PATH` for the `search` command.
 
-- Unflatten back to JSON
+`grep` is available by default on macOS and most Linux environments. On Windows, use WSL, Git Bash, or another shell environment that provides `grep`.
 
-- 🚀 **Fast JSON flattening** - Convert JSON to searchable gron format- Search/filter paths
+## Install
 
-- 🔄 **Reversible** - Convert gron back to JSON perfectly - VS Code command: “Gronify: Flatten JSON” (preview panel)
+Gronify is currently installed from source. This repository does not claim an npm package release.
 
-- 🔍 **Powerful search** - Regex patterns, case sensitivity, match counting
+1. Install `fastgron`.
 
-- 🎨 **Beautiful output** - Syntax highlighting and colored formatting## Install
+   ```bash
+   brew install fastgron
+   ```
 
-- 📡 **Unix pipelines** - Full stdin/stdout support for composability
+   For non-Homebrew installs, use the options documented by the [fastgron project](https://github.com/adamritter/fastgron).
 
-- 🧪 **Battle-tested** - Comprehensive test suite with 15+ test scenarios### Prereq: fastgron
+2. Clone and build Gronify.
 
-- 🛠️ **Professional CLI** - Built with commander.js for robust argument handlingmacOS/Linux (Homebrew):
+   ```bash
+   git clone https://github.com/1solomonwakhungu/gronify.git
+   cd gronify/src/packages/cli
+   npm ci
+   npm run build
+   ```
 
-````bash
+3. Link the local CLI.
 
-## Installationbrew install fastgron
+   ```bash
+   npm link
+   gronify --help
+   ```
 
+## Run
 
-### Prerequisites: fastgron
-
-**macOS/Linux (Homebrew):**
-```bash
-brew install fastgron
-````
-
-**Or visit:** https://github.com/adamritter/fastgron for other installation methods.
-
-### Install Gronify
-
-```bash
-# Clone and install
-git clone https://github.com/yourusername/gronify.git
-cd src/packages/cli
-npm install
-npm run build
-
-# Make globally available
-npm link
-```
-
-## Usage
-
-### Basic Commands
-
-**Flatten JSON to gron format:**
+Flatten a JSON file:
 
 ```bash
-# From file
 gronify flatten data.json
-
-# From stdin
-cat data.json | gronify flatten
-echo '{"name":"Alice","age":30}' | gronify flatten
 ```
 
-**Convert gron back to JSON:**
+Flatten JSON from stdin:
 
 ```bash
-# From file
-gronify unflatten data.gron
-
-# From stdin
-cat data.gron | gronify unflatten
-gronify flatten data.json | gronify unflatten  # Round trip
+echo '{"service":"api","retries":2}' | gronify flatten
 ```
 
-**Search through JSON:**
+Unflatten gron output back to JSON:
 
 ```bash
-# Search in file
-gronify search data.json "user"
-gronify search data.json "age"
-
-# Search from stdin
-cat data.json | gronify search "name"
-
-# With regex patterns
-gronify search data.json -r "user\\.\\w+"
-cat data.json | gronify search -r "items\\[\\d+\\]"
-
-# Case sensitive search
-gronify search data.json -c "Name"
-
-# Count matches only
-gronify search data.json --count "user"
+gronify flatten data.json | gronify unflatten
 ```
 
-### Output Formatting
-
-**Colored output (auto-detected):**
+Search flattened paths:
 
 ```bash
-gronify flatten data.json --color          # Force colors
-gronify flatten data.json --no-color       # Disable colors
+gronify search data.json "service"
+gronify search data.json --regex "users\[[0-9]+\]\.name"
+gronify search data.json --case-sensitive "Service"
+gronify search data.json --count "error"
 ```
 
-**Pretty formatting:**
+Use Gronify in a pipeline:
 
 ```bash
-gronify flatten data.json --pretty         # Enhanced readability
+curl -s https://example.com/payload.json | gronify search --regex "metadata|status"
 ```
 
-### Examples
+## Demo
 
-**Example JSON:**
+Create a sample payload:
 
-```json
+```bash
+cat > demo.json <<'JSON'
 {
-  "users": [
-    { "name": "Alice", "age": 30, "active": true },
-    { "name": "Bob", "age": 25, "active": false }
-  ],
-  "meta": {
-    "total": 2,
-    "page": 1
-  }
+  "service": {
+    "name": "checkout",
+    "status": "degraded"
+  },
+  "deployments": [
+    { "region": "us-central1", "version": "2026.05.22" },
+    { "region": "us-east1", "version": "2026.05.21" }
+  ]
 }
+JSON
 ```
 
-**Flattened output:**
+Flatten it:
 
 ```bash
-$ gronify flatten example.json
-json = {}
-json.users = []
-json.users[0] = {}
-json.users[0].name = "Alice"
-json.users[0].age = 30
-json.users[0].active = true
-json.users[1] = {}
-json.users[1].name = "Bob"
-json.users[1].age = 25
-json.users[1].active = false
-json.meta = {}
-json.meta.total = 2
-json.meta.page = 1
+gronify flatten demo.json
 ```
 
-**Search examples:**
+Example output:
 
-```bash
-# Find all user names
-$ gronify search example.json "name"
-json.users[0].name = "Alice"
-json.users[1].name = "Bob"
-
-# Find active users
-$ gronify search example.json "active.*true"
-json.users[0].active = true
-
-# Count total fields
-$ gronify search example.json --count ".*"
-11
+```text
+json = {};
+json.deployments = [];
+json.deployments[0] = {};
+json.deployments[0].region = "us-central1";
+json.deployments[0].version = "2026.05.22";
+json.deployments[1] = {};
+json.deployments[1].region = "us-east1";
+json.deployments[1].version = "2026.05.21";
+json.service = {};
+json.service.name = "checkout";
+json.service.status = "degraded";
 ```
 
-**Pipeline workflows:**
+Find operationally relevant fields:
 
 ```bash
-# Complex processing pipeline
-cat data.json | \
-  gronify flatten | \
-  grep "user" | \
-  grep -v "password" | \
-  gronify unflatten
-
-# Search and transform
-curl -s api.json | gronify search "important" | head -10
+gronify search demo.json --regex "status|version"
 ```
 
 ## Command Reference
 
 ### Global Options
 
-| Option          | Description              |
-| --------------- | ------------------------ |
-| `--color`       | Force colored output     |
-| `--no-color`    | Disable colored output   |
-| `--pretty`      | Enable pretty formatting |
-| `-h, --help`    | Show help information    |
-| `-V, --version` | Show version number      |
+| Option          | Description                                   |
+| --------------- | --------------------------------------------- |
+| `--color`       | Force colored output.                         |
+| `--no-color`    | Disable colored output.                       |
+| `--pretty`      | Add indentation/grouping to formatted output. |
+| `-h, --help`    | Show help.                                    |
+| `-V, --version` | Show the CLI version.                         |
 
-### Commands
+### `flatten [file]`
 
-#### `flatten [file]`
+Converts JSON to gron format. If `file` is omitted, Gronify reads from stdin.
 
-Convert JSON to gron format.
+```bash
+gronify flatten data.json
+cat data.json | gronify flatten
+```
 
-- **Arguments:** `[file]` - JSON file to flatten (optional, reads from stdin if not provided)
-- **Examples:**
-  ```bash
-  gronify flatten data.json
-  cat data.json | gronify flatten
-  ```
+### `unflatten [file]`
 
-#### `unflatten [file]`
+Converts gron format back to JSON. If `file` is omitted, Gronify reads from stdin.
 
-Convert gron format back to JSON.
+```bash
+gronify unflatten data.gron
+cat data.gron | gronify unflatten
+```
 
-- **Arguments:** `[file]` - Gron file to unflatten (optional, reads from stdin if not provided)
-- **Examples:**
-  ```bash
-  gronify unflatten data.gron
-  cat data.gron | gronify unflatten
-  ```
+### `search <file_or_term> [term]`
 
-#### `search <file_or_term> [term]`
+Searches flattened JSON paths. Pass both a file and term, or pipe JSON to stdin and pass only the search term.
 
-Search through flattened JSON paths.
+| Option                 | Description                       |
+| ---------------------- | --------------------------------- |
+| `-r, --regex`          | Use extended regular expressions. |
+| `-c, --case-sensitive` | Match case sensitively.           |
+| `--count`              | Print only the match count.       |
 
-- **Arguments:**
-  - `<file_or_term>` - JSON file to search OR search term (if using stdin)
-  - `[term]` - Search term or regex pattern (required if first arg is file)
-- **Options:**
-  - `-r, --regex` - Use regex pattern matching
-  - `-c, --case-sensitive` - Case sensitive search
-  - `--count` - Show only the count of matches
-- **Examples:**
-  ```bash
-  gronify search data.json "user"
-  gronify search data.json -r "user\\.\\w+"
-  cat data.json | gronify search "name"
-  gronify search data.json --count "field"
-  ```
+```bash
+gronify search data.json "user"
+gronify search data.json --regex "user\.[a-z]+"
+cat data.json | gronify search "name"
+gronify search data.json --count "field"
+```
 
 ## Development
 
-### Setup
+The CLI package lives in `src/packages/cli`.
 
 ```bash
-cd packages/cli
-npm install
+cd src/packages/cli
+npm ci
+npm run build
+npm test
 ```
 
-### Build
+Useful package scripts:
+
+```bash
+npm run lint
+npm run format:check
+npm run build
+npm test
+npm run audit
+```
+
+The integration tests shell out to `fastgron`, so install `fastgron` before running the test suite.
+
+## Repository Layout
+
+```text
+.
+|-- branding/              # Logo and icon assets
+|-- landing-page/          # Next.js marketing/demo page
+|-- scripts/               # Repository validation and package discovery helpers
+|-- src/
+|   |-- README.md          # Source tree orientation
+|   `-- packages/cli/      # TypeScript CLI package
+`-- .github/               # CI, Dependabot, and contribution templates
+```
+
+## Troubleshooting
+
+### `fastgron not found`
+
+Install `fastgron` and confirm it is on `PATH`:
+
+```bash
+fastgron --help
+```
+
+### `grep` errors when running `search`
+
+The `search` command pipes flattened output into `grep`. Use macOS, Linux, WSL, Git Bash, or another environment where `grep` is available.
+
+### `npm test` fails before running assertions
+
+Build first so `dist/index.js` exists:
 
 ```bash
 npm run build
+npm test
 ```
 
-### Test
+### JSON does not flatten
 
-```bash
-npm test                    # Run all tests
-npm run test:watch          # Run tests in watch mode
-```
-
-### Project Structure
-
-```
-packages/cli/
-├── src/
-│   ├── index.ts           # Main CLI entry point
-│   ├── formatter.ts       # Output formatting and colors
-│   └── index.d.ts         # Type definitions
-├── __tests__/
-│   └── cli.test.ts        # Comprehensive test suite
-├── dist/                  # Compiled JavaScript
-├── package.json
-└── tsconfig.json
-```
-
-## Roadmap
-
-- [ ] **Native JSON querying** - Eliminate grep dependency for cross-platform support
-- [ ] **Diff functionality** - Compare JSON files with colored diff output
-- [ ] **VS Code extension** - Inline JSON manipulation and visualization
-- [ ] **Performance optimization** - Streaming support for massive JSON files
-- [ ] **Output formats** - YAML, CSV, and other export formats
+Validate that the input is valid JSON and that files passed to `flatten` are readable from the current shell.
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes with tests
-4. Run the test suite (`npm test`)
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and pull request expectations.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for vulnerability reporting guidance.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+Gronify is licensed under the [MIT License](LICENSE).
 
 ## Credits
 
-- Built on top of [fastgron](https://github.com/adamritter/fastgron) for high-performance JSON flattening
-- Inspired by the original [gron](https://github.com/tomnomnom/gron) tool
-- Uses [commander.js](https://github.com/tj/commander.js) for professional CLI interface
-- Colored output powered by [chalk](https://github.com/chalk/chalk)
+- [fastgron](https://github.com/adamritter/fastgron) provides the JSON flattening and unflattening engine.
+- [gron](https://github.com/tomnomnom/gron) established the greppable JSON workflow that inspired this project.
+- [commander.js](https://github.com/tj/commander.js) powers the command interface.
+- [chalk](https://github.com/chalk/chalk) powers colored terminal output.
