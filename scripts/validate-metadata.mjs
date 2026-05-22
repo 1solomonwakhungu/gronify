@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 const requiredFiles = [
   "README.md",
   "src/README.md",
+  "landing-page/README.md",
   "LICENSE",
   "CONTRIBUTING.md",
   "SECURITY.md",
@@ -25,6 +26,43 @@ const requiredReadmeSections = [
 ];
 
 const errors = [];
+
+const staleClaimPatterns = [
+  {
+    pattern: /\bVS Code\b/i,
+    message: "claims a VS Code workflow that is not present",
+  },
+  {
+    pattern: /\bdiff\b/i,
+    message: "claims diff support that is not present",
+  },
+  {
+    pattern: /\bbeautiful\b/i,
+    message: "uses unsupported beautiful-output positioning",
+  },
+  {
+    pattern: /\bsyntax highlighting\b/i,
+    message: "claims syntax highlighting that is not documented as supported",
+  },
+  {
+    pattern: /\bDiscussions\b/i,
+    message:
+      "links to Discussions even though repository discussions are disabled",
+  },
+];
+
+function scanForStaleClaims(file) {
+  if (!existsSync(file)) {
+    return;
+  }
+
+  const contents = readFileSync(file, "utf8");
+  for (const { pattern, message } of staleClaimPatterns) {
+    if (pattern.test(contents)) {
+      errors.push(`${file} ${message}`);
+    }
+  }
+}
 
 for (const file of requiredFiles) {
   if (!existsSync(file)) {
@@ -49,10 +87,11 @@ if (existsSync("README.md")) {
     errors.push("README.md claims npm publication or global npm install");
   }
 
-  if (/VS Code/i.test(readme)) {
-    errors.push("README.md claims a VS Code workflow that is not present");
-  }
+  scanForStaleClaims("README.md");
 }
+
+scanForStaleClaims("landing-page/src/app/layout.tsx");
+scanForStaleClaims("landing-page/src/app/page.tsx");
 
 if (existsSync("src/packages/cli/package.json")) {
   const pkg = JSON.parse(readFileSync("src/packages/cli/package.json", "utf8"));
