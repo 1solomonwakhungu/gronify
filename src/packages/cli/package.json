@@ -1,19 +1,46 @@
 {
   "name": "gronify",
   "version": "1.0.0",
-  "description": "Make big JSON easy to search, inspect, and diff",
+  "description": "Flatten, search, and unflatten JSON from the command line with fastgron.",
+  "keywords": [
+    "json",
+    "gron",
+    "fastgron",
+    "cli",
+    "grep",
+    "platform-engineering",
+    "developer-tools"
+  ],
+  "homepage": "https://github.com/1solomonwakhungu/gronify#readme",
+  "bugs": {
+    "url": "https://github.com/1solomonwakhungu/gronify/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1solomonwakhungu/gronify.git",
+    "directory": "src/packages/cli"
+  },
+  "author": "Solomon Wakhungu",
+  "license": "MIT",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "gronify": "dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsc",
+    "lint": "tsc --noEmit",
+    "format:check": "npx --yes prettier@3.6.2 --check package.json",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "audit": "npm audit --audit-level=moderate"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "type": "module",
   "devDependencies": {
     "@types/jest": "^30.0.0",
