@@ -144,7 +144,7 @@ describe("Gronify CLI", () => {
       const result = await runCLI(["--help"]);
       
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("Make big JSON easy to search, inspect, and diff");
+      expect(result.stdout).toContain("Flatten, search, and unflatten JSON from the command line");
       expect(result.stdout).toContain("flatten");
       expect(result.stdout).toContain("unflatten");
       expect(result.stdout).toContain("search");

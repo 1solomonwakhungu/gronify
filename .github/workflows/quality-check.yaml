@@ -10,6 +10,7 @@ on:
       - "CONTRIBUTING.md"
       - "SECURITY.md"
       - ".github/**"
+      - "landing-page/**"
       - "scripts/**"
       - "src/**"
   pull_request:
@@ -21,6 +22,7 @@ on:
       - "CONTRIBUTING.md"
       - "SECURITY.md"
       - ".github/**"
+      - "landing-page/**"
       - "scripts/**"
       - "src/**"
 
@@ -54,6 +56,7 @@ jobs:
           .github/pull_request_template.md
           .github/workflows/*.yaml
           .github/dependabot.yml
+          landing-page/package.json
           scripts/*.mjs
           src/packages/cli/package.json
 
@@ -135,3 +138,34 @@ jobs:
       - name: Audit
         working-directory: ${{ matrix.package }}
         run: npm run audit --if-present
+
+  landing-page:
+    name: Landing page
+    needs: metadata
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: landing-page/package-lock.json
+
+      - name: Install dependencies
+        working-directory: landing-page
+        run: npm ci
+
+      - name: Lint
+        working-directory: landing-page
+        run: npm run lint
+
+      - name: Build
+        working-directory: landing-page
+        run: npm run build
+
+      - name: Audit
+        working-directory: landing-page
+        run: npm audit --audit-level=moderate
