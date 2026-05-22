@@ -139,13 +139,13 @@ gronify search demo.json --regex "status|version"
 
 ### Global Options
 
-| Option          | Description                                   |
-| --------------- | --------------------------------------------- |
-| `--color`       | Force colored output.                         |
-| `--no-color`    | Disable colored output.                       |
-| `--pretty`      | Add indentation/grouping to formatted output. |
-| `-h, --help`    | Show help.                                    |
-| `-V, --version` | Show the CLI version.                         |
+| Option          | Description                                          |
+| --------------- | ---------------------------------------------------- |
+| `--color`       | Enable colored output when the terminal supports it. |
+| `--no-color`    | Disable colored output.                              |
+| `--pretty`      | Add indentation/grouping to formatted output.        |
+| `-h, --help`    | Show help.                                           |
+| `-V, --version` | Show the CLI version.                                |
 
 ### `flatten [file]`
 
