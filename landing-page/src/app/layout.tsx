@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gronify - Make big JSON easy to search, inspect, and diff",
-  description: "Flatten JSON into greppable paths, search with powerful regex, and round-trip back to JSON. All with beautiful colored output and Unix pipeline support.",
+  title: "Gronify - Terminal JSON inspection with fastgron",
+  description:
+    "Flatten JSON into greppable paths, search those paths, and round-trip gron output back to JSON from a local CLI.",
 };
 
 export default function RootLayout({
