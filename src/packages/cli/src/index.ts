@@ -11,7 +11,7 @@ const program = new Command();
 // Package info (we'll read this from package.json later)
 program
   .name("gronify")
-  .description("Make big JSON easy to search, inspect, and diff")
+  .description("Flatten, search, and unflatten JSON from the command line")
   .version("1.0.0")
   .option("--color", "Enable colored output (default: auto-detect)")
   .option("--no-color", "Disable colored output")

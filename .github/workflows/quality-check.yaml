@@ -1,84 +1,172 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Node.js CI
+name: Quality Checks
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
     paths:
-      - 'src/**'
+      - "README.md"
+      - "LICENSE"
+      - "CONTRIBUTING.md"
+      - "SECURITY.md"
+      - ".github/**"
+      - "landing-page/**"
+      - "scripts/**"
+      - "src/**"
   pull_request:
-    branches: '*'
+    branches:
+      - main
     paths:
-      - 'src/**'
+      - "README.md"
+      - "LICENSE"
+      - "CONTRIBUTING.md"
+      - "SECURITY.md"
+      - ".github/**"
+      - "landing-page/**"
+      - "scripts/**"
+      - "src/**"
+
+permissions:
+  contents: read
 
 jobs:
-  discover-packages:
+  metadata:
+    name: Documentation and package metadata
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Validate repository metadata
+        run: node scripts/validate-metadata.mjs
+
+      - name: Check formatting for docs, templates, and package metadata
+        run: >
+          npx --yes prettier@3.6.2 --check
+          README.md
+          src/README.md
+          landing-page/README.md
+          CONTRIBUTING.md
+          SECURITY.md
+          .github/ISSUE_TEMPLATE/*.md
+          .github/pull_request_template.md
+          .github/workflows/*.yaml
+          .github/dependabot.yml
+          landing-page/package.json
+          scripts/*.mjs
+          src/packages/cli/package.json
+
+  discover-cli-packages:
+    name: Discover CLI packages
     runs-on: ubuntu-latest
     outputs:
       packages: ${{ steps.find-packages.outputs.packages }}
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Find packages with package-lock.json in src folder
-      id: find-packages
-      run: |
-        # Find all directories in src that contain package-lock.json
-        packages=$(find src -name "package-lock.json" -type f | xargs dirname | jq -R -s -c 'split("\n")[:-1]')
-        echo "Found packages: $packages"
-        echo "packages=$packages" >> $GITHUB_OUTPUT
 
-  quality:
-    name: Test ${{ matrix.package }} (Node ${{ matrix.node-version }} on ${{ matrix.os }})
-    needs: discover-packages
-    if: needs.discover-packages.outputs.packages != '[]'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find packages with package-lock.json in src
+        id: find-packages
+        run: |
+          packages=$(find src -name "package-lock.json" -type f | xargs dirname | jq -R -s -c 'split("\n")[:-1]')
+          echo "Found packages: $packages"
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
+
+  cli:
+    name: CLI (${{ matrix.package }}, Node ${{ matrix.node-version }}, ${{ matrix.os }})
+    needs:
+      - metadata
+      - discover-cli-packages
+    if: needs.discover-cli-packages.outputs.packages != '[]'
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [20.x, 22.x]
-        os: [ubuntu-latest, macos-latest]
-        package: ${{ fromJson(needs.discover-packages.outputs.packages) }}
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        node-version:
+          - 20.x
+          - 22.x
+        os:
+          - ubuntu-latest
+          - macos-latest
+        package: ${{ fromJson(needs.discover-cli-packages.outputs.packages) }}
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install fastgron
-      run: |
-        if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-          # Install fastgron using Homebrew on macOS
-          brew install fastgron --build-from-source
-        elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-          # Download pre-built binary for Ubuntu
-          curl -L -o fastgron https://github.com/adamritter/fastgron/releases/download/v0.7.7/fastgron-ubuntu
-          chmod +x fastgron
-          sudo mv fastgron /usr/local/bin/
-        fi
-    
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        cache-dependency-path: ${{ matrix.package }}/package-lock.json
-    
-    - name: Install dependencies in ${{ matrix.package }}
-      working-directory: ${{ matrix.package }}
-      run: |
-        echo "📦 Installing dependencies for $(basename ${{ matrix.package }})..."
-        npm ci
-    
-    - name: Build project in ${{ matrix.package }}
-      working-directory: ${{ matrix.package }}
-      run: |
-        echo "Building $(basename ${{ matrix.package }})..."
-        npm run build --if-present
-    
-    - name: Run tests in ${{ matrix.package }}
-      working-directory: ${{ matrix.package }}
-      run: |
-        echo "Running tests for $(basename ${{ matrix.package }})..."
-        npm test
+      - uses: actions/checkout@v4
+
+      - name: Install fastgron
+        run: |
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            brew install fastgron --build-from-source
+          else
+            curl -L -o fastgron https://github.com/adamritter/fastgron/releases/download/v0.7.7/fastgron-ubuntu
+            chmod +x fastgron
+            sudo mv fastgron /usr/local/bin/
+          fi
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: ${{ matrix.package }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.package }}
+        run: npm ci
+
+      - name: Lint
+        working-directory: ${{ matrix.package }}
+        run: npm run lint --if-present
+
+      - name: Format check
+        working-directory: ${{ matrix.package }}
+        run: npm run format:check --if-present
+
+      - name: Build
+        working-directory: ${{ matrix.package }}
+        run: npm run build --if-present
+
+      - name: Test
+        working-directory: ${{ matrix.package }}
+        run: npm test
+
+      - name: Audit
+        working-directory: ${{ matrix.package }}
+        run: npm run audit --if-present
+
+  landing-page:
+    name: Landing page
+    needs: metadata
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: landing-page/package-lock.json
+
+      - name: Install dependencies
+        working-directory: landing-page
+        run: npm ci
+
+      - name: Lint
+        working-directory: landing-page
+        run: npm run lint
+
+      - name: Build
+        working-directory: landing-page
+        run: npm run build
+
+      - name: Audit
+        working-directory: landing-page
+        run: npm audit --audit-level=moderate
