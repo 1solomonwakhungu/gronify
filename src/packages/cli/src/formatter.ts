@@ -204,34 +204,6 @@ export class OutputFormatter {
   }
 
   /**
-   * Apply pretty formatting with indentation and grouping
-   */
-  private applyPrettyFormatting(lines: string[]): string[] {
-    const result: string[] = [];
-    let lastTopLevel = '';
-
-    lines.forEach((line, index) => {
-      // Calculate indentation based on nesting level
-      const nestingLevel = Math.max(0, (line.match(/\[/g) || []).length + (line.match(/\./g) || []).length - 1);
-      const indent = '  '.repeat(Math.min(nestingLevel, 6)); // Max 6 levels
-      
-      // Extract top-level object (e.g., "users" from "json.users[0].name")
-      const topLevelMatch = line.match(/^json\.([^\[.]+)/);
-      const currentTopLevel = topLevelMatch ? topLevelMatch[1] : 'root';
-      
-      // Add spacing between different top-level objects
-      if (index > 0 && currentTopLevel !== lastTopLevel && lastTopLevel !== 'root') {
-        result.push('');
-      }
-      
-      result.push(indent + line);
-      lastTopLevel = currentTopLevel || 'root';
-    });
-
-    return result;
-  }
-
-  /**
    * Apply pretty formatting to already colored lines
    */
   private applyPrettyFormattingToColoredLines(lines: string[]): string[] {
