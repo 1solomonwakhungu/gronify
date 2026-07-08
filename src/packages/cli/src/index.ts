@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { spawn } from "node:child_process";
-import { existsSync, accessSync, constants, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, accessSync, constants, writeFileSync, mkdirSync, unlinkSync } from "node:fs";
 import { extname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { createFormatter, shouldUseColor, type FormatOptions } from "./formatter.js";
@@ -15,7 +15,8 @@ program
   .version("1.0.0")
   .option("--color", "Enable colored output (default: auto-detect)")
   .option("--no-color", "Disable colored output")
-  .option("--pretty", "Enable pretty formatting with better readability");
+  .option("--pretty", "Enable pretty formatting with better readability")
+  .option("-o, --output <file>", "Write output to a file instead of stdout");
 
 // Helper function to check if stdin has data
 function hasStdinData(): boolean {
@@ -85,7 +86,7 @@ function validateFile(filePath: string, allowMissing = false): void {
 }
 
 // Helper function to run fastgron with formatting
-function runFastgron(args: string[], formatter: import("./formatter.js").OutputFormatter, onError?: (code: number) => void): void {
+function runFastgron(args: string[], formatter: import("./formatter.js").OutputFormatter, onError?: (code: number) => void, outputFile?: string): void {
   const p = spawn("fastgron", args, { stdio: ["inherit", "pipe", "pipe"] });
 
   let stdout = "";
@@ -123,10 +124,20 @@ function runFastgron(args: string[], formatter: import("./formatter.js").OutputF
       // Check if this is gron output (flatten) or JSON output (unflatten)
       const isGronOutput = args.includes("-u") ? false : true;
       
-      if (isGronOutput) {
-        console.log(formatter.formatGron(stdout.trim()));
+      const formatted = isGronOutput
+        ? formatter.formatGron(stdout.trim())
+        : formatter.formatJson(stdout.trim());
+
+      if (outputFile) {
+        try {
+          writeFileSync(outputFile, formatted + "\n", "utf8");
+          console.error(formatter.formatSuccess(`Output written to ${outputFile}`));
+        } catch (err: any) {
+          console.error(formatter.formatError(`writing to ${outputFile}: ${err.message}`));
+          process.exit(1);
+        }
       } else {
-        console.log(formatter.formatJson(stdout.trim()));
+        console.log(formatted);
       }
     }
 
@@ -180,8 +191,8 @@ program
       // Clean up temporary file if created
       if (isTemporary) {
         try {
-          require('fs').unlinkSync(inputFile);
-        } catch (error) {
+          unlinkSync(inputFile);
+        } catch {
           // Ignore cleanup errors
         }
       }
@@ -189,9 +200,10 @@ program
       if (code === 1) {
         console.error(formatter.formatError("This might indicate invalid JSON in the input"));
         console.error("Please check that your JSON is valid");
+        console.error(formatter.formatInfo("Tip: Validate your JSON with a linter like https://jsonlint.com"));
       }
       process.exit(code);
-    });
+    }, globalOptions.output);
   });
 
 // Unflatten command
@@ -231,8 +243,8 @@ program
       // Clean up temporary file if created
       if (isTemporary) {
         try {
-          require('fs').unlinkSync(inputFile);
-        } catch (error) {
+          unlinkSync(inputFile);
+        } catch {
           // Ignore cleanup errors
         }
       }
@@ -240,9 +252,10 @@ program
       if (code === 1) {
         console.error(formatter.formatError("This might indicate invalid gron format in the input"));
         console.error("Please check that your gron file is properly formatted");
+        console.error(formatter.formatInfo("Tip: Gron lines should look like: json.path = value"));
       }
       process.exit(code);
-    });
+    }, globalOptions.output);
   });
 
 // Search command
@@ -254,10 +267,12 @@ program
   .option("-r, --regex", "Use regex pattern matching")
   .option("-c, --case-sensitive", "Case sensitive search")
   .option("--count", "Show only the count of matches")
+  .option("-v, --invert-match", "Invert match: show lines that do NOT match")
   .action(async (fileOrTerm: string, term: string | undefined, options: {
     regex?: boolean;
     caseSensitive?: boolean;
     count?: boolean;
+    invertMatch?: boolean;
   }, command?: any) => {
     const globalOptions = command?.parent?.opts() || {};
     const formatter = createFormatterFromOptions(globalOptions);
@@ -310,6 +325,11 @@ program
     if (options.regex) {
       grepArgs.push("-E"); // Extended regex
     }
+
+    // Invert match
+    if (options.invertMatch) {
+      grepArgs.push("-v");
+    }
     
     // Add the search term
     grepArgs.push(searchTerm);
@@ -338,8 +358,8 @@ program
     const cleanupTempFile = () => {
       if (isTemporary) {
         try {
-          require('fs').unlinkSync(inputFile);
-        } catch (error) {
+          unlinkSync(inputFile);
+        } catch {
           // Ignore cleanup errors
         }
       }
@@ -383,7 +403,12 @@ program
       
       if (code === 1) {
         if (!options.count) {
-          console.error(formatter.formatWarning(`No matches found for '${searchTerm}'`));
+          if (options.invertMatch) {
+            console.error(formatter.formatWarning(`All lines matched '${searchTerm}' (nothing to invert)`));
+          } else {
+            console.error(formatter.formatWarning(`No matches found for '${searchTerm}'`));
+            console.error(formatter.formatInfo(`Tip: Try --case-sensitive or --regex for different matching`));
+          }
         }
         process.exit(0); // This is not an error, just no matches
       } else if (code && code > 1) {

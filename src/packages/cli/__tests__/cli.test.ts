@@ -3,10 +3,13 @@ import { readFileSync } from "fs";
 import { join } from "path";
 
 // Helper function to run CLI commands and capture output
-function runCLI(args: string[], input?: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+function runCLI(
+  args: string[],
+  input?: string,
+): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   return new Promise((resolve) => {
     const child = spawn("node", ["dist/index.js", ...args], {
-      stdio: ["pipe", "pipe", "pipe"]
+      stdio: ["pipe", "pipe", "pipe"],
     });
 
     let stdout = "";
@@ -28,7 +31,7 @@ function runCLI(args: string[], input?: string): Promise<{ stdout: string; stder
       resolve({
         stdout: stdout.trim(),
         stderr: stderr.trim(),
-        exitCode: code ?? 0
+        exitCode: code ?? 0,
       });
     });
 
@@ -42,8 +45,6 @@ function runCLI(args: string[], input?: string): Promise<{ stdout: string; stder
   });
 }
 
-
-
 describe("Gronify CLI", () => {
   const testJSONFile = join(process.cwd(), "__tests__", "test.json");
   const testGronFile = join(process.cwd(), "__tests__", "test.gron");
@@ -52,23 +53,23 @@ describe("Gronify CLI", () => {
 
   beforeAll(() => {
     // Read test data from files
-    testJSON = JSON.parse(readFileSync(testJSONFile, 'utf8'));
-    testGron = readFileSync(testGronFile, 'utf8');
+    testJSON = JSON.parse(readFileSync(testJSONFile, "utf8"));
+    testGron = readFileSync(testGronFile, "utf8");
   });
 
   describe("flatten command", () => {
     test("should flatten JSON from stdin", async () => {
       const result = await runCLI(["flatten"], JSON.stringify(testJSON));
-      
+
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain("json = {}");
       expect(result.stdout).toContain("json.user.id = 12345");
-      expect(result.stdout).toContain("json.user.name = \"Alice\"");
+      expect(result.stdout).toContain('json.user.name = "Alice"');
     });
 
     test("should show error for non-existent file", async () => {
       const result = await runCLI(["flatten", "nonexistent.json"]);
-      
+
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("does not exist");
     });
@@ -77,7 +78,7 @@ describe("Gronify CLI", () => {
   describe("unflatten command", () => {
     test("should unflatten gron file", async () => {
       const result = await runCLI(["unflatten", testGronFile]);
-      
+
       expect(result.exitCode).toBe(0);
       const parsed = JSON.parse(result.stdout);
       expect(parsed.user.id).toBe(12345);
@@ -87,7 +88,7 @@ describe("Gronify CLI", () => {
 
     test("should unflatten gron from stdin", async () => {
       const result = await runCLI(["unflatten"], testGron);
-      
+
       expect(result.exitCode).toBe(0);
       const parsed = JSON.parse(result.stdout);
       expect(parsed.user.id).toBe(12345);
@@ -96,7 +97,7 @@ describe("Gronify CLI", () => {
 
     test("should show error for non-existent file", async () => {
       const result = await runCLI(["unflatten", "nonexistent.gron"]);
-      
+
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("does not exist");
     });
@@ -105,46 +106,94 @@ describe("Gronify CLI", () => {
   describe("search command", () => {
     test("should search in JSON file", async () => {
       const result = await runCLI(["search", testJSONFile, "user"]);
-      
+
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain("json.user");
     });
 
     test("should search case sensitively", async () => {
-      const result = await runCLI(["search", testJSONFile, "Alice", "--case-sensitive"]);
-      
+      const result = await runCLI([
+        "search",
+        testJSONFile,
+        "Alice",
+        "--case-sensitive",
+      ]);
+
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("json.user.name = \"Alice\"");
+      expect(result.stdout).toContain('json.user.name = "Alice"');
     });
 
     test("should count matches", async () => {
       const result = await runCLI(["search", testJSONFile, "post", "--count"]);
-      
+
       expect(result.exitCode).toBe(0);
       expect(parseInt(result.stdout)).toBeGreaterThan(0);
     });
 
     test("should search from stdin", async () => {
       const result = await runCLI(["search", "user"], JSON.stringify(testJSON));
-      
+
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain("json.user");
     });
 
     test("should show no matches found", async () => {
       const result = await runCLI(["search", testJSONFile, "nonexistent"]);
-      
+
       expect(result.exitCode).toBe(0); // No matches is not an error
       expect(result.stderr).toContain("No matches found");
+    });
+
+    test("should support --invert-match flag", async () => {
+      const result = await runCLI([
+        "search",
+        testJSONFile,
+        "user",
+        "--invert-match",
+      ]);
+
+      expect(result.exitCode).toBe(0);
+      // Should contain lines that don't have "user" in them
+      expect(result.stdout).toContain("json.posts");
+      expect(result.stdout).not.toContain("json.user");
+    });
+  });
+
+  describe("output file option", () => {
+    test("should write flatten output to file with -o", async () => {
+      const outputFile = join(process.cwd(), "__tests__", "test-output.gron");
+      const result = await runCLI([
+        "--no-color",
+        "-o",
+        outputFile,
+        "flatten",
+        testJSONFile,
+      ]);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toContain("Output written to");
+      // Verify the file was written
+      const content = readFileSync(outputFile, "utf8");
+      expect(content).toContain("json.user.id = 12345");
+
+      // Clean up
+      const { unlinkSync } = await import("fs");
+      try {
+        unlinkSync(outputFile);
+      } catch {
+        /* ignore */
+      }
     });
   });
 
   describe("help and version", () => {
     test("should show help", async () => {
       const result = await runCLI(["--help"]);
-      
+
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("Flatten, search, and unflatten JSON from the command line");
+      expect(result.stdout).toContain(
+        "Flatten, search, and unflatten JSON from the command line",
+      );
       expect(result.stdout).toContain("flatten");
       expect(result.stdout).toContain("unflatten");
       expect(result.stdout).toContain("search");
@@ -152,14 +201,14 @@ describe("Gronify CLI", () => {
 
     test("should show version", async () => {
       const result = await runCLI(["--version"]);
-      
+
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain("1.0.0");
     });
 
     test("should show command help", async () => {
       const result = await runCLI(["search", "--help"]);
-      
+
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain("Search through flattened JSON paths");
       expect(result.stdout).toContain("--regex");
