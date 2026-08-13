@@ -34,7 +34,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/inject-version.mjs",
+    "build:bundle": "npm run build && esbuild dist/index.js --bundle --platform=node --format=esm --target=node20 --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" --outfile=dist/gronify",
     "lint": "tsc --noEmit",
     "format:check": "npx --yes prettier@3.6.2 --check package.json",
     "test": "jest",
@@ -45,6 +46,7 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^24.5.2",
+    "esbuild": "^0.25.10",
     "jest": "^29.7.0",
     "ts-jest": "^29.4.4",
     "typescript": "^5.9.2"
