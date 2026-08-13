@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     "developer tools",
   ],
   openGraph: {
-    title: "Gronify | Make nested JSON answerable",
+    title: "Gronify | Search JSON. Find answers.",
     description:
       "A local-first CLI for flattening, searching, and reconstructing JSON in terminal workflows.",
     type: "website",
