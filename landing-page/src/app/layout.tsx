@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gronify - Terminal JSON inspection with fastgron",
+  title: "Gronify - Standalone terminal JSON inspection",
   description:
     "Flatten JSON into greppable paths, search those paths, and round-trip gron output back to JSON from a local CLI.",
 };

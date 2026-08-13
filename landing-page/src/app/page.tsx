@@ -78,7 +78,7 @@ export default function Home() {
             <h1 className="mb-6 text-4xl font-bold text-gray-900 sm:text-6xl lg:text-7xl dark:text-white">
               Terminal JSON inspection
               <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                powered by fastgron
+                in one standalone CLI
               </span>
             </h1>
             <p className="mx-auto mb-8 max-w-3xl text-xl text-gray-600 sm:text-2xl dark:text-gray-300">
@@ -126,7 +126,7 @@ export default function Home() {
             <FeatureCard
               marker="<>"
               title="Round Trip"
-              description="Convert gron output back to JSON through fastgron unflattening."
+              description="Convert gron output back to JSON with the built-in engine."
             />
             <FeatureCard
               marker="/"
@@ -204,7 +204,7 @@ json.service.status = "degraded"`}
               <h3 className="mb-4 text-xl font-semibold">
                 Pipeline Processing
               </h3>
-              <CodeBlock title="$ cat data.json | gronify flatten | grep service">
+              <CodeBlock title="$ cat data.json | gronify search service">
                 {`json.service = {}
 json.service.name = "checkout"`}
               </CodeBlock>
@@ -230,27 +230,15 @@ json.service.name = "checkout"`}
               Build Locally from Source
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300">
-              Install fastgron, then build and link the CLI locally.
+              Build and link the CLI locally. No external binaries are required.
             </p>
           </div>
 
           <div className="mx-auto max-w-4xl">
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div className="mx-auto max-w-2xl">
               <div>
                 <h3 className="mb-4 text-xl font-semibold">
-                  1. Install fastgron
-                </h3>
-                <CodeBlock>
-                  {`# macOS/Linux (Homebrew)
-brew install fastgron
-
-# Other install methods:
-# https://github.com/adamritter/fastgron`}
-                </CodeBlock>
-              </div>
-              <div>
-                <h3 className="mb-4 text-xl font-semibold">
-                  2. Install Gronify
+                  Install Gronify
                 </h3>
                 <CodeBlock>
                   {`git clone https://github.com/1solomonwakhungu/gronify.git
@@ -269,7 +257,7 @@ npm link`}
               <CodeBlock>
                 {`gronify flatten data.json
 gronify search data.json "service"
-cat data.json | gronify flatten | grep "name"`}
+cat data.json | gronify search "name"`}
               </CodeBlock>
             </div>
           </div>
