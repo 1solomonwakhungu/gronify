@@ -10,7 +10,7 @@ const program = new Command();
 program
   .name("gronify")
   .description("Flatten, search, and unflatten JSON from the command line")
-  .version("1.0.0")
+  .version("__GRONIFY_VERSION__")
   .option("--color", "Enable colored output (default: auto-detect)")
   .option("--no-color", "Disable colored output")
   .option("--pretty", "Enable pretty formatting with better readability");
