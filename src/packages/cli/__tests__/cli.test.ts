@@ -66,11 +66,35 @@ describe("Gronify CLI", () => {
       expect(result.stdout).toContain("json.user.name = \"Alice\"");
     });
 
+    test("should flatten keys that require bracket notation", async () => {
+      const result = await runCLI(["flatten"], JSON.stringify({ "service.name": "api", "quoted\"key": null }));
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('json["service.name"] = "api"');
+      expect(result.stdout).toContain('json["quoted\\\"key"] = null');
+    });
+
     test("should show error for non-existent file", async () => {
       const result = await runCLI(["flatten", "nonexistent.json"]);
       
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("does not exist");
+    });
+
+    test("should round-trip quoted keys and nested values", async () => {
+      const input = { "service.name": [null, -2.5], constructor: { prototype: true } };
+      const flattened = await runCLI(["flatten"], JSON.stringify(input));
+      const result = await runCLI(["unflatten"], flattened.stdout);
+
+      expect(result.exitCode).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual(input);
+    });
+
+    test("should reject child paths before their parent", async () => {
+      const result = await runCLI(["unflatten"], "json = {}\njson.user.name = \"Alice\"");
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("parent path must be assigned");
     });
   });
 
@@ -122,6 +146,28 @@ describe("Gronify CLI", () => {
       
       expect(result.exitCode).toBe(0);
       expect(parseInt(result.stdout)).toBeGreaterThan(0);
+    });
+
+    test("should print zero when counting no matches", async () => {
+      const result = await runCLI(["search", testJSONFile, "nonexistent", "--count"]);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toBe("0");
+    });
+
+    test("should treat plain search terms literally", async () => {
+      const result = await runCLI(["search", testJSONFile, "user.*name"]);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toContain("No matches found");
+    });
+
+    test("should report invalid regular expressions", async () => {
+      const result = await runCLI(["search", testJSONFile, "[", "--regex"]);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("invalid regex");
     });
 
     test("should search from stdin", async () => {

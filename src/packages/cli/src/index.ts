@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { spawn } from "node:child_process";
-import { existsSync, accessSync, constants, writeFileSync, mkdirSync } from "node:fs";
-import { extname, join } from "node:path";
-import { tmpdir } from "node:os";
-import { createFormatter, shouldUseColor, type FormatOptions } from "./formatter.js";
+import { accessSync, constants, existsSync, readFileSync } from "node:fs";
+import { extname } from "node:path";
+import { createFormatter, shouldUseColor, type FormatOptions, type OutputFormatter } from "./formatter.js";
+import { flattenJson, unflattenGron } from "./gron.js";
 
 const program = new Command();
 
@@ -16,235 +15,90 @@ program
   .option("--no-color", "Disable colored output")
   .option("--pretty", "Enable pretty formatting with better readability");
 
-// Helper function to check if stdin has data
 function hasStdinData(): boolean {
   return !process.stdin.isTTY;
 }
 
-// Helper function to read stdin and save to temp file
-async function readStdinToTempFile(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    
-    process.stdin.setEncoding('utf8');
-    
-    process.stdin.on('data', (chunk) => {
-      data += chunk;
-    });
-    
-    process.stdin.on('end', () => {
-      try {
-        // Create temp file
-        const tempDir = tmpdir();
-        const tempFile = join(tempDir, `gronify-stdin-${Date.now()}.json`);
-        
-        // Ensure temp directory exists
-        mkdirSync(tempDir, { recursive: true });
-        
-        // Write stdin data to temp file
-        writeFileSync(tempFile, data, 'utf8');
-        
-        resolve(tempFile);
-      } catch (error) {
-        reject(error);
-      }
-    });
-    
-    process.stdin.on('error', (error) => {
-      reject(error);
-    });
-  });
+async function readStdin(): Promise<string> {
+  process.stdin.setEncoding("utf8");
+  let data = "";
+  for await (const chunk of process.stdin) data += chunk;
+  return data;
 }
 
-// Helper function to create formatter from global options
-function createFormatterFromOptions(globalOptions: any): import("./formatter.js").OutputFormatter {
+function createFormatterFromOptions(globalOptions: Record<string, unknown>): OutputFormatter {
   const formatOptions: FormatOptions = {
-    color: globalOptions.color ?? shouldUseColor(),
-    pretty: globalOptions.pretty ?? false,
-    format: 'gron'
+    color: globalOptions.color as boolean | undefined ?? shouldUseColor(),
+    pretty: globalOptions.pretty as boolean | undefined ?? false,
+    format: "gron"
   };
   return createFormatter(formatOptions);
 }
 
-// Helper function to validate file
-function validateFile(filePath: string, allowMissing = false): void {
-  if (!allowMissing && !existsSync(filePath)) {
-    console.error(`Error: File '${filePath}' does not exist`);
-    process.exit(1);
+function validateFile(filePath: string): void {
+  if (!existsSync(filePath)) {
+    throw new Error(`File '${filePath}' does not exist`);
   }
-
-  if (existsSync(filePath)) {
-    try {
-      accessSync(filePath, constants.R_OK);
-    } catch (error) {
-      console.error(`Error: Cannot read file '${filePath}' - permission denied`);
-      process.exit(1);
-    }
+  try {
+    accessSync(filePath, constants.R_OK);
+  } catch {
+    throw new Error(`Cannot read file '${filePath}' - permission denied`);
   }
 }
 
-// Helper function to run fastgron with formatting
-function runFastgron(args: string[], formatter: import("./formatter.js").OutputFormatter, onError?: (code: number) => void): void {
-  const p = spawn("fastgron", args, { stdio: ["inherit", "pipe", "pipe"] });
-
-  let stdout = "";
-  let stderr = "";
-
-  if (p.stdout) {
-    p.stdout.on("data", (data) => {
-      stdout += data.toString();
-    });
+async function readInput(file: string | undefined, formatter: OutputFormatter, usage: string): Promise<string> {
+  if (file) {
+    validateFile(file);
+    return readFileSync(file, "utf8");
   }
-
-  if (p.stderr) {
-    p.stderr.on("data", (data) => {
-      stderr += data.toString();
-    });
+  if (!hasStdinData()) {
+    console.error(formatter.formatError("No input file provided and no data piped to stdin"));
+    console.error(usage);
+    process.exitCode = 1;
+    return "";
   }
-
-  p.on("error", (error: any) => {
-    if (error.code === "ENOENT") {
-      console.error(formatter.formatError("fastgron not found. Please install it first:"));
-      console.error("  macOS/Linux: brew install fastgron");
-      console.error("  Or visit: https://github.com/adamritter/fastgron");
-    } else {
-      console.error(formatter.formatError(`running fastgron: ${error.message}`));
-    }
-    process.exit(1);
-  });
-
-  p.on("exit", (code) => {
-    if (stderr) {
-      console.error(formatter.formatError(stderr.trim()));
-    }
-
-    if (stdout) {
-      // Check if this is gron output (flatten) or JSON output (unflatten)
-      const isGronOutput = args.includes("-u") ? false : true;
-      
-      if (isGronOutput) {
-        console.log(formatter.formatGron(stdout.trim()));
-      } else {
-        console.log(formatter.formatJson(stdout.trim()));
-      }
-    }
-
-    if (code !== 0 && onError) {
-      onError(code ?? 1);
-    } else if (code !== 0) {
-      process.exit(code ?? 1);
-    }
-  });
+  return readStdin();
 }
 
-// Flatten command
+function fail(formatter: OutputFormatter, context: string, error: unknown): void {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(formatter.formatError(`${context}: ${message}`));
+  process.exitCode = 1;
+}
+
 program
   .command("flatten")
   .description("Convert JSON to gron format")
   .argument("[file]", "JSON file to flatten (or read from stdin if not provided)")
-  .action(async (file?: string, options?: any, command?: any) => {
-    const globalOptions = command?.parent?.opts() || {};
-    const formatter = createFormatterFromOptions(globalOptions);
-    
-    let inputFile: string;
-    let isTemporary = false;
-
-    if (!file) {
-      // Check if stdin has data
-      if (!hasStdinData()) {
-        console.error(formatter.formatError("No input file provided and no data piped to stdin"));
-        console.error("Usage: gronify flatten <file> OR cat file.json | gronify flatten");
-        process.exit(1);
+  .action(async (file: string | undefined, _options: unknown, command: Command) => {
+    const formatter = createFormatterFromOptions(command.parent?.opts() ?? {});
+    try {
+      if (file && ![".json", ".jsonl"].includes(extname(file).toLowerCase())) {
+        console.warn(formatter.formatWarning(`File '${file}' doesn't have a .json extension`));
       }
-
-      try {
-        // Read from stdin and create temp file
-        inputFile = await readStdinToTempFile();
-        isTemporary = true;
-      } catch (error) {
-        console.error(formatter.formatError(`reading from stdin: ${error}`));
-        process.exit(1);
-      }
-    } else {
-      inputFile = file;
-      validateFile(inputFile);
-      
-      // Warn about non-JSON extensions
-      if (![".json", ".jsonl"].includes(extname(inputFile).toLowerCase())) {
-        console.warn(formatter.formatWarning(`File '${inputFile}' doesn't have a .json extension`));
-      }
+      const input = await readInput(file, formatter, "Usage: gronify flatten <file> OR cat file.json | gronify flatten");
+      if (process.exitCode) return;
+      console.log(formatter.formatGron(flattenJson(JSON.parse(input))));
+    } catch (error) {
+      fail(formatter, "flattening JSON", error);
     }
-
-    runFastgron([inputFile], formatter, (code: number) => {
-      // Clean up temporary file if created
-      if (isTemporary) {
-        try {
-          require('fs').unlinkSync(inputFile);
-        } catch (error) {
-          // Ignore cleanup errors
-        }
-      }
-
-      if (code === 1) {
-        console.error(formatter.formatError("This might indicate invalid JSON in the input"));
-        console.error("Please check that your JSON is valid");
-      }
-      process.exit(code);
-    });
   });
 
-// Unflatten command
 program
   .command("unflatten")
   .description("Convert gron format back to JSON")
   .argument("[file]", "Gron file to unflatten (or read from stdin if not provided)")
-  .action(async (file?: string, options?: any, command?: any) => {
-    const globalOptions = command?.parent?.opts() || {};
-    const formatter = createFormatterFromOptions(globalOptions);
-    
-    let inputFile: string;
-    let isTemporary = false;
-
-    if (!file) {
-      // Check if stdin has data
-      if (!hasStdinData()) {
-        console.error(formatter.formatError("No input file provided and no data piped to stdin"));
-        console.error("Usage: gronify unflatten <file> OR cat file.gron | gronify unflatten");
-        process.exit(1);
-      }
-
-      try {
-        // Read from stdin and create temp file
-        inputFile = await readStdinToTempFile();
-        isTemporary = true;
-      } catch (error) {
-        console.error(formatter.formatError(`reading from stdin: ${error}`));
-        process.exit(1);
-      }
-    } else {
-      inputFile = file;
-      validateFile(inputFile);
+  .action(async (file: string | undefined, _options: unknown, command: Command) => {
+    const formatter = createFormatterFromOptions(command.parent?.opts() ?? {});
+    try {
+      const input = await readInput(file, formatter, "Usage: gronify unflatten <file> OR cat file.gron | gronify unflatten");
+      if (process.exitCode) return;
+      console.log(formatter.formatJson(JSON.stringify(unflattenGron(input))));
+    } catch (error) {
+      fail(formatter, "unflattening gron", error);
     }
-
-    runFastgron(["-u", inputFile], formatter, (code: number) => {
-      // Clean up temporary file if created
-      if (isTemporary) {
-        try {
-          require('fs').unlinkSync(inputFile);
-        } catch (error) {
-          // Ignore cleanup errors
-        }
-      }
-
-      if (code === 1) {
-        console.error(formatter.formatError("This might indicate invalid gron format in the input"));
-        console.error("Please check that your gron file is properly formatted");
-      }
-      process.exit(code);
-    });
   });
 
-// Search command
 program
   .command("search")
   .description("Search through flattened JSON paths")
@@ -257,151 +111,31 @@ program
     regex?: boolean;
     caseSensitive?: boolean;
     count?: boolean;
-  }, command?: any) => {
-    const globalOptions = command?.parent?.opts() || {};
-    const formatter = createFormatterFromOptions(globalOptions);
-    
-    let inputFile: string;
-    let searchTerm: string;
-    let isTemporary = false;
+  }, command: Command) => {
+    const formatter = createFormatterFromOptions(command.parent?.opts() ?? {});
+    const file = term ? fileOrTerm : undefined;
+    const searchTerm = term ?? fileOrTerm;
 
-    // Determine if first argument is a file or search term
-    if (term) {
-      // Two arguments provided: first is file, second is search term
-      inputFile = fileOrTerm;
-      searchTerm = term;
-      validateFile(inputFile);
-    } else {
-      // One argument provided: it's the search term, read from stdin
-      searchTerm = fileOrTerm;
-      
-      // Check if stdin has data
-      if (!hasStdinData()) {
-        console.error(formatter.formatError("No search term provided or no data piped to stdin"));
-        console.error("Usage: gronify search <file> <term> OR cat file.json | gronify search <term>");
-        process.exit(1);
-      }
+    try {
+      const input = await readInput(file, formatter, "Usage: gronify search <file> <term> OR cat file.json | gronify search <term>");
+      if (process.exitCode) return;
+      const lines = flattenJson(JSON.parse(input)).split("\n");
+      const flags = options.caseSensitive ? "" : "i";
+      const pattern = options.regex
+        ? new RegExp(searchTerm, flags)
+        : new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), flags);
+      const matches = lines.filter((line) => pattern.test(line));
 
-      try {
-        // Read from stdin and create temp file
-        inputFile = await readStdinToTempFile();
-        isTemporary = true;
-      } catch (error) {
-        console.error(formatter.formatError(`reading from stdin: ${error}`));
-        process.exit(1);
-      }
-    }
-
-    // Build grep arguments based on options
-    const grepArgs: string[] = [];
-    
-    // Case sensitivity (default is case-insensitive)
-    if (!options.caseSensitive) {
-      grepArgs.push("-i");
-    }
-    
-    // Count only
-    if (options.count) {
-      grepArgs.push("-c");
-    }
-    
-    // Regex support
-    if (options.regex) {
-      grepArgs.push("-E"); // Extended regex
-    }
-    
-    // Add the search term
-    grepArgs.push(searchTerm);
-
-    // For search: flatten first, then grep
-    const p = spawn("fastgron", [inputFile], { stdio: "pipe" });
-    const grep = spawn("grep", grepArgs, { stdio: ["pipe", "pipe", "pipe"] });
-    
-    let grepOutput = "";
-    let grepError = "";
-    
-    p.stdout?.pipe(grep.stdin);
-    
-    if (grep.stdout) {
-      grep.stdout.on("data", (data) => {
-        grepOutput += data.toString();
-      });
-    }
-    
-    if (grep.stderr) {
-      grep.stderr.on("data", (data) => {
-        grepError += data.toString();
-      });
-    }
-    
-    const cleanupTempFile = () => {
-      if (isTemporary) {
-        try {
-          require('fs').unlinkSync(inputFile);
-        } catch (error) {
-          // Ignore cleanup errors
-        }
-      }
-    };
-    
-    p.on("error", (error: any) => {
-      cleanupTempFile();
-      if (error.code === "ENOENT") {
-        console.error(formatter.formatError("fastgron not found. Please install it first:"));
-        console.error("  macOS/Linux: brew install fastgron");
-        console.error("  Or visit: https://github.com/adamritter/fastgron");
+      if (options.count) {
+        console.log(formatter.formatSuccess(String(matches.length)));
+      } else if (matches.length === 0) {
+        console.error(formatter.formatWarning(`No matches found for '${searchTerm}'`));
       } else {
-        console.error(formatter.formatError(`running fastgron: ${error.message}`));
+        console.log(formatter.formatSearchResults(matches.join("\n"), searchTerm));
       }
-      process.exit(1);
-    });
-    
-    p.on("exit", (code) => {
-      if (code !== 0) {
-        cleanupTempFile();
-        console.error(formatter.formatError(`fastgron exited with code ${code}`));
-        if (code === 1) {
-          console.error("This might indicate invalid JSON in the input");
-        }
-        process.exit(code);
-      }
-    });
-    
-    grep.on("error", (error) => {
-      cleanupTempFile();
-      console.error(formatter.formatError(`running grep: ${error.message}`));
-      process.exit(1);
-    });
-    
-    grep.on("exit", (code) => {
-      cleanupTempFile();
-      
-      if (grepError) {
-        console.error(formatter.formatError(grepError.trim()));
-      }
-      
-      if (code === 1) {
-        if (!options.count) {
-          console.error(formatter.formatWarning(`No matches found for '${searchTerm}'`));
-        }
-        process.exit(0); // This is not an error, just no matches
-      } else if (code && code > 1) {
-        console.error(formatter.formatError(`grep exited with code ${code}`));
-        process.exit(code);
-      }
-      
-      if (grepOutput) {
-        if (options.count) {
-          console.log(formatter.formatSuccess(grepOutput.trim()));
-        } else {
-          // Highlight search results
-          console.log(formatter.formatSearchResults(grepOutput.trim(), searchTerm));
-        }
-      }
-      
-      process.exit(0);
-    });
+    } catch (error) {
+      fail(formatter, options.regex ? "searching JSON (invalid regex or JSON)" : "searching JSON", error);
+    }
   });
 
-// Parse arguments
-program.parse();
+await program.parseAsync();

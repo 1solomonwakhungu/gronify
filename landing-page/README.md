@@ -1,6 +1,6 @@
 # Gronify Landing Page
 
-This is the Next.js landing page for Gronify. The copy should stay aligned with the root README: Gronify is a local-first CLI for flattening JSON into greppable paths, searching those paths, and round-tripping gron output back to JSON through `fastgron`.
+This is the Next.js landing page for Gronify. The copy should stay aligned with the root README: Gronify is a local-first, standalone CLI for flattening JSON into greppable paths, searching those paths, and round-tripping gron output back to JSON.
 
 ## Development
 
