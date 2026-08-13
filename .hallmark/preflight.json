@@ -1,0 +1,8 @@
+{
+  "date": "2026-08-13",
+  "framework": "Next.js 15 App Router",
+  "styling": "Tailwind CSS v4",
+  "fonts": ["Geist", "Geist Mono"],
+  "motion": "motion-cut",
+  "source": "landing-page"
+}

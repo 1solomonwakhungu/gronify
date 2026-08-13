@@ -13,9 +13,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gronify - Standalone terminal JSON inspection",
+  title: "Gronify | Standalone JSON inspection for the terminal",
   description:
-    "Flatten JSON into greppable paths, search those paths, and round-trip gron output back to JSON from a local CLI.",
+    "Flatten nested JSON into searchable paths, filter with text or regex, and round-trip gron output locally from a focused CLI.",
+  keywords: [
+    "JSON CLI",
+    "standalone JSON CLI",
+    "terminal JSON",
+    "grep JSON",
+    "developer tools",
+  ],
+  openGraph: {
+    title: "Gronify | Make nested JSON answerable",
+    description:
+      "A local-first CLI for flattening, searching, and reconstructing JSON in terminal workflows.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -24,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
