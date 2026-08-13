@@ -63,7 +63,7 @@ button, a, summary { -webkit-tap-highlight-color: transparent; }
 .hero-copy { min-width: 0; animation: hero-in 650ms cubic-bezier(.22, 1, .36, 1) both; }
 .status-chip { width: fit-content; display: flex; align-items: center; gap: 9px; margin-bottom: 28px; color: var(--muted); font-family: var(--font-geist-mono), monospace; font-size: 12px; }
 .status-chip span { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 4px oklch(0.75 0.14 151 / 0.09); }
-.hero h1 { max-width: 670px; margin: 0; font-size: clamp(3.1rem, 6.2vw, 5.65rem); font-weight: 560; letter-spacing: -0.04em; line-height: 0.96; text-wrap: balance; overflow-wrap: anywhere; }
+.hero h1 { max-width: 620px; margin: 0; font-size: clamp(2.35rem, 4.4vw, 4.15rem); font-weight: 560; letter-spacing: -0.035em; line-height: 1.02; text-wrap: balance; overflow-wrap: normal; }
 .hero-lede { max-width: 620px; margin: 28px 0 0; color: var(--muted); font-size: clamp(1.05rem, 1.8vw, 1.22rem); line-height: 1.65; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 34px; }
 .button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid transparent; border-radius: 8px; padding: 0 17px; font-size: 14px; font-weight: 620; white-space: nowrap; transition: background 160ms ease, border-color 160ms ease, transform 160ms ease; }
@@ -207,7 +207,7 @@ button, a, summary { -webkit-tap-highlight-color: transparent; }
   .nav-shell { height: 48px; }
   .nav-links a:not(.nav-command-link) { display: none; }
   .hero { padding: 116px 0 74px; }
-  .hero h1 { font-size: clamp(2.75rem, 14vw, 4.2rem); }
+  .hero h1 { font-size: clamp(2.1rem, 10vw, 3.1rem); }
   .hero-lede { font-size: 16px; }
   .requirement-strip { gap: 16px; justify-content: space-between; }
   .context-row { align-items: flex-start; flex-direction: column; gap: 12px; padding-block: 20px; }

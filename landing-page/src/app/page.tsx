@@ -137,7 +137,7 @@ export default function Home() {
                 <span aria-hidden="true" />
                 Local-first JSON tooling
               </div>
-              <h1 id="hero-title">Make nested JSON answerable.</h1>
+              <h1 id="hero-title">Search JSON. Find answers.</h1>
               <p className="hero-lede">
                 Flatten large payloads into greppable paths, search the fields that matter, and reconstruct valid JSON without leaving the terminal.
               </p>
