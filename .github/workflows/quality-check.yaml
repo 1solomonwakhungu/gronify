@@ -99,16 +99,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install fastgron
-        run: |
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            brew install fastgron --build-from-source
-          else
-            curl -L -o fastgron https://github.com/adamritter/fastgron/releases/download/v0.7.7/fastgron-ubuntu
-            chmod +x fastgron
-            sudo mv fastgron /usr/local/bin/
-          fi
-
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:

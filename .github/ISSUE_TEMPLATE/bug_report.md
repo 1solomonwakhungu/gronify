@@ -16,7 +16,6 @@ Describe the problem and the expected behavior.
 - Shell:
 - Node.js:
 - npm:
-- fastgron install method/version:
 
 ## Reproduction
 
