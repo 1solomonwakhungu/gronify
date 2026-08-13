@@ -27,7 +27,21 @@ For platform and developer-experience teams, Gronify is useful when large JSON p
 
 ## Install
 
-Gronify is currently installed from source. This repository does not claim an npm package release.
+### Homebrew
+
+Homebrew installs Gronify together with its `fastgron` and Node.js dependencies:
+
+```bash
+brew install 1solomonwakhungu/tap/gronify
+```
+
+The formula is maintained in the [Homebrew tap](https://github.com/1solomonwakhungu/homebrew-tap).
+
+### Release Archive
+
+Download the archive for the latest version from [GitHub Releases](https://github.com/1solomonwakhungu/gronify/releases). The executable requires Node.js 20 or newer and `fastgron` on `PATH`.
+
+### From Source
 
 1. Install `fastgron`.
 
