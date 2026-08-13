@@ -1,5 +1,22 @@
 # Status
 
-- Completed: tag-driven GitHub release workflow, version injection, bundled executable, Homebrew formula, and installation documentation.
-- Published: `v1.0.0` with tar/zip artifacts and SHA-256 checksums; `brew install 1solomonwakhungu/tap/gronify` is live.
-- Validation: 13 CLI tests pass; both npm audits report zero vulnerabilities; Homebrew audit/install/tests pass on macOS and Ubuntu; post-merge Homebrew install and flatten smoke test pass.
+## Completed
+
+- Retained the published `v1.0.0`, bundled executable, Homebrew formula, and installation documentation from `main`.
+- Replaced the `fastgron` and `grep` subprocesses with built-in TypeScript flatten, unflatten, and search behavior.
+- Removed external CLI installation requirements from CI, package metadata, contributor guidance, and core documentation.
+- Preserved file/stdin input, regex and case-sensitive search, counts, formatting, and gron round trips.
+
+## Verification
+
+- TypeScript build: passing.
+- CLI lint, format check, TypeScript build, and package dry run: passing.
+- CLI integration tests: 19 passing.
+- Landing-page lint and production build: passing.
+- Repository metadata validation and `git diff --check`: passing.
+- CLI dependency audit: 0 vulnerabilities after refreshing transitive development dependencies.
+- Landing-page dependency audit: 0 vulnerabilities after updating Next.js and its build dependencies to satisfy the existing CI gate.
+
+## Next
+
+- Merge the standalone CLI pull request and cut a follow-up release containing the built-in engine.

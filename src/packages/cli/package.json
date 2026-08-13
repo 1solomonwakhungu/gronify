@@ -1,13 +1,12 @@
 {
   "name": "gronify",
   "version": "1.0.0",
-  "description": "Flatten, search, and unflatten JSON from the command line with fastgron.",
+  "description": "A standalone command-line tool to flatten, search, and unflatten JSON.",
   "keywords": [
     "json",
     "gron",
-    "fastgron",
     "cli",
-    "grep",
+    "search",
     "platform-engineering",
     "developer-tools"
   ],
