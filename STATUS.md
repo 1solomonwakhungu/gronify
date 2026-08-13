@@ -14,7 +14,7 @@
 - Landing-page lint and production build: passing.
 - Repository metadata validation and `git diff --check`: passing.
 - CLI dependency audit: 0 vulnerabilities after refreshing transitive development dependencies.
-- Landing-page dependencies retain 7 existing audit findings (6 high, 1 critical), unrelated to the standalone CLI change.
+- Landing-page dependency audit: 0 vulnerabilities after updating Next.js and its build dependencies to satisfy the existing CI gate.
 
 ## Next
 
