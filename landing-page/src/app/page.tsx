@@ -238,7 +238,7 @@ export default function Home() {
               <div>
                 <p className="section-label">Composability</p>
                 <h3>Use the tools already in your muscle memory.</h3>
-                <p>Gronify reads stdin and writes stdout, so it can sit between curl, grep, sort, diff, and the rest of your shell workflow.</p>
+                <p>Gronify reads stdin and writes stdout, so it can sit between curl, grep, sort, and the rest of your shell workflow.</p>
               </div>
               <CodePanel label="A real pipeline">
                 {`curl -s https://example.com/payload.json \\
