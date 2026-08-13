@@ -2,6 +2,7 @@
 
 ## Completed
 
+- Retained the tag-driven GitHub release workflow, version injection, bundled executable, and Homebrew installation documentation added on `main`.
 - Replaced the `fastgron` and `grep` subprocesses with built-in TypeScript flatten, unflatten, and search behavior.
 - Removed external CLI installation requirements from CI, package metadata, contributor guidance, and core documentation.
 - Preserved file/stdin input, regex and case-sensitive search, counts, formatting, and gron round trips.
