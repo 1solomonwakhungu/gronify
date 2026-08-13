@@ -2,21 +2,19 @@
 
 ## Completed
 
-- Retained the published `v1.0.0`, bundled executable, Homebrew formula, and installation documentation from `main`.
-- Replaced the `fastgron` and `grep` subprocesses with built-in TypeScript flatten, unflatten, and search behavior.
-- Removed external CLI installation requirements from CI, package metadata, contributor guidance, and core documentation.
-- Preserved file/stdin input, regex and case-sensitive search, counts, formatting, and gron round trips.
+- Retained the published `v1.0.0`, bundled executable, Homebrew formula, and standalone TypeScript engine from `main`.
+- Rebuilt the landing page as an information-rich dark Linear-derived workbench.
+- Updated landing-page product facts for built-in flatten, unflatten, and search behavior with no external CLI requirements.
+- Added product and design-system records plus Hallmark project memory.
+- Added Better Design MCP to the global OpenCode config outside the repository.
 
 ## Verification
 
-- TypeScript build: passing.
-- CLI lint, format check, TypeScript build, and package dry run: passing.
-- CLI integration tests: 19 passing.
-- Landing-page lint and production build: passing.
-- Repository metadata validation and `git diff --check`: passing.
-- CLI dependency audit: 0 vulnerabilities after refreshing transitive development dependencies.
-- Landing-page dependency audit: 0 vulnerabilities after updating Next.js and its build dependencies to satisfy the existing CI gate.
+- Landing-page ESLint: passing with 0 errors.
+- Next.js production build: passing and statically prerendered.
+- Impeccable design detector: 0 findings.
+- Responsive Chromium checks: 320, 375, 414, 768, and 1280px pass with no horizontal overflow.
 
 ## Next
 
-- Merge the standalone CLI pull request and cut a follow-up release containing the built-in engine.
+- Open and merge the landing-page redesign pull request.
