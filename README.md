@@ -4,14 +4,14 @@
 
 # Gronify
 
-Gronify is a local-first CLI for turning JSON into greppable paths, searching those paths, and round-tripping gron output back to JSON. It is built as a thin TypeScript wrapper around [fastgron](https://github.com/adamritter/fastgron) with colored terminal output and stdin/stdout support.
+Gronify is a local-first, standalone CLI for turning JSON into greppable paths, searching those paths, and round-tripping gron output back to JSON. Flattening, unflattening, and search are built in, with no external command-line tools required.
 
 For platform and developer-experience teams, Gronify is useful when large JSON payloads show up in CI logs, service responses, support bundles, generated config, or incident debugging sessions and need to be inspected with familiar shell tools.
 
 ## Features
 
 - Flatten JSON files or stdin into gron-style path assignments.
-- Unflatten gron files or stdin back into JSON through `fastgron -u`.
+- Unflatten gron files or stdin back into JSON.
 - Search flattened paths with plain text, extended regex, case-sensitive matching, and match counts.
 - Use stdin/stdout workflows so Gronify can sit inside shell pipelines.
 - Format terminal output with optional colors and pretty indentation.
@@ -20,24 +20,26 @@ For platform and developer-experience teams, Gronify is useful when large JSON p
 
 - Node.js 20 or newer.
 - npm 10 or newer.
-- `fastgron` on `PATH`.
-- `grep` on `PATH` for the `search` command.
-
-`grep` is available by default on macOS and most Linux environments. On Windows, use WSL, Git Bash, or another shell environment that provides `grep`.
 
 ## Install
 
-Gronify is currently installed from source. This repository does not claim an npm package release.
+### Homebrew
 
-1. Install `fastgron`.
+Homebrew installs Gronify together with its `fastgron` and Node.js dependencies:
 
-   ```bash
-   brew install fastgron
-   ```
+```bash
+brew install 1solomonwakhungu/tap/gronify
+```
 
-   For non-Homebrew installs, use the options documented by the [fastgron project](https://github.com/adamritter/fastgron).
+The formula is maintained in the [Homebrew tap](https://github.com/1solomonwakhungu/homebrew-tap).
 
-2. Clone and build Gronify.
+### Release Archive
+
+Download the archive for the latest version from [GitHub Releases](https://github.com/1solomonwakhungu/gronify/releases). The executable requires Node.js 20 or newer and `fastgron` on `PATH`.
+
+### From Source
+
+1. Clone and build Gronify.
 
    ```bash
    git clone https://github.com/1solomonwakhungu/gronify.git
@@ -46,7 +48,7 @@ Gronify is currently installed from source. This repository does not claim an np
    npm run build
    ```
 
-3. Link the local CLI.
+2. Link the local CLI.
 
    ```bash
    npm link
@@ -203,7 +205,7 @@ npm test
 npm run audit
 ```
 
-The integration tests shell out to `fastgron`, so install `fastgron` before running the test suite.
+The integration tests run the built CLI directly and require no external binaries.
 
 ## Repository Layout
 
@@ -219,18 +221,6 @@ The integration tests shell out to `fastgron`, so install `fastgron` before runn
 ```
 
 ## Troubleshooting
-
-### `fastgron not found`
-
-Install `fastgron` and confirm it is on `PATH`:
-
-```bash
-fastgron --help
-```
-
-### `grep` errors when running `search`
-
-The `search` command pipes flattened output into `grep`. Use macOS, Linux, WSL, Git Bash, or another environment where `grep` is available.
 
 ### `npm test` fails before running assertions
 
@@ -259,7 +249,6 @@ Gronify is licensed under the [MIT License](LICENSE).
 
 ## Credits
 
-- [fastgron](https://github.com/adamritter/fastgron) provides the JSON flattening and unflattening engine.
 - [gron](https://github.com/tomnomnom/gron) established the greppable JSON workflow that inspired this project.
 - [commander.js](https://github.com/tj/commander.js) powers the command interface.
 - [chalk](https://github.com/chalk/chalk) powers colored terminal output.

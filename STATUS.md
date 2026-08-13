@@ -1,19 +1,20 @@
 # Status
 
-## Current
+## Completed
 
-- Landing-page redesign complete.
-- Better Design remote MCP added to the global OpenCode config.
-- Production build, ESLint, design detector, and responsive browser checks pass.
+- Retained the published `v1.0.0`, bundled executable, Homebrew formula, and standalone TypeScript engine from `main`.
+- Rebuilt the landing page as an information-rich dark Linear-derived workbench.
+- Updated landing-page product facts for built-in flatten, unflatten, and search behavior with no external CLI requirements.
+- Added product and design-system records plus Hallmark project memory.
+- Added Better Design MCP to the global OpenCode config outside the repository.
+
+## Verification
+
+- Landing-page ESLint: passing with 0 errors.
+- Next.js production build: passing and statically prerendered.
+- Impeccable design detector: 0 findings.
+- Responsive Chromium checks: 320, 375, 414, 768, and 1280px pass with no horizontal overflow.
 
 ## Next
 
-- Open and merge the pull request.
-
-## Results
-
-- 1 information-rich landing page rebuilt in a dark Linear-derived system.
-- 0 ESLint errors.
-- 0 Impeccable detector findings.
-- 5 viewport checks pass with no horizontal overflow: 320, 375, 414, 768, and 1280px.
-- Next.js production route is statically prerendered.
+- Open and merge the landing-page redesign pull request.

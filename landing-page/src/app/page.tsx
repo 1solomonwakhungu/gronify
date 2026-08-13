@@ -143,7 +143,7 @@ export default function Home() {
               </p>
               <div className="hero-actions">
                 <a className="button button--primary" href="#install">
-                  Install from source <ArrowIcon />
+                  Install Gronify <ArrowIcon />
                 </a>
                 <a className="button button--secondary" href="#workflow">
                   See the workflow
@@ -151,7 +151,7 @@ export default function Home() {
               </div>
               <dl className="requirement-strip" aria-label="Runtime requirements">
                 <div><dt>Runtime</dt><dd>Node.js 20+</dd></div>
-                <div><dt>Engine</dt><dd>fastgron</dd></div>
+                <div><dt>Engine</dt><dd>Built in</dd></div>
                 <div><dt>Input</dt><dd>File or stdin</dd></div>
               </dl>
             </div>
@@ -191,7 +191,7 @@ export default function Home() {
           <SectionHeading
             label="The workflow"
             title="Structure first. Search second. Pipe everything."
-            description="Gronify is a thin TypeScript layer around fastgron. It keeps the transformation explicit and gives the common inspection loop a focused command interface."
+            description="Gronify ships flattening, unflattening, and search in one standalone TypeScript CLI. The transformation stays explicit and the common inspection loop gets a focused command interface."
           />
 
           <div className="transformation">
@@ -215,7 +215,7 @@ export default function Home() {
           <div className="workflow-notes">
             <article><span>Flatten</span><h3>Expose every path</h3><p>Nested values become line-oriented assignments that standard text tools can inspect.</p></article>
             <article><span>Search</span><h3>Keep only the signal</h3><p>Use plain text or extended regex, then choose case-sensitive output or a match count.</p></article>
-            <article><span>Unflatten</span><h3>Return to valid JSON</h3><p>Send complete, structurally valid gron data back through fastgron when a JSON document is needed.</p></article>
+            <article><span>Unflatten</span><h3>Return to valid JSON</h3><p>Send complete, structurally valid gron data through the built-in engine when a JSON document is needed.</p></article>
           </div>
         </section>
 
@@ -291,31 +291,35 @@ export default function Home() {
           <div className="page-width install-grid">
             <div className="install-copy">
               <p className="section-label">Installation</p>
-              <h2>Build locally from source.</h2>
-              <p>Gronify is not presented as a published npm package. Install its native engine, clone the repository, build the CLI, and link it on your machine.</p>
+              <h2>Install it your way.</h2>
+              <p>Use Homebrew for the shortest path, download the latest release archive, or clone the repository to build the CLI from source.</p>
               <div className="requirements">
                 <h3>Before you begin</h3>
                 <ul>
                   <li><span>Node.js</span><strong>20 or newer</strong></li>
-                  <li><span>npm</span><strong>10 or newer</strong></li>
-                  <li><span>fastgron</span><strong>available on PATH</strong></li>
-                  <li><span>grep</span><strong>required for search</strong></li>
+                  <li><span>External tools</span><strong>none required</strong></li>
+                  <li><span>License</span><strong>MIT</strong></li>
+                  <li><span>Current release</span><strong>v1.0.0</strong></li>
                 </ul>
               </div>
             </div>
             <div className="install-steps">
-              <CodePanel label="1 · Install the engine">
-                {`brew install fastgron
-fastgron --help`}
+              <CodePanel label="1 · Homebrew">
+                {`brew install 1solomonwakhungu/tap/gronify
+gronify --help`}
               </CodePanel>
-              <CodePanel label="2 · Build and link Gronify">
+              <CodePanel label="2 · Release archive">
+                {`# Download the archive for your platform
+https://github.com/1solomonwakhungu/gronify/releases`}
+              </CodePanel>
+              <CodePanel label="3 · Build from source">
                 {`git clone https://github.com/1solomonwakhungu/gronify.git
 cd gronify/src/packages/cli
 npm ci
 npm run build
 npm link`}
               </CodePanel>
-              <CodePanel label="3 · Verify the CLI">
+              <CodePanel label="4 · Verify the CLI">
                 {`gronify --help
 gronify flatten data.json`}
               </CodePanel>
@@ -331,16 +335,16 @@ gronify flatten data.json`}
           />
           <div className="faq-list">
             <details>
-              <summary><span>Why does Gronify report that fastgron is missing?</span><span aria-hidden="true">+</span></summary>
-              <p>Install fastgron and confirm <code>fastgron --help</code> succeeds in the same shell before running Gronify.</p>
+              <summary><span>Does Gronify require fastgron or grep?</span><span aria-hidden="true">+</span></summary>
+              <p>No. Flattening, unflattening, and search are built into the standalone CLI.</p>
             </details>
             <details>
               <summary><span>Can I use Gronify on Windows?</span><span aria-hidden="true">+</span></summary>
-              <p>Use WSL, Git Bash, or another shell environment that provides <code>grep</code>. The search command depends on it.</p>
+              <p>Use the release archive for your platform, Homebrew where supported, or build the TypeScript CLI from source with Node.js 20 or newer.</p>
             </details>
             <details>
               <summary><span>Why do the integration tests fail before assertions run?</span><span aria-hidden="true">+</span></summary>
-              <p>Run <code>npm run build</code> first so <code>dist/index.js</code> exists, and verify fastgron is installed.</p>
+              <p>Run <code>npm run build</code> first so <code>dist/index.js</code> exists before starting the integration tests.</p>
             </details>
             <details>
               <summary><span>Does Gronify send JSON to a service?</span><span aria-hidden="true">+</span></summary>

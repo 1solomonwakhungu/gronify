@@ -13,12 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gronify | Greppable JSON for the terminal",
+  title: "Gronify | Standalone JSON inspection for the terminal",
   description:
     "Flatten nested JSON into searchable paths, filter with text or regex, and round-trip gron output locally from a focused CLI.",
   keywords: [
     "JSON CLI",
-    "fastgron",
+    "standalone JSON CLI",
     "terminal JSON",
     "grep JSON",
     "developer tools",

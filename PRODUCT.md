@@ -12,22 +12,22 @@ Platform engineers, developer-experience teams, support engineers, and developer
 
 ## Product Purpose
 
-Gronify is a local-first TypeScript CLI that turns JSON into greppable path assignments, searches those paths, and round-trips gron output back to JSON.
+Gronify is a local-first, standalone TypeScript CLI that turns JSON into greppable path assignments, searches those paths, and round-trips gron output back to JSON.
 
 ## Positioning
 
-Gronify keeps JSON inspection composable with familiar shell tools by wrapping fastgron with focused commands, stdin/stdout support, search options, and readable terminal output.
+Gronify keeps JSON inspection composable with familiar shell workflows while shipping flattening, unflattening, and search in one standalone CLI with stdin/stdout support and readable output.
 
 ## Operating Context
 
-Users inspect service responses, generated configuration, CI artifacts, support bundles, and incident data on macOS, Linux, WSL, Git Bash, or another shell environment with `grep`.
+Users inspect service responses, generated configuration, CI artifacts, support bundles, and incident data from terminal environments.
 
 ## Capabilities and Constraints
 
-- Requires Node.js 20+, npm 10+, `fastgron` on `PATH`, and `grep` for search.
+- Requires Node.js 20+ for the executable or source install; npm 10+ is required when building from source.
 - Supports flattening and unflattening files or stdin.
 - Supports plain-text search, extended regex, case-sensitive matching, match counts, optional color, and pretty output.
-- Installation is currently from source; there is no claimed npm release.
+- Installation is available through Homebrew, GitHub release archives, or source.
 
 ## Brand Commitments
 
