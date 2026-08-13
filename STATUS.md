@@ -1,5 +1,5 @@
 # Status
 
-- Completed locally: tag-driven GitHub release workflow, version injection, bundled executable, and Homebrew installation documentation.
-- Validation: 13 CLI tests pass; both npm audits report zero vulnerabilities; metadata, formatting, TypeScript, landing-page build, package dry-run, and bundled executable smoke checks pass.
-- Next: merge the Gronify PR, publish `v1.0.0`, then add and test the tap formula.
+- Completed: tag-driven GitHub release workflow, version injection, bundled executable, Homebrew formula, and installation documentation.
+- Published: `v1.0.0` with tar/zip artifacts and SHA-256 checksums; `brew install 1solomonwakhungu/tap/gronify` is live.
+- Validation: 13 CLI tests pass; both npm audits report zero vulnerabilities; Homebrew audit/install/tests pass on macOS and Ubuntu; post-merge Homebrew install and flatten smoke test pass.
