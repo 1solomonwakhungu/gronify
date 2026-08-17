@@ -1,9 +1,18 @@
 :root {
   color-scheme: dark;
+
+  /* Matches the max-width of Primer Brand's own Grid container, so custom
+     page furniture (nav, footer, hero media band) shares one content column. */
+  --gronify-content-max-width: 1280px;
 }
 
 * {
   box-sizing: border-box;
+}
+
+html,
+body {
+  overflow-x: clip;
 }
 
 html {
@@ -12,8 +21,22 @@ html {
 
 body {
   margin: 0;
+  font-family: var(--brand-body-fontFamily);
+  background-color: var(--brand-color-canvas-default);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Anchor targets sit below the fixed navigation bar. */
+[id] {
+  scroll-margin-block-start: var(--base-size-80);
 }
 
 code {
   font-family: var(--brand-fontStack-monospace);
+  overflow-wrap: anywhere;
 }

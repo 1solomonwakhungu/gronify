@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-color-mode="dark">
       <body>
         <Providers>{children}</Providers>
       </body>
