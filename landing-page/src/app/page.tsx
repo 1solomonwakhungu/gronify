@@ -8,12 +8,11 @@ import {
   Grid,
   Heading,
   Hero,
-  MinimalFooter,
+  Link,
   River,
   Section,
   SectionIntro,
   Stack,
-  SubdomainNavBar,
   Text,
 } from "@primer/react-brand";
 
@@ -71,14 +70,40 @@ const useCases = [
 export default function Home() {
   return (
     <Box>
-      <SubdomainNavBar title="Gronify" titleHref="#top">
-        <SubdomainNavBar.Link href="#workflow">Workflow</SubdomainNavBar.Link>
-        <SubdomainNavBar.Link href="#commands">Commands</SubdomainNavBar.Link>
-        <SubdomainNavBar.Link href="#install">Install</SubdomainNavBar.Link>
-        <SubdomainNavBar.SecondaryAction href={repositoryUrl}>
-          GitHub
-        </SubdomainNavBar.SecondaryAction>
-      </SubdomainNavBar>
+      <Box
+        borderBlockEndWidth="thin"
+        borderColor="muted"
+        borderStyle="solid"
+        backgroundColor="default"
+        style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 10 }}
+      >
+        <Box padding={16}>
+          <Stack
+            direction="horizontal"
+            justifyContent="space-between"
+            alignItems="center"
+            padding="none"
+          >
+            <Text as="p" weight="semibold" size="300">
+              Gronify
+            </Text>
+            <Stack direction="horizontal" gap="spacious" padding="none">
+              <Link href="#workflow" size="small">
+                Workflow
+              </Link>
+              <Link href="#commands" size="small">
+                Commands
+              </Link>
+              <Link href="#install" size="small">
+                Install
+              </Link>
+            </Stack>
+            <Button as="a" href={repositoryUrl} variant="secondary" size="small">
+              View on GitHub
+            </Button>
+          </Stack>
+        </Box>
+      </Box>
 
       <Box paddingBlockStart={64} id="top">
         <Section paddingBlockStart="none" paddingBlockEnd="none" fullWidth>
@@ -573,17 +598,35 @@ export default function Home() {
         </CTABanner.ButtonGroup>
       </CTABanner>
 
-      <MinimalFooter>
-        <MinimalFooter.Link href={`${repositoryUrl}/issues`}>
-          Issues
-        </MinimalFooter.Link>
-        <MinimalFooter.Link href={`${repositoryUrl}/security`}>
-          Security
-        </MinimalFooter.Link>
-        <MinimalFooter.Link href={`${repositoryUrl}/blob/main/LICENSE`}>
-          MIT License
-        </MinimalFooter.Link>
-      </MinimalFooter>
+      <Box
+        borderBlockStartWidth="thin"
+        borderColor="muted"
+        borderStyle="solid"
+        padding={32}
+      >
+        <Stack
+          direction="horizontal"
+          justifyContent="space-between"
+          alignItems="center"
+          padding="none"
+          flexWrap="wrap"
+        >
+          <Text as="p" variant="muted" size="200">
+            Gronify — local-first JSON inspection for the terminal.
+          </Text>
+          <Stack direction="horizontal" gap="normal" padding="none">
+            <Link href={`${repositoryUrl}/issues`} size="small">
+              Issues
+            </Link>
+            <Link href={`${repositoryUrl}/security`} size="small">
+              Security
+            </Link>
+            <Link href={`${repositoryUrl}/blob/main/LICENSE`} size="small">
+              MIT License
+            </Link>
+          </Stack>
+        </Stack>
+      </Box>
     </Box>
   );
 }
