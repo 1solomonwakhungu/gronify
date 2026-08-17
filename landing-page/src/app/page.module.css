@@ -1,0 +1,234 @@
+/* Connected gridline frames.
+   A single hairline colour sits behind a zero-gap grid, so every divider is
+   shared between neighbouring cells and every endpoint meets the frame. */
+.gridFrame {
+  display: grid;
+  gap: var(--brand-borderWidth-thin);
+  background-color: var(--brand-color-border-muted);
+  border: var(--brand-borderWidth-thin) solid var(--brand-color-border-muted);
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.gridFrameTwoUp {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.gridFrameThreeUp {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media screen and (min-width: 48rem) {
+  .gridFrameTwoUp {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gridFrameThreeUp {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.gridCell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-8);
+  padding: var(--base-size-24);
+  background-color: var(--brand-color-canvas-default);
+  min-width: 0;
+}
+
+@media screen and (min-width: 48rem) {
+  .gridCell {
+    padding: var(--base-size-32);
+  }
+}
+
+/* Terminal transcripts. Real CLI output, framed by the same hairline as the
+   rest of the page — no imitation window chrome. */
+.terminal {
+  padding: var(--base-size-20);
+  background-color: var(--brand-color-canvas-default);
+  border: var(--brand-borderWidth-thin) solid var(--brand-color-border-muted);
+  min-width: 0;
+}
+
+@media screen and (min-width: 48rem) {
+  .terminal {
+    padding: var(--base-size-24);
+  }
+}
+
+.terminalLine {
+  display: block;
+  margin: 0;
+  font-family: var(--brand-fontStack-monospace);
+  font-size: var(--brand-text-size-100);
+  line-height: var(--brand-text-lineHeight-200);
+  color: var(--brand-color-text-default);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.terminalPrompt {
+  color: var(--brand-color-text-muted);
+}
+
+.terminalPath {
+  color: var(--brand-color-text-muted);
+}
+
+/* Hero media band: full-bleed background, contained transcript. */
+.heroBand {
+  border-block: var(--brand-borderWidth-thin) solid var(--brand-color-border-muted);
+  background-color: var(--brand-color-canvas-default);
+}
+
+.heroBandInner {
+  max-inline-size: var(--gronify-content-max-width);
+  margin-inline: auto;
+  padding-inline: var(--base-size-16);
+  padding-block: var(--base-size-40);
+}
+
+@media screen and (min-width: 48rem) {
+  .heroBandInner {
+    padding-inline: var(--base-size-40);
+    padding-block: var(--base-size-64);
+  }
+}
+
+/* Long commands and URLs must never push the page sideways. */
+.wrapAnywhere {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+/* Navigation: Gronify wordmark, section links, one trailing action. */
+.navBar {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 100;
+  background-color: var(--brand-color-canvas-default);
+  border-block-end: var(--brand-borderWidth-thin) solid
+    var(--brand-color-border-muted);
+}
+
+.navBarInner {
+  display: flex;
+  align-items: center;
+  gap: var(--base-size-24);
+  max-inline-size: var(--gronify-content-max-width);
+  margin-inline: auto;
+  padding-inline: var(--base-size-16);
+  block-size: var(--base-size-64);
+}
+
+@media screen and (min-width: 48rem) {
+  .navBarInner {
+    padding-inline: var(--base-size-40);
+  }
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--base-size-12);
+  color: var(--brand-color-text-default);
+  text-decoration: none;
+  border-radius: var(--brand-borderRadius-small);
+}
+
+.wordmarkText {
+  font-family: var(--brand-heading-fontFamily);
+  font-size: var(--brand-text-size-300);
+  font-weight: var(--brand-heading-weight-600);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.navLinks {
+  display: none;
+  align-items: center;
+  gap: var(--base-size-32);
+  margin-inline-start: auto;
+}
+
+@media screen and (min-width: 48rem) {
+  .navLinks {
+    display: flex;
+  }
+}
+
+.navLink {
+  color: var(--brand-color-text-muted);
+  font-family: var(--brand-body-fontFamily);
+  font-size: var(--brand-text-size-200);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--brand-animation-duration-fast)
+    var(--brand-animation-easing-default);
+}
+
+.navLink:hover {
+  color: var(--brand-color-text-default);
+}
+
+.navBarInner > :last-child {
+  margin-inline-start: auto;
+}
+
+@media screen and (min-width: 48rem) {
+  .navBarInner > :last-child {
+    margin-inline-start: 0;
+  }
+}
+
+.wordmark:focus-visible,
+.navLink:focus-visible {
+  outline: var(--brand-borderWidth-thick) solid var(--brand-color-focus);
+  outline-offset: var(--base-size-4);
+}
+
+/* Footer */
+.footer {
+  border-block-start: var(--brand-borderWidth-thin) solid
+    var(--brand-color-border-muted);
+}
+
+.footerInner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--base-size-24);
+  max-inline-size: var(--gronify-content-max-width);
+  margin-inline: auto;
+  padding-inline: var(--base-size-16);
+  padding-block: var(--base-size-40);
+}
+
+@media screen and (min-width: 48rem) {
+  .footerInner {
+    padding-inline: var(--base-size-40);
+  }
+}
+
+.footerBrand {
+  display: flex;
+  align-items: center;
+  gap: var(--base-size-12);
+  color: var(--brand-color-text-muted);
+  min-width: 0;
+}
+
+/* Keep the closing call to action on the same black canvas as the rest of the
+   page; the default subtle surface reads as a green-grey band. */
+.ctaBanner {
+  --brand-CTABanner-bgColor: var(--brand-color-canvas-default);
+}
+
+/* Push a cell's trailing visual to the bottom so neighbouring cells in a row
+   keep their transcripts on the same baseline. */
+.cellFooter {
+  margin-block-start: auto;
+}
