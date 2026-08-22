@@ -15,6 +15,7 @@ import {
   Stack,
   Text,
 } from "@primer/react-brand";
+import posthog from "posthog-js";
 
 import { GronifyLogo } from "./logo";
 import styles from "./page.module.css";
@@ -225,6 +226,14 @@ const faqs = [
 ];
 
 export default function Home() {
+  const captureRepositoryLinkClick = (placement: "header" | "cta") => {
+    posthog.capture("repository_link_clicked", { placement });
+  };
+
+  const captureIssueReportLinkClick = () => {
+    posthog.capture("issue_report_link_clicked", { placement: "cta" });
+  };
+
   return (
     <>
       <div className={styles.navBar}>
@@ -244,7 +253,13 @@ export default function Home() {
               Install
             </a>
           </nav>
-          <Button as="a" href={repositoryUrl} variant="secondary" size="small">
+          <Button
+            as="a"
+            href={repositoryUrl}
+            variant="secondary"
+            size="small"
+            onClick={() => captureRepositoryLinkClick("header")}
+          >
             View on GitHub
           </Button>
         </div>
@@ -518,10 +533,20 @@ export default function Home() {
           issue, or build the CLI locally.
         </CTABanner.Description>
         <CTABanner.ButtonGroup>
-          <Button as="a" href={repositoryUrl} variant="primary">
+          <Button
+            as="a"
+            href={repositoryUrl}
+            variant="primary"
+            onClick={() => captureRepositoryLinkClick("cta")}
+          >
             View the repository
           </Button>
-          <Button as="a" href={`${repositoryUrl}/issues`} variant="secondary">
+          <Button
+            as="a"
+            href={`${repositoryUrl}/issues`}
+            variant="secondary"
+            onClick={captureIssueReportLinkClick}
+          >
             Report an issue
           </Button>
         </CTABanner.ButtonGroup>
