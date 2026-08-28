@@ -590,6 +590,9 @@ export default function Home() {
             >
               MIT License
             </Link>
+            <Link href="/llms.txt" size="small" arrowDirection="none">
+              llms.txt
+            </Link>
           </Stack>
         </div>
       </footer>
