@@ -1,0 +1,29 @@
+# Gronify
+
+> Local-first, standalone CLI for turning JSON into greppable paths, searching those paths, and round-tripping gron output back to JSON.
+
+Gronify is a TypeScript CLI that flattens JSON documents into one assignment per path, searches those paths with plain text or extended regex, and unflattens gron output back into valid JSON. Flattening, unflattening, and search are all built in — no external command-line tools such as grep or fastgron are required at runtime.
+
+The CLI reads from files or stdin and writes to stdout, so it composes naturally with pipes, redirection, and other shell tools. Optional flags control colored output, pretty indentation, case-sensitive matching, and match counts.
+
+Gronify is designed for platform engineers, SREs, developer-experience teams, support engineers, and developers who inspect large JSON payloads in CI logs, service responses, support bundles, generated configuration, or incident debugging sessions.
+
+The project is open source under the MIT license and requires Node.js 20 or newer.
+
+## Documentation
+
+- [Core workflow: flatten, search, unflatten](https://gronify.vercel.app/#workflow): Flatten JSON into greppable path assignments, search for specific fields, and reconstruct valid JSON.
+- [Command: flatten](https://gronify.vercel.app/#commands): `gronify flatten [file]` — Convert JSON from a file or stdin into one greppable assignment per path.
+- [Command: search](https://gronify.vercel.app/#commands): `gronify search <file_or_term> [term]` — Flatten and filter in one step with plain text, regex, case sensitivity, or match counts. Options: `-r, --regex` (extended regular expressions), `-c, --case-sensitive` (exact case matching), `--count` (print match count only).
+- [Command: unflatten](https://gronify.vercel.app/#commands): `gronify unflatten [file]` — Turn gron assignments from a file or stdin back into valid JSON.
+- [Global options](https://gronify.vercel.app/#commands): `--color` (enable color), `--no-color` (disable color), `--pretty` (readable grouping), `-h, --help` (show help), `-V, --version` (show version).
+- [Install via Homebrew](https://gronify.vercel.app/#install): `brew install 1solomonwakhungu/tap/gronify`
+- [Install from release archive](https://github.com/1solomonwakhungu/gronify/releases): Download the archive for the latest version. Requires Node.js 20 or newer.
+- [Build from source](https://gronify.vercel.app/#install): Clone the repository, run `npm ci && npm run build && npm link` in `src/packages/cli`.
+
+## Optional
+
+- [Full documentation](https://gronify.vercel.app/llms-full.txt): Complete reference with all commands, options, examples, demo data, pipeline recipes, and troubleshooting.
+- [GitHub repository](https://github.com/1solomonwakhungu/gronify): Source code, CI, and contribution guidelines.
+- [Issues](https://github.com/1solomonwakhungu/gronify/issues): Bug reports and feature requests.
+- [License](https://github.com/1solomonwakhungu/gronify/blob/main/LICENSE): MIT License.
