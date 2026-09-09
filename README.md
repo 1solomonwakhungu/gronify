@@ -23,6 +23,16 @@ For platform and developer-experience teams, Gronify is useful when large JSON p
 
 ## Install
 
+### Agent Skill
+
+Install the Gronify agent skill with the open `skills` CLI:
+
+```bash
+npx skills add 1solomonwakhungu/gronify --skill gronify
+```
+
+The skill teaches supported coding agents when to flatten, search, and round-trip JSON with the Gronify CLI. Browse it on [skills.sh](https://skills.sh/1solomonwakhungu/gronify/gronify).
+
 ### Homebrew
 
 Homebrew installs Gronify together with its `fastgron` and Node.js dependencies:
@@ -214,6 +224,7 @@ The integration tests run the built CLI directly and require no external binarie
 |-- branding/              # Logo and icon assets
 |-- landing-page/          # Next.js marketing/demo page
 |-- scripts/               # Repository validation and package discovery helpers
+|-- skills/gronify/        # Installable agent skill indexed by skills.sh
 |-- src/
 |   |-- README.md          # Source tree orientation
 |   `-- packages/cli/      # TypeScript CLI package

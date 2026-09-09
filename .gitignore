@@ -48,6 +48,9 @@ jspm_packages/
 # Optional eslint cache
 .eslintcache
 
+# Local web-research cache
+.firecrawl/
+
 # Output of 'npm pack'
 *.tgz
 
