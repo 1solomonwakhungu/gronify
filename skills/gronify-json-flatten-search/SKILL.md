@@ -1,6 +1,6 @@
 ---
-name: gronify
-description: Inspect, search, flatten, or reconstruct JSON from the terminal with the Gronify CLI. Use for API payloads, logs, support bundles, generated configuration, and other JSON where greppable paths are easier to work with than nested output.
+name: gronify-json-flatten-search
+description: Flattens JSON into greppable key-value paths, searches nested JSON, and unflattens gron-style output back to JSON with the Gronify CLI. Use when the user wants to flatten JSON, grep JSON, search nested JSON, convert JSON to paths, inspect API responses, explore large JSON, diff JSON via flattened output, or needs a jq alternative or gron/ungron workflow.
 ---
 
 # Gronify

@@ -1,3 +1,5 @@
+[![skills.sh](https://skills.sh/b/1solomonwakhungu/gronify)](https://skills.sh/1solomonwakhungu/gronify)
+
 <div align="center">
   <img src="branding/logo.svg" alt="Gronify logo" width="180" height="180">
 </div>
@@ -7,6 +9,16 @@
 Gronify is a local-first, standalone CLI for turning JSON into greppable paths, searching those paths, and round-tripping gron output back to JSON. Flattening, unflattening, and search are built in, with no external command-line tools required.
 
 For platform and developer-experience teams, Gronify is useful when large JSON payloads show up in CI logs, service responses, support bundles, generated config, or incident debugging sessions and need to be inspected with familiar shell tools.
+
+## Agent skills
+
+Install the Gronify agent skill with the open `skills` CLI:
+
+```bash
+npx skills add https://github.com/1solomonwakhungu/gronify --skill gronify-json-flatten-search
+```
+
+The skill teaches supported coding agents when to flatten, search, and round-trip JSON with the Gronify CLI. Browse it on [skills.sh](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search).
 
 ## Features
 
@@ -22,16 +34,6 @@ For platform and developer-experience teams, Gronify is useful when large JSON p
 - npm 10 or newer.
 
 ## Install
-
-### Agent Skill
-
-Install the Gronify agent skill with the open `skills` CLI:
-
-```bash
-npx skills add 1solomonwakhungu/gronify --skill gronify
-```
-
-The skill teaches supported coding agents when to flatten, search, and round-trip JSON with the Gronify CLI. Browse it on [skills.sh](https://skills.sh/1solomonwakhungu/gronify/gronify).
 
 ### Homebrew
 
@@ -224,7 +226,7 @@ The integration tests run the built CLI directly and require no external binarie
 |-- branding/              # Logo and icon assets
 |-- landing-page/          # Next.js marketing/demo page
 |-- scripts/               # Repository validation and package discovery helpers
-|-- skills/gronify/        # Installable agent skill indexed by skills.sh
+|-- skills/gronify-json-flatten-search/  # Installable agent skill indexed by skills.sh
 |-- src/
 |   |-- README.md          # Source tree orientation
 |   `-- packages/cli/      # TypeScript CLI package
