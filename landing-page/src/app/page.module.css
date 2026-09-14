@@ -82,6 +82,69 @@
   background-color: var(--brand-color-canvas-default);
 }
 
+/* The single soft hero reveal DESIGN.md calls for, as one choreographed
+   entrance: the hero copy rises as one block, then the hero transcript lines
+   follow with a 40ms-per-line stagger. CSS-only with `backwards` fill, so
+   content is fully visible whenever the animation does not run. */
+.heroReveal {
+  animation: heroIn var(--duration-very-slow) var(--ease-in-out) backwards;
+}
+
+@keyframes heroIn {
+  from {
+    opacity: 0;
+    transform: translateY(var(--distance-medium));
+    filter: blur(var(--blur-medium));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.terminalReveal {
+  --terminal-reveal-delay: 200ms;
+}
+
+.terminalReveal .terminalLine {
+  animation: heroLineIn var(--duration-very-slow) var(--ease-in-out) backwards;
+}
+
+.terminalReveal .terminalLine:nth-child(1) {
+  animation-delay: var(--terminal-reveal-delay);
+}
+
+.terminalReveal .terminalLine:nth-child(2) {
+  animation-delay: calc(var(--terminal-reveal-delay) + var(--duration-stagger));
+}
+
+.terminalReveal .terminalLine:nth-child(3) {
+  animation-delay: calc(var(--terminal-reveal-delay) + 2 * var(--duration-stagger));
+}
+
+.terminalReveal .terminalLine:nth-child(4) {
+  animation-delay: calc(var(--terminal-reveal-delay) + 3 * var(--duration-stagger));
+}
+
+/* Longer transcripts keep the last line inside the stagger budget. */
+.terminalReveal .terminalLine:nth-child(n + 5) {
+  animation-delay: calc(var(--terminal-reveal-delay) + 4 * var(--duration-stagger));
+}
+
+@keyframes heroLineIn {
+  from {
+    opacity: 0;
+    transform: translateY(var(--distance-medium));
+    filter: blur(var(--blur-medium));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
 .heroBandInner {
   max-inline-size: var(--gronify-content-max-width);
   margin-inline: auto;
@@ -165,8 +228,8 @@
   font-size: var(--brand-text-size-200);
   text-decoration: none;
   white-space: nowrap;
-  transition: color var(--brand-animation-duration-fast)
-    var(--brand-animation-easing-default);
+  /* Hover-in is quick and direct: 150ms smooth-out, not the 300ms default. */
+  transition: color var(--duration-quick) var(--ease-smooth-out);
 }
 
 .navLink:hover {

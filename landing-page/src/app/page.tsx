@@ -30,12 +30,18 @@ type TerminalLine = {
 function Terminal({
   lines,
   label,
+  className,
 }: {
   lines: TerminalLine[];
   label: string;
+  className?: string;
 }) {
   return (
-    <div className={styles.terminal} role="figure" aria-label={label}>
+    <div
+      className={`${styles.terminal} ${className ?? ""}`}
+      role="figure"
+      aria-label={label}
+    >
       {lines.map((line) => (
         <code
           key={line.text}
@@ -268,22 +274,24 @@ export default function Home() {
       <Box paddingBlockStart={64} id="top" />
 
       <Section paddingBlockStart="none" paddingBlockEnd="none" fullWidth>
-        <Hero align="start" variant="gridline-expressive">
-          <Hero.Label>Local-first JSON tooling</Hero.Label>
-          <Hero.Heading>Search JSON. Find answers.</Hero.Heading>
-          <Hero.Description>
-            Flatten large payloads into greppable paths, search the fields that
-            matter, and reconstruct valid JSON without leaving the terminal.
-          </Hero.Description>
-          <Hero.ButtonGroup>
-            <Button as="a" href="#install" variant="primary">
-              Install Gronify
-            </Button>
-            <Button as="a" href="#workflow" variant="secondary">
-              See the workflow
-            </Button>
-          </Hero.ButtonGroup>
-        </Hero>
+        <div className={styles.heroReveal}>
+          <Hero align="start" variant="gridline-expressive">
+            <Hero.Label>Local-first JSON tooling</Hero.Label>
+            <Hero.Heading>Search JSON. Find answers.</Hero.Heading>
+            <Hero.Description>
+              Flatten large payloads into greppable paths, search the fields that
+              matter, and reconstruct valid JSON without leaving the terminal.
+            </Hero.Description>
+            <Hero.ButtonGroup>
+              <Button as="a" href="#install" variant="primary">
+                Install Gronify
+              </Button>
+              <Button as="a" href="#workflow" variant="secondary">
+                See the workflow
+              </Button>
+            </Hero.ButtonGroup>
+          </Hero>
+        </div>
       </Section>
 
       <div className={styles.heroBand}>
@@ -291,6 +299,7 @@ export default function Home() {
           <Terminal
             label="Searching a deployment payload with Gronify"
             lines={heroTranscript}
+            className={styles.terminalReveal}
           />
         </div>
       </div>
