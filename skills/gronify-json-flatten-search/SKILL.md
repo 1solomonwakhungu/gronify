@@ -1,6 +1,6 @@
 ---
 name: gronify-json-flatten-search
-description: Flattens JSON into greppable key-value paths, searches nested JSON, and unflattens gron-style output back to JSON with the Gronify CLI. Use when the user wants to flatten JSON, grep JSON, search nested JSON, convert JSON to paths, inspect API responses, explore large JSON, diff JSON via flattened output, or needs a jq alternative or gron/ungron workflow.
+description: Flattens, transforms, and queries JSON into greppable key-value path lines using the Gronify CLI (gron and ungron workflow). Use when an AI agent needs to flatten JSON, grep JSON, search nested JSON structure, inspect API payloads, diff JSON as sorted text lines, or replace jq with path-based queries.
 ---
 
 # Gronify
