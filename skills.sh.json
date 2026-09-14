@@ -1,0 +1,11 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "JSON",
+      "description": "Skills for flattening, searching, and inspecting JSON from the terminal.",
+      "skills": ["gronify-json-flatten-search"]
+    }
+  ]
+}
