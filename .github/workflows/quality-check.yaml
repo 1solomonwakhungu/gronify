@@ -162,4 +162,7 @@ jobs:
 
       - name: Audit
         working-directory: landing-page
-        run: npm audit --audit-level=moderate
+        # Production dependencies only: GHSA-vfj7-8cjw-p6xm (braces, every published
+        # version) reaches this app solely through eslint-config-next, a lint-time
+        # devDependency that never ships in the static export, and has no upstream fix.
+        run: npm audit --omit=dev --audit-level=moderate
