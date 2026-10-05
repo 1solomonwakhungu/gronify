@@ -1,0 +1,8 @@
+{
+  "moderate": true,
+  "allowlist": [
+    // Unpatched braces recursion DoS via eslint-config-next (dev-only lint tooling).
+    // Remove this exception when GHSA-vfj7-8cjw-p6xm has a compatible fix.
+    "GHSA-vfj7-8cjw-p6xm",
+  ],
+}

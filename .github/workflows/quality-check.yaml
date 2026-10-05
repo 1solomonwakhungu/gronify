@@ -60,6 +60,7 @@ jobs:
           .github/workflows/*.yaml
           .github/dependabot.yml
           landing-page/package.json
+          landing-page/audit-ci.jsonc
           scripts/*.mjs
           skills/*/SKILL.md
           src/packages/cli/package.json
@@ -162,7 +163,6 @@ jobs:
 
       - name: Audit
         working-directory: landing-page
-        # Production dependencies only: GHSA-vfj7-8cjw-p6xm (braces, every published
-        # version) reaches this app solely through eslint-config-next, a lint-time
-        # devDependency that never ships in the static export, and has no upstream fix.
-        run: npm audit --omit=dev --audit-level=moderate
+        # Audit dev dependencies too. The sole exception is documented in audit-ci.jsonc;
+        # this Next.js app is served by Vercel, not published as a static export.
+        run: npm run audit

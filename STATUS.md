@@ -27,3 +27,10 @@
 - CLI checks pass on Node 20 and 22 (19 tests, zero audit findings). Landing-page lint and production build pass on Node 22.
 - Landing-page audit remains blocked by five high-severity dependency findings from one unpatched `braces` advisory (`GHSA-vfj7-8cjw-p6xm`). The published `braces` version is 3.0.3; npm's forced fix downgrades `eslint-config-next` from 15.5.25 to 14.2.35. Retained the compatible Next.js lint stack and recorded the finding for review.
 - Next: review the isolated dependency branch and revisit the audit when a compatible patch ships.
+
+## 2026-10-05 — Landing audit follow-up
+
+- Restored the landing-page CI audit across production and development dependencies with `audit-ci`. Only `GHSA-vfj7-8cjw-p6xm` is allowlisted in `landing-page/audit-ci.jsonc`.
+- `npm run audit` passes with that exception; the same audit exits 1 when run with an empty allowlist. CLI tests pass (19/19), both packages lint/build, and repository metadata/format checks pass.
+- Corrected the workflow comment: Vercel serves the Next.js app; it is not a static export.
+- Next: review the follow-up PR and remove the exception when a compatible `braces` fix ships.
