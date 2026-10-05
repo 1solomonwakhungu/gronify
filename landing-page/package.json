@@ -14,7 +14,7 @@
     "next": "15.5.25",
     "posthog-js": "^1.418.10",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
