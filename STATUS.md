@@ -20,3 +20,10 @@
 ## Next
 
 - Open and merge the landing-page redesign pull request.
+
+## 2026-10-05 — Dependency verification
+
+- Added weekly Dependabot updates for the landing-page npm package; existing devcontainer, CLI npm, and GitHub Actions entries remain unchanged.
+- CLI checks pass on Node 20 and 22 (19 tests, zero audit findings). Landing-page lint and production build pass on Node 22.
+- Landing-page audit remains blocked by five high-severity dependency findings from one unpatched `braces` advisory (`GHSA-vfj7-8cjw-p6xm`). The published `braces` version is 3.0.3; npm's forced fix downgrades `eslint-config-next` from 15.5.25 to 14.2.35. Retained the compatible Next.js lint stack and recorded the finding for review.
+- Next: review the isolated dependency branch and revisit the audit when a compatible patch ships.
