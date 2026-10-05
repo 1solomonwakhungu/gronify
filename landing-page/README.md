@@ -25,8 +25,10 @@ Run these checks before changing landing-page copy or dependencies:
 ```bash
 npm run lint
 npm run build
-npm audit --audit-level=moderate
+npm run audit
 ```
+
+The audit checks production and development dependencies at moderate severity or higher. `audit-ci.jsonc` allows only the currently unpatched `braces` advisory (GHSA-vfj7-8cjw-p6xm) in the lint-time dependency chain; new advisories fail the check.
 
 The repository metadata validation also scans `landing-page/src/app/layout.tsx` and `landing-page/src/app/page.tsx` for stale claims that are not supported by the current project.
 
