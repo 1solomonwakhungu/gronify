@@ -1,6 +1,6 @@
 # Gronify Landing Page
 
-This is the Next.js landing page for Gronify. The copy should stay aligned with the root README: Gronify is a local-first CLI for flattening JSON into greppable paths, searching those paths, and round-tripping gron output back to JSON through `fastgron`.
+This is the Next.js landing page for Gronify. The copy should stay aligned with the root README: Gronify is a local-first, standalone CLI for flattening JSON into greppable paths, searching those paths, and round-tripping gron output back to JSON.
 
 ## Development
 
@@ -25,8 +25,10 @@ Run these checks before changing landing-page copy or dependencies:
 ```bash
 npm run lint
 npm run build
-npm audit --audit-level=moderate
+npm run audit
 ```
+
+The audit checks production and development dependencies at moderate severity or higher. `audit-ci.jsonc` allows only the currently unpatched `braces` advisory (GHSA-vfj7-8cjw-p6xm) in the lint-time dependency chain; new advisories fail the check.
 
 The repository metadata validation also scans `landing-page/src/app/layout.tsx` and `landing-page/src/app/page.tsx` for stale claims that are not supported by the current project.
 

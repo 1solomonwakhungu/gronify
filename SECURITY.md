@@ -13,7 +13,7 @@ If private reporting is unavailable, open a minimal public issue that states the
 Useful report details include:
 
 - Affected command or package path.
-- Environment details such as operating system, shell, Node.js version, and `fastgron` version.
+- Environment details such as operating system, shell, and Node.js version.
 - Impact summary.
 - Reproduction steps using non-sensitive sample data.
 

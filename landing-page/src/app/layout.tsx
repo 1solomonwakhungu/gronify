@@ -1,21 +1,26 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import "@primer/react-brand/fonts/fonts.css";
+import "@primer/react-brand/lib/css/main.css";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Gronify - Terminal JSON inspection with fastgron",
+  title: "Gronify | Standalone JSON inspection for the terminal",
   description:
-    "Flatten JSON into greppable paths, search those paths, and round-trip gron output back to JSON from a local CLI.",
+    "Flatten nested JSON into searchable paths, filter with text or regex, and round-trip gron output locally from a focused CLI.",
+  keywords: [
+    "JSON CLI",
+    "standalone JSON CLI",
+    "terminal JSON",
+    "grep JSON",
+    "developer tools",
+  ],
+  openGraph: {
+    title: "Gronify | Search JSON. Find answers.",
+    description:
+      "A local-first CLI for flattening, searching, and reconstructing JSON in terminal workflows.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -24,11 +29,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html lang="en" data-color-mode="dark">
+      <body>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
