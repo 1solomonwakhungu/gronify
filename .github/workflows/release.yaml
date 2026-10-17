@@ -55,16 +55,38 @@ jobs:
       group: release-artifacts-${{ needs.release-please.outputs.tag_name || github.ref_name }}
     outputs:
       tag: ${{ env.TAG }}
+      uploaded: ${{ steps.existing.outputs.skip != 'true' }}
     steps:
+      # With RELEASE_PLEASE_TOKEN set, the tag release-please creates also
+      # triggers this workflow on the tag push. Both runs share the concurrency
+      # group above; whichever runs second finds the assets already attached
+      # and stops, so published checksums never change and npm publishes once.
+      - name: Check for existing release assets
+        id: existing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if gh release view "$TAG" --json assets --jq '.assets[].name' 2>/dev/null \
+            | grep -qxF "gronify-${TAG}.tar.gz"; then
+            echo "::notice::Release $TAG already has its artifacts; skipping build and upload."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.existing.outputs.skip != 'true'
         with:
           ref: ${{ env.TAG }}
 
       - name: Verify release version
+        if: steps.existing.outputs.skip != 'true'
         working-directory: src/packages/cli
         run: test "v$(node -p "require('./package.json').version")" = "$TAG"
 
       - name: Use Node.js
+        if: steps.existing.outputs.skip != 'true'
         uses: actions/setup-node@v7
         with:
           node-version: 22.x
@@ -72,10 +94,12 @@ jobs:
           cache-dependency-path: src/packages/cli/package-lock.json
 
       - name: Install dependencies
+        if: steps.existing.outputs.skip != 'true'
         working-directory: src/packages/cli
         run: npm ci
 
       - name: Check, build, and test
+        if: steps.existing.outputs.skip != 'true'
         working-directory: src/packages/cli
         run: |
           npm run lint
@@ -85,6 +109,7 @@ jobs:
           test "$(node dist/gronify --version)" = "${TAG#v}"
 
       - name: Package release artifacts
+        if: steps.existing.outputs.skip != 'true'
         working-directory: src/packages/cli
         run: |
           mkdir release
@@ -96,13 +121,14 @@ jobs:
           sha256sum "gronify-${TAG}.tar.gz" "gronify-${TAG}.zip" > checksums.txt
 
       - name: Create or update GitHub release
+        if: steps.existing.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         working-directory: src/packages/cli
         run: |
           assets=("gronify-${TAG}.tar.gz" "gronify-${TAG}.zip" checksums.txt)
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" --clobber "${assets[@]}"
+            gh release upload "$TAG" "${assets[@]}"
           else
             gh release create "$TAG" --verify-tag --generate-notes --title "$TAG" "${assets[@]}"
           fi
@@ -110,7 +136,10 @@ jobs:
   npm-publish:
     name: Publish to npm
     needs: artifacts
-    if: always() && needs.artifacts.result == 'success'
+    if: >-
+      always() &&
+      needs.artifacts.result == 'success' &&
+      needs.artifacts.outputs.uploaded == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
