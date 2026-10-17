@@ -80,6 +80,14 @@ describe("Gronify CLI", () => {
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("does not exist");
+      expect(result.stderr).not.toContain("Validate your JSON");
+    });
+
+    test("should suggest validating JSON only for parse errors", async () => {
+      const result = await runCLI(["flatten"], "{bad");
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("Validate your JSON");
     });
 
     test("should round-trip quoted keys and nested values", async () => {
@@ -124,6 +132,14 @@ describe("Gronify CLI", () => {
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("does not exist");
+      expect(result.stderr).not.toContain("Gron lines should look like");
+    });
+
+    test("should show the gron syntax tip for parse errors", async () => {
+      const result = await runCLI(["unflatten"], "foo = 1");
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("Gron lines should look like");
     });
   });
 

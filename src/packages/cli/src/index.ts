@@ -94,7 +94,9 @@ program
       emit(formatter.formatGron(flattenJson(JSON.parse(input))), formatter, globalOptions.output);
     } catch (error) {
       fail(formatter, "flattening JSON", error);
-      console.error(formatter.formatInfo("Tip: Validate your JSON with a linter like https://jsonlint.com"));
+      if (error instanceof SyntaxError) {
+        console.error(formatter.formatInfo("Tip: Validate your JSON with a linter like https://jsonlint.com"));
+      }
     }
   });
 
@@ -111,7 +113,9 @@ program
       emit(formatter.formatJson(JSON.stringify(unflattenGron(input))), formatter, globalOptions.output);
     } catch (error) {
       fail(formatter, "unflattening gron", error);
-      console.error(formatter.formatInfo("Tip: Gron lines should look like: json.path = value"));
+      if (error instanceof Error && /^line \d+:/.test(error.message)) {
+        console.error(formatter.formatInfo("Tip: Gron lines should look like: json.path = value"));
+      }
     }
   });
 
@@ -152,7 +156,7 @@ program
           console.error(formatter.formatWarning(`All lines matched '${searchTerm}' (nothing to invert)`));
         } else {
           console.error(formatter.formatWarning(`No matches found for '${searchTerm}'`));
-          console.error(formatter.formatInfo("Tip: Try --case-sensitive or --regex for different matching"));
+          console.error(formatter.formatInfo("Tip: Search is a case-insensitive substring match; use --regex for patterns"));
         }
       } else {
         const results = options.invertMatch
