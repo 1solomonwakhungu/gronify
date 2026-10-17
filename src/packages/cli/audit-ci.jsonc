@@ -1,0 +1,8 @@
+{
+  "moderate": true,
+  "allowlist": [
+    // sprintf-js DoS via jest coverage tooling (ts-jest > babel-plugin-istanbul > js-yaml@3 > argparse@1).
+    // Dev-only test dependency with no patched release. Remove when GHSA-hp3w-g68c-fv3c has a fix.
+    "GHSA-hp3w-g68c-fv3c",
+  ],
+}

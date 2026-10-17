@@ -39,12 +39,13 @@
     "format:check": "npx --yes prettier@3.6.2 --check package.json",
     "test": "jest",
     "test:watch": "jest --watch",
-    "audit": "npm audit --audit-level=moderate"
+    "audit": "audit-ci --config audit-ci.jsonc"
   },
   "type": "module",
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^26.6.4",
+    "audit-ci": "^7.1.0",
     "esbuild": "^0.25.10",
     "jest": "^30.5.2",
     "ts-jest": "^29.4.14",

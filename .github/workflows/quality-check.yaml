@@ -61,6 +61,7 @@ jobs:
           .github/dependabot.yml
           landing-page/package.json
           landing-page/audit-ci.jsonc
+          src/packages/cli/audit-ci.jsonc
           scripts/*.mjs
           skills/*/SKILL.md
           src/packages/cli/package.json
