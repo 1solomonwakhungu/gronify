@@ -153,13 +153,14 @@ gronify search demo.json --regex "status|version"
 
 ### Global Options
 
-| Option          | Description                                          |
-| --------------- | ---------------------------------------------------- |
-| `--color`       | Enable colored output when the terminal supports it. |
-| `--no-color`    | Disable colored output.                              |
-| `--pretty`      | Add indentation/grouping to formatted output.        |
-| `-h, --help`    | Show help.                                           |
-| `-V, --version` | Show the CLI version.                                |
+| Option                | Description                                          |
+| --------------------- | ---------------------------------------------------- |
+| `--color`             | Enable colored output when the terminal supports it. |
+| `--no-color`          | Disable colored output.                              |
+| `--pretty`            | Add indentation/grouping to formatted output.        |
+| `-o, --output <file>` | Write output to a file instead of stdout.            |
+| `-h, --help`          | Show help.                                           |
+| `-V, --version`       | Show the CLI version.                                |
 
 ### `flatten [file]`
 
@@ -177,6 +178,7 @@ Converts gron format back to JSON. If `file` is omitted, Gronify reads from stdi
 ```bash
 gronify unflatten data.gron
 cat data.gron | gronify unflatten
+gronify --output data.json unflatten data.gron
 ```
 
 ### `search <file_or_term> [term]`
@@ -188,6 +190,7 @@ Searches flattened JSON paths. Pass both a file and term, or pipe JSON to stdin 
 | `-r, --regex`          | Use extended regular expressions. |
 | `-c, --case-sensitive` | Match case sensitively.           |
 | `--count`              | Print only the match count.       |
+| `-v, --invert-match`   | Show lines that do not match.     |
 
 ```bash
 gronify search data.json "user"
