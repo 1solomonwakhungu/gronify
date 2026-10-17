@@ -34,3 +34,19 @@
 - `npm run audit` passes with that exception; the same audit exits 1 when run with an empty allowlist. CLI tests pass (19/19), both packages lint/build, and repository metadata/format checks pass.
 - Corrected the workflow comment: Vercel serves the Next.js app; it is not a static export.
 - Next: review the follow-up PR and remove the exception when a compatible `braces` fix ships.
+
+## 2026-10-17 — Audit fixes, release automation, and CLI UX
+
+- Merged #73: landing page on Next 16.4.0 with `sharp` 0.35.5 and `source-map-js` 1.2.2 overrides; CLI `npm audit fix` for the critical `handlebars` advisory (ts-jest dev dependency, now 4.7.10). The CLI audit now uses `audit-ci` with one allowlisted advisory, `GHSA-hp3w-g68c-fv3c` (sprintf-js <= 1.1.3, no patched release, reached only through jest coverage tooling). `npm audit --omit=dev` reports zero findings.
+- Merged Dependabot #43 (actions/checkout v7) and #62 (lightningcss-linux-x64-gnu 1.33.0); closed #69 as superseded by #73.
+- Merged #72: Dependabot ignores TypeScript >= 7 in both npm directories and groups react, react-dom, and their types.
+- Merged #44 as `feat(cli)`: `-o/--output`, `search -v/--invert-match`, and error tips. Review fix: tips now print only for JSON or gron parse errors, and the empty-search tip no longer suggests `--case-sensitive`. CLI tests: 46/46.
+- Merged #74: release-please manages `src/packages/cli` from the existing `v1.0.0` tag; merged release PRs build the Homebrew tarball, zip, and checksums, then publish to npm with provenance when `NPM_TOKEN` is set. Review fix: the artifacts job skips when the release already has its tarball, so a second tag-push run cannot change published checksums or double-publish.
+- First release-please run on `main` computed the release from 11 CLI commits and pushed its branch, then failed with "GitHub Actions is not permitted to create or approve pull requests".
+
+### Owner actions
+
+- Enable **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests**, or add a `RELEASE_PLEASE_TOKEN` secret, then re-run the Release workflow.
+- Add an `NPM_TOKEN` secret to publish `gronify` to npm.
+- After the next release, update `Formula/gronify.rb` in the Homebrew tap with the new `url` and `sha256`, and drop `depends_on "fastgron"`; the CLI no longer needs it.
+- Remove the `GHSA-hp3w-g68c-fv3c` and `GHSA-vfj7-8cjw-p6xm` allowlist entries once fixes ship.
