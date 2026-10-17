@@ -37,7 +37,7 @@ The skill teaches supported coding agents when to flatten, search, and round-tri
 
 ### Homebrew
 
-Homebrew installs Gronify together with its `fastgron` and Node.js dependencies:
+Homebrew installs Gronify together with its Node.js dependency:
 
 ```bash
 brew install 1solomonwakhungu/tap/gronify
@@ -47,7 +47,7 @@ The formula is maintained in the [Homebrew tap](https://github.com/1solomonwakhu
 
 ### Release Archive
 
-Download the archive for the latest version from [GitHub Releases](https://github.com/1solomonwakhungu/gronify/releases). The executable requires Node.js 20 or newer and `fastgron` on `PATH`.
+Download the archive for the latest version from [GitHub Releases](https://github.com/1solomonwakhungu/gronify/releases). The executable requires Node.js 20 or newer.
 
 ### From Source
 
