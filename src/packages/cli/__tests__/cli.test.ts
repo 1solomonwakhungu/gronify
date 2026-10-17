@@ -264,8 +264,12 @@ describe("Gronify CLI", () => {
     test("should show version", async () => {
       const result = await runCLI(["--version"]);
 
+      const { version } = JSON.parse(
+        readFileSync(join(process.cwd(), "package.json"), "utf8"),
+      ) as { version: string };
+
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("1.0.0");
+      expect(result.stdout.trim()).toBe(version);
     });
 
     test("should show command help", async () => {
