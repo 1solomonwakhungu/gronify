@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { accessSync, constants, existsSync, readFileSync } from "node:fs";
+import { accessSync, constants, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { extname } from "node:path";
 import { createFormatter, shouldUseColor, type FormatOptions, type OutputFormatter } from "./formatter.js";
 import { flattenJson, unflattenGron } from "./gron.js";
@@ -13,7 +13,8 @@ program
   .version("__GRONIFY_VERSION__")
   .option("--color", "Enable colored output (default: auto-detect)")
   .option("--no-color", "Disable colored output")
-  .option("--pretty", "Enable pretty formatting with better readability");
+  .option("--pretty", "Enable pretty formatting with better readability")
+  .option("-o, --output <file>", "Write output to a file instead of stdout");
 
 function hasStdinData(): boolean {
   return !process.stdin.isTTY;
@@ -27,8 +28,10 @@ async function readStdin(): Promise<string> {
 }
 
 function createFormatterFromOptions(globalOptions: Record<string, unknown>): OutputFormatter {
+  // Auto-detected color follows stdout, so don't write ANSI codes into an output file unless --color was explicit.
+  const autoColor = globalOptions.output ? false : shouldUseColor();
   const formatOptions: FormatOptions = {
-    color: globalOptions.color as boolean | undefined ?? shouldUseColor(),
+    color: globalOptions.color as boolean | undefined ?? autoColor,
     pretty: globalOptions.pretty as boolean | undefined ?? false,
     format: "gron"
   };
@@ -60,6 +63,15 @@ async function readInput(file: string | undefined, formatter: OutputFormatter, u
   return readStdin();
 }
 
+function emit(output: string, formatter: OutputFormatter, outputFile: string | undefined): void {
+  if (!outputFile) {
+    console.log(output);
+    return;
+  }
+  writeFileSync(outputFile, output + "\n", "utf8");
+  console.error(formatter.formatSuccess(`Output written to ${outputFile}`));
+}
+
 function fail(formatter: OutputFormatter, context: string, error: unknown): void {
   const message = error instanceof Error ? error.message : String(error);
   console.error(formatter.formatError(`${context}: ${message}`));
@@ -71,16 +83,20 @@ program
   .description("Convert JSON to gron format")
   .argument("[file]", "JSON file to flatten (or read from stdin if not provided)")
   .action(async (file: string | undefined, _options: unknown, command: Command) => {
-    const formatter = createFormatterFromOptions(command.parent?.opts() ?? {});
+    const globalOptions = command.parent?.opts() ?? {};
+    const formatter = createFormatterFromOptions(globalOptions);
     try {
       if (file && ![".json", ".jsonl"].includes(extname(file).toLowerCase())) {
         console.warn(formatter.formatWarning(`File '${file}' doesn't have a .json extension`));
       }
       const input = await readInput(file, formatter, "Usage: gronify flatten <file> OR cat file.json | gronify flatten");
       if (process.exitCode) return;
-      console.log(formatter.formatGron(flattenJson(JSON.parse(input))));
+      emit(formatter.formatGron(flattenJson(JSON.parse(input))), formatter, globalOptions.output);
     } catch (error) {
       fail(formatter, "flattening JSON", error);
+      if (error instanceof SyntaxError) {
+        console.error(formatter.formatInfo("Tip: Validate your JSON with a linter like https://jsonlint.com"));
+      }
     }
   });
 
@@ -89,13 +105,17 @@ program
   .description("Convert gron format back to JSON")
   .argument("[file]", "Gron file to unflatten (or read from stdin if not provided)")
   .action(async (file: string | undefined, _options: unknown, command: Command) => {
-    const formatter = createFormatterFromOptions(command.parent?.opts() ?? {});
+    const globalOptions = command.parent?.opts() ?? {};
+    const formatter = createFormatterFromOptions(globalOptions);
     try {
       const input = await readInput(file, formatter, "Usage: gronify unflatten <file> OR cat file.gron | gronify unflatten");
       if (process.exitCode) return;
-      console.log(formatter.formatJson(JSON.stringify(unflattenGron(input))));
+      emit(formatter.formatJson(JSON.stringify(unflattenGron(input))), formatter, globalOptions.output);
     } catch (error) {
       fail(formatter, "unflattening gron", error);
+      if (error instanceof Error && /^line \d+:/.test(error.message)) {
+        console.error(formatter.formatInfo("Tip: Gron lines should look like: json.path = value"));
+      }
     }
   });
 
@@ -107,12 +127,15 @@ program
   .option("-r, --regex", "Use regex pattern matching")
   .option("-c, --case-sensitive", "Case sensitive search")
   .option("--count", "Show only the count of matches")
+  .option("-v, --invert-match", "Invert match: show lines that do NOT match")
   .action(async (fileOrTerm: string, term: string | undefined, options: {
     regex?: boolean;
     caseSensitive?: boolean;
     count?: boolean;
+    invertMatch?: boolean;
   }, command: Command) => {
-    const formatter = createFormatterFromOptions(command.parent?.opts() ?? {});
+    const globalOptions = command.parent?.opts() ?? {};
+    const formatter = createFormatterFromOptions(globalOptions);
     const file = term ? fileOrTerm : undefined;
     const searchTerm = term ?? fileOrTerm;
 
@@ -124,14 +147,22 @@ program
       const pattern = options.regex
         ? new RegExp(searchTerm, flags)
         : new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), flags);
-      const matches = lines.filter((line) => pattern.test(line));
+      const matches = lines.filter((line) => pattern.test(line) !== Boolean(options.invertMatch));
 
       if (options.count) {
-        console.log(formatter.formatSuccess(String(matches.length)));
+        emit(formatter.formatSuccess(String(matches.length)), formatter, globalOptions.output);
       } else if (matches.length === 0) {
-        console.error(formatter.formatWarning(`No matches found for '${searchTerm}'`));
+        if (options.invertMatch) {
+          console.error(formatter.formatWarning(`All lines matched '${searchTerm}' (nothing to invert)`));
+        } else {
+          console.error(formatter.formatWarning(`No matches found for '${searchTerm}'`));
+          console.error(formatter.formatInfo("Tip: Search is a case-insensitive substring match; use --regex for patterns"));
+        }
       } else {
-        console.log(formatter.formatSearchResults(matches.join("\n"), searchTerm));
+        const results = options.invertMatch
+          ? formatter.formatGron(matches.join("\n"))
+          : formatter.formatSearchResults(matches.join("\n"), searchTerm);
+        emit(results, formatter, globalOptions.output);
       }
     } catch (error) {
       fail(formatter, options.regex ? "searching JSON (invalid regex or JSON)" : "searching JSON", error);
