@@ -222,6 +222,25 @@ npm run audit
 
 The integration tests run the built CLI directly and require no external binaries.
 
+## Releasing
+
+Releases are automated with [release-please](https://github.com/googleapis/release-please) from [Conventional Commits](https://www.conventionalcommits.org/) that touch `src/packages/cli`:
+
+1. Each push to `main` updates an open release PR that bumps `src/packages/cli/package.json` and `src/packages/cli/CHANGELOG.md`. `fix:` gives a patch release, `feat:` a minor release, and `feat!:` or a `BREAKING CHANGE:` footer a major release.
+2. Merging the release PR tags `vX.Y.Z` and creates the GitHub release. The release workflow then attaches `gronify-vX.Y.Z.tar.gz`, `gronify-vX.Y.Z.zip`, and `checksums.txt`.
+3. If the `NPM_TOKEN` secret is set, the workflow publishes the package to npm with provenance. Without it, the npm step is skipped and the rest of the release still runs.
+
+Pushing a `v*` tag by hand still builds the archives and creates the release.
+
+### One-time setup
+
+- **`NPM_TOKEN`**: add an npm granular access token with publish rights for `gronify` under **Settings → Secrets and variables → Actions**. Releases do not reach npm until this secret exists.
+- **Release PR permissions**: enable **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests**, or add a `RELEASE_PLEASE_TOKEN` secret (a fine-grained PAT with contents and pull-request write access). With the PAT, CI also runs on the release PR, which `GITHUB_TOKEN`-created PRs do not trigger.
+
+### Homebrew
+
+The [Homebrew tap](https://github.com/1solomonwakhungu/homebrew-tap) formula installs the `gronify-vX.Y.Z.tar.gz` release archive. After each release, update the formula's `url` and `sha256` (from `checksums.txt`).
+
 ## Repository Layout
 
 ```text
