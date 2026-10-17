@@ -24,7 +24,7 @@
     "audit-ci": "^7.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.25",
-    "typescript": "^5"
+    "typescript": "^7"
   },
   "overrides": {
     "postcss": "8.5.26",
