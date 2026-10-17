@@ -22,7 +22,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "audit-ci": "^7.1.0",
-    "eslint": "^9",
+    "eslint": "^10",
     "eslint-config-next": "15.5.25",
     "typescript": "^5"
   },
