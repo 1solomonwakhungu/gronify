@@ -10,6 +10,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # TypeScript 7 is not yet supported by ts-jest. Remove once it is.
+      - dependency-name: "typescript"
+        versions: [">=7"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -20,3 +24,15 @@ updates:
     directory: "/landing-page"
     schedule:
       interval: weekly
+    ignore:
+      # TypeScript 7 is not yet supported by typescript-eslint. Remove once it is.
+      - dependency-name: "typescript"
+        versions: [">=7"]
+    groups:
+      # react and react-dom must always ship on the same version.
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
