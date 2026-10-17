@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve Gronify. This project is currently source-installed and does not claim an npm release process.
+Thanks for helping improve Gronify. Releases are automated from Conventional Commits; see [Releasing](README.md#releasing).
 
 ## Development Setup
 
@@ -28,9 +28,10 @@ npm run audit
 ## Pull Requests
 
 - Keep changes focused on one problem.
+- Use [Conventional Commits](https://www.conventionalcommits.org/) for pull request titles (`fix:`, `feat:`, `docs:`, `chore:`). Squash merges use the title, and release-please reads it to pick the next version.
 - Update documentation when behavior, commands, setup, or troubleshooting changes.
 - Add or update tests when CLI behavior changes.
-- Do not claim npm publication, hosted releases, support guarantees, or platform integrations unless they exist in the repository.
+- Do not claim npm availability, hosted releases, support guarantees, or platform integrations unless they exist in the repository.
 - Include the commands you ran and any known blockers in the pull request description.
 
 ## Issues
