@@ -10,7 +10,7 @@
     "audit": "audit-ci --config audit-ci.jsonc"
   },
   "dependencies": {
-    "@primer/react-brand": "^0.77.0",
+    "@primer/react-brand": "^0.79.0",
     "next": "16.4.0",
     "posthog-js": "^1.418.10",
     "react": "19.1.0",
