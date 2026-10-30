@@ -178,6 +178,71 @@ describe("OutputFormatter", () => {
       ).not.toThrow();
     });
   });
+
+  describe("streaming line formatters", () => {
+    const gron = [
+      "json = {}",
+      "json.users = []",
+      "json.users[0] = {}",
+      'json.users[0].name = "Alice"',
+      "json.users[0].tags = []",
+      'json.users[0].tags[0] = "a"',
+      "json.settings = {}",
+      "json.settings.deep.er.still.and.more.and.more.x = 1",
+      "json.settings.flag = true",
+      "json.id = null",
+    ];
+
+    /** The pre-streaming pretty algorithm, kept here as the reference. */
+    function referencePretty(lines: string[]): string {
+      const result: string[] = [];
+      let lastTopLevel = "";
+      lines.forEach((line, index) => {
+        const cleanLine = line.replace(/\u001b\[[0-9;]*m/g, "");
+        const nestingLevel = Math.max(0, (cleanLine.match(/\[/g) || []).length + (cleanLine.match(/\./g) || []).length - 1);
+        const indent = "  ".repeat(Math.min(nestingLevel, 6));
+        const topLevelMatch = cleanLine.match(/^json\.([^\[.]+)/);
+        const currentTopLevel = topLevelMatch ? topLevelMatch[1] : "root";
+        if (index > 0 && currentTopLevel !== lastTopLevel && lastTopLevel !== "root") result.push("");
+        result.push(indent + line);
+        lastTopLevel = currentTopLevel || "root";
+      });
+      return result.join("\n");
+    }
+
+    test("returns null when there is nothing to format", () => {
+      const fmt = new OutputFormatter({ color: false, pretty: false });
+      expect(fmt.createGronLineFormatter()).toBeNull();
+      expect(fmt.createSearchLineFormatter("x")).toBeNull();
+    });
+
+    test("pretty lines joined with newlines equal the batch pretty output", () => {
+      const fmt = new OutputFormatter({ color: false, pretty: true });
+      const format = fmt.createGronLineFormatter()!;
+      expect(gron.map(format).join("\n")).toBe(referencePretty(gron));
+      expect(fmt.formatGron(gron.join("\n"))).toBe(referencePretty(gron));
+    });
+
+    test("each stream formatter starts with fresh grouping state", () => {
+      const fmt = new OutputFormatter({ color: false, pretty: true });
+      const first = fmt.createGronLineFormatter()!;
+      gron.forEach((line) => first(line));
+      const second = fmt.createGronLineFormatter()!;
+      expect(second(gron[0]!)).toBe("json = {}");
+      // A stale state would put a blank separator in front of this line.
+      expect(second(gron[1]!)).toBe("  json.users = []");
+    });
+
+    test("search formatter matches formatSearchResults line by line when color is on", () => {
+      // @ts-expect-error: writable for tests
+      process.stdout.isTTY = true;
+      delete process.env.NO_COLOR;
+      const fmt = new OutputFormatter({ color: true });
+      const format = fmt.createSearchLineFormatter("name")!;
+      expect(format).toBeInstanceOf(Function);
+      expect(gron.map(format).join("\n")).toBe(fmt.formatSearchResults(gron.join("\n"), "name"));
+    });
+  });
 });
 
 describe("createFormatter", () => {

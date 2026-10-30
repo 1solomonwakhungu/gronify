@@ -51,6 +51,28 @@
 - After the next release, update `Formula/gronify.rb` in the Homebrew tap with the new `url` and `sha256`, and drop `depends_on "fastgron"`; the CLI no longer needs it.
 - Remove the `GHSA-hp3w-g68c-fv3c` and `GHSA-vfj7-8cjw-p6xm` allowlist entries once fixes ship.
 
+## 2026-10-29 — Streaming flatten and search
+
+- `flatten` and `search` now stream: a hand-written byte-level JSON tokenizer reads 1 MB chunks (file or stdin), an iterative path-stack flattener writes gron lines into 1 MB blocks, and a backpressure-aware writer feeds stdout or the `-o` file. Memory no longer depends on input size or nesting depth. `unflatten` is untouched.
+- Plain `search` is a Horspool byte search (ASCII case folding for the default case-insensitive mode; non-ASCII case-insensitive terms and `--regex` use a precompiled RegExp). Rejected lines are rewound in the output block without being copied. `--color` and `--pretty` are applied per line with the same output as before (verified byte-for-byte against the old CLI in a pty).
+- Intentional behavior changes: numbers print verbatim from the source; object keys keep document order; duplicate keys are all emitted; strict JSON with byte offset, line, and column in errors; invalid UTF-8 is rejected; on stdout a mid-stream error keeps what was already written (possibly nearly all of it, since each input chunk is flushed) and still exits 1 with the message; a search with no matches creates no `-o` file.
+- Review fixes (PR #95): `-o` is now atomic. `src/output.ts` exports `OutputSink` (`open()`, `commit()`, `abort()`) and `createOutputSink(file?)`; `GronOutput` takes a sink, and `emit` (unflatten, `--count`) uses it too, so `unflatten` in #94 can reuse it. A file sink writes `.<name>.<pid>.<random>.tmp` beside the target and renames it over the target on commit; any error, or no output at all, removes the temp file and leaves the target untouched. It keeps the target's mode, writes through symlinks, writes devices and pipes (`-o /dev/null`) in place, and removes the temp file on SIGINT/SIGTERM. This fixes `gronify -o a.json flatten a.json`. README and the agent skill now say stdout may hold partial output after an input error (check the exit status, use `set -o pipefail`) and that `-o` is atomic; the README `é` example got its backslash back; `output.ts` explains why block reuse on `writableLength === 0` is safe for the streams the CLI uses.
+- Benchmarks after the review fixes are unchanged (Node 22.23.1, best of 3): 23 MB flatten 0.18 s / 81 MB, search --count 0.19 s / 78 MB; 129 MB flatten 0.82 s / 91 MB, search --count 0.88 s / 90 MB. `-o` flatten of 23 MB takes 0.18 s before and after.
+- Benchmarks (Node 22.23.1, macOS arm64, stdout to /dev/null, `npm run bench`, best of 3):
+
+| Input | Command | Before | After |
+| --- | --- | --- | --- |
+| 23 MB | flatten | 0.69 s, 1023 MB RSS | 0.18 s, 80 MB RSS |
+| 23 MB | search --count | 0.64 s, 778 MB RSS | 0.19 s, 78 MB RSS |
+| 129 MB | flatten | 4.23 s, 4457 MB RSS | 0.85 s, 92 MB RSS |
+| 129 MB | search --count | 3.72 s, 3617 MB RSS | 0.92 s, 88 MB RSS |
+| 3.50 GB | flatten | not run; old build fails above ~240 MB | 22.1 s, 98 MB RSS |
+| 3.50 GB | search --count | not run; old build fails above ~240 MB | 24.5 s, 96 MB RSS |
+| 100,000 levels deep | flatten | not run; old build overflows the stack near 2,000 levels | 0.17 s, 63 MB RSS (10 GB of output) |
+
+- Tests: 203 passing on Node 20.20.2 and 22.23.1 (tokenizer chunk splits at every byte, 300-document randomized equivalence with `flattenJson(JSON.parse(x))`, CLI stdin, `-o` onto its own input for flatten and search on 4 MB+, invalid input past the first flush leaving an existing `-o` file byte-identical with no temp files, unwritable and missing `-o` directories, SIGTERM cleanup, closed pipe, hang, deep nesting).
+- Next: review and merge the streaming PR; `unflatten` streaming is being done separately.
+
 ## 2026-10-29 — Landing audit fix
 
 - The Landing page CI audit failed on `main` with five new advisories: `next` 16.4.0 (`GHSA-2464-fhr4-w9xw`, `GHSA-673q-mjm6-r5xr`, `GHSA-p3m5-59mp-jv5r`) and `dompurify` <= 3.4.16 (`GHSA-cg2g-xh64-v4q7`, `GHSA-mrv2-3pqr-j5jr`).
