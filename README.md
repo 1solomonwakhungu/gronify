@@ -23,7 +23,7 @@ The skill teaches supported coding agents when to flatten, search, and round-tri
 ## Features
 
 - Flatten JSON files or stdin into gron-style path assignments, streaming through multi-gigabyte inputs in constant memory.
-- Unflatten gron files or stdin back into JSON.
+- Unflatten gron files or stdin back into JSON, streaming multi-gigabyte input in roughly constant memory.
 - Search flattened paths with plain text, extended regex, case-sensitive matching, and match counts.
 - Cap the output with `search -m/--max-count` and `flatten --limit`. The input stops being read at the cap, so a huge file returns in milliseconds and an agent cannot flood its context.
 - Sort object keys at every level with `--sort` for stable, diffable output. The default is document order.
@@ -219,6 +219,17 @@ cat data.gron | gronify unflatten
 gronify --output data.json unflatten data.gron
 ```
 
+`unflatten` reads its input as a byte stream and writes JSON as it goes, so memory use does not grow with input size. On an Apple M5 Pro, a 3 GB gron file converts in about 7 seconds with a peak RSS of about 100 MB.
+
+- **Document order.** Gron written by `gronify flatten` streams in a single pass: each container comes before its children, siblings stay together, and array indexes ascend. Input that breaks this, such as lexically sorted gron (`json[10]` before `json[2]`) or a path that re-enters a container that was already closed, is still accepted when the problem shows up within the first 16 MiB of input. Gronify then rebuilds the whole document in memory. Once 16 MiB of input has been read or 16 MiB of output produced (a large array gap counts as output), out-of-order input fails with an error that names the line, because JSON may already have been written to stdout. Regenerate such input with `gronify flatten`. Output of `gronify flatten --sort` is in document order too, so it unflattens in a single pass; plain `sort` on the lines is not (see [Sorting keys](#sorting-keys)).
+- **Values are written as they appear.** Numbers are validated, not parsed, so `12345678901234567890`, `1.10`, `-0`, and `1e-7` come out unchanged. Strings are normalized to what `JSON.stringify` writes (`"A\/"` becomes `"A/"`). Compound values written on one line (`json.a = {"n":12345678901234567890}`) keep their numbers too, with whitespace and strings normalized, keys in source order (integer-like keys are not moved first as `JSON.parse` would), and a repeated key keeping its last value. Only space, tab, LF, and CR separate tokens inside a value, so `[\v]` is rejected; around a line and around `=`, anything `String.prototype.trim` strips (including U+00A0) is ignored.
+- **Skipped array indexes become `null`.** `json[3] = 1` after `json = []` gives `[null,null,null,1]`. The nulls are streamed, not allocated, so `json[100000000] = 1` costs output size, not memory.
+- **Repeated assignments.** In streamed output a repeated object key is written again where it appears, and a JSON parser keeps the last one, so the data matches the old last-write-wins result. Reassigning an array index counts as out of order, because the position is already written. Because the duplicate is written, `--pretty` output for such input is not the same as `JSON.stringify(value, null, 2)` of the parsed result, which has the key once; and a strict consumer that rejects duplicate names will reject the output. Gron from `gronify flatten` never repeats a key.
+- **`--pretty`** matches `JSON.stringify(value, null, 2)`, including `{}` and `[]` for empty containers, except for repeated keys (see above).
+- **`--output` is atomic**, as for `flatten` (see [Streaming and large inputs](#streaming-and-large-inputs)): the JSON goes to a temporary file that replaces the target only after the whole input converted, so a failure leaves an existing target alone, and `-o` may name the input file.
+- **Colored output** (`--color`, or a terminal without `--no-color`) needs the whole document, so it is built in memory, also when combined with `--output`. Runs without color stream in constant memory; use `--no-color` for very large inputs.
+- Bracket keys may contain `=`, `]`, and escaped quotes: `json["a=b"] = 1`.
+
 ### `search <file_or_term> [term]`
 
 Searches flattened JSON paths. Pass both a file and term, or pipe JSON to stdin and pass only the search term.
@@ -300,7 +311,7 @@ json.b = 1
 
 ### Streaming and large inputs
 
-`flatten` and `search` read the input in 1 MB chunks, tokenize the raw bytes, and write each gron line as it is produced. Peak memory stays around 100 MB whether the input is 20 MB or several gigabytes, and output starts before the input has been read in full. `unflatten` still loads its whole input.
+`flatten` and `search` read the input in 1 MB chunks, tokenize the raw bytes, and write each gron line as it is produced. Peak memory stays around 100 MB whether the input is 20 MB or several gigabytes, and output starts before the input has been read in full. `unflatten` streams too (see above).
 
 - **Strict JSON.** Trailing commas, comments, single quotes, bad escapes, raw control characters in strings, invalid UTF-8, and data after the top-level value are rejected. Errors report the byte offset, plus line and column (columns count bytes), for example `Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 7 (line 1, column 8)`.
 - **Numbers are printed exactly as written.** `12345678901234567890`, `1.10`, `1e2`, and `-0` come out unchanged, where a parse-and-reprint would give `12345678901234567000`, `1.1`, `100`, and `0`.
@@ -336,6 +347,15 @@ npm run audit
 ```
 
 The integration tests run the built CLI directly and require no external binaries.
+
+To measure `unflatten` on generated gron (inputs live in a temp directory and are deleted afterwards):
+
+```bash
+cd src/packages/cli
+npm run build
+node scripts/bench-unflatten.mjs                 # 56 MB and 285 MB, plus a flatten | unflatten round-trip check
+node scripts/bench-unflatten.mjs --huge 3        # one 3 GB input; needs about 3 GB of free temp space
+```
 
 `npm run bench` generates inputs in a temporary directory, times `flatten`, `search --count`, `flatten --sort`, and an early-stopping `search -m 5`, and deletes the files afterwards. Pass options after `--`, for example `npm run bench -- --sizes 23,129 --big 3 --deep 100000 --baseline path/to/older/dist/index.js`.
 

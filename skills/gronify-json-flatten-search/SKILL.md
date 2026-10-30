@@ -38,7 +38,7 @@ gronify --no-color search payload.json --regex 'users\[[0-9]+\]\.email' -m 20   
 
 - `gronify flatten [file]`: every value with its full path. Reads stdin when no file is given.
 - `gronify search [file] <term>`: path or value filtering, no separate `grep` needed. Plain terms are case-insensitive and literal. Options: `--regex`, `--case-sensitive`, `--count`, `-v/--invert-match`, `-m/--max-count`, `--sort`, `--exit-status`. Quote shell-sensitive patterns.
-- `gronify unflatten [file]`: gron assignments back to JSON; the root and parent containers must appear before their children.
+- `gronify unflatten [file]`: gron assignments back to JSON; the root and parent containers must appear before their children. It streams, so multi-gigabyte gron is fine as long as it is in document order, which is what `gronify flatten` and `flatten --sort` write.
 
 ```bash
 curl -sS https://example.com/api/status | gronify --no-color search version -m 5
@@ -82,13 +82,17 @@ gronify --no-color unflatten payload.gron
 gronify --no-color flatten payload.json | gronify --no-color unflatten
 ```
 
-`unflatten` still reads its whole input into memory.
-
 Do not overwrite the source JSON during exploration. Write reconstructed JSON to a new file first, parse it, and compare it with the source before replacing anything:
 
 ```bash
 gronify --no-color unflatten edited.gron > reconstructed.json
 node -e 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))' reconstructed.json
 ```
+
+Large and edited gron:
+
+- `unflatten` keeps memory flat, so it handles files of several gigabytes. Numbers come out as written (`12345678901234567890` and `1.10` are not rounded or reformatted), and `--pretty` matches `JSON.stringify(value, null, 2)`.
+- Keep gron in document order for big inputs: a container before its children, siblings together, array indexes ascending. `flatten --sort` output qualifies (it round-trips through `unflatten`). Do not run plain `sort` on gron you plan to unflatten: `[10]` sorts before `[2]`. Out-of-order input is rebuilt in memory only while the first 16 MiB are being read; after that, `unflatten` stops with `line N: ...` and an explanation. Appending an override for a top-level key, such as `json.name = "new"`, still works, because a JSON parser keeps the last duplicate key.
+- Skipped array indexes come out as `null`.
 
 Gronify accepts JSON, not arbitrary JavaScript objects or comments. If parsing fails, report the failing input and error rather than silently rewriting the data.
