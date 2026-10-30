@@ -50,3 +50,10 @@
 - Add an `NPM_TOKEN` secret to publish `gronify` to npm.
 - After the next release, update `Formula/gronify.rb` in the Homebrew tap with the new `url` and `sha256`, and drop `depends_on "fastgron"`; the CLI no longer needs it.
 - Remove the `GHSA-hp3w-g68c-fv3c` and `GHSA-vfj7-8cjw-p6xm` allowlist entries once fixes ship.
+
+## 2026-10-29 — Landing audit fix
+
+- The Landing page CI audit failed on `main` with five new advisories: `next` 16.4.0 (`GHSA-2464-fhr4-w9xw`, `GHSA-673q-mjm6-r5xr`, `GHSA-p3m5-59mp-jv5r`) and `dompurify` <= 3.4.16 (`GHSA-cg2g-xh64-v4q7`, `GHSA-mrv2-3pqr-j5jr`).
+- Fixed by bumping `next` to 16.4.3 (same major) and adding a `dompurify` 3.4.17 override. `dompurify` arrives through `posthog-js`, which declares `^3.4.13` even in its latest release, so an override is the only way to move it. No allowlist entries added.
+- `npm ci`, `npm run audit`, `npm run lint`, and `npm run build` pass on Node 22.
+- The `GHSA-vfj7-8cjw-p6xm` (`braces`) allowlist entry is no longer needed: the audit passes with an empty allowlist. Left in place here; remove it in a follow-up.
