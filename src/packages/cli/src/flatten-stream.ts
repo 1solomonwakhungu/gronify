@@ -1,5 +1,15 @@
+import { Readable } from "node:stream";
 import type { GronOutput } from "./output.js";
-import { JsonTokenizer, type JsonSink } from "./tokenizer.js";
+import { SortingSink } from "./sort.js";
+import { JsonTokenizer, type JsonGate, type JsonSink } from "./tokenizer.js";
+
+/** Where the flattener writes its lines: reserve room, write bytes at `pos`, then call `lineDone`. */
+export interface LineSink {
+  buf: Buffer;
+  pos: number;
+  reserve(n: number): void;
+  lineDone(start: number): void;
+}
 
 const OBJECT = 0;
 const ARRAY = 1;
@@ -57,7 +67,7 @@ export class GronFlattener implements JsonSink {
   /** Index of the innermost open container, or -1 at the root. */
   private top = -1;
 
-  constructor(private readonly out: GronOutput) {
+  constructor(private readonly out: LineSink) {
     ROOT.copy(this.path);
   }
 
@@ -198,28 +208,61 @@ export class GronFlattener implements JsonSink {
   }
 }
 
+export interface FlattenOptions {
+  /** Sort object keys at every level (see `SortingSink`). Array order is unchanged. */
+  sort?: boolean | undefined;
+  /** Bytes of sorted lines to hold in memory before spilling to a temp file. Defaults to 64 MiB. */
+  sortMemory?: number | undefined;
+}
+
 /**
  * Feeds every chunk of `input` through the tokenizer into `out`, pausing whenever the output pushes back, then
  * commits `out`. On an error the sink is aborted: a file is left as it was, while lines already handed to stdout stay
  * written and only the unflushed tail is dropped.
+ *
+ * When `out` reaches its line limit the read stops there: the input is destroyed, the rest of it is never read or
+ * validated, and what was kept is committed as usual.
  */
-export async function flattenStream(input: AsyncIterable<Buffer | string>, out: GronOutput): Promise<void> {
+export async function flattenStream(
+  input: AsyncIterable<Buffer | string>,
+  out: GronOutput,
+  options: FlattenOptions = {},
+): Promise<void> {
+  let sorter: SortingSink | null = null;
   try {
-    const tokenizer = new JsonTokenizer(new GronFlattener(out), out);
-    for await (const piece of input) {
+    sorter = options.sort ? new SortingSink(out, (lines) => new GronFlattener(lines), { memoryLimit: options.sortMemory }) : null;
+    const gate: JsonGate = sorter ?? out;
+    const tokenizer = new JsonTokenizer(sorter ?? new GronFlattener(out), gate);
+    reading: for await (const piece of input) {
       const chunk = typeof piece === "string" ? Buffer.from(piece, "utf8") : piece;
       let pos = 0;
       do {
         pos = tokenizer.write(chunk, pos);
+        if (sorter !== null) await sorter.settle();
+        if (out.stopped) {
+          // Sorted output can still be waiting to be written, so only an unsorted run can tell that nothing is left.
+          out.exhausted = sorter === null && tokenizer.finishesAt(chunk, pos);
+          break reading;
+        }
         if (out.blocked) await out.drain();
       } while (pos < chunk.length);
       out.flush();
       if (out.blocked) await out.drain();
     }
-    tokenizer.end();
+    if (out.stopped) {
+      if (input instanceof Readable) input.destroy();
+    } else {
+      tokenizer.end();
+      await sorter?.settle();
+      // The whole input was read; a limit reached on its very last line leaves nothing unprinted.
+      if (out.stopped) out.exhausted = sorter === null;
+    }
   } catch (error) {
     await out.finish(false).catch(() => undefined);
+    if (input instanceof Readable) input.destroy();
     throw error;
+  } finally {
+    sorter?.dispose();
   }
   await out.finish(true);
 }

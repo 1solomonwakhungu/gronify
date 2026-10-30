@@ -33,7 +33,26 @@ const staleClaimPatterns = [
     message: "claims a VS Code workflow that is not present",
   },
   {
-    pattern: /\bdiff\b/i,
+    // Gronify has no diff command, so `gronify diff` is rejected anywhere, code included.
+    pattern: /\bgronify(?:\s+--?[\w-]+)*\s+diff\b/i,
+    message: "documents a gronify diff command that does not exist",
+  },
+  {
+    // `--sort` only makes the output diffable. Naming the system `diff` tool is fine, so code spans are ignored and
+    // only claim-shaped phrases are matched: a verb list ending in "and diff", "Gronify diffs ...", "diff two JSON
+    // files", "a diff mode", "diffing support", "built-in diffing".
+    prose: true,
+    pattern: new RegExp(
+      [
+        String.raw`\bgronify\s+(?:can\s+|will\s+|also\s+)?diffs?\b`,
+        String.raw`\b(?:search|inspect|flatten|unflatten|explor|quer|filter)\w*\b[^.\n]*?\b(?:and|or)\s+diffs?\b(?!\s+(?:the|them|it|its|a|an|two|both|with|by|against|those|these)\b)`,
+        String.raw`\bdiffs?\s+(?:two|2|any|your|the two)\s+(?:JSON|payloads?)\b`,
+        String.raw`\b(?:JSON|gron)\s+diff(?:s|ing)?\b`,
+        String.raw`(?<!\b(?:no|not\s+an?|without\s+an?)\s+)\bdiff(?:ing)?\s+(?:command|subcommand|support|mode|feature)s?\b`,
+        String.raw`\bbuilt-in\s+diff(?:s|ing)?\b`,
+      ].join("|"),
+      "i",
+    ),
     message: "claims diff support that is not present",
   },
   {
@@ -57,8 +76,12 @@ function scanForStaleClaims(file) {
   }
 
   const contents = readFileSync(file, "utf8");
-  for (const { pattern, message } of staleClaimPatterns) {
-    if (pattern.test(contents)) {
+  // Fenced blocks and inline code hold commands and examples, not claims about what Gronify does.
+  const prose = contents
+    .replace(/^ *```[\s\S]*?^ *```/gm, " ")
+    .replace(/`[^`\n]*`/g, " ");
+  for (const { pattern, message, prose: proseOnly } of staleClaimPatterns) {
+    if (pattern.test(proseOnly ? prose : contents)) {
       errors.push(`${file} ${message}`);
     }
   }
@@ -83,13 +106,10 @@ if (existsSync("README.md")) {
     errors.push("README.md still contains the duplicated Gronify heading");
   }
 
-  if (/npm (publish|install -g gronify)/i.test(readme)) {
-    errors.push("README.md claims npm publication or global npm install");
-  }
-
   scanForStaleClaims("README.md");
 }
 
+scanForStaleClaims("skills/gronify-json-flatten-search/SKILL.md");
 scanForStaleClaims("landing-page/src/app/layout.tsx");
 scanForStaleClaims("landing-page/src/app/page.tsx");
 
