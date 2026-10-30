@@ -33,17 +33,23 @@ const staleClaimPatterns = [
     message: "claims a VS Code workflow that is not present",
   },
   {
-    // Gronify has no diff command; `--sort` only makes the output diffable. Naming the system `diff` tool is fine, so
-    // code spans are ignored and only claim-shaped phrases are matched: a verb list ending in "and diff", "Gronify
-    // diffs ...", "diff two JSON files", "a diff mode", "diff support".
+    // Gronify has no diff command, so `gronify diff` is rejected anywhere, code included.
+    pattern: /\bgronify(?:\s+--?[\w-]+)*\s+diff\b/i,
+    message: "documents a gronify diff command that does not exist",
+  },
+  {
+    // `--sort` only makes the output diffable. Naming the system `diff` tool is fine, so code spans are ignored and
+    // only claim-shaped phrases are matched: a verb list ending in "and diff", "Gronify diffs ...", "diff two JSON
+    // files", "a diff mode", "diffing support", "built-in diffing".
     prose: true,
     pattern: new RegExp(
       [
-        String.raw`\bgronify\b[^.\n]{0,40}\bdiffs?\b`,
+        String.raw`\bgronify\s+(?:can\s+|will\s+|also\s+)?diffs?\b`,
         String.raw`\b(?:search|inspect|flatten|unflatten|explor|quer|filter)\w*\b[^.\n]*?\b(?:and|or)\s+diffs?\b(?!\s+(?:the|them|it|its|a|an|two|both|with|by|against|those|these)\b)`,
-        String.raw`\bdiffs?\s+(?:(?:two|2|any|your|the two)\s+)?(?:JSON|payloads?)\b`,
+        String.raw`\bdiffs?\s+(?:two|2|any|your|the two)\s+(?:JSON|payloads?)\b`,
         String.raw`\b(?:JSON|gron)\s+diff(?:s|ing)?\b`,
-        String.raw`\bdiff\s+(?:command|subcommand|support|mode|feature)\b`,
+        String.raw`(?<!\b(?:no|not\s+an?|without\s+an?)\s+)\bdiff(?:ing)?\s+(?:command|subcommand|support|mode|feature)s?\b`,
+        String.raw`\bbuilt-in\s+diff(?:s|ing)?\b`,
       ].join("|"),
       "i",
     ),

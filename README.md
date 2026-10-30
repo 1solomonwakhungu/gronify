@@ -47,7 +47,7 @@ npm install -g gronify
 npx gronify --help
 ```
 
-The result caps (`search -m/--max-count`, `flatten --limit`), `--sort`, and `search --exit-status` need Gronify **1.2.0 or newer**. Version 1.1.0 stops with `error: unknown option '-m'`. Check with `gronify --version` (or look for `--max-count` in `gronify search --help`), and update with `npm install -g gronify@latest`.
+The result caps (`search -m/--max-count`, `flatten --limit`), `--sort`, and `search --exit-status` need Gronify **1.2.0 or newer**. Version 1.1.0 stops with `error: unknown option '-m'`. Check with `gronify search --help | grep -e --max-count` (a build from source may report an older `--version` while having the flags) or `gronify --version`, and update with `npm install -g gronify@latest`.
 
 ### Homebrew
 
@@ -127,7 +127,7 @@ diff <(gronify flatten --sort old.json) <(gronify flatten --sort new.json)
 Use the exit status in a script:
 
 ```bash
-if gronify search --exit-status config.json -m 1 "debug = true" > /dev/null; then echo "debug is on"; fi
+if gronify search --exit-status config.json -m 1 "debug = true" > /dev/null 2>&1; then echo "debug is on"; fi
 ```
 
 Use Gronify in a pipeline:
@@ -261,7 +261,7 @@ gronify search data.json -m 10 "field"
 - `n` must be a positive integer. `0`, negative numbers, decimals, and text are rejected with an error.
 - The cap counts matching lines. With `-v` it counts the non-matching lines that are printed. With `--count` it caps the count.
 - Gronify stops reading the input at the cap and destroys the read stream (or stdin), so a 5 GB file whose first match is near the start returns in milliseconds, and a `cat huge.json | gronify search -m 5 term` pipeline ends instead of waiting. Memory and time depend on how far Gronify had to read, not on the file size.
-- The exit status is 0. When a cap ended the run, Gronify prints one line to **stderr**, for example `Stopped after 20 matches (--max-count); there may be more`, and stdout holds only the lines. Gronify does not read further to find out whether more output was left, so the notice says "there may be more". It stays quiet when it can tell without reading on: the cap was reached on the last line of the document (only whitespace and closing brackets follow in the same chunk of input). With `--sort` the notice is always printed.
+- The exit status is 0. When a cap ended the run, Gronify prints one line to **stderr**, for example `Stopped after 20 matches (--max-count); there may be more`, and stdout holds only the lines. Gronify does not read further to find out whether more output was left, so the notice says "there may be more". It stays quiet when it can tell without reading on: the cap was reached on the last line of the document (only whitespace and closing brackets follow in the same chunk of input). With `--sort`, the notice is printed whenever the cap is reached.
 - The rest of the input is never read, so it is not validated either. A syntax error after the cap is not reported, where a run without a cap would exit 1 on it. Errors before the cap are reported as usual.
 - With `-o`, the capped output is committed atomically like any other output: the file appears (or replaces the old one) only when the run finishes, and holds exactly the lines that were printed. See the notes under [Streaming and large inputs](#streaming-and-large-inputs).
 - With `--sort`, the cap applies to the sorted order. It can only end the read early while the input is a top-level array. A document whose root is an object has to be read to the end before its first sorted line is known.
@@ -292,7 +292,7 @@ How the order is defined:
 
 **This is not the order `gron` uses**, and it differs from sorting the lines with `sort`:
 
-- `gron` 0.7.1 puts every bare key (`json.b`) before every bracketed key (`json["10"]`, `json["b x"]`) at the same level, whatever the key text, and compares keys as UTF-8 bytes (so it prints `"～"` before `"😀"`, the reverse of the above). It also merges duplicate keys. `gronify flatten --sort` and `gron` agree only when every key is ASCII, all keys of a level are bare or all are bracketed, and no key repeats.
+- `gron` 0.7.1 puts every bare key (`json.b`) before every bracketed key (`json["10"]`, `json["b x"]`) at the same level, whatever the key text, and compares keys as UTF-8 bytes (so it prints `"～"` before `"😀"`, the reverse of the above). It also merges duplicate keys. `gronify flatten --sort` and `gron` agree only when every key is ASCII, all keys of a level are bare or all are bracketed, no key needs escaping (`gron` compares the escaped text, so `"a\"b"` and keys with tabs can sort differently), and no key repeats.
 - Plain `sort` on the lines compares whole lines. It puts `json.a$ = 1` between `json.a = {}` and `json.a.x = 2`, and `json.arr[10]` before `json.arr[2]`, and its output no longer unflattens.
 
 Why this order suits diffing:
