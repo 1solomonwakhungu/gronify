@@ -193,6 +193,8 @@ export class GronOutput {
   matched = 0;
   /** The `limit` was reached. `blocked` stays true so the producer stops, and `drain` no longer waits. */
   stopped = false;
+  /** Set by the producer when the limit was reached and it knows the input had nothing more to print. */
+  exhausted = false;
 
   private stream: Writable | null = null;
   private spare: Buffer[] = [];

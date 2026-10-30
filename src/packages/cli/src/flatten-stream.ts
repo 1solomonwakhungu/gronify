@@ -228,8 +228,9 @@ export async function flattenStream(
   out: GronOutput,
   options: FlattenOptions = {},
 ): Promise<void> {
-  const sorter = options.sort ? new SortingSink(out, (lines) => new GronFlattener(lines), { memoryLimit: options.sortMemory }) : null;
+  let sorter: SortingSink | null = null;
   try {
+    sorter = options.sort ? new SortingSink(out, (lines) => new GronFlattener(lines), { memoryLimit: options.sortMemory }) : null;
     const gate: JsonGate = sorter ?? out;
     const tokenizer = new JsonTokenizer(sorter ?? new GronFlattener(out), gate);
     reading: for await (const piece of input) {
@@ -238,7 +239,11 @@ export async function flattenStream(
       do {
         pos = tokenizer.write(chunk, pos);
         if (sorter !== null) await sorter.settle();
-        if (out.stopped) break reading;
+        if (out.stopped) {
+          // Sorted output can still be waiting to be written, so only an unsorted run can tell that nothing is left.
+          out.exhausted = sorter === null && tokenizer.finishesAt(chunk, pos);
+          break reading;
+        }
         if (out.blocked) await out.drain();
       } while (pos < chunk.length);
       out.flush();
@@ -249,9 +254,12 @@ export async function flattenStream(
     } else {
       tokenizer.end();
       await sorter?.settle();
+      // The whole input was read; a limit reached on its very last line leaves nothing unprinted.
+      if (out.stopped) out.exhausted = sorter === null;
     }
   } catch (error) {
     await out.finish(false).catch(() => undefined);
+    if (input instanceof Readable) input.destroy();
     throw error;
   } finally {
     sorter?.dispose();

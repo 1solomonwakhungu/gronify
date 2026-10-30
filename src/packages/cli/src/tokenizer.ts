@@ -226,6 +226,22 @@ export class JsonTokenizer {
     return pos;
   }
 
+  /**
+   * Whether `buf` from `pos` holds nothing but whitespace and the closing brackets that finish the document, so the rest
+   * of the input cannot add a line. Call it after `write` returned `pos`. It does not validate the closers.
+   */
+  finishesAt(buf: Buffer, pos: number): boolean {
+    if (this.state >= IN_STRING) return false;
+    let open = this.depth;
+    for (; pos < buf.length; pos += 1) {
+      const c = buf[pos]!;
+      if (c === 0x20 || c === 0x0d || c === 0x09 || c === 0x0a) continue;
+      if ((c !== 0x5d && c !== 0x7d) || open === 0) return false;
+      open -= 1;
+    }
+    return open === 0;
+  }
+
   /** Signals end of input and throws unless exactly one complete JSON value was seen. */
   end(): void {
     const state = this.state;
