@@ -207,10 +207,10 @@ gronify search data.json --count "field"
 - **Numbers are printed exactly as written.** `12345678901234567890`, `1.10`, `1e2`, and `-0` come out unchanged, where a parse-and-reprint would give `12345678901234567000`, `1.1`, `100`, and `0`.
 - **Keys keep document order.** Integer-like keys such as `"2"` are no longer moved ahead of the others.
 - **Duplicate keys are all emitted**, one line per occurrence, in the order they appear.
-- **Strings** are printed as `JSON.stringify` would print them, so `"é"` becomes `"é"` and `"\/"` becomes `"/"`.
+- **Strings** are printed as `JSON.stringify` would print them, so `"\u00e9"` becomes `"é"` and `"\/"` becomes `"/"`.
 - **Deep nesting** has no depth limit. Every container line repeats its full path, so the output of a very deep document grows quadratically with depth.
-- **Errors mid-stream.** Output already written stays written and the exit code is 1. Lines still buffered when the error occurs (less than 1 MB) are dropped.
-- **Output files.** `-o` creates or truncates the file when the first output is written. A search with no matches writes no file.
+- **Invalid input on stdout.** Output is written while the input is still being read, so when the input turns out to be invalid (a truncated download is only noticed at the end) the lines produced before the error may already have been written, possibly all but the last few. The error message and exit code 1 are always produced. Scripts should check the exit status, or use `set -o pipefail` in a pipeline such as `gronify flatten data.json | other-tool`, rather than trusting that stdout holds a complete result.
+- **Output files are atomic.** With `-o`, output goes to a temporary file next to the target, and the target is replaced only after the whole input was processed successfully. If anything fails (invalid input, a write error, Ctrl-C), the temporary file is removed and an existing target is left untouched. The target keeps its mode, and `-o` may name the input file (`gronify -o data.json flatten data.json`). A search with no matches writes no file.
 - **Closed pipes.** `gronify flatten data.json | head` stops quietly once `head` exits.
 - A single string or number token must fit in memory.
 
