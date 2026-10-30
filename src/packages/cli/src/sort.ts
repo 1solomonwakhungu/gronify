@@ -23,9 +23,33 @@ export interface SortOptions {
   memoryLimit?: number | undefined;
 }
 
+const MEMORY_UNITS: Record<string, number> = {
+  "": 1,
+  b: 1,
+  kb: 1e3,
+  mb: 1e6,
+  gb: 1e9,
+  kib: 1024,
+  mib: 1024 ** 2,
+  gib: 1024 ** 3,
+};
+
+/** Parses `GRONIFY_SORT_MEMORY`: a byte count, or a number with a KB/MB/GB (powers of 1000) or KiB/MiB/GiB suffix. */
+export function parseMemoryLimit(text: string): number {
+  const match = /^\s*([0-9]+(?:\.[0-9]+)?)\s*([a-z]*)\s*$/i.exec(text);
+  const unit = match === null ? undefined : MEMORY_UNITS[match[2]!.toLowerCase()];
+  const bytes = match === null || unit === undefined ? NaN : Math.floor(Number(match[1]) * unit);
+  if (!Number.isSafeInteger(bytes) || bytes < 1) {
+    throw new Error(
+      `GRONIFY_SORT_MEMORY must be a positive size such as 67108864, 64MiB or 64MB (bytes, or KB/MB/GB, or KiB/MiB/GiB); got '${text}'`,
+    );
+  }
+  return bytes;
+}
+
 function defaultMemoryLimit(): number {
-  const configured = Number(process.env.GRONIFY_SORT_MEMORY);
-  return Number.isSafeInteger(configured) && configured > 0 ? configured : DEFAULT_MEMORY_LIMIT;
+  const configured = process.env.GRONIFY_SORT_MEMORY;
+  return configured === undefined || configured.trim() === "" ? DEFAULT_MEMORY_LIMIT : parseMemoryLimit(configured);
 }
 
 /** A view of bytes holding whole lines. The object is reused between yields, so consume it before resuming. */

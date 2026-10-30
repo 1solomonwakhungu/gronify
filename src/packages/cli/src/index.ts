@@ -34,12 +34,19 @@ function parseCount(value: string): number {
 
 const SORT_HELP =
   "Sort object keys at every level (UTF-16 order); arrays keep their order. Default: document order. " +
-  "Memory: arrays at the top level stream; an object is held until it closes, up to 64 MiB (GRONIFY_SORT_MEMORY bytes) " +
+  "Memory: arrays at the top level stream; an object is held until it closes, up to 64 MiB (set GRONIFY_SORT_MEMORY, e.g. 256MiB) " +
   "before spilling to a temp file";
 
-/** Tells the reader (on stderr, so stdout stays clean) that a cap ended the run before the input did. */
-function reportStop(formatter: OutputFormatter, output: GronOutput, message: string): void {
-  if (output.stopped) console.error(formatter.formatInfo(message));
+function plural(count: number, one: string, many: string): string {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
+/**
+ * Tells the reader (on stderr, so stdout stays clean) that a cap ended the run before the input did. Nothing is said when
+ * the input turned out to hold no more output. Without `hedge`, the message carries no "there may be more".
+ */
+function reportStop(formatter: OutputFormatter, output: GronOutput, message: string, hedge = true): void {
+  if (output.stopped && !output.exhausted) console.error(formatter.formatInfo(hedge ? `${message}; there may be more` : message));
 }
 
 function hasStdinData(): boolean {
@@ -131,7 +138,7 @@ program
       if (!input) return;
       const output = createOutput(globalOptions.output, { format: formatter.createGronLineFormatter(), limit: options.limit });
       await flattenStream(input, output, { sort: options.sort });
-      reportStop(formatter, output, `Stopped after ${options.limit} lines (--limit); there may be more`);
+      reportStop(formatter, output, `Stopped after ${plural(options.limit!, "line", "lines")} (--limit)`);
       if (globalOptions.output) {
         console.error(formatter.formatSuccess(`Output written to ${globalOptions.output}`));
       }
@@ -222,13 +229,11 @@ program
       });
       // Counting needs no order, so --sort is skipped with --count.
       await flattenStream(input, output, { sort: options.sort && !options.count });
-      reportStop(
-        formatter,
-        output,
-        options.count
-          ? `Stopped counting at ${options.maxCount} matches (--max-count)`
-          : `Stopped after ${options.maxCount} ${options.invertMatch ? "lines" : "matches"} (--max-count); there may be more`
-      );
+      if (options.count) {
+        reportStop(formatter, output, `Stopped counting at ${plural(options.maxCount!, "match", "matches")} (--max-count)`, false);
+      } else {
+        reportStop(formatter, output, `Stopped after ${options.invertMatch ? plural(options.maxCount!, "line", "lines") : plural(options.maxCount!, "match", "matches")} (--max-count)`);
+      }
       if (options.exitStatus && output.matched === 0) process.exitCode = 1;
 
       if (options.count) {

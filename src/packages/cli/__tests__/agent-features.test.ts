@@ -118,7 +118,7 @@ describe("agent features", () => {
       expect(result.stderr).toBe("");
     });
 
-    test("a cap that equals the number of matches still reports it was reached", async () => {
+    test("a cap that equals the number of matches reports it while the document has more lines to come", async () => {
       const result = await runCLI(["--no-color", "search", "-m", "2", "region"], DOC);
 
       expect(lines(result.stdout)).toHaveLength(2);
@@ -223,6 +223,61 @@ describe("agent features", () => {
       expect(lines(result.stdout)).toHaveLength(3);
       // A full pass over this file takes 0.1 s or more; process start-up alone is most of this budget.
       expect(elapsed).toBeLessThan(5_000);
+    });
+
+    describe("the stop notice", () => {
+      const THREE = '[{"a":1},{"a":2},{"a":3}]';
+
+      test("uses the singular for a cap of 1", async () => {
+        const flatten = await runCLI(["--no-color", "flatten", "--limit", "1"], DOC);
+        const search = await runCLI(["--no-color", "search", "-m", "1", "e"], DOC);
+        const invert = await runCLI(["--no-color", "search", "-v", "-m", "1", "zzz"], DOC);
+        const count = await runCLI(["--no-color", "search", "--count", "-m", "1", "e"], DOC);
+
+        expect(flatten.stderr.trim()).toBe("Stopped after 1 line (--limit); there may be more");
+        expect(search.stderr.trim()).toBe("Stopped after 1 match (--max-count); there may be more");
+        expect(invert.stderr.trim()).toBe("Stopped after 1 line (--max-count); there may be more");
+        expect(count.stderr.trim()).toBe("Stopped counting at 1 match (--max-count)");
+      });
+
+      test("says nothing when the cap equals the number of results and the document is finished", async () => {
+        const search = await runCLI(["--no-color", "search", "a =", "-m", "3"], THREE);
+        const flatten = await runCLI(["--no-color", "flatten", "--limit", "7"], THREE);
+        const count = await runCLI(["--no-color", "search", "--count", "a =", "-m", "3"], THREE);
+
+        expect(lines(search.stdout)).toHaveLength(3);
+        expect(search.stderr).toBe("");
+        expect(lines(flatten.stdout)).toHaveLength(7);
+        expect(flatten.stderr).toBe("");
+        expect(count.stdout.trim()).toBe("3");
+        expect(count.stderr).toBe("");
+      });
+
+      test("says nothing when only whitespace and closing brackets are left, also across a file read", async () => {
+        const file = join(dir, "exact.json");
+        writeFileSync(file, `${THREE}\n`);
+
+        const result = await runCLI(["--no-color", "search", file, "a =", "-m", "3"]);
+
+        expect(lines(result.stdout)).toHaveLength(3);
+        expect(result.stderr).toBe("");
+      });
+
+      test("keeps the hedge when more output follows the cap", async () => {
+        const fewer = await runCLI(["--no-color", "search", "a =", "-m", "2"], THREE);
+        const lastLine = await runCLI(["--no-color", "flatten", "--limit", "6"], THREE);
+        const more = await runCLI(["--no-color", "flatten", "--limit", "7"], '[{"a":1},{"a":2},{"a":3},4]');
+
+        expect(fewer.stderr.trim()).toBe("Stopped after 2 matches (--max-count); there may be more");
+        expect(lastLine.stderr.trim()).toBe("Stopped after 6 lines (--limit); there may be more");
+        expect(more.stderr.trim()).toBe("Stopped after 7 lines (--limit); there may be more");
+      });
+
+      test("keeps the hedge for a sorted run, which cannot tell what is still waiting", async () => {
+        const result = await runCLI(["--no-color", "search", "--sort", "a =", "-m", "3"], THREE);
+
+        expect(result.stderr.trim()).toBe("Stopped after 3 matches (--max-count); there may be more");
+      });
     });
 
     describe("with -o", () => {
@@ -451,6 +506,43 @@ describe("agent features", () => {
         .filter((key): key is string => key !== undefined);
       expect(keys).toHaveLength(6000);
       expect(keys).toEqual([...keys].sort());
+    });
+
+    describe("GRONIFY_SORT_MEMORY", () => {
+      const text = JSON.stringify(Object.fromEntries(Array.from({ length: 300 }, (_, i) => [`k${(i * 7) % 300}`, { v: i, w: [i] }])));
+
+      test("accepts a byte count and KB, MB, GB, KiB, MiB and GiB suffixes", async () => {
+        const reference = await runCLI(["--no-color", "flatten", "--sort"], text);
+        for (const value of ["2048", "1KB", "1 KiB", "1kib", "0.5MB", "64MiB", "1GiB", "1gb", ""]) {
+          const result = await runCLI(["--no-color", "flatten", "--sort"], text, { GRONIFY_SORT_MEMORY: value });
+
+          expect(result.stderr).toBe("");
+          expect(result.stdout).toBe(reference.stdout);
+        }
+      });
+
+      test("rejects a value it cannot read instead of ignoring it", async () => {
+        for (const value of ["64XiB", "MiB", "-1", "0", "0KB", "1.5.2", "lots", "1e3"]) {
+          const result = await runCLI(["--no-color", "flatten", "--sort"], text, { GRONIFY_SORT_MEMORY: value });
+
+          expect(result.exitCode).toBe(1);
+          expect(result.stdout).toBe("");
+          expect(result.stderr).toContain("GRONIFY_SORT_MEMORY must be a positive size");
+          expect(result.stderr).toContain(`'${value}'`);
+        }
+      });
+
+      test("is only read when --sort is used", async () => {
+        const result = await runCLI(["--no-color", "flatten"], text, { GRONIFY_SORT_MEMORY: "lots" });
+
+        expect(result.exitCode).toBe(0);
+      });
+
+      test("an unreadable value exits 2 under search --exit-status", async () => {
+        const result = await runCLI(["--no-color", "search", "--sort", "--exit-status", "v"], text, { GRONIFY_SORT_MEMORY: "lots" });
+
+        expect(result.exitCode).toBe(2);
+      });
     });
 
     test("reports invalid JSON with exit 1", async () => {
