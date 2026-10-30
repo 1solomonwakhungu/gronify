@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { accessSync, constants, createReadStream, existsSync, readFileSync } from "node:fs";
+import { accessSync, constants, createReadStream, existsSync } from "node:fs";
 import { extname } from "node:path";
 import { flattenStream } from "./flatten-stream.js";
 import { createFormatter, shouldUseColor, type FormatOptions, type OutputFormatter } from "./formatter.js";
-import { unflattenGron } from "./gron.js";
 import { createLineMatcher } from "./matcher.js";
 import { createOutputSink, GronOutput, type OutputOptions } from "./output.js";
 
@@ -23,13 +22,6 @@ program
 
 function hasStdinData(): boolean {
   return !process.stdin.isTTY;
-}
-
-async function readStdin(): Promise<string> {
-  process.stdin.setEncoding("utf8");
-  let data = "";
-  for await (const chunk of process.stdin) data += chunk;
-  return data;
 }
 
 function createFormatterFromOptions(globalOptions: Record<string, unknown>): OutputFormatter {
@@ -52,20 +44,6 @@ function validateFile(filePath: string): void {
   } catch {
     throw new Error(`Cannot read file '${filePath}' - permission denied`);
   }
-}
-
-async function readInput(file: string | undefined, formatter: OutputFormatter, usage: string): Promise<string> {
-  if (file) {
-    validateFile(file);
-    return readFileSync(file, "utf8");
-  }
-  if (!hasStdinData()) {
-    console.error(formatter.formatError("No input file provided and no data piped to stdin"));
-    console.error(usage);
-    process.exitCode = 1;
-    return "";
-  }
-  return readStdin();
 }
 
 /** Streams a file or stdin as raw bytes. Returns undefined (after printing usage) when there is nothing to read. */
@@ -149,10 +127,24 @@ program
     const globalOptions = command.parent?.opts() ?? {};
     const formatter = createFormatterFromOptions(globalOptions);
     try {
-      const input = await readInput(file, formatter, "Usage: gronify unflatten <file> OR cat file.gron | gronify unflatten");
-      if (process.exitCode) return;
-      await emit(formatter.formatJson(JSON.stringify(unflattenGron(input))), formatter, globalOptions.output);
+      const input = openInput(file, formatter, "Usage: gronify unflatten <file> OR cat file.gron | gronify unflatten");
+      if (!input) return;
+      const { createMemoryOutput, unflattenStream } = await import("./unflatten-stream.js");
+      const pretty = Boolean(globalOptions.pretty);
+      // Colour is applied to the finished text, so it is only used when the formatter would actually colour JSON.
+      const colorizer = createFormatterFromOptions({ ...globalOptions, pretty: false });
+      if (colorizer.formatJson("{}") !== "{}") {
+        const memory = createMemoryOutput();
+        await unflattenStream(input, memory.sink, { pretty });
+        await emit(colorizer.formatJson(memory.text().replace(/\n$/, "")), formatter, globalOptions.output);
+        return;
+      }
+      await unflattenStream(input, createOutputSink(globalOptions.output), { pretty });
+      if (globalOptions.output) {
+        console.error(formatter.formatSuccess(`Output written to ${globalOptions.output}`));
+      }
     } catch (error) {
+      if (isBrokenPipe(error)) return;
       fail(formatter, "unflattening gron", error);
       if (error instanceof Error && /^line \d+:/.test(error.message)) {
         console.error(formatter.formatInfo("Tip: Gron lines should look like: json.path = value"));
