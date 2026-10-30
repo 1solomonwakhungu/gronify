@@ -51,26 +51,28 @@
 - After the next release, update `Formula/gronify.rb` in the Homebrew tap with the new `url` and `sha256`, and drop `depends_on "fastgron"`; the CLI no longer needs it.
 - Remove the `GHSA-hp3w-g68c-fv3c` and `GHSA-vfj7-8cjw-p6xm` allowlist entries once fixes ship.
 
-## 2026-10-29 — Streaming unflatten
+## 2026-10-30 — Streaming unflatten
 
-- `gronify unflatten` now reads a byte stream and writes JSON through a backpressure-aware buffered writer, so memory stays flat. New modules live in `src/packages/cli/src/unflatten-stream.ts` and `src/packages/cli/src/unflatten/`; the `unflatten` action in `index.ts` loads them lazily. `flatten`, `search`, and `gron.ts` are untouched.
+- `gronify unflatten` reads a byte stream and writes JSON through a backpressure-aware buffered writer, so memory stays flat. New modules live in `src/packages/cli/src/unflatten-stream.ts` and `src/packages/cli/src/unflatten/`; the `unflatten` action in `index.ts` loads them lazily.
+- Merged #95 (`origin/main` e3ac1a1). `unflattenStream` now takes an `OutputSink` from `src/output.ts` instead of opening files itself, for stdout and `-o` alike. Its `OutputBuffer` stays as a thin hold-and-discard buffer in front of the sink (the streaming pass has to throw held output away when out-of-order input shows up in the first 16 MiB, which `GronOutput`'s line-oriented API cannot do); it never creates a file. `emit` is awaited on every path, and the colour path (a pty only; chalk is off without a TTY) reports an unwritable `-o` in one line.
+- Review fixes (all with tests): `-o` is atomic through the sink, so `-o` may name the input file and invalid input past 16 MiB, or out-of-order input past the budget, leaves an existing target alone (CLI tests use inputs over 16 MiB). An unwritable `-o` gives a one-line error and exit 1 for small and large inputs. `\v` and `\f` inside values are rejected (only space, tab, LF and CR are JSON whitespace) while each line is still trimmed of Unicode whitespace like `String.prototype.trim` (U+00A0, U+3000, ...). The post-budget error now says that more than 16 MiB of input was read or output produced, instead of "Input larger than 16 MiB". Big integers in one-line compound values (`json.a = {"n":12345678901234567890}`) are kept verbatim by a small iterative parser in `unflatten/compound.ts`. The README now says repeated assignments write duplicate keys.
 - Document-order gron (what `flatten` writes) converts in one pass. Out-of-order input seen before the first 16 MiB of input or output is rebuilt with an in-memory tree; later it fails with `line N: ...` and a document-order explanation.
-- Numbers are validated and written verbatim (`12345678901234567890`, `1.10`, `-0`); strings are normalized to `JSON.stringify` form; skipped array indexes stream out as `null`; `--pretty` is generated directly and matches `JSON.stringify(value, null, 2)`; `--color` output is byte-identical to the previous build.
-- Benchmarks (`node scripts/bench-unflatten.mjs`, Apple M5 Pro, Node 22.23.1, best of 3, stdout to /dev/null). Before is `main` at `07c1c86`:
+- Numbers are validated and written verbatim (`12345678901234567890`, `1.10`, `-0`); strings are normalized to `JSON.stringify` form; skipped array indexes stream out as `null`; `--pretty` is generated directly and matches `JSON.stringify(value, null, 2)` (except for repeated keys); `--color` output is byte-identical to the previous build.
+- Benchmarks after the merge (`node scripts/bench-unflatten.mjs`, Apple M5 Pro, Node 22.23.1, stdout to /dev/null, best of 3). Before is `main` at `07c1c86`:
 
   | Input                               | Before                  | After               |
   | ----------------------------------- | ----------------------- | ------------------- |
-  | 56 MB gron                          | 0.91 s, 515 MB RSS      | 0.17 s, 91 MB RSS   |
-  | 285 MB gron                         | 4.85 s, 2068 MB RSS     | 0.70 s, 96 MB RSS   |
+  | 56 MB gron                          | 0.91 s, 515 MB RSS      | 0.19 s, 95 MB RSS   |
+  | 285 MB gron                         | 4.85 s, 2068 MB RSS     | 0.76 s, 117 MB RSS  |
   | 600 MB gron                         | fails (string too long) | 1.70 s, 97 MB RSS   |
   | 3 GB gron (9.8M records)            | not possible            | 7.31 s, 100 MB RSS  |
   | 285 MB gron, out of order at line 3 | 5.50 s, 2100 MB RSS     | 3.28 s, 1259 MB RSS |
 
-  Node 20.20.2 gives 0.95 s and 101 MB for the 285 MB file with identical output. The 3 GB output was checked against a sha256 computed while generating the input. `flatten | unflatten` round trips of 67 random documents (quoted keys, escapes, unicode, empty containers) match the originals.
+  The 600 MB and 3 GB rows and the out-of-order row are from the pre-merge run. Node 20.20.2 gives 0.86 s and 87 MB for the 285 MB file. A 1.0 GB JSON file (5.1M records with escapes, big integers, empty containers) went through `flatten | unflatten` in 19.8 s; the output was byte-identical to the input plus the trailing newline, and peak RSS was 93 MB for `unflatten` (151 MB for `flatten` writing to a pipe). The generated files were deleted. 67 random documents round-trip with 0 failures.
 
-- Tests: 207 passing (161 new: line splitter at every cut position, path parser, value validator, emitter, pretty mode, out-of-order fallback, post-flush error, backpressure, CLI stdin/file/`-o`).
+- Tests: 425 passing on Node 20.20.2 and 22.23.1 (the suite includes #95's), lint, format check and build clean.
 - Behavior changes: numbers keep their spelling (`1e999` is no longer turned into `null`); keys containing `=` and values containing U+2028 now parse; a repeated object key in streamed output is written twice (parsers keep the last); out-of-order input past 16 MiB is an error instead of an in-memory rebuild; array indexes above 4294967294 are rejected.
-- Next: remove the now-unused `unflattenGron` import from `index.ts` and the function from `gron.ts` once the flatten/search rewrite has merged.
+- Next: review and merge. `unflattenGron` stays in `gron.ts` only as the reference implementation for the differential tests; drop it if those tests are retired.
 
 ## 2026-10-29 — Streaming flatten and search
 
@@ -92,7 +94,7 @@
 | 100,000 levels deep | flatten | not run; old build overflows the stack near 2,000 levels | 0.17 s, 63 MB RSS (10 GB of output) |
 
 - Tests: 203 passing on Node 20.20.2 and 22.23.1 (tokenizer chunk splits at every byte, 300-document randomized equivalence with `flattenJson(JSON.parse(x))`, CLI stdin, `-o` onto its own input for flatten and search on 4 MB+, invalid input past the first flush leaving an existing `-o` file byte-identical with no temp files, unwritable and missing `-o` directories, SIGTERM cleanup, closed pipe, hang, deep nesting).
-- Next: review and merge the streaming PR; `unflatten` streaming is being done separately.
+- Next: review and merge the streaming PR; `unflatten` streaming is in #94.
 
 ## 2026-10-29 — Landing audit fix
 
