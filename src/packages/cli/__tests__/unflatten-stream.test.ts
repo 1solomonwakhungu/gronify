@@ -1,8 +1,24 @@
 import { Writable } from "node:stream";
 import { flattenJson, unflattenGron } from "../src/gron.js";
+import type { OutputSink } from "../src/output.js";
 import { createMemoryOutput, unflattenStream, type UnflattenOptions } from "../src/unflatten-stream.js";
 import { LineSplitter, type LineSink } from "../src/unflatten/lines.js";
 import { LineParser, VALUE_EMPTY_ARRAY, VALUE_EMPTY_OBJECT, VALUE_INLINE, VALUE_SCALAR } from "../src/unflatten/parse.js";
+
+/** A sink around a stream, recording how it was finished. */
+function sinkOf(stream: Writable): OutputSink & { events: string[] } {
+  const events: string[] = [];
+  return {
+    events,
+    open: () => stream,
+    commit: async () => {
+      events.push("commit");
+    },
+    abort: async () => {
+      events.push("abort");
+    }
+  };
+}
 
 async function* chunked(text: string | Buffer, size: number): AsyncGenerator<Buffer> {
   const bytes = Buffer.isBuffer(text) ? text : Buffer.from(text, "utf8");
@@ -15,7 +31,7 @@ async function unflatten(
   chunkSize = 1 << 20
 ): Promise<string> {
   const memory = createMemoryOutput();
-  await unflattenStream(chunked(gron, chunkSize), memory.stream, options);
+  await unflattenStream(chunked(gron, chunkSize), memory.sink, options);
   return memory.text();
 }
 
@@ -503,7 +519,7 @@ describe("out-of-order input", () => {
         callback();
       }
     });
-    await unflattenStream(chunked(sorted, 1 << 20), stream);
+    await unflattenStream(chunked(sorted, 1 << 20), sinkOf(stream));
     expect(writes).toHaveLength(1);
   });
 
@@ -512,13 +528,13 @@ describe("out-of-order input", () => {
 
     test("fails with the line number and an explanation", async () => {
       const gron = `${ascending.join("\n")}\njson[3] = 99\n`;
-      await expect(unflatten(gron, { budgetBytes: 64 }, 32)).rejects.toThrow(/^line 62: .*document-order gron/);
+      await expect(unflatten(gron, { budgetBytes: 64 }, 32)).rejects.toThrow(/^line 62: .*must be in document order/);
     });
 
     test("fails when a closed container is re-entered", async () => {
       const filler = Array.from({ length: 40 }, (_, index) => `json.a[${index}] = ${index}`);
       const gron = ["json = {}", "json.a = []", ...filler, "json.b = 1", "json.a[40] = 5"].join("\n");
-      await expect(unflatten(gron, { budgetBytes: 64 }, 32)).rejects.toThrow(/^line 44: .*document-order gron/);
+      await expect(unflatten(gron, { budgetBytes: 64 }, 32)).rejects.toThrow(/^line 44: .*must be in document order/);
     });
 
     test("still streams document-order input of any size", async () => {
@@ -548,7 +564,7 @@ describe("backpressure", () => {
         setImmediate(callback);
       }
     });
-    await unflattenStream(chunked("json = []\njson[3000000] = 1\n", 1 << 20), stream);
+    await unflattenStream(chunked("json = []\njson[3000000] = 1\n", 1 << 20), sinkOf(stream));
     expect(total).toBe(15_000_004);
     expect(tail.endsWith(",1]\n")).toBe(true);
     expect(maxQueued).toBeLessThan(16 * 1024 * 1024);
@@ -565,7 +581,7 @@ describe("backpressure", () => {
         setImmediate(callback);
       }
     });
-    await unflattenStream(chunked("json = []\njson[2000000] = 1\njson[1] = 2\n", 1 << 20), stream);
+    await unflattenStream(chunked("json = []\njson[2000000] = 1\njson[1] = 2\n", 1 << 20), sinkOf(stream));
     expect(total).toBe(10_000_001);
     expect(maxQueued).toBeLessThan(16 * 1024 * 1024);
   });
@@ -578,6 +594,171 @@ describe("backpressure", () => {
       }
     });
     const gron = ["json = []", ...Array.from({ length: 20000 }, (_, index) => `json[${index}] = "${"x".repeat(100)}"`)].join("\n");
-    await expect(unflattenStream(chunked(gron, 1 << 16), stream, { budgetBytes: 1024 })).rejects.toThrow("disk full");
+    await expect(unflattenStream(chunked(gron, 1 << 16), sinkOf(stream), { budgetBytes: 1024 })).rejects.toThrow("disk full");
+  });
+});
+
+// ------------------------------------------------------------ review fixes
+
+describe("whitespace", () => {
+  test.each([
+    ["[\v]", "vertical tab"],
+    ["{ \f }", "form feed"],
+    ["[ ]", "no-break space"]
+  ])("rejects %j inside an empty container (%s)", async (raw) => {
+    await expect(unflatten(`json = {}\njson.a = ${raw};\n`)).rejects.toThrow("line 2: invalid JSON value");
+  });
+
+  test("accepts space and tab inside empty containers", async () => {
+    expect(await unflatten("json = {}\njson.a = [ \t ]\njson.b = {\t}\n")).toBe('{"a":[],"b":{}}\n');
+  });
+
+  test.each([
+    [" ", "U+00A0"],
+    ["　", "U+3000"],
+    [" ", "U+2028"],
+    [" ", "U+2003"],
+    ["﻿", "U+FEFF"],
+    [" ", "U+1680"],
+    [" ", "U+202F"],
+    [" ", "U+205F"],
+    ["\v\f", "vertical tab and form feed"]
+  ])("trims %j (%s) around a line like String.prototype.trim", async (space) => {
+    const gron = `${space}json = {}${space}\n${space}json.a = 1${space};${space}\n${space}${space}\n`;
+    expect(await unflatten(gron)).toBe('{"a":1}\n');
+    expect(JSON.stringify(unflattenGron(gron))).toBe('{"a":1}');
+  });
+
+  test("does not trim characters that trim() keeps", async () => {
+    await expect(unflatten("json = {}\njson.a = 1​\n")).rejects.toThrow("line 2: invalid JSON value");
+    await expect(unflatten("json = {}\njson.a = 1\u0085\n")).rejects.toThrow("line 2: invalid JSON value");
+  });
+
+  test("trims a space split across chunks", async () => {
+    const bytes = Buffer.from("json = {}\njson.a = 1　\n", "utf8");
+    for (let size = 1; size < 6; size += 1) expect(await unflatten(bytes, {}, size)).toBe('{"a":1}\n');
+  });
+});
+
+describe("one-line compound values", () => {
+  test("keep big integers and number spellings", async () => {
+    const gron = 'json = {}\njson.a = {"n":12345678901234567890,"m":[1.10,-0,1e-7,[]],"o":{}}\n';
+    expect(await unflatten(gron)).toBe('{"a":{"n":12345678901234567890,"m":[1.10,-0,1e-7,[]],"o":{}}}\n');
+  });
+
+  test("normalize whitespace and strings", async () => {
+    const gron = 'json = {}\njson.a = { "k\\/" : [ "A\\/\\u00e9" ,\t"\\ud83d\\ude00" , null , true ] }\n';
+    expect(await unflatten(gron)).toBe(`${JSON.stringify({ a: { "k/": ["A/é", "\u{1f600}", null, true] } })}\n`);
+  });
+
+  test("pretty output matches JSON.stringify", async () => {
+    const value = { a: { n: [1, { b: [] }, {}], s: "x" } };
+    const gron = `json = {}\njson.a = ${JSON.stringify(value.a)}\n`;
+    expect(await unflatten(gron, { pretty: true })).toBe(`${JSON.stringify(value, null, 2)}\n`);
+  });
+
+  test("a repeated key keeps its last value, in the first position", async () => {
+    expect(await unflatten('json = {}\njson.a = {"x":1,"y":2,"x":3}\n')).toBe('{"a":{"x":3,"y":2}}\n');
+  });
+
+  test("keep big integers in the out-of-order fallback", async () => {
+    const out = await unflatten('json = []\njson[1] = [12345678901234567890]\njson[0] = {"n":98765432109876543210}\n');
+    expect(out).toBe('[{"n":98765432109876543210},[12345678901234567890]]\n');
+  });
+
+  test("can be extended by later lines in the fallback", async () => {
+    const out = await unflatten('json = {}\njson.a = {"x":1}\njson.b = 2\njson.a.y = 12345678901234567890\n');
+    expect(out).toBe('{"a":{"x":1,"y":12345678901234567890},"b":2}\n');
+  });
+
+  test("nest deeper than the call stack allows", async () => {
+    const depth = 200000;
+    const out = await unflatten(`json = {}\njson.a = ${"[".repeat(depth)}1${"]".repeat(depth)}\n`);
+    expect(out).toBe(`{"a":${"[".repeat(depth)}1${"]".repeat(depth)}}\n`);
+  });
+
+  test.each(["[1,]", "[,1]", '{"a" 1}', '{"a":1,}', "{1:2}", "[1 2]", "[01]", "[1.]", "[-]", "[tru]", "[truex]", '["a\nb"]', '["\\x"]', "[1]]", "[[1]", "{'a':1}", "[1]x"])(
+    "rejects %j",
+    async (raw) => {
+      await expect(unflatten(`json = ${raw}\n`)).rejects.toThrow("line 1: invalid JSON value");
+    }
+  );
+
+  test("agree with JSON.parse on every accepted value", async () => {
+    const values = ['[1,{"a":[true,false,null]},"s",-1.5e+3]', '{"k":{"k":{"k":[[],{}]}}}', '[ "\\u0000\\n\\t\\"\\\\" ]', '{"":[0]}'];
+    for (const raw of values) {
+      expect(JSON.parse(await unflatten(`json = ${raw}\n`))).toEqual(JSON.parse(raw));
+    }
+  });
+});
+
+describe("output sink", () => {
+  const gron = "json = {}\njson.a = 1\n";
+
+  test("is committed once, after all output was written", async () => {
+    const written: string[] = [];
+    const sink = sinkOf(
+      new Writable({
+        write(chunk: Buffer, _encoding, callback) {
+          written.push(chunk.toString());
+          callback();
+        }
+      })
+    );
+    await unflattenStream(chunked(gron, 1 << 20), sink);
+    expect(written.join("")).toBe('{"a":1}\n');
+    expect(sink.events).toEqual(["commit"]);
+  });
+
+  test("is aborted, and never opened, when the input is invalid before the first flush", async () => {
+    const stream = new Writable({ write: (_chunk, _encoding, callback) => callback() });
+    const sink = sinkOf(stream);
+    const open = jest.spyOn(sink, "open");
+    await expect(unflattenStream(chunked("json = {}\njson.a = nope\n", 1 << 20), sink)).rejects.toThrow("line 2");
+    expect(open).not.toHaveBeenCalled();
+    expect(sink.events).toEqual(["abort"]);
+  });
+
+  test("is aborted when the input fails after output was flushed", async () => {
+    const stream = new Writable({ write: (_chunk, _encoding, callback) => callback() });
+    const sink = sinkOf(stream);
+    const lines = Array.from({ length: 60 }, (_, index) => `json[${index}] = ${index}`);
+    await expect(
+      unflattenStream(chunked(`json = []\n${lines.join("\n")}\njson[3] = 99\n`, 32), sink, { budgetBytes: 64 })
+    ).rejects.toThrow(/^line 62: /);
+    expect(sink.events).toEqual(["abort"]);
+  });
+
+  test("is aborted when the output stream fails", async () => {
+    const stream = new Writable({
+      highWaterMark: 1,
+      write(_chunk, _encoding, callback) {
+        callback(new Error("disk full"));
+      }
+    });
+    const sink = sinkOf(stream);
+    await expect(unflattenStream(chunked(gron, 1 << 20), sink)).rejects.toThrow("disk full");
+    expect(sink.events).toEqual(["abort"]);
+  });
+
+  test("is opened even when the document is tiny, so the destination gets created", async () => {
+    const sink = sinkOf(new Writable({ write: (_chunk, _encoding, callback) => callback() }));
+    const open = jest.spyOn(sink, "open");
+    await unflattenStream(chunked("json = 1\n", 1 << 20), sink);
+    expect(open).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("the post-budget error", () => {
+  test("blames the output buffer, not the input size, for a small input with a large gap", async () => {
+    const gron = "json = []\njson[5000000] = 1\njson[0] = 2\n";
+    const error = await unflatten(gron).then(
+      () => undefined,
+      (caught: Error) => caught
+    );
+    expect(error?.message).toMatch(/^line 3: array index 0 does not follow the previous index/);
+    expect(error?.message).toContain("16 MiB of input has been read or 16 MiB of output produced");
+    expect(error?.message).toContain("a large array gap counts as output");
+    expect(error?.message).not.toContain("Input larger than");
   });
 });

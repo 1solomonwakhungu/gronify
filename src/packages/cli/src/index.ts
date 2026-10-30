@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { accessSync, constants, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { accessSync, constants, createReadStream, existsSync } from "node:fs";
 import { extname } from "node:path";
+import { flattenStream } from "./flatten-stream.js";
 import { createFormatter, shouldUseColor, type FormatOptions, type OutputFormatter } from "./formatter.js";
-import { flattenJson, unflattenGron } from "./gron.js";
+import { createLineMatcher } from "./matcher.js";
+import { createOutputSink, GronOutput, type OutputOptions } from "./output.js";
+
+const INPUT_BLOCK_SIZE = 1 << 20;
 
 const program = new Command();
 
@@ -18,13 +22,6 @@ program
 
 function hasStdinData(): boolean {
   return !process.stdin.isTTY;
-}
-
-async function readStdin(): Promise<string> {
-  process.stdin.setEncoding("utf8");
-  let data = "";
-  for await (const chunk of process.stdin) data += chunk;
-  return data;
 }
 
 function createFormatterFromOptions(globalOptions: Record<string, unknown>): OutputFormatter {
@@ -49,26 +46,43 @@ function validateFile(filePath: string): void {
   }
 }
 
-async function readInput(file: string | undefined, formatter: OutputFormatter, usage: string): Promise<string> {
+/** Streams a file or stdin as raw bytes. Returns undefined (after printing usage) when there is nothing to read. */
+function openInput(file: string | undefined, formatter: OutputFormatter, usage: string): AsyncIterable<Buffer> | undefined {
   if (file) {
     validateFile(file);
-    return readFileSync(file, "utf8");
+    return createReadStream(file, { highWaterMark: INPUT_BLOCK_SIZE });
   }
   if (!hasStdinData()) {
     console.error(formatter.formatError("No input file provided and no data piped to stdin"));
     console.error(usage);
     process.exitCode = 1;
-    return "";
+    return undefined;
   }
-  return readStdin();
+  return process.stdin;
 }
 
-function emit(output: string, formatter: OutputFormatter, outputFile: string | undefined): void {
+function createOutput(outputFile: string | undefined, options: Omit<OutputOptions, "sink"> = {}): GronOutput {
+  return new GronOutput({ ...options, sink: createOutputSink(outputFile) });
+}
+
+/** A closed downstream pipe (for example `| head`) is a normal way to stop, not a failure. */
+function isBrokenPipe(error: unknown): boolean {
+  return error instanceof Error && (error as NodeJS.ErrnoException).code === "EPIPE";
+}
+
+async function emit(output: string, formatter: OutputFormatter, outputFile: string | undefined): Promise<void> {
   if (!outputFile) {
     console.log(output);
     return;
   }
-  writeFileSync(outputFile, output + "\n", "utf8");
+  const sink = createOutputSink(outputFile);
+  try {
+    sink.open().write(output + "\n", "utf8");
+    await sink.commit();
+  } catch (error) {
+    await sink.abort();
+    throw error;
+  }
   console.error(formatter.formatSuccess(`Output written to ${outputFile}`));
 }
 
@@ -89,10 +103,15 @@ program
       if (file && ![".json", ".jsonl"].includes(extname(file).toLowerCase())) {
         console.warn(formatter.formatWarning(`File '${file}' doesn't have a .json extension`));
       }
-      const input = await readInput(file, formatter, "Usage: gronify flatten <file> OR cat file.json | gronify flatten");
-      if (process.exitCode) return;
-      emit(formatter.formatGron(flattenJson(JSON.parse(input))), formatter, globalOptions.output);
+      const input = openInput(file, formatter, "Usage: gronify flatten <file> OR cat file.json | gronify flatten");
+      if (!input) return;
+      const output = createOutput(globalOptions.output, { format: formatter.createGronLineFormatter() });
+      await flattenStream(input, output);
+      if (globalOptions.output) {
+        console.error(formatter.formatSuccess(`Output written to ${globalOptions.output}`));
+      }
     } catch (error) {
+      if (isBrokenPipe(error)) return;
       fail(formatter, "flattening JSON", error);
       if (error instanceof SyntaxError) {
         console.error(formatter.formatInfo("Tip: Validate your JSON with a linter like https://jsonlint.com"));
@@ -108,38 +127,24 @@ program
     const globalOptions = command.parent?.opts() ?? {};
     const formatter = createFormatterFromOptions(globalOptions);
     try {
-      if (file) {
-        validateFile(file);
-      } else if (!hasStdinData()) {
-        console.error(formatter.formatError("No input file provided and no data piped to stdin"));
-        console.error("Usage: gronify unflatten <file> OR cat file.gron | gronify unflatten");
-        process.exitCode = 1;
-        return;
-      }
-      const { closeOutput, createFileOutput, createMemoryOutput, openGronInput, unflattenStream } = await import("./unflatten-stream.js");
-      const outputFile: string | undefined = globalOptions.output;
+      const input = openInput(file, formatter, "Usage: gronify unflatten <file> OR cat file.gron | gronify unflatten");
+      if (!input) return;
+      const { createMemoryOutput, unflattenStream } = await import("./unflatten-stream.js");
       const pretty = Boolean(globalOptions.pretty);
       // Colour is applied to the finished text, so it is only used when the formatter would actually colour JSON.
       const colorizer = createFormatterFromOptions({ ...globalOptions, pretty: false });
       if (colorizer.formatJson("{}") !== "{}") {
         const memory = createMemoryOutput();
-        await unflattenStream(openGronInput(file), memory.stream, { pretty });
-        emit(colorizer.formatJson(memory.text().replace(/\n$/, "")), formatter, outputFile);
+        await unflattenStream(input, memory.sink, { pretty });
+        await emit(colorizer.formatJson(memory.text().replace(/\n$/, "")), formatter, globalOptions.output);
         return;
       }
-      const stream = outputFile ? createFileOutput(outputFile) : process.stdout;
-      try {
-        await unflattenStream(openGronInput(file), stream, { pretty });
-      } catch (error) {
-        if (stream !== process.stdout) stream.destroy();
-        throw error;
-      }
-      if (stream !== process.stdout) {
-        await closeOutput(stream);
-        console.error(formatter.formatSuccess(`Output written to ${outputFile}`));
+      await unflattenStream(input, createOutputSink(globalOptions.output), { pretty });
+      if (globalOptions.output) {
+        console.error(formatter.formatSuccess(`Output written to ${globalOptions.output}`));
       }
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "EPIPE") return;
+      if (isBrokenPipe(error)) return;
       fail(formatter, "unflattening gron", error);
       if (error instanceof Error && /^line \d+:/.test(error.message)) {
         console.error(formatter.formatInfo("Tip: Gron lines should look like: json.path = value"));
@@ -168,31 +173,34 @@ program
     const searchTerm = term ?? fileOrTerm;
 
     try {
-      const input = await readInput(file, formatter, "Usage: gronify search <file> <term> OR cat file.json | gronify search <term>");
-      if (process.exitCode) return;
-      const lines = flattenJson(JSON.parse(input)).split("\n");
-      const flags = options.caseSensitive ? "" : "i";
-      const pattern = options.regex
-        ? new RegExp(searchTerm, flags)
-        : new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), flags);
-      const matches = lines.filter((line) => pattern.test(line) !== Boolean(options.invertMatch));
+      const matcher = createLineMatcher(searchTerm, {
+        regex: Boolean(options.regex),
+        caseSensitive: Boolean(options.caseSensitive)
+      });
+      const input = openInput(file, formatter, "Usage: gronify search <file> <term> OR cat file.json | gronify search <term>");
+      if (!input) return;
+      const output = createOutput(globalOptions.output, {
+        matcher,
+        invert: Boolean(options.invertMatch),
+        countOnly: Boolean(options.count),
+        format: options.invertMatch ? formatter.createGronLineFormatter() : formatter.createSearchLineFormatter(searchTerm)
+      });
+      await flattenStream(input, output);
 
       if (options.count) {
-        emit(formatter.formatSuccess(String(matches.length)), formatter, globalOptions.output);
-      } else if (matches.length === 0) {
+        await emit(formatter.formatSuccess(String(output.matched)), formatter, globalOptions.output);
+      } else if (output.matched === 0) {
         if (options.invertMatch) {
           console.error(formatter.formatWarning(`All lines matched '${searchTerm}' (nothing to invert)`));
         } else {
           console.error(formatter.formatWarning(`No matches found for '${searchTerm}'`));
           console.error(formatter.formatInfo("Tip: Search is a case-insensitive substring match; use --regex for patterns"));
         }
-      } else {
-        const results = options.invertMatch
-          ? formatter.formatGron(matches.join("\n"))
-          : formatter.formatSearchResults(matches.join("\n"), searchTerm);
-        emit(results, formatter, globalOptions.output);
+      } else if (globalOptions.output) {
+        console.error(formatter.formatSuccess(`Output written to ${globalOptions.output}`));
       }
     } catch (error) {
+      if (isBrokenPipe(error)) return;
       fail(formatter, options.regex ? "searching JSON (invalid regex or JSON)" : "searching JSON", error);
     }
   });

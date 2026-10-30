@@ -1,13 +1,17 @@
+import type { Writable } from "node:stream";
+import type { OutputSink } from "../output.js";
+
 export const CHUNK_SIZE = 1 << 20;
 const STREAMING_HIGH_WATER = 4 * CHUNK_SIZE;
 
 /**
- * Buffered writer in front of a `NodeJS.WritableStream`.
+ * Buffered writer in front of an `OutputSink`.
  *
- * Output is produced synchronously into `buf` and handed to the stream in
- * whole chunks. Until `commit()` is called nothing reaches the stream, so a
- * caller can still `discard()` everything and start over; after that, `flush()`
- * respects backpressure by waiting for `'drain'` whenever `write()` returns false.
+ * Output is produced synchronously into `buf` and handed to the sink's stream in
+ * whole chunks. Until `commit()` is called nothing reaches the sink, which is not
+ * even opened, so a caller can still `discard()` everything and start over; after
+ * that, `flush()` respects backpressure by waiting for `'drain'` whenever `write()`
+ * returns false. Committing or aborting the sink itself is up to the caller.
  */
 export class OutputBuffer {
   buf: Buffer = Buffer.allocUnsafe(CHUNK_SIZE);
@@ -18,15 +22,23 @@ export class OutputBuffer {
 
   private queue: Buffer[] = [];
   private failure: Error | undefined;
+  private opened: Writable | undefined;
   private readonly onError = (error: Error): void => {
     this.failure ??= error;
   };
 
   constructor(
-    private readonly stream: NodeJS.WritableStream,
+    private readonly sink: OutputSink,
     private readonly holdLimit: number
-  ) {
-    stream.on("error", this.onError);
+  ) {}
+
+  /** The sink's stream, opened on first use. */
+  private get stream(): Writable {
+    if (!this.opened) {
+      this.opened = this.sink.open();
+      this.opened.on("error", this.onError);
+    }
+    return this.opened;
   }
 
   /** Makes room for `bytes` more bytes in `buf`. */
@@ -76,25 +88,27 @@ export class OutputBuffer {
     this.queue = [];
     this.queued = 0;
     try {
+      // Opens the sink even with nothing to write, so the destination always exists afterwards.
+      const stream = this.stream;
       for (let index = 0; index < queue.length; index += 1) {
         this.throwIfFailed();
         const chunk = queue[index] as Buffer;
         if (index < queue.length - 1) {
-          if (!this.stream.write(chunk)) await this.waitForDrain();
+          if (!stream.write(chunk)) await this.waitForDrain();
         } else {
           await new Promise<void>((resolve, reject) => {
-            this.stream.write(chunk, (error?: Error | null) => (error ? reject(error) : resolve()));
+            stream.write(chunk, (error?: Error | null) => (error ? reject(error) : resolve()));
           });
         }
       }
       this.throwIfFailed();
     } finally {
-      this.stream.off("error", this.onError);
+      this.opened?.off("error", this.onError);
     }
   }
 
   dispose(): void {
-    this.stream.off("error", this.onError);
+    this.opened?.off("error", this.onError);
   }
 
   private rotate(minimum: number): void {

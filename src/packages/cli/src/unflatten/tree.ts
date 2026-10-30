@@ -1,41 +1,8 @@
 import type { LineSink } from "./lines.js";
 import type { OutputBuffer } from "./output.js";
 import { LineParser, VALUE_EMPTY_ARRAY, VALUE_EMPTY_OBJECT, VALUE_INLINE, lineError } from "./parse.js";
+import { TreeArray, TreeObject, type TreeNode } from "./node.js";
 import type { JsonWriter } from "./writer.js";
-
-// Scalars are kept as latin1 strings of their UTF-8 bytes (and object keys as the
-// bytes of their escaped JSON form), so they can be written back byte for byte.
-type TreeNode = string | TreeObject | TreeArray;
-
-class TreeObject {
-  readonly entries = new Map<string, TreeNode>();
-}
-
-class TreeArray {
-  readonly items: Array<TreeNode | undefined> = [];
-}
-
-function byteString(text: string): string {
-  return Buffer.from(text, "utf8").toString("latin1");
-}
-
-function fromJson(value: unknown): TreeNode {
-  if (Array.isArray(value)) {
-    const array = new TreeArray();
-    value.forEach((item, index) => {
-      array.items[index] = fromJson(item);
-    });
-    return array;
-  }
-  if (value !== null && typeof value === "object") {
-    const object = new TreeObject();
-    for (const [key, item] of Object.entries(value)) {
-      object.entries.set(byteString(JSON.stringify(key).slice(1, -1)), fromJson(item));
-    }
-    return object;
-  }
-  return byteString(JSON.stringify(value));
-}
 
 /**
  * In-memory fallback for gron that is not in document order. It accepts what
@@ -102,7 +69,7 @@ export class TreeBuilder implements LineSink {
       case VALUE_EMPTY_ARRAY:
         return new TreeArray();
       case VALUE_INLINE:
-        return fromJson(parser.inline);
+        return parser.inline;
       default:
         return parser.valueBuf.toString("latin1", parser.valueStart, parser.valueEnd);
     }
@@ -130,8 +97,11 @@ export class TreeSerializer {
     private readonly out: OutputBuffer
   ) {}
 
-  /** Returns true once the whole tree has been written. */
-  run(): boolean {
+  /**
+   * Returns true once the whole tree has been written. Unless `unbounded` is set it stops early when the output
+   * backs up; the streaming pass sets it to write one line's value, which it cannot split.
+   */
+  run(unbounded = false): boolean {
     const writer = this.writer;
     if (!this.started) {
       this.started = true;
@@ -139,7 +109,7 @@ export class TreeSerializer {
     }
     const stack = this.stack;
     while (stack.length > 0) {
-      if (this.out.saturated) return false;
+      if (!unbounded && this.out.saturated) return false;
       const level = stack[stack.length - 1] as Level;
       if (level.entries) {
         const next = level.entries.next();

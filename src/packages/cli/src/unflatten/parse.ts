@@ -1,4 +1,6 @@
 import { isUtf8 } from "node:buffer";
+import { isJsonSpace, parseCompound } from "./compound.js";
+import type { TreeNode } from "./node.js";
 
 /** Value kinds produced by `LineParser`. */
 export const VALUE_SCALAR = 0;
@@ -10,6 +12,7 @@ export const VALUE_INLINE = 3;
 /** Highest index a JavaScript array can hold. */
 const MAX_ARRAY_INDEX = 4294967294;
 
+// ASCII whitespace as `String.prototype.trim` and the regex `\s` see it. Inside values only isJsonSpace applies.
 const WHITESPACE = new Uint8Array(256);
 for (const code of [0x20, 0x09, 0x0a, 0x0b, 0x0c, 0x0d]) WHITESPACE[code] = 1;
 
@@ -35,6 +38,69 @@ for (const char of '"\\bfnrt') CANONICAL_ESCAPE[char.charCodeAt(0)] = 1;
 
 function isWhitespace(code: number | undefined): boolean {
   return code !== undefined && WHITESPACE[code] === 1;
+}
+
+/**
+ * Length in bytes of the non-ASCII character at `at` that `String.prototype.trim` strips (U+00A0, U+1680,
+ * U+2000-200A, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF), or 0 if it is none of them.
+ */
+function wideSpaceLength(buf: Buffer, at: number, end: number): number {
+  const first = buf[at];
+  if (first === 0xc2) return at + 1 < end && buf[at + 1] === 0xa0 ? 2 : 0;
+  if (at + 2 >= end) return 0;
+  const second = buf[at + 1] as number;
+  const third = buf[at + 2] as number;
+  switch (first) {
+    case 0xe1:
+      return second === 0x9a && third === 0x80 ? 3 : 0;
+    case 0xe2:
+      if (second === 0x80) return (third >= 0x80 && third <= 0x8a) || third === 0xa8 || third === 0xa9 || third === 0xaf ? 3 : 0;
+      return second === 0x81 && third === 0x9f ? 3 : 0;
+    case 0xe3:
+      return second === 0x80 && third === 0x80 ? 3 : 0;
+    case 0xef:
+      return second === 0xbb && third === 0xbf ? 3 : 0;
+    default:
+      return 0;
+  }
+}
+
+/** First index in `[start, end)` that is not whitespace in the sense of `String.prototype.trim`. */
+function trimStart(buf: Buffer, start: number, end: number): number {
+  let index = start;
+  while (index < end) {
+    const code = buf[index] as number;
+    if (WHITESPACE[code] === 1) {
+      index += 1;
+    } else if (code >= 0xc2) {
+      const width = wideSpaceLength(buf, index, end);
+      if (width === 0) break;
+      index += width;
+    } else {
+      break;
+    }
+  }
+  return index;
+}
+
+/** Index just past the last byte of `[start, end)` that is not whitespace in the sense of `String.prototype.trim`. */
+function trimEnd(buf: Buffer, start: number, end: number): number {
+  let last = end;
+  while (last > start) {
+    const code = buf[last - 1] as number;
+    if (WHITESPACE[code] === 1) {
+      last -= 1;
+    } else if (code < 0x80) {
+      break;
+    } else if (last - 3 >= start && wideSpaceLength(buf, last - 3, last) === 3) {
+      last -= 3;
+    } else if (last - 2 >= start && buf[last - 2] === 0xc2 && code === 0xa0) {
+      last -= 2;
+    } else {
+      break;
+    }
+  }
+  return last;
 }
 
 /**
@@ -128,7 +194,8 @@ export class LineParser {
   valueBuf: Buffer = Buffer.alloc(0);
   valueStart = 0;
   valueEnd = 0;
-  inline: unknown;
+  /** The parsed value when `valueKind` is `VALUE_INLINE`. */
+  inline: TreeNode = "";
 
   private arenaLength = 0;
 
@@ -136,23 +203,9 @@ export class LineParser {
    * Returns false for blank lines. Throws `line N: ...` errors for invalid ones.
    */
   parse(buf: Buffer, start: number, end: number, lineNumber: number): boolean {
-    let index = start;
-    while (index < end) {
-      const code = buf[index] as number;
-      if (WHITESPACE[code] === 1) {
-        index += 1;
-      } else if (code === 0xef && buf[index + 1] === 0xbb && buf[index + 2] === 0xbf) {
-        index += 3;
-      } else {
-        break;
-      }
-    }
-    let last = end;
-    while (last > index && WHITESPACE[buf[last - 1] as number] === 1) last -= 1;
-    if (last > index && buf[last - 1] === 0x3b) {
-      last -= 1;
-      while (last > index && WHITESPACE[buf[last - 1] as number] === 1) last -= 1;
-    }
+    const index = trimStart(buf, start, end);
+    let last = trimEnd(buf, index, end);
+    if (last > index && buf[last - 1] === 0x3b) last = trimEnd(buf, index, last - 1);
     if (index >= last) return false;
 
     if (last - index < 4 || buf[index] !== 0x6a || buf[index + 1] !== 0x73 || buf[index + 2] !== 0x6f || buf[index + 3] !== 0x6e) {
@@ -351,17 +404,16 @@ export class LineParser {
       if (hasLiteral(buf, start, end, "null")) return;
     } else if (first === 0x7b || first === 0x5b) {
       let inner = start + 1;
-      while (inner < end && WHITESPACE[buf[inner] as number] === 1) inner += 1;
+      while (inner < end && isJsonSpace(buf[inner] as number)) inner += 1;
       if (inner === end - 1 && buf[inner] === (first === 0x7b ? 0x7d : 0x5d)) {
         this.valueKind = first === 0x7b ? VALUE_EMPTY_OBJECT : VALUE_EMPTY_ARRAY;
         return;
       }
-      try {
-        this.inline = JSON.parse(buf.toString("utf8", start, end));
+      const inline = parseCompound(buf.toString("utf8", start, end));
+      if (inline !== undefined) {
+        this.inline = inline;
         this.valueKind = VALUE_INLINE;
         return;
-      } catch {
-        // falls through to the shared error below
       }
     }
     throw lineError(lineNumber, "invalid JSON value");
