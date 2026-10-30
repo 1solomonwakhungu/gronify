@@ -30,7 +30,7 @@ Do not claim that Gronify is published on npm. The npm package metadata supports
 
 - Use `gronify flatten` when the user needs every value paired with its full JSON path.
 - Use `gronify search` for path or value filtering. It avoids a separate `grep` dependency.
-- Use `gronify unflatten` only for valid gron assignments whose root and parent containers appear before their children.
+- Use `gronify unflatten` only for valid gron assignments whose root and parent containers appear before their children. It streams, so multi-gigabyte gron is fine as long as it is in document order, which is what `gronify flatten` writes.
 
 Prefer stdin when the JSON already comes from another command. Use a file argument when the user supplied a file and reading it directly is clearer.
 
@@ -94,5 +94,11 @@ Do not overwrite the source JSON during exploration. Write reconstructed JSON to
 gronify --no-color unflatten edited.gron > reconstructed.json
 node -e 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))' reconstructed.json
 ```
+
+Large and edited gron:
+
+- `unflatten` keeps memory flat, so it handles files of several gigabytes. Numbers come out as written (`12345678901234567890` and `1.10` are not rounded or reformatted), and `--pretty` matches `JSON.stringify(value, null, 2)`.
+- Keep gron in document order for big inputs: a container before its children, siblings together, array indexes ascending. Do not run `sort` on gron you plan to unflatten. Out-of-order input is rebuilt in memory only while the first 16 MiB are being read; after that, `unflatten` stops with `line N: ...` and an explanation. Appending an override for a top-level key, such as `json.name = "new"`, still works, because a JSON parser keeps the last duplicate key.
+- Skipped array indexes come out as `null`.
 
 Gronify accepts JSON, not arbitrary JavaScript objects or comments. If parsing fails, report the failing input and error rather than silently rewriting the data.
