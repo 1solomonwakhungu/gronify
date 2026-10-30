@@ -200,7 +200,8 @@ export class GronFlattener implements JsonSink {
 
 /**
  * Feeds every chunk of `input` through the tokenizer into `out`, pausing whenever the output pushes back, then
- * closes `out`. On an error the lines already handed to the stream stay written and the unflushed tail is dropped.
+ * commits `out`. On an error the sink is aborted: a file is left as it was, while lines already handed to stdout stay
+ * written and only the unflushed tail is dropped.
  */
 export async function flattenStream(input: AsyncIterable<Buffer | string>, out: GronOutput): Promise<void> {
   try {
