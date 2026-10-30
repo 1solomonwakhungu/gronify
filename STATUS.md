@@ -50,3 +50,24 @@
 - Add an `NPM_TOKEN` secret to publish `gronify` to npm.
 - After the next release, update `Formula/gronify.rb` in the Homebrew tap with the new `url` and `sha256`, and drop `depends_on "fastgron"`; the CLI no longer needs it.
 - Remove the `GHSA-hp3w-g68c-fv3c` and `GHSA-vfj7-8cjw-p6xm` allowlist entries once fixes ship.
+
+## 2026-10-29 — Streaming unflatten
+
+- `gronify unflatten` now reads a byte stream and writes JSON through a backpressure-aware buffered writer, so memory stays flat. New modules live in `src/packages/cli/src/unflatten-stream.ts` and `src/packages/cli/src/unflatten/`; the `unflatten` action in `index.ts` loads them lazily. `flatten`, `search`, and `gron.ts` are untouched.
+- Document-order gron (what `flatten` writes) converts in one pass. Out-of-order input seen before the first 16 MiB of input or output is rebuilt with an in-memory tree; later it fails with `line N: ...` and a document-order explanation.
+- Numbers are validated and written verbatim (`12345678901234567890`, `1.10`, `-0`); strings are normalized to `JSON.stringify` form; skipped array indexes stream out as `null`; `--pretty` is generated directly and matches `JSON.stringify(value, null, 2)`; `--color` output is byte-identical to the previous build.
+- Benchmarks (`node scripts/bench-unflatten.mjs`, Apple M5 Pro, Node 22.23.1, best of 3, stdout to /dev/null). Before is `main` at `07c1c86`:
+
+  | Input                               | Before                  | After               |
+  | ----------------------------------- | ----------------------- | ------------------- |
+  | 56 MB gron                          | 0.91 s, 515 MB RSS      | 0.17 s, 91 MB RSS   |
+  | 285 MB gron                         | 4.85 s, 2068 MB RSS     | 0.70 s, 96 MB RSS   |
+  | 600 MB gron                         | fails (string too long) | 1.70 s, 97 MB RSS   |
+  | 3 GB gron (9.8M records)            | not possible            | 7.31 s, 100 MB RSS  |
+  | 285 MB gron, out of order at line 3 | 5.50 s, 2100 MB RSS     | 3.28 s, 1259 MB RSS |
+
+  Node 20.20.2 gives 0.95 s and 101 MB for the 285 MB file with identical output. The 3 GB output was checked against a sha256 computed while generating the input. `flatten | unflatten` round trips of 67 random documents (quoted keys, escapes, unicode, empty containers) match the originals.
+
+- Tests: 207 passing (161 new: line splitter at every cut position, path parser, value validator, emitter, pretty mode, out-of-order fallback, post-flush error, backpressure, CLI stdin/file/`-o`).
+- Behavior changes: numbers keep their spelling (`1e999` is no longer turned into `null`); keys containing `=` and values containing U+2028 now parse; a repeated object key in streamed output is written twice (parsers keep the last); out-of-order input past 16 MiB is an error instead of an in-memory rebuild; array indexes above 4294967294 are rejected.
+- Next: remove the now-unused `unflattenGron` import from `index.ts` and the function from `gron.ts` once the flatten/search rewrite has merged.
