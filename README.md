@@ -47,6 +47,8 @@ npm install -g gronify
 npx gronify --help
 ```
 
+The result caps (`search -m/--max-count`, `flatten --limit`), `--sort`, and `search --exit-status` need Gronify **1.2.0 or newer**. Version 1.1.0 stops with `error: unknown option '-m'`. Check with `gronify --version` (or look for `--max-count` in `gronify search --help`), and update with `npm install -g gronify@latest`.
+
 ### Homebrew
 
 Homebrew installs Gronify together with its Node.js dependency:
@@ -259,14 +261,14 @@ gronify search data.json -m 10 "field"
 - `n` must be a positive integer. `0`, negative numbers, decimals, and text are rejected with an error.
 - The cap counts matching lines. With `-v` it counts the non-matching lines that are printed. With `--count` it caps the count.
 - Gronify stops reading the input at the cap and destroys the read stream (or stdin), so a 5 GB file whose first match is near the start returns in milliseconds, and a `cat huge.json | gronify search -m 5 term` pipeline ends instead of waiting. Memory and time depend on how far Gronify had to read, not on the file size.
-- The exit status is 0. When a cap ended the run, Gronify prints one line to **stderr**, for example `Stopped after 20 matches (--max-count); there may be more`, and stdout holds only the lines. The notice also appears when the cap equals the exact number of results, because Gronify does not read further to find out.
+- The exit status is 0. When a cap ended the run, Gronify prints one line to **stderr**, for example `Stopped after 20 matches (--max-count); there may be more`, and stdout holds only the lines. Gronify does not read further to find out whether more output was left, so the notice says "there may be more". It stays quiet when it can tell without reading on: the cap was reached on the last line of the document (only whitespace and closing brackets follow in the same chunk of input). With `--sort` the notice is always printed.
 - The rest of the input is never read, so it is not validated either. A syntax error after the cap is not reported, where a run without a cap would exit 1 on it. Errors before the cap are reported as usual.
 - With `-o`, the capped output is committed atomically like any other output: the file appears (or replaces the old one) only when the run finishes, and holds exactly the lines that were printed. See the notes under [Streaming and large inputs](#streaming-and-large-inputs).
 - With `--sort`, the cap applies to the sorted order. It can only end the read early while the input is a top-level array. A document whose root is an object has to be read to the end before its first sorted line is known.
 
 ### Sorting keys
 
-**The default is document order**: keys come out in the order they appear in the input, which is not what `gron` does (`gron` sorts). Add `--sort` to `flatten` or `search` to sort the keys of every object, at every depth:
+**The default is document order**: keys come out in the order they appear in the input. (`gron` always sorts, in a different order; see below.) Add `--sort` to `flatten` or `search` to sort the keys of every object, at every depth:
 
 ```bash
 echo '{"b":1,"a":{"d":4,"c":3},"10":0,"2":0}' | gronify flatten --sort
@@ -282,18 +284,30 @@ json.a.d = 4
 json.b = 1
 ```
 
-- Keys are compared by UTF-16 code unit, the same order as the default JavaScript `sort()` and as `gron`. `"10"` comes before `"2"`, uppercase before lowercase, and a key such as `"😀"` (a surrogate pair) before `"～"` (U+FF5E), which a byte-wise UTF-8 sort would put the other way round.
-- Array elements keep their order. Duplicate keys stay together, in document order.
-- Because the order is stable, `diff <(gronify flatten --sort a.json) <(gronify flatten --sort b.json)` shows real changes and ignores key reordering.
+How the order is defined:
+
+- At each object, keys are compared by UTF-16 code unit, the same order as JavaScript's default `sort()`. `"10"` comes before `"2"`, uppercase before lowercase, and `"😀"` (U+1F600, a surrogate pair) before `"～"` (U+FF5E).
+- Each key's subtree stays right after the key's own line, so an object is never interleaved with its siblings. Array elements keep their index order (`[2]` before `[10]`). Duplicate keys stay together, in document order.
+- Only the order of keys changes. Numbers and strings are untouched.
+
+**This is not the order `gron` uses**, and it differs from sorting the lines with `sort`:
+
+- `gron` 0.7.1 puts every bare key (`json.b`) before every bracketed key (`json["10"]`, `json["b x"]`) at the same level, whatever the key text, and compares keys as UTF-8 bytes (so it prints `"～"` before `"😀"`, the reverse of the above). It also merges duplicate keys. `gronify flatten --sort` and `gron` agree only when every key is ASCII, all keys of a level are bare or all are bracketed, and no key repeats.
+- Plain `sort` on the lines compares whole lines. It puts `json.a$ = 1` between `json.a = {}` and `json.a.x = 2`, and `json.arr[10]` before `json.arr[2]`, and its output no longer unflattens.
+
+Why this order suits diffing:
+
+- It is stable: two documents that differ only in key order give identical output, so `diff <(gronify flatten --sort a.json) <(gronify flatten --sort b.json)` shows real changes and ignores reordering.
+- A changed object shows up as one contiguous block, and array elements stay in index order, so a diff reads like the document.
+- It round-trips. The output is in document order (a container before its children, siblings together, array indexes ascending), so `gronify flatten --sort data.json | gronify unflatten` streams in one pass, at any size, and rebuilds the same data with the keys sorted. Lines sorted with plain `sort` do not.
 - `search --sort` filters first and sorts what is left, so it only holds matching lines. `--sort` is ignored with `--count`, which needs no order.
-- Numbers and strings are untouched by sorting.
 
 **Memory cost.** The document is never turned into JS objects. Each object's members are kept as already-flattened bytes plus a key string and a few numbers per member, and are put in key order when the object closes. In practice:
 
-- A top-level array (the usual shape of a large payload: a list of records) is written as it is read, one record at a time. Sorting a 129 MB array of records peaked at 143 MB RSS, 3.7 s against 0.9 s unsorted.
-- Everything inside an object waits until the document, or the enclosing array element, ends. Gronify keeps up to 64 MiB of line data in memory (set `GRONIFY_SORT_MEMORY` to a number of bytes to change it), then writes the oldest buffers to an anonymous temp file in `$TMPDIR` (unlinked right after it is created, so it cannot be left behind) and reads them back at the end. That temp file can grow to roughly the size of the flattened output of the largest object, so make sure the temp directory has room.
+- A top-level array (the usual shape of a large payload: a list of records) is written as it is read, one record at a time. Sorting a 129 MB array of records peaked at 139 MB RSS and took 2.2 s, against 0.8 s unsorted.
+- Everything inside an object waits until the document, or the enclosing array element, ends. Gronify keeps up to 64 MiB of line data in memory (set `GRONIFY_SORT_MEMORY` to change it: a number of bytes, or a size such as `256MiB`, `64MB`, `512KiB`; anything it cannot read is an error), then writes the oldest buffers to an anonymous temp file in `$TMPDIR` (unlinked right after it is created, so it cannot be left behind) and reads them back at the end. That temp file can grow to roughly the size of the flattened output of the largest object, so make sure the temp directory has room.
 - The part that stays in memory is about 100 to 150 bytes per member of one object, however large each member is. A 270 MiB file that is one object with 1.5 million members peaked at about 500 MB RSS, and 350 MB with a 4 MiB line buffer.
-- Each very large member is read back once, and small members are copied into their parent once per level, so heavy nesting adds work. Output grows quadratically with depth with or without `--sort`.
+- Each very large member is read back once, and small members are copied into their parent once per level, so heavy nesting adds work. Output grows quadratically with depth with or without `--sort`, because every container line repeats its path. Those container lines count against the limit and spill like any other line, so a 20,000-level document peaked at about 450 MB RSS with the default limit and 280 MB with a 1 MB limit (60 MB without `--sort`), where the memory use no longer follows the depth squared.
 
 ### Exact numbers
 

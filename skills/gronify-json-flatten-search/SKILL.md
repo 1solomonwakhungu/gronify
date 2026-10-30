@@ -1,6 +1,6 @@
 ---
 name: gronify-json-flatten-search
-description: Flattens, searches, and diffs JSON as greppable key-value path lines using the Gronify CLI (gron and ungron workflow), with result caps and exact numbers. Use when an AI agent needs to explore a large or unknown JSON file without flooding its context, grep nested JSON, inspect API payloads, diff two JSON documents as key-sorted lines, check whether a path or value exists, or replace jq with path-based queries.
+description: Flattens and searches JSON as greppable key-value path lines using the Gronify CLI (gron and ungron workflow), with result caps, exact numbers, and a key-sorted output that makes JSON diffable with the system diff tool. Use when an AI agent needs to explore a large or unknown JSON file without flooding its context, grep nested JSON, inspect API payloads, make two JSON documents comparable as key-sorted lines, check whether a path or value exists, or replace jq with path-based queries.
 ---
 
 # Gronify
@@ -18,6 +18,8 @@ brew install 1solomonwakhungu/tap/gronify
 
 Gronify needs Node.js 20 or newer. To build from a checkout instead: `cd src/packages/cli && npm ci && npm run build && npm link`.
 
+**Check the version before using `-m`, `--limit`, `--sort` or `--exit-status`.** They need Gronify 1.2.0 or newer; 1.1.0 and older fail with `error: unknown option '-m'` (exit 1). Run `gronify --version`, or `gronify search --help | grep -e --max-count`. If the flag is missing, update (`npm install -g gronify@latest`) or cap the output with `| head -n 20` instead and skip `--sort`.
+
 ## Explore without flooding your context
 
 Use `--no-color` in every captured command. For any file you have not seen, or that may be large, go from cheap to specific:
@@ -30,7 +32,7 @@ gronify --no-color search payload.json --regex 'users\[[0-9]+\]\.email' -m 20   
 ```
 
 - `-m/--max-count <n>` (search) and `--limit <n>` (flatten) stop after `n` lines, stop reading the input, and exit 0. A 5 GB file returns in milliseconds if the cap is hit early. `n` must be a positive integer.
-- When a cap ended the run, stderr says so (`Stopped after 20 matches (--max-count); there may be more`) and stdout holds only gron lines. If you need more, raise `n` or narrow the term. Do not rerun without a cap on an unknown file.
+- When a cap ended the run, stderr says so (`Stopped after 20 matches (--max-count); there may be more`; no notice when the cap hit the last line of the document) and stdout holds only gron lines. If you need more, raise `n` or narrow the term. Do not rerun without a cap on an unknown file.
 - Everything after the cap is never read, so a syntax error there is not reported.
 - Prefer a file path or a pipe over loading the JSON into your own context. Do not `cat` a large JSON file.
 
@@ -46,14 +48,16 @@ curl -sS https://example.com/api/status | gronify --no-color search version -m 5
 
 ## Order and diffing
 
-**Default output is document order**, not sorted: keys appear as they do in the input. To compare two documents or get a stable order, add `--sort`, which sorts object keys at every level (UTF-16 order, as `gron` and JS `sort()` do) and leaves array order alone:
+**Default output is document order**, not sorted: keys appear as they do in the input. To compare two documents or get a stable order, add `--sort`. It sorts the keys of every object at every level by UTF-16 code unit (like JS `sort()`), keeps each key's subtree together, and leaves array order alone (`[2]` before `[10]`):
 
 ```bash
 diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten --sort new.json)
 ```
 
 - `--sort` works on `flatten` and `search` (it filters first, then sorts). It is ignored with `--count`.
-- A top-level array is sorted record by record as it streams. A large object at the root is buffered until it closes, using up to 64 MiB of memory and then a temp file in `$TMPDIR`, so budget disk and time (about 4x slower than unsorted) on multi-gigabyte objects.
+- **It is not `gron`'s order, and not what `sort` gives.** `gron` puts bare keys (`json.b`) before bracketed ones (`json["10"]`) at each level and compares UTF-8 bytes; plain `sort` on the lines interleaves a parent with similarly named siblings and puts `[10]` before `[2]`. Do not expect `gronify --sort` output to match `gron` output line for line, and do not `sort` Gronify output yourself.
+- The output is stable (the same data in another key order gives the same lines), subtrees stay contiguous, and the lines are in document order, so `flatten --sort` output goes straight back through `unflatten`.
+- A top-level array is sorted record by record as it streams. A large object at the root is buffered until it closes, using up to 64 MiB of memory and then a temp file in `$TMPDIR`, so budget disk and time (about 3x slower than unsorted) on multi-gigabyte objects. Set `GRONIFY_SORT_MEMORY` (bytes, or `256MiB`, `64MB`, ...) to change the 64 MiB.
 - Caps apply to the sorted order, so with `--sort` a root object is read to the end before its first line is printed.
 
 ## Check the exit status

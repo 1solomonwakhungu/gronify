@@ -33,8 +33,20 @@ const staleClaimPatterns = [
     message: "claims a VS Code workflow that is not present",
   },
   {
-    // Gronify has no diff command. Using the system `diff` on `--sort` output is fine to document.
-    pattern: /\bgronify diff\b|\bdiff (command|subcommand|support)\b/i,
+    // Gronify has no diff command; `--sort` only makes the output diffable. Naming the system `diff` tool is fine, so
+    // code spans are ignored and only claim-shaped phrases are matched: a verb list ending in "and diff", "Gronify
+    // diffs ...", "diff two JSON files", "a diff mode", "diff support".
+    prose: true,
+    pattern: new RegExp(
+      [
+        String.raw`\bgronify\b[^.\n]{0,40}\bdiffs?\b`,
+        String.raw`\b(?:search|inspect|flatten|unflatten|explor|quer|filter)\w*\b[^.\n]*?\b(?:and|or)\s+diffs?\b(?!\s+(?:the|them|it|its|a|an|two|both|with|by|against|those|these)\b)`,
+        String.raw`\bdiffs?\s+(?:(?:two|2|any|your|the two)\s+)?(?:JSON|payloads?)\b`,
+        String.raw`\b(?:JSON|gron)\s+diff(?:s|ing)?\b`,
+        String.raw`\bdiff\s+(?:command|subcommand|support|mode|feature)\b`,
+      ].join("|"),
+      "i",
+    ),
     message: "claims diff support that is not present",
   },
   {
@@ -58,8 +70,12 @@ function scanForStaleClaims(file) {
   }
 
   const contents = readFileSync(file, "utf8");
-  for (const { pattern, message } of staleClaimPatterns) {
-    if (pattern.test(contents)) {
+  // Fenced blocks and inline code hold commands and examples, not claims about what Gronify does.
+  const prose = contents
+    .replace(/^ *```[\s\S]*?^ *```/gm, " ")
+    .replace(/`[^`\n]*`/g, " ");
+  for (const { pattern, message, prose: proseOnly } of staleClaimPatterns) {
+    if (pattern.test(proseOnly ? prose : contents)) {
       errors.push(`${file} ${message}`);
     }
   }
@@ -87,6 +103,7 @@ if (existsSync("README.md")) {
   scanForStaleClaims("README.md");
 }
 
+scanForStaleClaims("skills/gronify-json-flatten-search/SKILL.md");
 scanForStaleClaims("landing-page/src/app/layout.tsx");
 scanForStaleClaims("landing-page/src/app/page.tsx");
 
