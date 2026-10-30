@@ -534,6 +534,13 @@ describe("Gronify CLI", () => {
         expect(tempFiles()).toEqual([]);
       });
 
+      (posix ? test : test.skip)("should write -o /dev/stdout in place", async () => {
+        const result = await runCLI(["-o", "/dev/stdout", "flatten"], '{"a":[1]}');
+
+        expect(result.exitCode).toBe(0);
+        expect(result.stdout).toContain("json.a[0] = 1");
+      });
+
       test("should search a multi-megabyte file onto itself", async () => {
         const text = bigRecords(40_000);
         const file = join(work, "b.json");
