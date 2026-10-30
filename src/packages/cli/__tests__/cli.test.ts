@@ -1,10 +1,12 @@
-import { spawn } from "child_process";
+import { spawn, spawnSync } from "child_process";
 import {
   chmodSync,
+  closeSync,
   existsSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
+  openSync,
   readdirSync,
   readFileSync,
   rmSync,
@@ -534,11 +536,23 @@ describe("Gronify CLI", () => {
         expect(tempFiles()).toEqual([]);
       });
 
-      (posix ? test : test.skip)("should write -o /dev/stdout in place", async () => {
-        const result = await runCLI(["-o", "/dev/stdout", "flatten"], '{"a":[1]}');
+      (posix ? test : test.skip)("should write -o /dev/stdout in place", () => {
+        // A real file as stdout: Node's own stdout pipe is a socket on Linux, which /dev/stdout cannot reopen.
+        const out = join(work, "stdout.txt");
+        const fd = openSync(out, "w");
+        let status: number | null;
+        try {
+          status = spawnSync("node", ["dist/index.js", "--no-color", "-o", "/dev/stdout", "flatten"], {
+            input: '{"a":[1]}',
+            stdio: ["pipe", fd, "pipe"],
+          }).status;
+        } finally {
+          closeSync(fd);
+        }
 
-        expect(result.exitCode).toBe(0);
-        expect(result.stdout).toContain("json.a[0] = 1");
+        expect(status).toBe(0);
+        expect(readFileSync(out, "utf8")).toBe('json = {}\njson.a = []\njson.a[0] = 1\n');
+        expect(tempFiles()).toEqual([]);
       });
 
       test("should search a multi-megabyte file onto itself", async () => {
