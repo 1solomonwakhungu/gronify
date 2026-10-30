@@ -1,6 +1,7 @@
 import type { LineSink } from "./lines.js";
 import type { OutputBuffer } from "./output.js";
 import { LineParser, VALUE_EMPTY_ARRAY, VALUE_EMPTY_OBJECT, VALUE_INLINE, lineError } from "./parse.js";
+import { TreeSerializer } from "./tree.js";
 import { JsonWriter } from "./writer.js";
 
 /**
@@ -35,7 +36,7 @@ export class StreamEmitter implements LineSink {
 
   private readonly writer: JsonWriter;
   private readonly parser: LineParser;
-  private readonly pretty: boolean;
+  private readonly out: OutputBuffer;
   // Entry key of the container at each depth (index 0, the root, has none).
   private frameIsIndex = new Uint8Array(64);
   private frameIndex = new Float64Array(64);
@@ -45,7 +46,7 @@ export class StreamEmitter implements LineSink {
 
   constructor(parser: LineParser, out: OutputBuffer, pretty: boolean) {
     this.parser = parser;
-    this.pretty = pretty;
+    this.out = out;
     this.writer = new JsonWriter(out, pretty);
   }
 
@@ -127,7 +128,7 @@ export class StreamEmitter implements LineSink {
         this.recordFrame(depth);
         break;
       case VALUE_INLINE:
-        writer.rawIndented(JSON.stringify(parser.inline, null, this.pretty ? 2 : undefined));
+        new TreeSerializer(parser.inline, writer, this.out).run(true);
         break;
       default:
         writer.raw(parser.valueBuf, parser.valueStart, parser.valueEnd);

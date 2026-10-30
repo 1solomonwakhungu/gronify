@@ -108,12 +108,6 @@ export class JsonWriter {
     out.pos += out.buf.write(text, out.pos, "latin1");
   }
 
-  /** Writes pre-serialized JSON that may span lines, re-indenting continuation lines when pretty. */
-  rawIndented(text: string): void {
-    const bytes = Buffer.from(this.pretty ? text.replace(/\n/g, `\n${"  ".repeat(this.depth)}`) : text, "utf8");
-    this.raw(bytes, 0, bytes.length);
-  }
-
   /** Writes pending `null` array slots. Returns false when output backed up and the caller must flush first. */
   fillNulls(): boolean {
     const out = this.out;

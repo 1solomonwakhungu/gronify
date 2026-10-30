@@ -1,8 +1,6 @@
-import { createReadStream } from "node:fs";
-import { open, type FileHandle } from "node:fs/promises";
 import { Writable } from "node:stream";
-import { finished } from "node:stream/promises";
 import { getHeapStatistics } from "node:v8";
+import type { OutputSink } from "./output.js";
 import { OutOfOrderError, StreamEmitter } from "./unflatten/emitter.js";
 import { LineSplitter } from "./unflatten/lines.js";
 import { OutputBuffer } from "./unflatten/output.js";
@@ -11,7 +9,6 @@ import { TreeBuilder, type TreeSerializer } from "./unflatten/tree.js";
 import { JsonWriter } from "./unflatten/writer.js";
 
 const MIB = 1024 * 1024;
-const READ_CHUNK_BYTES = 4 * MIB;
 /** Share of the V8 heap the out-of-order fallback may fill before it gives up with an error. */
 const HEAP_LIMIT_SHARE = 0.75;
 
@@ -28,7 +25,8 @@ export interface UnflattenOptions {
 type Chunk = Uint8Array | string;
 
 /**
- * Converts gron read from `input` to JSON written to `output`.
+ * Converts gron read from `input` to JSON written to `output`, which is committed once everything has been
+ * written and aborted when anything fails, so a file target is only ever replaced by a complete document.
  *
  * Document-order gron (what `gronify flatten` writes) is converted in a single
  * pass with constant memory. Output is held back, and the raw input kept, until
@@ -41,7 +39,7 @@ type Chunk = Uint8Array | string;
  */
 export async function unflattenStream(
   input: AsyncIterable<Chunk>,
-  output: NodeJS.WritableStream,
+  output: OutputSink,
   options: UnflattenOptions = {}
 ): Promise<void> {
   const budget = options.budgetBytes ?? 16 * MIB;
@@ -51,6 +49,10 @@ export async function unflattenStream(
       await run.consume(typeof chunk === "string" ? Buffer.from(chunk, "utf8") : toBuffer(chunk));
     }
     await run.finish();
+    await output.commit();
+  } catch (error) {
+    await output.abort();
+    throw error;
   } finally {
     run.dispose();
   }
@@ -71,7 +73,7 @@ class Unflattener {
   private retainedBytes = 0;
 
   constructor(
-    output: NodeJS.WritableStream,
+    output: OutputSink,
     private readonly pretty: boolean,
     private readonly budget: number
   ) {
@@ -141,9 +143,11 @@ class Unflattener {
   private rebuildInMemory(cause: OutOfOrderError): void {
     const retained = this.retained;
     if (!retained) {
+      const size = this.budget >= MIB ? `${Math.round(this.budget / MIB)} MiB` : `${this.budget} bytes`;
       throw new Error(
-        `${cause.message}. Input larger than ${Math.round(this.budget / MIB)} MiB is unflattened in a single streaming pass ` +
-          `and needs document-order gron: a container before its children, siblings together, array indexes ascending. ` +
+        `${cause.message}. Once ${size} of input has been read or ${size} ` +
+          `of output produced (a large array gap counts as output), gron must be in document order: a container before its ` +
+          `children, siblings together, array indexes ascending. ` +
           `Regenerate it with 'gronify flatten' instead of sorting or reordering it`
       );
     }
@@ -169,50 +173,8 @@ class Unflattener {
   }
 }
 
-/** Reads gron from a file in large chunks, or from stdin when no file is given. */
-export function openGronInput(file: string | undefined): AsyncIterable<Buffer> {
-  if (file === undefined) return process.stdin;
-  return createReadStream(file, { highWaterMark: READ_CHUNK_BYTES });
-}
-
-/**
- * A write stream for `-o/--output` that creates (and truncates) the file on its
- * first write, so invalid input never replaces an existing file.
- */
-export function createFileOutput(path: string): Writable {
-  let handle: FileHandle | undefined;
-  return new Writable({
-    highWaterMark: 8 * MIB,
-    write(chunk: Buffer, _encoding, callback) {
-      void (async () => {
-        handle ??= await open(path, "w");
-        let offset = 0;
-        while (offset < chunk.length) {
-          const { bytesWritten } = await handle.write(chunk, offset, chunk.length - offset);
-          offset += bytesWritten;
-        }
-      })().then(() => callback(), callback);
-    },
-    final(callback) {
-      (handle?.close() ?? Promise.resolve()).then(() => callback(), callback);
-    },
-    destroy(error, callback) {
-      (handle?.close() ?? Promise.resolve()).then(
-        () => callback(error),
-        () => callback(error)
-      );
-    }
-  });
-}
-
-/** Ends a stream made by `createFileOutput` and waits until the file is closed. */
-export async function closeOutput(stream: Writable): Promise<void> {
-  stream.end();
-  await finished(stream);
-}
-
 /** In-memory output, for terminal colouring that has to see the whole document. */
-export function createMemoryOutput(): { stream: Writable; text: () => string } {
+export function createMemoryOutput(): { sink: OutputSink; text: () => string } {
   const chunks: Buffer[] = [];
   const stream = new Writable({
     write(chunk: Buffer, _encoding, callback) {
@@ -220,5 +182,10 @@ export function createMemoryOutput(): { stream: Writable; text: () => string } {
       callback();
     }
   });
-  return { stream, text: () => Buffer.concat(chunks).toString("utf8") };
+  const sink: OutputSink = {
+    open: () => stream,
+    commit: async () => {},
+    abort: async () => {}
+  };
+  return { sink, text: () => Buffer.concat(chunks).toString("utf8") };
 }
