@@ -223,18 +223,17 @@ export class LineParser {
         cursor = this.parseBracket(buf, cursor, last, index, lineNumber);
       } else if (code === 0x3d) {
         break;
-      } else if (WHITESPACE[code] === 1) {
-        while (cursor < last && WHITESPACE[buf[cursor] as number] === 1) cursor += 1;
-        if (buf[cursor] !== 0x3d) this.pathError(buf, index, last, lineNumber, "invalid character in path");
-        break;
       } else {
-        this.pathError(buf, index, last, lineNumber, "invalid character in path");
+        // Whitespace before `=` follows `String.prototype.trim` (like the old `\s*=\s*`), including U+00A0 and friends.
+        const after = trimStart(buf, cursor, last);
+        if (after === cursor || buf[after] !== 0x3d) this.pathError(buf, index, last, lineNumber, "invalid character in path");
+        cursor = after;
+        break;
       }
     }
     if (cursor >= last) throw lineError(lineNumber, "expected a gron assignment");
 
-    let valueStart = cursor + 1;
-    while (valueStart < last && WHITESPACE[buf[valueStart] as number] === 1) valueStart += 1;
+    const valueStart = trimStart(buf, cursor + 1, last);
     if (valueStart >= last) throw lineError(lineNumber, "expected a gron assignment");
     this.parseValue(buf, valueStart, last, lineNumber);
     return true;
