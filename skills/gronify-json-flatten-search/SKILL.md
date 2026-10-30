@@ -75,7 +75,9 @@ The output reflects the source text, not a parsed copy:
 
 - Numbers are printed exactly as written, so `12345678901234567890`, `1.10`, and `1e2` survive unchanged.
 - Object keys stay in document order, and duplicate keys produce one line per occurrence.
-- Input must be strict JSON. A syntax error exits with status 1 and reports the byte offset, line, and column. Lines already printed stay printed, so check the exit status before trusting truncated output.
+- Input must be strict JSON. A syntax error exits with status 1 and reports the byte offset, line, and column.
+- On stdout, output is written while the input is still being read, so when the input is invalid (a truncated file is only noticed at the end) most or all of the lines may already have been printed. Always check the exit status, and use `set -o pipefail` when piping into another command; never treat the output as complete when the exit status is not 0.
+- `-o <file>` is atomic: the file is replaced only after the whole input succeeded, so a failed run leaves an existing file untouched and creates no new one. Prefer `-o` when a later step reads the result.
 
 `unflatten` still reads its whole input into memory.
 
