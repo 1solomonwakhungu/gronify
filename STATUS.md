@@ -72,3 +72,10 @@
 
 - Tests: 203 passing on Node 20.20.2 and 22.23.1 (tokenizer chunk splits at every byte, 300-document randomized equivalence with `flattenJson(JSON.parse(x))`, CLI stdin, `-o` onto its own input for flatten and search on 4 MB+, invalid input past the first flush leaving an existing `-o` file byte-identical with no temp files, unwritable and missing `-o` directories, SIGTERM cleanup, closed pipe, hang, deep nesting).
 - Next: review and merge the streaming PR; `unflatten` streaming is being done separately.
+
+## 2026-10-29 — Landing audit fix
+
+- The Landing page CI audit failed on `main` with five new advisories: `next` 16.4.0 (`GHSA-2464-fhr4-w9xw`, `GHSA-673q-mjm6-r5xr`, `GHSA-p3m5-59mp-jv5r`) and `dompurify` <= 3.4.16 (`GHSA-cg2g-xh64-v4q7`, `GHSA-mrv2-3pqr-j5jr`).
+- Fixed by bumping `next` to 16.4.3 (same major) and adding a `dompurify` 3.4.17 override. `dompurify` arrives through `posthog-js`, which declares `^3.4.13` even in its latest release, so an override is the only way to move it. No allowlist entries added.
+- `npm ci`, `npm run audit`, `npm run lint`, and `npm run build` pass on Node 22.
+- The `GHSA-vfj7-8cjw-p6xm` (`braces`) allowlist entry is no longer needed: the audit passes with an empty allowlist. Left in place here; remove it in a follow-up.
