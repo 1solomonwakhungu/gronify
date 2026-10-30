@@ -1,5 +1,17 @@
 import { spawn } from "child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
+import {
+  chmodSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { flattenJson } from "../src/gron";
@@ -494,6 +506,235 @@ describe("Gronify CLI", () => {
           "json.id = 1",
         ].join("\n"),
       );
+    });
+
+    describe("-o output is atomic", () => {
+      const posix = process.platform !== "win32";
+      let work: string;
+
+      beforeEach(() => {
+        work = mkdtempSync(join(dir, "atomic-"));
+      });
+
+      function tempFiles(): string[] {
+        return readdirSync(work).filter((name) => name.endsWith(".tmp"));
+      }
+
+      test("should flatten a multi-megabyte file onto itself", async () => {
+        const text = bigRecords(40_000);
+        const file = join(work, "a.json");
+        writeFileSync(file, text);
+        expect(Buffer.byteLength(text)).toBeGreaterThan(4 * 1024 * 1024);
+
+        const result = await runCLI(["-o", file, "flatten", file]);
+
+        expect(result.exitCode).toBe(0);
+        expect(result.stderr).toContain(`Output written to ${file}`);
+        expect(readFileSync(file, "utf8")).toBe(flattenJson(JSON.parse(text)) + "\n");
+        expect(tempFiles()).toEqual([]);
+      });
+
+      test("should search a multi-megabyte file onto itself", async () => {
+        const text = bigRecords(40_000);
+        const file = join(work, "b.json");
+        writeFileSync(file, text);
+        const expected = flattenJson(JSON.parse(text))
+          .split("\n")
+          .filter((line) => line.toLowerCase().includes("user"))
+          .join("\n");
+
+        const result = await runCLI(["-o", file, "search", file, "user"]);
+
+        expect(result.exitCode).toBe(0);
+        expect(result.stderr).toContain(`Output written to ${file}`);
+        expect(readFileSync(file, "utf8")).toBe(expected + "\n");
+        expect(tempFiles()).toEqual([]);
+      });
+
+      test("should leave an existing -o file byte-identical when the input is invalid past the first flush", async () => {
+        const input = join(work, "truncated.json");
+        const target = join(work, "out.gron");
+        const previous = Buffer.from([0x70, 0x72, 0x65, 0x63, 0x69, 0x6f, 0x75, 0x73, 0x00, 0xff, 0x0a]);
+        writeFileSync(input, bigRecords(40_000).slice(0, 3_000_000));
+        writeFileSync(target, previous);
+
+        const flatten = await runCLI(["-o", target, "flatten", input]);
+        const search = await runCLI(["-o", target, "search", input, "user"]);
+
+        for (const result of [flatten, search]) {
+          expect(result.exitCode).toBe(1);
+          expect(result.stderr).toContain("byte offset");
+          expect(result.stderr).not.toContain("Output written");
+        }
+        expect(readFileSync(target).equals(previous)).toBe(true);
+        expect(tempFiles()).toEqual([]);
+      });
+
+      test("should not create the -o file when the input is invalid", async () => {
+        const input = join(work, "truncated.json");
+        const target = join(work, "never.gron");
+        writeFileSync(input, bigRecords(40_000).slice(0, 3_000_000));
+
+        const result = await runCLI(["-o", target, "flatten", input]);
+
+        expect(result.exitCode).toBe(1);
+        expect(readdirSync(work)).toEqual(["truncated.json"]);
+      });
+
+      test("should leave an existing -o file alone when a search has no matches", async () => {
+        const target = join(work, "kept.gron");
+        writeFileSync(target, "precious\n");
+
+        const result = await runCLI(["-o", target, "search", testJSONFile, "zzzzz"]);
+
+        expect(result.stderr).toContain("No matches found");
+        expect(readFileSync(target, "utf8")).toBe("precious\n");
+        expect(tempFiles()).toEqual([]);
+      });
+
+      test("should replace a symlinked -o target's file and keep the link", async () => {
+        if (!posix) return;
+        const real = join(work, "real.gron");
+        const link = join(work, "link.gron");
+        writeFileSync(real, "old\n");
+        symlinkSync(real, link);
+
+        const result = await runCLI(["-o", link, "flatten"], "[1]");
+
+        expect(result.exitCode).toBe(0);
+        expect(lstatSync(link).isSymbolicLink()).toBe(true);
+        expect(readFileSync(real, "utf8")).toBe("json = []\njson[0] = 1\n");
+      });
+
+      test("should keep the mode of an existing -o file", async () => {
+        if (!posix) return;
+        const target = join(work, "mode.gron");
+        writeFileSync(target, "old\n");
+        chmodSync(target, 0o640);
+
+        const result = await runCLI(["-o", target, "flatten"], "[1]");
+
+        expect(result.exitCode).toBe(0);
+        expect(statSync(target).mode & 0o777).toBe(0o640);
+        expect(readFileSync(target, "utf8")).toBe("json = []\njson[0] = 1\n");
+      });
+
+      test("should write the unflatten and --count results atomically too", async () => {
+        const unflattened = join(work, "out.json");
+        const counted = join(work, "count.txt");
+        writeFileSync(unflattened, "old\n");
+
+        const first = await runCLI(["--no-color", "-o", unflattened, "unflatten", testGronFile]);
+        const second = await runCLI(["-o", counted, "search", testJSONFile, "user", "--count"]);
+
+        expect(first.exitCode).toBe(0);
+        expect(JSON.parse(readFileSync(unflattened, "utf8"))).toEqual(testJSON);
+        expect(second.exitCode).toBe(0);
+        expect(Number(readFileSync(counted, "utf8"))).toBeGreaterThan(0);
+        expect(tempFiles()).toEqual([]);
+      });
+
+      test("should exit 1 with a one-line error when the -o directory does not exist", async () => {
+        const target = join(work, "missing", "out.gron");
+
+        const result = await runCLI(["-o", target, "flatten"], "[1]");
+
+        expect(result.exitCode).toBe(1);
+        expect(result.stderr.split("\n")).toHaveLength(1);
+        expect(result.stderr).toContain(`ENOENT`);
+        expect(result.stderr).toContain(target);
+        expect(result.stderr).not.toContain(".tmp");
+      });
+
+      test("should exit 1 with a one-line error when the -o directory is unwritable", async () => {
+        if (!posix || process.getuid?.() === 0) return; // root ignores permission bits
+        const locked = join(work, "locked");
+        mkdirSync(locked);
+        chmodSync(locked, 0o500);
+        const target = join(locked, "out.gron");
+        const input = join(work, "in.json");
+        writeFileSync(input, bigRecords(25_000)); // enough output to fail on a flush before the end
+
+        try {
+          const result = await runCLI(["-o", target, "flatten", input]);
+
+          expect(result.exitCode).toBe(1);
+          expect(result.stderr.split("\n")).toHaveLength(1);
+          expect(result.stderr).toContain("EACCES");
+          expect(result.stderr).toContain(target);
+          expect(result.stderr).not.toContain(".tmp");
+          expect(result.stderr).not.toMatch(/\n\s+at /);
+          expect(readdirSync(locked)).toEqual([]);
+        } finally {
+          chmodSync(locked, 0o700);
+        }
+      });
+
+      test("should exit 1 with a one-line error when -o is a directory", async () => {
+        const result = await runCLI(["-o", work, "flatten"], "[1]");
+
+        expect(result.exitCode).toBe(1);
+        expect(result.stderr.split("\n")).toHaveLength(1);
+        expect(result.stderr).toContain("EISDIR");
+        expect(tempFiles()).toEqual([]);
+      });
+
+      test("should remove its temp file when killed", async () => {
+        if (!posix) return;
+        const target = join(work, "killed.gron");
+        const signal = await new Promise<NodeJS.Signals | null>((resolve, reject) => {
+          const child = spawn("node", ["dist/index.js", "-o", target, "flatten"]);
+          const poll = setInterval(() => {
+            // The first input chunk is flushed at once, which creates the temp file.
+            if (existsSync(work) && tempFiles().length > 0) {
+              clearInterval(poll);
+              child.kill("SIGTERM");
+            }
+          }, 20);
+          const timer = setTimeout(() => {
+            clearInterval(poll);
+            child.kill("SIGKILL");
+            reject(new Error("temp file never appeared"));
+          }, 4_000);
+          child.on("close", (_code, sig) => {
+            clearTimeout(timer);
+            clearInterval(poll);
+            resolve(sig);
+          });
+          child.stdin.on("error", () => undefined);
+          child.stdin.write("[1,2,");
+        });
+
+        expect(signal).toBe("SIGTERM");
+        expect(readdirSync(work)).toEqual([]);
+      });
+    });
+
+    describe("invalid input on stdout", () => {
+      test("should exit 1 with the error even though output was already written", async () => {
+        const result = await runCLI(["flatten"], '{"a":[1,2,{"b":"c"');
+
+        expect(result.exitCode).toBe(1);
+        expect(result.stderr).toContain("flattening JSON");
+        expect(result.stderr).toContain("Unexpected end of input");
+        // Streaming has already written every complete line by the time the end of input is found to be truncated.
+        expect(result.stdout.split("\n")).toEqual(["json = {}", "json.a = []", "json.a[0] = 1", "json.a[1] = 2", "json.a[2] = {}", 'json.a[2].b = "c"']);
+      });
+
+      test("should exit 1 with the error when the document is truncated past several flushes", async () => {
+        const text = bigRecords(40_000).slice(0, 3_000_000);
+        const file = join(dir, "truncated-stdout.json");
+        writeFileSync(file, text);
+
+        const flatten = await runCLI(["flatten", file]);
+        const search = await runCLI(["search", file, "user"]);
+
+        for (const result of [flatten, search]) {
+          expect(result.exitCode).toBe(1);
+          expect(result.stderr).toContain("byte offset");
+          expect(result.stdout.length).toBeGreaterThan(1024 * 1024);
+        }
+      });
     });
   });
 

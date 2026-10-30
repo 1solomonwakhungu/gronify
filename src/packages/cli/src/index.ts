@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { accessSync, constants, createReadStream, createWriteStream, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { accessSync, constants, createReadStream, existsSync, readFileSync } from "node:fs";
 import { extname } from "node:path";
 import { flattenStream } from "./flatten-stream.js";
 import { createFormatter, shouldUseColor, type FormatOptions, type OutputFormatter } from "./formatter.js";
 import { unflattenGron } from "./gron.js";
 import { createLineMatcher } from "./matcher.js";
-import { GronOutput, type OutputOptions } from "./output.js";
+import { createOutputSink, GronOutput, type OutputOptions } from "./output.js";
 
 const INPUT_BLOCK_SIZE = 1 << 20;
 
@@ -83,12 +83,8 @@ function openInput(file: string | undefined, formatter: OutputFormatter, usage: 
   return process.stdin;
 }
 
-function createOutput(outputFile: string | undefined, options: Omit<OutputOptions, "open" | "ownsStream"> = {}): GronOutput {
-  return new GronOutput({
-    ...options,
-    open: outputFile ? () => createWriteStream(outputFile) : () => process.stdout,
-    ownsStream: Boolean(outputFile)
-  });
+function createOutput(outputFile: string | undefined, options: Omit<OutputOptions, "sink"> = {}): GronOutput {
+  return new GronOutput({ ...options, sink: createOutputSink(outputFile) });
 }
 
 /** A closed downstream pipe (for example `| head`) is a normal way to stop, not a failure. */
@@ -96,12 +92,19 @@ function isBrokenPipe(error: unknown): boolean {
   return error instanceof Error && (error as NodeJS.ErrnoException).code === "EPIPE";
 }
 
-function emit(output: string, formatter: OutputFormatter, outputFile: string | undefined): void {
+async function emit(output: string, formatter: OutputFormatter, outputFile: string | undefined): Promise<void> {
   if (!outputFile) {
     console.log(output);
     return;
   }
-  writeFileSync(outputFile, output + "\n", "utf8");
+  const sink = createOutputSink(outputFile);
+  try {
+    sink.open().write(output + "\n", "utf8");
+    await sink.commit();
+  } catch (error) {
+    await sink.abort();
+    throw error;
+  }
   console.error(formatter.formatSuccess(`Output written to ${outputFile}`));
 }
 
@@ -148,7 +151,7 @@ program
     try {
       const input = await readInput(file, formatter, "Usage: gronify unflatten <file> OR cat file.gron | gronify unflatten");
       if (process.exitCode) return;
-      emit(formatter.formatJson(JSON.stringify(unflattenGron(input))), formatter, globalOptions.output);
+      await emit(formatter.formatJson(JSON.stringify(unflattenGron(input))), formatter, globalOptions.output);
     } catch (error) {
       fail(formatter, "unflattening gron", error);
       if (error instanceof Error && /^line \d+:/.test(error.message)) {
@@ -193,7 +196,7 @@ program
       await flattenStream(input, output);
 
       if (options.count) {
-        emit(formatter.formatSuccess(String(output.matched)), formatter, globalOptions.output);
+        await emit(formatter.formatSuccess(String(output.matched)), formatter, globalOptions.output);
       } else if (output.matched === 0) {
         if (options.invertMatch) {
           console.error(formatter.formatWarning(`All lines matched '${searchTerm}' (nothing to invert)`));

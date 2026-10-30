@@ -2,8 +2,25 @@ import { Writable } from "node:stream";
 import { flattenStream } from "../src/flatten-stream";
 import { flattenJson } from "../src/gron";
 import { createLineMatcher } from "../src/matcher";
-import { GronOutput, type OutputOptions } from "../src/output";
+import { GronOutput, type OutputOptions, type OutputSink } from "../src/output";
 import { JsonSyntaxError } from "../src/tokenizer";
+
+/** A sink that ends the stream on commit and destroys it on abort, like a file sink without the rename. */
+function streamSink(open: () => Writable): OutputSink {
+  let stream: Writable | null = null;
+  return {
+    open: () => (stream ??= open()),
+    commit: () =>
+      new Promise<void>((resolve) => {
+        if (stream === null) return resolve();
+        stream.once("close", () => resolve());
+        stream.end();
+      }),
+    abort: async () => {
+      stream?.destroy();
+    },
+  };
+}
 
 interface Collected {
   text: string;
@@ -25,7 +42,7 @@ async function run(
         callback();
       },
     });
-  const output = new GronOutput({ open: () => stream, ownsStream: true, ...options });
+  const output = new GronOutput({ sink: streamSink(() => stream), ...options });
   await flattenStream(chunks, output);
   return { text: Buffer.concat(parts).toString("utf8"), writes: parts.length, output };
 }
@@ -272,7 +289,7 @@ describe("flattenStream", () => {
           callback();
         },
       });
-      const output = new GronOutput({ open: () => stream, ownsStream: true });
+      const output = new GronOutput({ sink: streamSink(() => stream) });
       await expect(flattenStream(['["a",', '"b",', "?"], output)).rejects.toBeInstanceOf(JsonSyntaxError);
       // Each chunk is flushed once fully processed, so everything before the bad chunk was written.
       expect(Buffer.concat(parts).toString("utf8")).toBe('json = []\njson[0] = "a"\njson[1] = "b"\n');
@@ -280,7 +297,7 @@ describe("flattenStream", () => {
 
     test("does not create the destination when nothing was produced", async () => {
       const open = jest.fn(() => new Writable({ write: (_c, _e, cb) => cb() }));
-      const output = new GronOutput({ open, ownsStream: true });
+      const output = new GronOutput({ sink: streamSink(open) });
       await expect(flattenStream(["?"], output)).rejects.toBeInstanceOf(JsonSyntaxError);
       expect(open).not.toHaveBeenCalled();
     });
