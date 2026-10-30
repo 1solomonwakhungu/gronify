@@ -137,12 +137,15 @@ try {
     const file = join(dir, `records-${mb}mb.json`);
     await generateRecords(file, mb * 1024 * 1024);
     const actual = (statSync(file).size / 1048576).toFixed(0);
-    for (const [name, args] of [
-      ["flatten", ["flatten", file]],
-      ["search --count", ["search", file, options.term, "--count"]],
+    // `newOnly` rows use options an older baseline build does not have, so they only run on this build.
+    for (const [name, args, newOnly] of [
+      ["flatten", ["flatten", file], false],
+      ["search --count", ["search", file, options.term, "--count"], false],
+      ["flatten --sort", ["flatten", "--sort", file], true],
+      ["search -m 5 (stops early)", ["search", file, options.term, "-m", "5"], true],
     ]) {
       const current = await best(cli, args, options.runs);
-      const before = options.baseline ? await best(options.baseline, args, options.runs) : null;
+      const before = options.baseline && !newOnly ? await best(options.baseline, args, options.runs) : null;
       rows.push([`${actual} MB`, name, before ? describe(before) : "n/a", describe(current)]);
     }
     rmSync(file);

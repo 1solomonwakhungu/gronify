@@ -25,6 +25,10 @@ The skill teaches supported coding agents when to flatten, search, and round-tri
 - Flatten JSON files or stdin into gron-style path assignments, streaming through multi-gigabyte inputs in constant memory.
 - Unflatten gron files or stdin back into JSON, streaming multi-gigabyte input in roughly constant memory.
 - Search flattened paths with plain text, extended regex, case-sensitive matching, and match counts.
+- Cap the output with `search -m/--max-count` and `flatten --limit`. The input stops being read at the cap, so a huge file returns in milliseconds and an agent cannot flood its context.
+- Sort object keys at every level with `--sort` for stable, diffable output. The default is document order.
+- Keep numbers exactly as written (`12345678901234567890`, `1.10`), which `jq` can round.
+- Opt in to grep-style exit codes with `search --exit-status`.
 - Use stdin/stdout workflows so Gronify can sit inside shell pipelines.
 - Format terminal output with optional colors and pretty indentation.
 
@@ -34,6 +38,16 @@ The skill teaches supported coding agents when to flatten, search, and round-tri
 - npm 10 or newer.
 
 ## Install
+
+### npm
+
+```bash
+npm install -g gronify
+# or run it once without installing
+npx gronify --help
+```
+
+The result caps (`search -m/--max-count`, `flatten --limit`), `--sort`, and `search --exit-status` need Gronify **1.2.0 or newer**. Version 1.1.0 stops with `error: unknown option '-m'`. Check with `gronify search --help | grep -e --max-count` (a build from source may report an older `--version` while having the flags) or `gronify --version`, and update with `npm install -g gronify@latest`.
 
 ### Homebrew
 
@@ -96,6 +110,26 @@ gronify search data.json --case-sensitive "Service"
 gronify search data.json --count "error"
 ```
 
+Look at a large file without printing all of it:
+
+```bash
+gronify search huge.json --count "error"        # how many matches, before printing any
+gronify search huge.json -m 20 "error"          # the first 20 matches, then stop reading
+gronify flatten --limit 50 huge.json            # the first 50 lines
+```
+
+Sort keys so two payloads can be diffed:
+
+```bash
+diff <(gronify flatten --sort old.json) <(gronify flatten --sort new.json)
+```
+
+Use the exit status in a script:
+
+```bash
+if gronify search --exit-status config.json -m 1 "debug = true" > /dev/null 2>&1; then echo "debug is on"; fi
+```
+
 Use Gronify in a pipeline:
 
 ```bash
@@ -127,7 +161,7 @@ Flatten it:
 gronify flatten demo.json
 ```
 
-Example output:
+Example output (keys come out in the order they appear in the document; add `--sort` to sort them):
 
 ```text
 json = {}
@@ -166,9 +200,15 @@ gronify search demo.json --regex "status|version"
 
 Converts JSON to gron format. If `file` is omitted, Gronify reads from stdin.
 
+| Option        | Description                                                                                                                  |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `--limit <n>` | Stop after `n` lines of output and stop reading the input. See [Limiting output](#limiting-output).                          |
+| `--sort`      | Sort object keys at every level. Array order is unchanged. The default is document order. See [Sorting keys](#sorting-keys). |
+
 ```bash
 gronify flatten data.json
 cat data.json | gronify flatten
+gronify flatten --sort --limit 100 data.json
 ```
 
 ### `unflatten [file]`
@@ -183,7 +223,7 @@ gronify --output data.json unflatten data.gron
 
 `unflatten` reads its input as a byte stream and writes JSON as it goes, so memory use does not grow with input size. On an Apple M5 Pro, a 3 GB gron file converts in about 7 seconds with a peak RSS of about 100 MB.
 
-- **Document order.** Gron written by `gronify flatten` streams in a single pass: each container comes before its children, siblings stay together, and array indexes ascend. Input that breaks this, such as lexically sorted gron (`json[10]` before `json[2]`) or a path that re-enters a container that was already closed, is still accepted when the problem shows up within the first 16 MiB of input. Gronify then rebuilds the whole document in memory. Once 16 MiB of input has been read or 16 MiB of output produced (a large array gap counts as output), out-of-order input fails with an error that names the line, because JSON may already have been written to stdout. Regenerate such input with `gronify flatten`.
+- **Document order.** Gron written by `gronify flatten` streams in a single pass: each container comes before its children, siblings stay together, and array indexes ascend. Input that breaks this, such as lexically sorted gron (`json[10]` before `json[2]`) or a path that re-enters a container that was already closed, is still accepted when the problem shows up within the first 16 MiB of input. Gronify then rebuilds the whole document in memory. Once 16 MiB of input has been read or 16 MiB of output produced (a large array gap counts as output), out-of-order input fails with an error that names the line, because JSON may already have been written to stdout. Regenerate such input with `gronify flatten`. Output of `gronify flatten --sort` is in document order too, so it unflattens in a single pass; plain `sort` on the lines is not (see [Sorting keys](#sorting-keys)).
 - **Values are written as they appear.** Numbers are validated, not parsed, so `12345678901234567890`, `1.10`, `-0`, and `1e-7` come out unchanged. Strings are normalized to what `JSON.stringify` writes (`"A\/"` becomes `"A/"`). Compound values written on one line (`json.a = {"n":12345678901234567890}`) keep their numbers too, with whitespace and strings normalized, keys in source order (integer-like keys are not moved first as `JSON.parse` would), and a repeated key keeping its last value. Only space, tab, LF, and CR separate tokens inside a value, so `[\v]` is rejected; around a line and around `=`, anything `String.prototype.trim` strips (including U+00A0) is ignored.
 - **Skipped array indexes become `null`.** `json[3] = 1` after `json = []` gives `[null,null,null,1]`. The nulls are streamed, not allocated, so `json[100000000] = 1` costs output size, not memory.
 - **Repeated assignments.** In streamed output a repeated object key is written again where it appears, and a JSON parser keeps the last one, so the data matches the old last-write-wins result. Reassigning an array index counts as out of order, because the position is already written. Because the duplicate is written, `--pretty` output for such input is not the same as `JSON.stringify(value, null, 2)` of the parsed result, which has the key once; and a strict consumer that rejects duplicate names will reject the output. Gron from `gronify flatten` never repeats a key.
@@ -196,19 +236,92 @@ gronify --output data.json unflatten data.gron
 
 Searches flattened JSON paths. Pass both a file and term, or pipe JSON to stdin and pass only the search term.
 
-| Option                 | Description                       |
-| ---------------------- | --------------------------------- |
-| `-r, --regex`          | Use extended regular expressions. |
-| `-c, --case-sensitive` | Match case sensitively.           |
-| `--count`              | Print only the match count.       |
-| `-v, --invert-match`   | Show lines that do not match.     |
+| Option                 | Description                                                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `-r, --regex`          | Use extended regular expressions.                                                                                             |
+| `-c, --case-sensitive` | Match case sensitively.                                                                                                       |
+| `--count`              | Print only the match count.                                                                                                   |
+| `-v, --invert-match`   | Show lines that do not match.                                                                                                 |
+| `-m, --max-count <n>`  | Stop after `n` matching lines (`n` non-matching lines with `-v`; with `--count`, count up to `n`) and stop reading the input. |
+| `--sort`               | Sort object keys at every level before printing. The default is document order. Ignored with `--count`.                       |
+| `--exit-status`        | Exit 1 when nothing matches, like `grep`. Errors then exit 2 instead of 1. See [Exit codes](#exit-codes).                     |
 
 ```bash
 gronify search data.json "user"
 gronify search data.json --regex "user\.[a-z]+"
 cat data.json | gronify search "name"
 gronify search data.json --count "field"
+gronify search data.json -m 10 "field"
 ```
+
+### Limiting output
+
+`search -m/--max-count <n>` and `flatten --limit <n>` stop after `n` lines. They exist so a person or an AI agent can look at a file of unknown size without flooding a terminal or a context window, and they follow `grep -m`:
+
+- `n` must be a positive integer. `0`, negative numbers, decimals, and text are rejected with an error.
+- The cap counts matching lines. With `-v` it counts the non-matching lines that are printed. With `--count` it caps the count.
+- Gronify stops reading the input at the cap and destroys the read stream (or stdin), so a 5 GB file whose first match is near the start returns in milliseconds, and a `cat huge.json | gronify search -m 5 term` pipeline ends instead of waiting. Memory and time depend on how far Gronify had to read, not on the file size.
+- The exit status is 0. When a cap ended the run, Gronify prints one line to **stderr**, for example `Stopped after 20 matches (--max-count); there may be more`, and stdout holds only the lines. Gronify does not read further to find out whether more output was left, so the notice says "there may be more". It stays quiet when it can tell without reading on: the cap was reached on the last line of the document (only whitespace and closing brackets follow in the same chunk of input). With `--sort`, the notice is printed whenever the cap is reached.
+- The rest of the input is never read, so it is not validated either. A syntax error after the cap is not reported, where a run without a cap would exit 1 on it. Errors before the cap are reported as usual.
+- With `-o`, the capped output is committed atomically like any other output: the file appears (or replaces the old one) only when the run finishes, and holds exactly the lines that were printed. See the notes under [Streaming and large inputs](#streaming-and-large-inputs).
+- With `--sort`, the cap applies to the sorted order. It can only end the read early while the input is a top-level array. A document whose root is an object has to be read to the end before its first sorted line is known.
+
+### Sorting keys
+
+**The default is document order**: keys come out in the order they appear in the input. (`gron` always sorts, in a different order; see below.) Add `--sort` to `flatten` or `search` to sort the keys of every object, at every depth:
+
+```bash
+echo '{"b":1,"a":{"d":4,"c":3},"10":0,"2":0}' | gronify flatten --sort
+```
+
+```text
+json = {}
+json["10"] = 0
+json["2"] = 0
+json.a = {}
+json.a.c = 3
+json.a.d = 4
+json.b = 1
+```
+
+How the order is defined:
+
+- At each object, keys are compared by UTF-16 code unit, the same order as JavaScript's default `sort()`. `"10"` comes before `"2"`, uppercase before lowercase, and `"😀"` (U+1F600, a surrogate pair) before `"～"` (U+FF5E).
+- Each key's subtree stays right after the key's own line, so an object is never interleaved with its siblings. Array elements keep their index order (`[2]` before `[10]`). Duplicate keys stay together, in document order.
+- Only the order of keys changes. Numbers and strings are untouched.
+
+**This is not the order `gron` uses**, and it differs from sorting the lines with `sort`:
+
+- `gron` 0.7.1 puts every bare key (`json.b`) before every bracketed key (`json["10"]`, `json["b x"]`) at the same level, whatever the key text, and compares keys as UTF-8 bytes (so it prints `"～"` before `"😀"`, the reverse of the above). It also merges duplicate keys. `gronify flatten --sort` and `gron` agree only when every key is ASCII, all keys of a level are bare or all are bracketed, no key needs escaping (`gron` compares the escaped text, so `"a\"b"` and keys with tabs can sort differently), and no key repeats.
+- Plain `sort` on the lines compares whole lines. It puts `json.a$ = 1` between `json.a = {}` and `json.a.x = 2`, and `json.arr[10]` before `json.arr[2]`, and its output no longer unflattens.
+
+Why this order suits diffing:
+
+- It is stable: two documents that differ only in key order give identical output, so `diff <(gronify flatten --sort a.json) <(gronify flatten --sort b.json)` shows real changes and ignores reordering.
+- A changed object shows up as one contiguous block, and array elements stay in index order, so a diff reads like the document.
+- It round-trips. The output is in document order (a container before its children, siblings together, array indexes ascending), so `gronify flatten --sort data.json | gronify unflatten` streams in one pass, at any size, and rebuilds the same data with the keys sorted. Lines sorted with plain `sort` do not.
+- `search --sort` filters first and sorts what is left, so it only holds matching lines. `--sort` is ignored with `--count`, which needs no order.
+
+**Memory cost.** The document is never turned into JS objects. Each object's members are kept as already-flattened bytes plus a key string and a few numbers per member, and are put in key order when the object closes. In practice:
+
+- A top-level array (the usual shape of a large payload: a list of records) is written as it is read, one record at a time. Sorting a 129 MB array of records peaked at 139 MB RSS and took 2.2 s, against 0.8 s unsorted.
+- Everything inside an object waits until the document, or the enclosing array element, ends. Gronify keeps up to 64 MiB of line data in memory (set `GRONIFY_SORT_MEMORY` to change it: a number of bytes, or a size such as `256MiB`, `64MB`, `512KiB`; anything it cannot read is an error), then writes the oldest buffers to an anonymous temp file in `$TMPDIR` (unlinked right after it is created, so it cannot be left behind) and reads them back at the end. That temp file can grow to roughly the size of the flattened output of the largest object, so make sure the temp directory has room.
+- The part that stays in memory is about 100 to 150 bytes per member of one object, however large each member is. A 270 MiB file that is one object with 1.5 million members peaked at about 500 MB RSS, and 350 MB with a 4 MiB line buffer.
+- Each very large member is read back once, and small members are copied into their parent once per level, so heavy nesting adds work. Output grows quadratically with depth with or without `--sort`, because every container line repeats its path. Those container lines count against the limit and spill like any other line, so a 20,000-level document peaked at about 450 MB RSS with the default limit and 280 MB with a 1 MB limit (60 MB without `--sort`), where the memory use no longer follows the depth squared.
+
+### Exact numbers
+
+`flatten` and `search` print numbers exactly as they appear in the source. `12345678901234567890` stays `12345678901234567890` and `1.10` stays `1.10`. `jq` parses numbers into doubles, so, depending on the version and the filter, an integer above 2^53 (9007199254740992) such as a 64-bit ID or a nanosecond timestamp can come back rounded (`12345678901234567000`), and `1.10` can come back as `1.1`. A search for the ID you copied from a log will still find it in Gronify.
+
+### Exit codes
+
+| Code | Meaning                                                                                                                                                                |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0`  | Success. This includes a `search` with no matches (the default), a run that stopped at `-m`/`--limit`, and a closed output pipe such as `\| head`.                     |
+| `1`  | Failure: invalid JSON or gron, an unreadable or missing file, no input provided, an invalid option value, or an unknown option. With `search --exit-status`: no match. |
+| `2`  | Only with `search --exit-status`: any failure from the list above. This keeps "no match" (1) separate from "broken" (2), as in `grep`.                                 |
+
+`--exit-status` is opt-in so existing scripts keep exit 0 on an empty search. With it, `gronify search --exit-status ...` exits 0 when at least one line was selected (a run stopped by `-m` counts), 1 when none was, and 2 on any error. `--count` still prints `0` before exiting 1. With `-v`, "no match" means every line matched the term, so nothing was printed.
 
 ### Streaming and large inputs
 
@@ -258,7 +371,7 @@ node scripts/bench-unflatten.mjs                 # 56 MB and 285 MB, plus a flat
 node scripts/bench-unflatten.mjs --huge 3        # one 3 GB input; needs about 3 GB of free temp space
 ```
 
-`npm run bench` generates inputs in a temporary directory, times `flatten` and `search --count`, and deletes the files afterwards. Pass options after `--`, for example `npm run bench -- --sizes 23,129 --big 3 --deep 100000 --baseline path/to/older/dist/index.js`.
+`npm run bench` generates inputs in a temporary directory, times `flatten`, `search --count`, `flatten --sort`, and an early-stopping `search -m 5`, and deletes the files afterwards. Pass options after `--`, for example `npm run bench -- --sizes 23,129 --big 3 --deep 100000 --baseline path/to/older/dist/index.js`.
 
 ## Releasing
 
