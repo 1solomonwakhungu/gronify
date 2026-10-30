@@ -18,7 +18,7 @@ brew install 1solomonwakhungu/tap/gronify
 
 Gronify needs Node.js 20 or newer. To build from a checkout instead: `cd src/packages/cli && npm ci && npm run build && npm link`.
 
-**Check the version before using `-m`, `--limit`, `--sort` or `--exit-status`.** They need Gronify 1.2.0 or newer; 1.1.0 and older fail with `error: unknown option '-m'` (exit 1). Run `gronify --version`, or `gronify search --help | grep -e --max-count`. If the flag is missing, update (`npm install -g gronify@latest`) or cap the output with `| head -n 20` instead and skip `--sort`.
+**Check the version before using `-m`, `--limit`, `--sort` or `--exit-status`.** They need Gronify 1.2.0 or newer; 1.1.0 and older fail with `error: unknown option '-m'` (exit 1). Run `gronify search --help | grep -e --max-count` (a build from source can report an older `--version` while having the flags), or `gronify --version`. If the flag is missing, update (`npm install -g gronify@latest`) or cap the output with `| head -n 20` instead and skip `--sort`.
 
 ## Explore without flooding your context
 
@@ -57,7 +57,7 @@ diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten 
 - `--sort` works on `flatten` and `search` (it filters first, then sorts). It is ignored with `--count`.
 - **It is not `gron`'s order, and not what `sort` gives.** `gron` puts bare keys (`json.b`) before bracketed ones (`json["10"]`) at each level and compares UTF-8 bytes; plain `sort` on the lines interleaves a parent with similarly named siblings and puts `[10]` before `[2]`. Do not expect `gronify --sort` output to match `gron` output line for line, and do not `sort` Gronify output yourself.
 - The output is stable (the same data in another key order gives the same lines), subtrees stay contiguous, and the lines are in document order, so `flatten --sort` output goes straight back through `unflatten`.
-- A top-level array is sorted record by record as it streams. A large object at the root is buffered until it closes, using up to 64 MiB of memory and then a temp file in `$TMPDIR`, so budget disk and time (about 3x slower than unsorted) on multi-gigabyte objects. Set `GRONIFY_SORT_MEMORY` (bytes, or `256MiB`, `64MB`, ...) to change the 64 MiB.
+- A top-level array is sorted record by record as it streams. A large object at the root is buffered until it closes, using up to 64 MiB of memory and then a temp file in `$TMPDIR`, so budget disk and time (about 3–5x slower than unsorted) on multi-gigabyte objects. Set `GRONIFY_SORT_MEMORY` (bytes, or `256MiB`, `64MB`, ...) to change the 64 MiB.
 - Caps apply to the sorted order, so with `--sort` a root object is read to the end before its first line is printed.
 
 ## Check the exit status
@@ -66,7 +66,7 @@ diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten 
 - For yes/no questions add `--exit-status`: `0` = something matched, `1` = nothing matched, `2` = error. Use it instead of parsing output:
 
 ```bash
-if gronify --no-color search --exit-status config.json -m 1 'debug = true' > /dev/null; then echo on; fi
+if gronify --no-color search --exit-status config.json -m 1 'debug = true' > /dev/null 2>&1; then echo on; fi
 ```
 
 - A cap reached counts as a match. `--count --exit-status` prints the count and exits 1 when it is `0`.
