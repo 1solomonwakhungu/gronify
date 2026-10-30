@@ -629,6 +629,16 @@ describe("whitespace", () => {
     expect(JSON.stringify(unflattenGron(gron))).toBe('{"a":1}');
   });
 
+  test.each([
+    [" ", "U+00A0"],
+    ["　", "U+3000"],
+    ["\v", "vertical tab"]
+  ])("accepts %j (%s) around = like the old \\s*=\\s*", async (space) => {
+    const gron = `json = {}\njson.a${space}=${space}1\njson.b${space}= 2\njson.c =${space}3\n`;
+    expect(await unflatten(gron)).toBe('{"a":1,"b":2,"c":3}\n');
+    expect(JSON.stringify(unflattenGron(gron))).toBe('{"a":1,"b":2,"c":3}');
+  });
+
   test("does not trim characters that trim() keeps", async () => {
     await expect(unflatten("json = {}\njson.a = 1​\n")).rejects.toThrow("line 2: invalid JSON value");
     await expect(unflatten("json = {}\njson.a = 1\u0085\n")).rejects.toThrow("line 2: invalid JSON value");
