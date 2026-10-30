@@ -33,7 +33,8 @@ const staleClaimPatterns = [
     message: "claims a VS Code workflow that is not present",
   },
   {
-    pattern: /\bdiff\b/i,
+    // Gronify has no diff command. Using the system `diff` on `--sort` output is fine to document.
+    pattern: /\bgronify diff\b|\bdiff (command|subcommand|support)\b/i,
     message: "claims diff support that is not present",
   },
   {
@@ -81,10 +82,6 @@ if (existsSync("README.md")) {
 
   if (/^# Gronify# Gronify/m.test(readme)) {
     errors.push("README.md still contains the duplicated Gronify heading");
-  }
-
-  if (/npm (publish|install -g gronify)/i.test(readme)) {
-    errors.push("README.md claims npm publication or global npm install");
   }
 
   scanForStaleClaims("README.md");

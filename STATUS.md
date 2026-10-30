@@ -79,3 +79,27 @@
 - Fixed by bumping `next` to 16.4.3 (same major) and adding a `dompurify` 3.4.17 override. `dompurify` arrives through `posthog-js`, which declares `^3.4.13` even in its latest release, so an override is the only way to move it. No allowlist entries added.
 - `npm ci`, `npm run audit`, `npm run lint`, and `npm run build` pass on Node 22.
 - The `GHSA-vfj7-8cjw-p6xm` (`braces`) allowlist entry is no longer needed: the audit passes with an empty allowlist. Left in place here; remove it in a follow-up.
+
+## 2026-10-30 — Agent features: result caps, sorting, exit status
+
+- `search -m/--max-count <n>` and `flatten --limit <n>` stop after `n` lines (grep semantics; `-v` counts non-matching lines; `--count` counts up to `n`). `GronOutput` takes a `limit`, sets `stopped` and holds `blocked` when it is reached, and `flattenStream` then breaks out of the read loop and destroys the input. The rest of the input is never read or validated. Exit code 0; a one-line notice goes to stderr (`Stopped after 20 matches (--max-count); there may be more`), stdout stays clean. `n` must be a positive safe integer (commander `InvalidArgumentError`). With `-o` the capped output is committed through the same atomic sink.
+- `--sort` on `flatten` and `search` sorts object keys at every level by UTF-16 code unit order and leaves arrays alone. Document order stays the default; README and skill now say so. `src/sort.ts` (`SortingSink`) wraps the existing flattener and never builds JS values: each container keeps its lines as bytes in an `Arena` plus a key and two offsets per member. Small closed children (<= 4 KB) are copied into the parent, bigger ones are referenced and read in place, and one iterative walk writes the tree in key order. Arrays under the root (or under such arrays) stream through, so a top-level array of records needs one record at a time. Over 64 MiB of buffered line data (`GRONIFY_SORT_MEMORY`, bytes) buffers go to an anonymous temp file (unlinked at creation). The search filter runs before buffering, `--sort` is ignored with `--count`, and caps apply to the sorted order (a root object is read to the end first). Memory is documented in `--help` and the README.
+- Big integers: streaming flatten/search already printed numbers verbatim; README and skill now state it as an advantage over `jq`, with regression tests for `12345678901234567890` and `1.10` through `flatten`, `flatten --sort`, and `search`.
+- `search --exit-status`: exit 1 when nothing is selected (a cap that was reached counts as a match; `--count` still prints `0`). The existing error code is 1, which collides with "no match", so with the flag errors (including usage errors, via `exitOverride`) exit 2; without it nothing changes. All codes are in a README table.
+- Skill rewritten: explore with `--count` first, then `-m`/`--limit`, `--sort` for diffing, check exit status, exact numbers. The "not published on npm" claim is gone (`gronify@1.1.0` is on npm and `release.yaml` publishes); README has an npm install section. `scripts/validate-metadata.mjs` no longer forbids the npm install line, and its `diff` rule now only flags a claimed `gronify diff` command.
+- Edits kept away from `unflatten` (`index.ts` changes are in the option setup, `flatten` and `search` actions, and one `exitOverride`; README additions sit in new sections; tests are in new files) to limit conflicts with #94.
+- Benchmarks (Node 22.23.1, macOS arm64, stdout to /dev/null, `npm run bench -- --baseline <origin/main build>`, best of 3). The default path did not regress:
+
+| Input | Command | origin/main | This branch |
+| --- | --- | --- | --- |
+| 23 MB | flatten | 0.23 s, 81 MB RSS | 0.20 s, 81 MB RSS |
+| 23 MB | search --count | 0.22 s, 78 MB RSS | 0.22 s, 79 MB RSS |
+| 129 MB | flatten | 0.87 s, 91 MB RSS | 0.89 s, 91 MB RSS |
+| 129 MB | search --count | 0.93 s, 89 MB RSS | 0.92 s, 89 MB RSS |
+| 23 MB | flatten --sort | n/a | 0.73 s, 89 MB RSS |
+| 129 MB | flatten --sort | n/a | 3.70 s, 143 MB RSS |
+| 23 MB / 129 MB | search -m 5 | n/a | 0.04 s, 55 MB RSS |
+
+- Early exit on a generated 1.2 GiB array of records (deleted afterwards): `search -m 5 status` 0.03 s, 57 MB RSS (a full `search --count` of the same file takes 8.5 s); `flatten --limit 3` 0.03 s; `cat file | gronify search -m 2` 0.04 s. A 270 MiB file that is one object with 1.5M scrambled keys: `flatten --sort` 7.4 s, about 500 MB RSS (350 MB with a 4 MiB buffer), output verified sorted with every line present, identical with and without spilling.
+- Tests: 311 passing (new: `sort.test.ts`, `limit.test.ts`, `agent-features.test.ts`: randomized sorted equivalence with tiny memory limits, spill, backpressure, line-by-line limits, never-ending stdin, `-o` with caps, exit codes, exact numbers). `npm run lint`, `format:check`, `build`, and `test` pass in `src/packages/cli`; repository metadata and prettier checks pass.
+- Next: review and merge this PR. The landing page and `llms*.txt` still describe only flatten/search/unflatten; update them in a separate change.
