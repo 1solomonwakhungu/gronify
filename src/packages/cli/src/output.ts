@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { createWriteStream, realpathSync, statSync, unlinkSync, type Stats } from "node:fs";
 import { chmod, rename, unlink } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import type { Writable } from "node:stream";
 import type { LineMatcher } from "./matcher.js";
 
@@ -68,8 +68,10 @@ class FileSink implements OutputSink {
       throw Object.assign(new Error(`EISDIR: illegal operation on a directory, open '${this.file}'`), { code: "EISDIR" });
     }
     let stream: Writable;
-    if (existing !== null && !existing.isFile()) {
-      stream = createWriteStream(this.target);
+    // Paths like /dev/stdout and /dev/fd/N resolve to whatever the descriptor points at (often a regular file), so
+    // decide from the path the user gave: renaming over a /dev or /proc entry would replace the link itself.
+    if (/^\/(dev|proc)\//.test(resolve(this.file)) || (existing !== null && !existing.isFile())) {
+      stream = createWriteStream(this.file);
     } else {
       this.mode = existing === null ? null : existing.mode & 0o7777;
       this.temp = join(dirname(this.target), `.${basename(this.target)}.${process.pid}.${randomBytes(4).toString("hex")}.tmp`);
@@ -136,12 +138,14 @@ class FileSink implements OutputSink {
   private installCleanup(): void {
     process.on("SIGINT", this.onSignal);
     process.on("SIGTERM", this.onSignal);
+    process.on("SIGHUP", this.onSignal);
     process.on("exit", this.onExit);
   }
 
   private uninstallCleanup(): void {
     process.removeListener("SIGINT", this.onSignal);
     process.removeListener("SIGTERM", this.onSignal);
+    process.removeListener("SIGHUP", this.onSignal);
     process.removeListener("exit", this.onExit);
   }
 }
