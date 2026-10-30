@@ -1,85 +1,79 @@
 ---
 name: gronify-json-flatten-search
-description: Flattens, transforms, and queries JSON into greppable key-value path lines using the Gronify CLI (gron and ungron workflow). Use when an AI agent needs to flatten JSON, grep JSON, search nested JSON structure, inspect API payloads, diff JSON as sorted text lines, or replace jq with path-based queries.
+description: Flattens, searches, and diffs JSON as greppable key-value path lines using the Gronify CLI (gron and ungron workflow), with result caps and exact numbers. Use when an AI agent needs to explore a large or unknown JSON file without flooding its context, grep nested JSON, inspect API payloads, diff two JSON documents as key-sorted lines, check whether a path or value exists, or replace jq with path-based queries.
 ---
 
 # Gronify
 
-Use Gronify to turn nested JSON into one assignment per path, search those paths, and convert valid gron assignments back to JSON.
+Gronify turns nested JSON into one assignment per path (`json.users[0].name = "Ann"`), searches those paths, and converts gron assignments back to JSON. `flatten` and `search` stream, so multi-gigabyte files work.
 
 ## Check availability
 
-Run `command -v gronify` before using the CLI. If it is missing and the user wants it installed, use one of the repository's supported installation paths:
+Run `command -v gronify` before using the CLI. If it is missing and the user wants it installed:
 
 ```bash
+npm install -g gronify        # or: npx gronify ...
 brew install 1solomonwakhungu/tap/gronify
 ```
 
-Or build it from a Gronify checkout with Node.js 20 or newer:
+Gronify needs Node.js 20 or newer. To build from a checkout instead: `cd src/packages/cli && npm ci && npm run build && npm link`.
+
+## Explore without flooding your context
+
+Use `--no-color` in every captured command. For any file you have not seen, or that may be large, go from cheap to specific:
 
 ```bash
-cd src/packages/cli
-npm ci
-npm run build
-npm link
+gronify --no-color search payload.json error --count      # 1. how many matches? prints one number
+gronify --no-color search payload.json error -m 20        # 2. the first 20 matches only
+gronify --no-color flatten --limit 50 payload.json        # 3. the first 50 lines to learn the shape
+gronify --no-color search payload.json --regex 'users\[[0-9]+\]\.email' -m 20   # 4. narrow, still capped
 ```
 
-Do not claim that Gronify is published on npm. The npm package metadata supports source builds, but the project does not publish through npm.
+- `-m/--max-count <n>` (search) and `--limit <n>` (flatten) stop after `n` lines, stop reading the input, and exit 0. A 5 GB file returns in milliseconds if the cap is hit early. `n` must be a positive integer.
+- When a cap ended the run, stderr says so (`Stopped after 20 matches (--max-count); there may be more`) and stdout holds only gron lines. If you need more, raise `n` or narrow the term. Do not rerun without a cap on an unknown file.
+- Everything after the cap is never read, so a syntax error there is not reported.
+- Prefer a file path or a pipe over loading the JSON into your own context. Do not `cat` a large JSON file.
 
-## Choose the command
+## Commands
 
-- Use `gronify flatten` when the user needs every value paired with its full JSON path.
-- Use `gronify search` for path or value filtering. It avoids a separate `grep` dependency.
-- Use `gronify unflatten` only for valid gron assignments whose root and parent containers appear before their children.
-
-Prefer stdin when the JSON already comes from another command. Use a file argument when the user supplied a file and reading it directly is clearer.
-
-## Flatten JSON
+- `gronify flatten [file]`: every value with its full path. Reads stdin when no file is given.
+- `gronify search [file] <term>`: path or value filtering, no separate `grep` needed. Plain terms are case-insensitive and literal. Options: `--regex`, `--case-sensitive`, `--count`, `-v/--invert-match`, `-m/--max-count`, `--sort`, `--exit-status`. Quote shell-sensitive patterns.
+- `gronify unflatten [file]`: gron assignments back to JSON; the root and parent containers must appear before their children.
 
 ```bash
-gronify --no-color flatten payload.json
-curl -sS https://example.com/api/status | gronify --no-color flatten
+curl -sS https://example.com/api/status | gronify --no-color search version -m 5
 ```
 
-Keep `--no-color` in pipelines or captured output. Add `--pretty` only for terminal reading.
+## Order and diffing
 
-## Search JSON paths and values
-
-Plain searches are case-insensitive and treat the search term literally:
+**Default output is document order**, not sorted: keys appear as they do in the input. To compare two documents or get a stable order, add `--sort`, which sorts object keys at every level (UTF-16 order, as `gron` and JS `sort()` do) and leaves array order alone:
 
 ```bash
-gronify --no-color search payload.json status
-cat payload.json | gronify --no-color search version
+diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten --sort new.json)
 ```
 
-Use `--regex` only when pattern matching is intended. Quote shell-sensitive patterns:
+- `--sort` works on `flatten` and `search` (it filters first, then sorts). It is ignored with `--count`.
+- A top-level array is sorted record by record as it streams. A large object at the root is buffered until it closes, using up to 64 MiB of memory and then a temp file in `$TMPDIR`, so budget disk and time (about 4x slower than unsorted) on multi-gigabyte objects.
+- Caps apply to the sorted order, so with `--sort` a root object is read to the end before its first line is printed.
+
+## Check the exit status
+
+- Default: exit 0 for success, including a search with no matches (a message goes to stderr), and exit 1 for an error (invalid JSON, missing file, bad option).
+- For yes/no questions add `--exit-status`: `0` = something matched, `1` = nothing matched, `2` = error. Use it instead of parsing output:
 
 ```bash
-gronify --no-color search payload.json --regex 'users\[[0-9]+\]\.email'
-gronify --no-color search payload.json Alice --case-sensitive
-gronify --no-color search payload.json error --count
+if gronify --no-color search --exit-status config.json -m 1 'debug = true' > /dev/null; then echo on; fi
 ```
 
-A search with no matches exits successfully and writes a message to stderr. When a script needs an unambiguous result, use `--count` and inspect the numeric output.
+- A cap reached counts as a match. `--count --exit-status` prints the count and exits 1 when it is `0`.
+- On stdout, output is written while the input is still being read, so for invalid input (a truncated file is only noticed at the end) most of the lines may already be printed. Always check the exit status, use `set -o pipefail` when piping into another command, and never treat output as complete when the status is not 0.
+- `-o <file>` is atomic: the file is replaced only after the run succeeded, a failed run leaves an existing file untouched, and a capped run commits exactly the lines that were printed. Prefer `-o` when a later step reads the result.
 
-## Large inputs and exact values
+## Exact values
 
-`flatten` and `search` stream their input and output, so multi-gigabyte files work in roughly constant memory. Pass the file path (or pipe it in) instead of loading the JSON yourself, and prefer `--count`, a narrow search term, or `| head` over printing everything:
+Gronify prints numbers exactly as written in the source: `12345678901234567890`, `1.10`, `1e2`, and `-0` survive unchanged. `jq` parses numbers as doubles, so depending on its version an integer above 2^53 (a 64-bit ID, a nanosecond timestamp) can come back rounded and `1.10` as `1.1`. Search for the original digits and trust the printed ones.
 
-```bash
-gronify --no-color flatten huge.json | head -n 50
-gronify --no-color search huge.json error --count
-```
-
-The output reflects the source text, not a parsed copy:
-
-- Numbers are printed exactly as written, so `12345678901234567890`, `1.10`, and `1e2` survive unchanged.
-- Object keys stay in document order, and duplicate keys produce one line per occurrence.
-- Input must be strict JSON. A syntax error exits with status 1 and reports the byte offset, line, and column.
-- On stdout, output is written while the input is still being read, so when the input is invalid (a truncated file is only noticed at the end) most or all of the lines may already have been printed. Always check the exit status, and use `set -o pipefail` when piping into another command; never treat the output as complete when the exit status is not 0.
-- `-o <file>` is atomic: the file is replaced only after the whole input succeeded, so a failed run leaves an existing file untouched and creates no new one. Prefer `-o` when a later step reads the result.
-
-`unflatten` still reads its whole input into memory.
+Input must be strict JSON (no comments or trailing commas). Duplicate keys produce one line per occurrence. A syntax error exits non-zero and reports the byte offset, line, and column.
 
 ## Reconstruct JSON
 
@@ -87,6 +81,8 @@ The output reflects the source text, not a parsed copy:
 gronify --no-color unflatten payload.gron
 gronify --no-color flatten payload.json | gronify --no-color unflatten
 ```
+
+`unflatten` still reads its whole input into memory.
 
 Do not overwrite the source JSON during exploration. Write reconstructed JSON to a new file first, parse it, and compare it with the source before replacing anything:
 
