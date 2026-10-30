@@ -62,6 +62,23 @@ gronify --no-color search payload.json error --count
 
 A search with no matches exits successfully and writes a message to stderr. When a script needs an unambiguous result, use `--count` and inspect the numeric output.
 
+## Large inputs and exact values
+
+`flatten` and `search` stream their input and output, so multi-gigabyte files work in roughly constant memory. Pass the file path (or pipe it in) instead of loading the JSON yourself, and prefer `--count`, a narrow search term, or `| head` over printing everything:
+
+```bash
+gronify --no-color flatten huge.json | head -n 50
+gronify --no-color search huge.json error --count
+```
+
+The output reflects the source text, not a parsed copy:
+
+- Numbers are printed exactly as written, so `12345678901234567890`, `1.10`, and `1e2` survive unchanged.
+- Object keys stay in document order, and duplicate keys produce one line per occurrence.
+- Input must be strict JSON. A syntax error exits with status 1 and reports the byte offset, line, and column. Lines already printed stay printed, so check the exit status before trusting truncated output.
+
+`unflatten` still reads its whole input into memory.
+
 ## Reconstruct JSON
 
 ```bash

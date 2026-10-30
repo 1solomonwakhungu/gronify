@@ -22,7 +22,7 @@ The skill teaches supported coding agents when to flatten, search, and round-tri
 
 ## Features
 
-- Flatten JSON files or stdin into gron-style path assignments.
+- Flatten JSON files or stdin into gron-style path assignments, streaming through multi-gigabyte inputs in constant memory.
 - Unflatten gron files or stdin back into JSON.
 - Search flattened paths with plain text, extended regex, case-sensitive matching, and match counts.
 - Use stdin/stdout workflows so Gronify can sit inside shell pipelines.
@@ -130,17 +130,17 @@ gronify flatten demo.json
 Example output:
 
 ```text
-json = {};
-json.deployments = [];
-json.deployments[0] = {};
-json.deployments[0].region = "us-central1";
-json.deployments[0].version = "2026.05.22";
-json.deployments[1] = {};
-json.deployments[1].region = "us-east1";
-json.deployments[1].version = "2026.05.21";
-json.service = {};
-json.service.name = "checkout";
-json.service.status = "degraded";
+json = {}
+json.service = {}
+json.service.name = "checkout"
+json.service.status = "degraded"
+json.deployments = []
+json.deployments[0] = {}
+json.deployments[0].region = "us-central1"
+json.deployments[0].version = "2026.05.22"
+json.deployments[1] = {}
+json.deployments[1].region = "us-east1"
+json.deployments[1].version = "2026.05.21"
 ```
 
 Find operationally relevant fields:
@@ -199,6 +199,21 @@ cat data.json | gronify search "name"
 gronify search data.json --count "field"
 ```
 
+### Streaming and large inputs
+
+`flatten` and `search` read the input in 1 MB chunks, tokenize the raw bytes, and write each gron line as it is produced. Peak memory stays around 100 MB whether the input is 20 MB or several gigabytes, and output starts before the input has been read in full. `unflatten` still loads its whole input.
+
+- **Strict JSON.** Trailing commas, comments, single quotes, bad escapes, raw control characters in strings, invalid UTF-8, and data after the top-level value are rejected. Errors report the byte offset, plus line and column (columns count bytes), for example `Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 7 (line 1, column 8)`.
+- **Numbers are printed exactly as written.** `12345678901234567890`, `1.10`, `1e2`, and `-0` come out unchanged, where a parse-and-reprint would give `12345678901234567000`, `1.1`, `100`, and `0`.
+- **Keys keep document order.** Integer-like keys such as `"2"` are no longer moved ahead of the others.
+- **Duplicate keys are all emitted**, one line per occurrence, in the order they appear.
+- **Strings** are printed as `JSON.stringify` would print them, so `"é"` becomes `"é"` and `"\/"` becomes `"/"`.
+- **Deep nesting** has no depth limit. Every container line repeats its full path, so the output of a very deep document grows quadratically with depth.
+- **Errors mid-stream.** Output already written stays written and the exit code is 1. Lines still buffered when the error occurs (less than 1 MB) are dropped.
+- **Output files.** `-o` creates or truncates the file when the first output is written. A search with no matches writes no file.
+- **Closed pipes.** `gronify flatten data.json | head` stops quietly once `head` exits.
+- A single string or number token must fit in memory.
+
 ## Development
 
 The CLI package lives in `src/packages/cli`.
@@ -217,10 +232,13 @@ npm run lint
 npm run format:check
 npm run build
 npm test
+npm run bench
 npm run audit
 ```
 
 The integration tests run the built CLI directly and require no external binaries.
+
+`npm run bench` generates inputs in a temporary directory, times `flatten` and `search --count`, and deletes the files afterwards. Pass options after `--`, for example `npm run bench -- --sizes 23,129 --big 3 --deep 100000 --baseline path/to/older/dist/index.js`.
 
 ## Releasing
 

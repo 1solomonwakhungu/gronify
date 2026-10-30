@@ -50,3 +50,23 @@
 - Add an `NPM_TOKEN` secret to publish `gronify` to npm.
 - After the next release, update `Formula/gronify.rb` in the Homebrew tap with the new `url` and `sha256`, and drop `depends_on "fastgron"`; the CLI no longer needs it.
 - Remove the `GHSA-hp3w-g68c-fv3c` and `GHSA-vfj7-8cjw-p6xm` allowlist entries once fixes ship.
+
+## 2026-10-29 — Streaming flatten and search
+
+- `flatten` and `search` now stream: a hand-written byte-level JSON tokenizer reads 1 MB chunks (file or stdin), an iterative path-stack flattener writes gron lines into 1 MB blocks, and a backpressure-aware writer feeds stdout or the `-o` file. Memory no longer depends on input size or nesting depth. `unflatten` is untouched.
+- Plain `search` is a Horspool byte search (ASCII case folding for the default case-insensitive mode; non-ASCII case-insensitive terms and `--regex` use a precompiled RegExp). Rejected lines are rewound in the output block without being copied. `--color` and `--pretty` are applied per line with the same output as before (verified byte-for-byte against the old CLI in a pty).
+- Intentional behavior changes: numbers print verbatim from the source; object keys keep document order; duplicate keys are all emitted; strict JSON with byte offset, line, and column in errors; invalid UTF-8 is rejected; a mid-stream error keeps flushed output and drops the unflushed tail (under 1 MB); `-o` is opened on the first write, so a search with no matches creates no file.
+- Benchmarks (Node 22.23.1, macOS arm64, stdout to /dev/null, `npm run bench`, best of 3):
+
+| Input | Command | Before | After |
+| --- | --- | --- | --- |
+| 23 MB | flatten | 0.69 s, 1023 MB RSS | 0.18 s, 80 MB RSS |
+| 23 MB | search --count | 0.64 s, 778 MB RSS | 0.19 s, 78 MB RSS |
+| 129 MB | flatten | 4.23 s, 4457 MB RSS | 0.85 s, 92 MB RSS |
+| 129 MB | search --count | 3.72 s, 3617 MB RSS | 0.92 s, 88 MB RSS |
+| 3.50 GB | flatten | not run; old build fails above ~240 MB | 22.1 s, 98 MB RSS |
+| 3.50 GB | search --count | not run; old build fails above ~240 MB | 24.5 s, 96 MB RSS |
+| 100,000 levels deep | flatten | not run; old build overflows the stack near 2,000 levels | 0.17 s, 63 MB RSS (10 GB of output) |
+
+- Tests: 189 passing on Node 20.20.2 and 22.23.1 (tokenizer chunk splits at every byte, 300-document randomized equivalence with `flattenJson(JSON.parse(x))`, CLI stdin, `-o`, closed pipe, hang, deep nesting).
+- Next: review and merge the streaming PR; `unflatten` streaming is being done separately.

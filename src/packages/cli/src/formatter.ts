@@ -28,19 +28,45 @@ export class OutputFormatter {
    */
   formatGron(gronOutput: string): string {
     const lines = gronOutput.split('\n').filter(line => line.trim());
-    let formattedLines = lines;
+    const format = this.createGronLineFormatter();
+    return (format ? lines.map(format) : lines).join('\n');
+  }
 
-    // Apply color formatting first (on clean lines)
-    if (this.options.color) {
-      formattedLines = formattedLines.map(line => this.colorizeGronLine(line));
-    }
+  /**
+   * Streaming form of formatGron: formats one non-blank line at a time, keeping the little state pretty grouping
+   * needs. A line may come back with a leading newline (the blank separator between groups). Returns null when the
+   * options call for no formatting, so callers can skip the work.
+   */
+  createGronLineFormatter(): ((line: string) => string) | null {
+    const { color, pretty } = this.options;
+    if (!color && !pretty) return null;
 
-    // Then apply pretty formatting (which adds indentation)
-    if (this.options.pretty) {
-      formattedLines = this.applyPrettyFormattingToColoredLines(formattedLines);
-    }
+    let seenLine = false;
+    let lastTopLevel = '';
 
-    return formattedLines.join('\n');
+    return (line: string): string => {
+      // Apply color formatting first (on clean lines)
+      const colored = color ? this.colorizeGronLine(line) : line;
+      if (!pretty) return colored;
+
+      // Then apply pretty formatting (which adds indentation)
+      // Strip ANSI codes to analyze the original line structure
+      const cleanLine = colored.replace(/\u001b\[[0-9;]*m/g, '');
+
+      // Calculate indentation based on nesting level
+      const nestingLevel = Math.max(0, (cleanLine.match(/\[/g) || []).length + (cleanLine.match(/\./g) || []).length - 1);
+      const indent = '  '.repeat(Math.min(nestingLevel, 6)); // Max 6 levels
+
+      // Extract top-level object (e.g., "users" from "json.users[0].name")
+      const topLevelMatch = cleanLine.match(/^json\.([^\[.]+)/);
+      const currentTopLevel = topLevelMatch ? topLevelMatch[1] : 'root';
+
+      // Add spacing between different top-level objects
+      const separator = seenLine && currentTopLevel !== lastTopLevel && lastTopLevel !== 'root' ? '\n' : '';
+      seenLine = true;
+      lastTopLevel = currentTopLevel || 'root';
+      return separator + indent + colored;
+    };
   }
 
   /**
@@ -84,19 +110,27 @@ export class OutputFormatter {
       return results;
     }
 
+    const format = this.createSearchLineFormatter(searchTerm);
+    return format ? results.split('\n').map(format).join('\n') : results;
+  }
+
+  /** Streaming form of formatSearchResults for one line; null when color is off. */
+  createSearchLineFormatter(searchTerm: string): ((line: string) => string) | null {
+    if (!this.options.color) {
+      return null;
+    }
+
     // Highlight the search term in results
     const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`(${escapedTerm})`, 'gi');
-    
-    return results
-      .split('\n')
-      .map(line => {
-        // First colorize the gron syntax
-        const coloredLine = this.colorizeGronLine(line);
-        // Then highlight the search term
-        return coloredLine.replace(regex, chalk.bgYellow.black('$1'));
-      })
-      .join('\n');
+    const highlight = chalk.bgYellow.black('$1');
+
+    return (line: string): string => {
+      // First colorize the gron syntax
+      const coloredLine = this.colorizeGronLine(line);
+      // Then highlight the search term
+      return coloredLine.replace(regex, highlight);
+    };
   }
 
   /**
@@ -201,37 +235,6 @@ export class OutputFormatter {
     }
     
     return trimmed;
-  }
-
-  /**
-   * Apply pretty formatting to already colored lines
-   */
-  private applyPrettyFormattingToColoredLines(lines: string[]): string[] {
-    const result: string[] = [];
-    let lastTopLevel = '';
-
-    lines.forEach((line, index) => {
-      // Strip ANSI codes to analyze the original line structure
-      const cleanLine = line.replace(/\u001b\[[0-9;]*m/g, '');
-      
-      // Calculate indentation based on nesting level
-      const nestingLevel = Math.max(0, (cleanLine.match(/\[/g) || []).length + (cleanLine.match(/\./g) || []).length - 1);
-      const indent = '  '.repeat(Math.min(nestingLevel, 6)); // Max 6 levels
-      
-      // Extract top-level object (e.g., "users" from "json.users[0].name")
-      const topLevelMatch = cleanLine.match(/^json\.([^\[.]+)/);
-      const currentTopLevel = topLevelMatch ? topLevelMatch[1] : 'root';
-      
-      // Add spacing between different top-level objects
-      if (index > 0 && currentTopLevel !== lastTopLevel && lastTopLevel !== 'root') {
-        result.push('');
-      }
-      
-      result.push(indent + line);
-      lastTopLevel = currentTopLevel || 'root';
-    });
-
-    return result;
   }
 }
 
