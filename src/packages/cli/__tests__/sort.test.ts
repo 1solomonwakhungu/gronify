@@ -134,6 +134,34 @@ describe("sorted flatten", () => {
       );
     });
 
+    test("arrays inside objects keep their order and stay with their key, also when the key repeats", async () => {
+      const text = '{"b":[10,[2,{"y":1,"x":2}],{"d":[],"c":1}],"a":[3,1],"b":[0],"":[1],"a0":0}';
+      expect(await sorted(text)).toBe(
+        [
+          "json = {}",
+          'json[""] = []',
+          'json[""][0] = 1',
+          "json.a = []",
+          "json.a[0] = 3",
+          "json.a[1] = 1",
+          "json.a0 = 0",
+          "json.b = []",
+          "json.b[0] = 10",
+          "json.b[1] = []",
+          "json.b[1][0] = 2",
+          "json.b[1][1] = {}",
+          "json.b[1][1].x = 2",
+          "json.b[1][1].y = 1",
+          "json.b[2] = {}",
+          "json.b[2].c = 1",
+          "json.b[2].d = []",
+          "json.b = []",
+          "json.b[0] = 0",
+          "",
+        ].join("\n"),
+      );
+    });
+
     test("handles escaped keys and empty containers", async () => {
       expect(await sorted('{"\\u0062":{},"a\\nb":[],"a":{"z":{}}}')).toBe(
         ["json = {}", 'json.a = {}', 'json.a.z = {}', 'json["a\\nb"] = []', "json.b = {}", ""].join("\n"),
@@ -286,6 +314,25 @@ describe("sorted flatten", () => {
       const text = JSON.stringify({ b: long, a: 1, c: { d: long, e: 2 } });
       expect(await sorted(text, {}, 1024)).toBe(reference(text));
     }, 30000);
+
+    test("keeps every container line, not only the members, within the memory limit under deep nesting", async () => {
+      // Each container line repeats its whole path, so the lines of a deep document are quadratic in the depth. They must be
+      // counted and spilled like any other line: all but about one limit's worth ends up in the temp file.
+      const depth = 3000;
+      const limit = 1 << 20;
+      const text = '{"z":1,"a":'.repeat(depth) + "0" + "}".repeat(depth);
+      const write = jest.spyOn(fs, "writeSync");
+      try {
+        const output = await sorted(text, {}, limit);
+        const spilled = write.mock.results.reduce((sum, result) => sum + (result.type === "return" ? Number(result.value) : 0), 0);
+
+        expect(output.length).toBeGreaterThan(16 * limit);
+        expect(output.split("\n")[0]).toBe("json = {}");
+        expect(spilled).toBeGreaterThanOrEqual(output.length - 2 * limit);
+      } finally {
+        write.mockRestore();
+      }
+    }, 60000);
 
     test("handles nesting far deeper than the call stack", async () => {
       const depth = 3000;

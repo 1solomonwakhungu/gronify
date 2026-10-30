@@ -1,14 +1,5 @@
 import { spawn } from "node:child_process";
-import {
-  existsSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-  chmodSync,
-} from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -19,11 +10,7 @@ interface Result {
 }
 
 /** Runs the built CLI. Output is returned untrimmed so tests can check exact bytes. */
-function runCLI(
-  args: string[],
-  input?: string,
-  env: Record<string, string> = {},
-): Promise<Result> {
+function runCLI(args: string[], input?: string, env: Record<string, string> = {}): Promise<Result> {
   return new Promise((resolve) => {
     const child = spawn("node", ["dist/index.js", ...args], {
       stdio: ["pipe", "pipe", "pipe"],
@@ -33,9 +20,7 @@ function runCLI(
     let stderr = "";
     child.stdout.on("data", (data) => (stdout += data.toString()));
     child.stderr.on("data", (data) => (stderr += data.toString()));
-    child.on("close", (code) =>
-      resolve({ stdout, stderr, exitCode: code ?? 0 }),
-    );
+    child.on("close", (code) => resolve({ stdout, stderr, exitCode: code ?? 0 }));
     child.stdin.on("error", () => undefined);
     child.stdin.end(input);
   });
@@ -54,8 +39,7 @@ function sortedKeys(value: unknown): unknown {
   return value;
 }
 
-const lines = (text: string): string[] =>
-  text === "" ? [] : text.replace(/\n$/, "").split("\n");
+const lines = (text: string): string[] => (text === "" ? [] : text.replace(/\n$/, "").split("\n"));
 
 const DOC = JSON.stringify({
   service: { name: "checkout", status: "degraded", retries: 2 },
@@ -78,27 +62,15 @@ describe("agent features", () => {
 
   describe("result caps", () => {
     test("flatten --limit emits at most n lines and says so on stderr only", async () => {
-      const result = await runCLI(
-        ["--no-color", "flatten", "--limit", "3"],
-        DOC,
-      );
+      const result = await runCLI(["--no-color", "flatten", "--limit", "3"], DOC);
 
       expect(result.exitCode).toBe(0);
-      expect(lines(result.stdout)).toEqual([
-        "json = {}",
-        "json.service = {}",
-        'json.service.name = "checkout"',
-      ]);
-      expect(result.stderr.trim()).toBe(
-        "Stopped after 3 lines (--limit); there may be more",
-      );
+      expect(lines(result.stdout)).toEqual(["json = {}", "json.service = {}", 'json.service.name = "checkout"']);
+      expect(result.stderr.trim()).toBe("Stopped after 3 lines (--limit); there may be more");
     });
 
     test("flatten --limit larger than the output prints everything and no notice", async () => {
-      const result = await runCLI(
-        ["--no-color", "flatten", "--limit", "1000"],
-        DOC,
-      );
+      const result = await runCLI(["--no-color", "flatten", "--limit", "1000"], DOC);
 
       expect(result.exitCode).toBe(0);
       expect(lines(result.stdout)).toHaveLength(12);
@@ -106,97 +78,54 @@ describe("agent features", () => {
     });
 
     test("search -m stops after n matching lines", async () => {
-      const result = await runCLI(
-        ["--no-color", "search", "-m", "2", "region"],
-        DOC,
-      );
+      const result = await runCLI(["--no-color", "search", "-m", "2", "region"], DOC);
 
       expect(result.exitCode).toBe(0);
-      expect(lines(result.stdout)).toEqual([
-        'json.deployments[0].region = "us-central1"',
-        'json.deployments[1].region = "us-east1"',
-      ]);
-      expect(result.stderr.trim()).toBe(
-        "Stopped after 2 matches (--max-count); there may be more",
-      );
+      expect(lines(result.stdout)).toEqual(['json.deployments[0].region = "us-central1"', 'json.deployments[1].region = "us-east1"']);
+      expect(result.stderr.trim()).toBe("Stopped after 2 matches (--max-count); there may be more");
     });
 
     test("search --max-count 1 returns the first match in document order", async () => {
-      const result = await runCLI(
-        ["--no-color", "search", "--max-count", "1", "e"],
-        DOC,
-      );
+      const result = await runCLI(["--no-color", "search", "--max-count", "1", "e"], DOC);
 
       expect(lines(result.stdout)).toEqual(["json.service = {}"]);
     });
 
     test("search -m with -v caps the non-matching lines", async () => {
-      const result = await runCLI(
-        ["--no-color", "search", "-v", "-m", "2", "deployments"],
-        DOC,
-      );
+      const result = await runCLI(["--no-color", "search", "-v", "-m", "2", "deployments"], DOC);
 
       expect(lines(result.stdout)).toEqual(["json = {}", "json.service = {}"]);
-      expect(result.stderr.trim()).toBe(
-        "Stopped after 2 lines (--max-count); there may be more",
-      );
+      expect(result.stderr.trim()).toBe("Stopped after 2 lines (--max-count); there may be more");
     });
 
     test("search --count with -m counts up to n", async () => {
-      const unlimited = await runCLI(
-        ["--no-color", "search", "--count", "e"],
-        DOC,
-      );
-      const capped = await runCLI(
-        ["--no-color", "search", "--count", "-m", "3", "e"],
-        DOC,
-      );
-      const roomy = await runCLI(
-        ["--no-color", "search", "--count", "-m", "50", "region"],
-        DOC,
-      );
+      const unlimited = await runCLI(["--no-color", "search", "--count", "e"], DOC);
+      const capped = await runCLI(["--no-color", "search", "--count", "-m", "3", "e"], DOC);
+      const roomy = await runCLI(["--no-color", "search", "--count", "-m", "50", "region"], DOC);
 
       expect(Number(unlimited.stdout)).toBeGreaterThan(3);
       expect(capped.exitCode).toBe(0);
       expect(capped.stdout.trim()).toBe("3");
-      expect(capped.stderr.trim()).toBe(
-        "Stopped counting at 3 matches (--max-count)",
-      );
+      expect(capped.stderr.trim()).toBe("Stopped counting at 3 matches (--max-count)");
       expect(roomy.stdout.trim()).toBe("2");
       expect(roomy.stderr).toBe("");
     });
 
     test("-m larger than the number of matches is a plain search", async () => {
-      const result = await runCLI(
-        ["--no-color", "search", "-m", "99", "region"],
-        DOC,
-      );
+      const result = await runCLI(["--no-color", "search", "-m", "99", "region"], DOC);
 
       expect(lines(result.stdout)).toHaveLength(2);
       expect(result.stderr).toBe("");
     });
 
     test("a cap that equals the number of matches still reports it was reached", async () => {
-      const result = await runCLI(
-        ["--no-color", "search", "-m", "2", "region"],
-        DOC,
-      );
+      const result = await runCLI(["--no-color", "search", "-m", "2", "region"], DOC);
 
       expect(lines(result.stdout)).toHaveLength(2);
       expect(result.stderr).toContain("Stopped after 2 matches");
     });
 
-    test.each([
-      "0",
-      "-1",
-      "1.5",
-      "abc",
-      "",
-      "1e3",
-      "0x10",
-      "9007199254740993",
-      " 5",
-    ])("rejects %j as a cap", async (value) => {
+    test.each(["0", "-1", "1.5", "abc", "", "1e3", "0x10", "9007199254740993", " 5"])("rejects %j as a cap", async (value) => {
       for (const args of [
         ["search", "-m", value, "x"],
         ["flatten", "--limit", value],
@@ -218,28 +147,15 @@ describe("agent features", () => {
 
     test("stops reading a stdin that never ends", async () => {
       // Valid JSON prefix, then silence: only an early exit can finish this run.
-      const result = await new Promise<
-        Result & { signal: NodeJS.Signals | null }
-      >((resolve, reject) => {
-        const child = spawn("node", [
-          "dist/index.js",
-          "--no-color",
-          "search",
-          "-m",
-          "2",
-          "status",
-        ]);
+      const result = await new Promise<Result & { signal: NodeJS.Signals | null }>((resolve, reject) => {
+        const child = spawn("node", ["dist/index.js", "--no-color", "search", "-m", "2", "status"]);
         let stdout = "";
         let stderr = "";
         child.stdout.on("data", (data) => (stdout += data.toString()));
         child.stderr.on("data", (data) => (stderr += data.toString()));
         const timer = setTimeout(() => {
           child.kill("SIGKILL");
-          reject(
-            new Error(
-              "did not stop after the cap; it is still waiting for input",
-            ),
-          );
+          reject(new Error("did not stop after the cap; it is still waiting for input"));
         }, 8_000);
         child.on("close", (code, signal) => {
           clearTimeout(timer);
@@ -251,22 +167,13 @@ describe("agent features", () => {
 
       expect(result.signal).toBeNull();
       expect(result.exitCode).toBe(0);
-      expect(lines(result.stdout)).toEqual([
-        'json[0].status = "a"',
-        'json[1].status = "b"',
-      ]);
+      expect(lines(result.stdout)).toEqual(['json[0].status = "a"', 'json[1].status = "b"']);
       expect(result.stderr).toContain("Stopped after 2 matches");
     }, 15_000);
 
     test("flatten --limit also stops a stdin that never ends", async () => {
       const exit = await new Promise<number | null>((resolve, reject) => {
-        const child = spawn("node", [
-          "dist/index.js",
-          "--no-color",
-          "flatten",
-          "--limit",
-          "2",
-        ]);
+        const child = spawn("node", ["dist/index.js", "--no-color", "flatten", "--limit", "2"]);
         const timer = setTimeout(() => {
           child.kill("SIGKILL");
           reject(new Error("did not stop after the limit"));
@@ -287,29 +194,16 @@ describe("agent features", () => {
       const file = join(dir, "bad-tail.json");
       writeFileSync(file, '[{"status":1},{"status":2}, this is not json');
 
-      const capped = await runCLI([
-        "--no-color",
-        "search",
-        "-m",
-        "2",
-        file,
-        "status",
-      ]);
+      const capped = await runCLI(["--no-color", "search", "-m", "2", file, "status"]);
       const uncapped = await runCLI(["--no-color", "search", file, "status"]);
 
       expect(capped.exitCode).toBe(0);
-      expect(lines(capped.stdout)).toEqual([
-        "json[0].status = 1",
-        "json[1].status = 2",
-      ]);
+      expect(lines(capped.stdout)).toEqual(["json[0].status = 1", "json[1].status = 2"]);
       expect(uncapped.exitCode).toBe(1);
     });
 
     test("still reports a syntax error found before the cap", async () => {
-      const result = await runCLI(
-        ["--no-color", "flatten", "--limit", "50"],
-        '{"a":1,}',
-      );
+      const result = await runCLI(["--no-color", "flatten", "--limit", "50"], '{"a":1,}');
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("trailing commas");
@@ -317,20 +211,12 @@ describe("agent features", () => {
 
     test("stops early on a large file and returns quickly", async () => {
       const file = join(dir, "large.json");
-      const record =
-        '{"id":1,"user":{"name":"alice","email":"a@example.com"},"status":"ok","score":0}';
+      const record = '{"id":1,"user":{"name":"alice","email":"a@example.com"},"status":"ok","score":0}';
       writeFileSync(file, `[${new Array(250_000).fill(record).join(",")}]`);
       expect(statSync(file).size).toBeGreaterThan(19 * 1024 * 1024);
 
       const started = Date.now();
-      const result = await runCLI([
-        "--no-color",
-        "search",
-        "-m",
-        "3",
-        file,
-        "status",
-      ]);
+      const result = await runCLI(["--no-color", "search", "-m", "3", file, "status"]);
       const elapsed = Date.now() - started;
 
       expect(result.exitCode).toBe(0);
@@ -346,18 +232,14 @@ describe("agent features", () => {
         work = mkdtempSync(join(dir, "out-"));
       });
 
-      const tempFiles = (): string[] =>
-        readdirSync(work).filter((name) => name.endsWith(".tmp"));
+      const tempFiles = (): string[] => readdirSync(work).filter((name) => name.endsWith(".tmp"));
 
       test("commits the capped output atomically", async () => {
         const target = join(work, "capped.gron");
         writeFileSync(target, "old\n");
         chmodSync(target, 0o640);
 
-        const result = await runCLI(
-          ["--no-color", "-o", target, "search", "-m", "2", "region"],
-          DOC,
-        );
+        const result = await runCLI(["--no-color", "-o", target, "search", "-m", "2", "region"], DOC);
 
         expect(result.exitCode).toBe(0);
         expect(result.stdout).toBe("");
@@ -375,10 +257,7 @@ describe("agent features", () => {
       test("flatten --limit with -o writes exactly n lines", async () => {
         const target = join(work, "limited.gron");
 
-        const result = await runCLI(
-          ["--no-color", "-o", target, "flatten", "--limit", "4"],
-          DOC,
-        );
+        const result = await runCLI(["--no-color", "-o", target, "flatten", "--limit", "4"], DOC);
 
         expect(result.exitCode).toBe(0);
         expect(lines(readFileSync(target, "utf8"))).toHaveLength(4);
@@ -389,20 +268,10 @@ describe("agent features", () => {
         const target = join(work, "self.json");
         writeFileSync(target, DOC);
 
-        const result = await runCLI([
-          "--no-color",
-          "-o",
-          target,
-          "flatten",
-          target,
-          "--limit",
-          "2",
-        ]);
+        const result = await runCLI(["--no-color", "-o", target, "flatten", target, "--limit", "2"]);
 
         expect(result.exitCode).toBe(0);
-        expect(readFileSync(target, "utf8")).toBe(
-          "json = {}\njson.service = {}\n",
-        );
+        expect(readFileSync(target, "utf8")).toBe("json = {}\njson.service = {}\n");
         expect(tempFiles()).toEqual([]);
       });
 
@@ -410,10 +279,7 @@ describe("agent features", () => {
         const target = join(work, "keep.gron");
         writeFileSync(target, "precious\n");
 
-        const result = await runCLI(
-          ["--no-color", "-o", target, "search", "-m", "100", "a"],
-          '{"a":[1,2,',
-        );
+        const result = await runCLI(["--no-color", "-o", target, "search", "-m", "100", "a"], '{"a":[1,2,');
 
         expect(result.exitCode).toBe(1);
         expect(readFileSync(target, "utf8")).toBe("precious\n");
@@ -423,10 +289,7 @@ describe("agent features", () => {
       test("creates no file when nothing matches", async () => {
         const target = join(work, "none.gron");
 
-        const result = await runCLI(
-          ["--no-color", "-o", target, "search", "-m", "5", "no-such-text"],
-          DOC,
-        );
+        const result = await runCLI(["--no-color", "-o", target, "search", "-m", "5", "no-such-text"], DOC);
 
         expect(result.exitCode).toBe(0);
         expect(existsSync(target)).toBe(false);
@@ -436,10 +299,7 @@ describe("agent features", () => {
       test("--count with -m and -o writes the capped count", async () => {
         const target = join(work, "count.txt");
 
-        const result = await runCLI(
-          ["--no-color", "-o", target, "search", "--count", "-m", "3", "e"],
-          DOC,
-        );
+        const result = await runCLI(["--no-color", "-o", target, "search", "--count", "-m", "3", "e"], DOC);
 
         expect(result.exitCode).toBe(0);
         expect(readFileSync(target, "utf8")).toBe("3\n");
@@ -448,8 +308,7 @@ describe("agent features", () => {
   });
 
   describe("--sort", () => {
-    const UNSORTED =
-      '{"b":{"z":1,"a":[3,{"y":1,"x":2}]},"a":0,"10":"ten","2":"two","B":null}';
+    const UNSORTED = '{"b":{"z":1,"a":[3,{"y":1,"x":2}]},"a":0,"10":"ten","2":"two","B":null}';
 
     test("flatten keeps document order by default", async () => {
       const result = await runCLI(["--no-color", "flatten"], UNSORTED);
@@ -471,10 +330,7 @@ describe("agent features", () => {
     });
 
     test("flatten --sort orders keys at every level and keeps array order", async () => {
-      const result = await runCLI(
-        ["--no-color", "flatten", "--sort"],
-        UNSORTED,
-      );
+      const result = await runCLI(["--no-color", "flatten", "--sort"], UNSORTED);
 
       expect(result.exitCode).toBe(0);
       expect(lines(result.stdout)).toEqual([
@@ -495,80 +351,40 @@ describe("agent features", () => {
     });
 
     test("--sort output is identical for documents that differ only in key order", async () => {
-      const one = await runCLI(
-        ["--no-color", "flatten", "--sort"],
-        '{"a":1,"b":{"c":2,"d":3}}',
-      );
-      const two = await runCLI(
-        ["--no-color", "flatten", "--sort"],
-        '{"b":{"d":3,"c":2},"a":1}',
-      );
+      const one = await runCLI(["--no-color", "flatten", "--sort"], '{"a":1,"b":{"c":2,"d":3}}');
+      const two = await runCLI(["--no-color", "flatten", "--sort"], '{"b":{"d":3,"c":2},"a":1}');
 
       expect(one.stdout).toBe(two.stdout);
     });
 
     test("search --sort filters first and sorts what is left", async () => {
-      const result = await runCLI(
-        ["--no-color", "search", "--sort", "--regex", "\\.(x|y|z|a) = "],
-        UNSORTED,
-      );
+      const result = await runCLI(["--no-color", "search", "--sort", "--regex", "\\.(x|y|z|a) = "], UNSORTED);
 
-      expect(lines(result.stdout)).toEqual([
-        "json.a = 0",
-        "json.b.a = []",
-        "json.b.a[1].x = 2",
-        "json.b.a[1].y = 1",
-        "json.b.z = 1",
-      ]);
+      expect(lines(result.stdout)).toEqual(["json.a = 0", "json.b.a = []", "json.b.a[1].x = 2", "json.b.a[1].y = 1", "json.b.z = 1"]);
     });
 
     test("search --sort with -v sorts the lines that did not match", async () => {
-      const result = await runCLI(
-        ["--no-color", "search", "--sort", "-v", "--case-sensitive", "json.b"],
-        UNSORTED,
-      );
+      const result = await runCLI(["--no-color", "search", "--sort", "-v", "--case-sensitive", "json.b"], UNSORTED);
 
-      expect(lines(result.stdout)).toEqual([
-        "json = {}",
-        'json["10"] = "ten"',
-        'json["2"] = "two"',
-        "json.B = null",
-        "json.a = 0",
-      ]);
+      expect(lines(result.stdout)).toEqual(["json = {}", 'json["10"] = "ten"', 'json["2"] = "two"', "json.B = null", "json.a = 0"]);
     });
 
     test("--sort has no effect on --count", async () => {
-      const sorted = await runCLI(
-        ["--no-color", "search", "--sort", "--count", "json"],
-        UNSORTED,
-      );
-      const plain = await runCLI(
-        ["--no-color", "search", "--count", "json"],
-        UNSORTED,
-      );
+      const sorted = await runCLI(["--no-color", "search", "--sort", "--count", "json"], UNSORTED);
+      const plain = await runCLI(["--no-color", "search", "--count", "json"], UNSORTED);
 
       expect(sorted.stdout).toBe(plain.stdout);
     });
 
     test("--sort with --limit takes the first lines of the sorted order", async () => {
-      const result = await runCLI(
-        ["--no-color", "flatten", "--sort", "--limit", "3"],
-        UNSORTED,
-      );
+      const result = await runCLI(["--no-color", "flatten", "--sort", "--limit", "3"], UNSORTED);
 
-      expect(lines(result.stdout)).toEqual([
-        "json = {}",
-        'json["10"] = "ten"',
-        'json["2"] = "two"',
-      ]);
+      expect(lines(result.stdout)).toEqual(["json = {}", 'json["10"] = "ten"', 'json["2"] = "two"']);
       expect(result.stderr).toContain("Stopped after 3 lines (--limit)");
     });
 
     test("--sort with -m takes the first matches of the sorted order", async () => {
-      const result = await runCLI(
-        ["--no-color", "search", "--sort", "-m", "1", "json.b."],
-        UNSORTED,
-      );
+      const result = await runCLI(["--no-color", "search", "--sort", "-m", "1", "json.b."], UNSORTED);
 
       expect(lines(result.stdout)).toEqual(["json.b.a = []"]);
     });
@@ -576,15 +392,10 @@ describe("agent features", () => {
     test("--sort works with -o", async () => {
       const target = join(dir, "sorted.gron");
 
-      const result = await runCLI(
-        ["--no-color", "-o", target, "flatten", "--sort"],
-        '{"b":1,"a":2}',
-      );
+      const result = await runCLI(["--no-color", "-o", target, "flatten", "--sort"], '{"b":1,"a":2}');
 
       expect(result.exitCode).toBe(0);
-      expect(readFileSync(target, "utf8")).toBe(
-        "json = {}\njson.a = 2\njson.b = 1\n",
-      );
+      expect(readFileSync(target, "utf8")).toBe("json = {}\njson.a = 2\njson.b = 1\n");
     });
 
     test("--sort output round-trips through unflatten", async () => {
@@ -595,20 +406,15 @@ describe("agent features", () => {
     });
 
     test("--sort output streams through unflatten past its 16 MiB document-order budget", async () => {
-      // Arrays longer than 10 put [10] after [2] in index order but before it in a plain text sort,
-      // which unflatten would reject once it is past 16 MiB.
+      // A plain text sort would put [10] before [2], which unflatten rejects once it is past 16 MiB. --sort keeps index order.
       const members: string[] = [];
       for (let i = 0; i < 50000; i += 1) {
         const id = (i * 7919) % 50000;
-        members.push(
-          `"k${id}":{"z":${id},"list":[0,1,2,3,4,5,6,7,8,9,10,11],"a":{"y":"v${id}","x":12345678901234567890}}`,
-        );
+        members.push(`"k${id}":{"z":${id},"list":[0,1,2,3,4,5,6,7,8,9,10,11],"a":{"y":"v${id}","x":12345678901234567890}}`);
       }
       const text = `{${members.join(",")}}`;
-      const expected = JSON.stringify(sortedKeys(JSON.parse(text))).replace(
-        /"x":12345678901234567000/g,
-        '"x":12345678901234567890',
-      );
+      // JSON.parse rounds the big integer, so the expected text puts the original digits back.
+      const expected = JSON.stringify(sortedKeys(JSON.parse(text))).replace(/"x":12345678901234567000/g, '"x":12345678901234567890');
 
       const flat = await runCLI(["--no-color", "flatten", "--sort"], text);
       expect(flat.stdout.length).toBeGreaterThan(16 * 1024 * 1024);
@@ -620,33 +426,23 @@ describe("agent features", () => {
     }, 60000);
 
     test("--sort keeps array indexes in order, where a plain text sort of the lines does not", async () => {
-      const list = Array.from({ length: 12 }, (_, i) => i);
-      const text = JSON.stringify({ list });
-      const flat = (await runCLI(["--no-color", "flatten", "--sort"], text))
-        .stdout;
-      const lexical = lines(flat).sort().join("\n");
+      const text = JSON.stringify({ list: Array.from({ length: 12 }, (_, i) => i) });
+      const flat = lines((await runCLI(["--no-color", "flatten", "--sort"], text)).stdout);
+      const lexical = [...flat].sort();
 
-      expect(lines(flat).indexOf("json.list[2] = 2")).toBeLessThan(
-        lines(flat).indexOf("json.list[10] = 10"),
-      );
-      expect(lines(lexical).indexOf("json.list[10] = 10")).toBeLessThan(
-        lines(lexical).indexOf("json.list[2] = 2"),
-      );
+      expect(flat.indexOf("json.list[2] = 2")).toBeLessThan(flat.indexOf("json.list[10] = 10"));
+      expect(lexical.indexOf("json.list[10] = 10")).toBeLessThan(lexical.indexOf("json.list[2] = 2"));
     });
 
     test("sorts a document much larger than the in-memory limit through a temp file", async () => {
       const members: string[] = [];
       for (let i = 0; i < 6000; i += 1) {
         const id = (i * 7919) % 6000;
-        members.push(
-          `"k${id}":{"name":"n${id}","tags":["x","y"],"deep":{"z":1,"a":${id}}}`,
-        );
+        members.push(`"k${id}":{"name":"n${id}","tags":["x","y"],"deep":{"z":1,"a":${id}}}`);
       }
       const text = `{${members.join(",")}}`;
       const roomy = await runCLI(["--no-color", "flatten", "--sort"], text);
-      const tight = await runCLI(["--no-color", "flatten", "--sort"], text, {
-        GRONIFY_SORT_MEMORY: "2048",
-      });
+      const tight = await runCLI(["--no-color", "flatten", "--sort"], text, { GRONIFY_SORT_MEMORY: "2048" });
 
       expect(tight.exitCode).toBe(0);
       expect(tight.stdout).toBe(roomy.stdout);
@@ -676,8 +472,7 @@ describe("agent features", () => {
   });
 
   describe("numbers are preserved", () => {
-    const text =
-      '{"id":12345678901234567890,"price":1.10,"ids":[12345678901234567890,1.10,1e2,-0],"name":"n"}';
+    const text = '{"id":12345678901234567890,"price":1.10,"ids":[12345678901234567890,1.10,1e2,-0],"name":"n"}';
 
     test("the premise: parsing and re-printing loses them", () => {
       const roundTripped = JSON.stringify(JSON.parse(text));
@@ -711,29 +506,17 @@ describe("agent features", () => {
     });
 
     test("search finds them and prints the original digits", async () => {
-      const big = await runCLI(
-        ["--no-color", "search", "12345678901234567890"],
-        text,
-      );
+      const big = await runCLI(["--no-color", "search", "12345678901234567890"], text);
       const price = await runCLI(["--no-color", "search", "price"], text);
       const fixed = await runCLI(["--no-color", "search", "= 1.10"], text);
 
-      expect(lines(big.stdout)).toEqual([
-        "json.id = 12345678901234567890",
-        "json.ids[0] = 12345678901234567890",
-      ]);
+      expect(lines(big.stdout)).toEqual(["json.id = 12345678901234567890", "json.ids[0] = 12345678901234567890"]);
       expect(lines(price.stdout)).toEqual(["json.price = 1.10"]);
-      expect(lines(fixed.stdout)).toEqual([
-        "json.price = 1.10",
-        "json.ids[1] = 1.10",
-      ]);
+      expect(lines(fixed.stdout)).toEqual(["json.price = 1.10", "json.ids[1] = 1.10"]);
     });
 
     test("search finds nothing for the rounded value 12345678901234567000", async () => {
-      const result = await runCLI(
-        ["--no-color", "search", "12345678901234567000"],
-        text,
-      );
+      const result = await runCLI(["--no-color", "search", "12345678901234567000"], text);
 
       expect(result.stdout).toBe("");
     });
@@ -742,15 +525,7 @@ describe("agent features", () => {
       const file = join(dir, "numbers.json");
       writeFileSync(file, text);
 
-      const result = await runCLI([
-        "--no-color",
-        "search",
-        file,
-        "price",
-        "--sort",
-        "-m",
-        "5",
-      ]);
+      const result = await runCLI(["--no-color", "search", file, "price", "--sort", "-m", "5"]);
 
       expect(lines(result.stdout)).toEqual(["json.price = 1.10"]);
     });
@@ -758,20 +533,14 @@ describe("agent features", () => {
 
   describe("--exit-status", () => {
     test("search exits 0 when it matches", async () => {
-      const result = await runCLI(
-        ["--no-color", "search", "--exit-status", "region"],
-        DOC,
-      );
+      const result = await runCLI(["--no-color", "search", "--exit-status", "region"], DOC);
 
       expect(result.exitCode).toBe(0);
       expect(lines(result.stdout)).toHaveLength(2);
     });
 
     test("search exits 1 when nothing matches", async () => {
-      const result = await runCLI(
-        ["--no-color", "search", "--exit-status", "no-such-text"],
-        DOC,
-      );
+      const result = await runCLI(["--no-color", "search", "--exit-status", "no-such-text"], DOC);
 
       expect(result.exitCode).toBe(1);
       expect(result.stdout).toBe("");
@@ -779,23 +548,14 @@ describe("agent features", () => {
     });
 
     test("without the flag a search with no matches still exits 0", async () => {
-      const result = await runCLI(
-        ["--no-color", "search", "no-such-text"],
-        DOC,
-      );
+      const result = await runCLI(["--no-color", "search", "no-such-text"], DOC);
 
       expect(result.exitCode).toBe(0);
     });
 
     test("--count prints 0 and exits 1 when nothing matches", async () => {
-      const none = await runCLI(
-        ["--no-color", "search", "--count", "--exit-status", "no-such-text"],
-        DOC,
-      );
-      const some = await runCLI(
-        ["--no-color", "search", "--count", "--exit-status", "region"],
-        DOC,
-      );
+      const none = await runCLI(["--no-color", "search", "--count", "--exit-status", "no-such-text"], DOC);
+      const some = await runCLI(["--no-color", "search", "--count", "--exit-status", "region"], DOC);
 
       expect(none.stdout.trim()).toBe("0");
       expect(none.exitCode).toBe(1);
@@ -804,24 +564,15 @@ describe("agent features", () => {
     });
 
     test("-v exits 1 when every line matches", async () => {
-      const everything = await runCLI(
-        ["--no-color", "search", "-v", "--exit-status", "json"],
-        DOC,
-      );
-      const some = await runCLI(
-        ["--no-color", "search", "-v", "--exit-status", "region"],
-        DOC,
-      );
+      const everything = await runCLI(["--no-color", "search", "-v", "--exit-status", "json"], DOC);
+      const some = await runCLI(["--no-color", "search", "-v", "--exit-status", "region"], DOC);
 
       expect(everything.exitCode).toBe(1);
       expect(some.exitCode).toBe(0);
     });
 
     test("a cap that was reached is a success", async () => {
-      const result = await runCLI(
-        ["--no-color", "search", "--exit-status", "-m", "1", "region"],
-        DOC,
-      );
+      const result = await runCLI(["--no-color", "search", "--exit-status", "-m", "1", "region"], DOC);
 
       expect(result.exitCode).toBe(0);
     });
@@ -830,43 +581,17 @@ describe("agent features", () => {
       const file = join(dir, "status.json");
       writeFileSync(file, DOC);
 
-      const hit = await runCLI([
-        "--no-color",
-        "search",
-        file,
-        "status",
-        "--exit-status",
-        "--sort",
-      ]);
-      const miss = await runCLI([
-        "--no-color",
-        "search",
-        file,
-        "nope",
-        "--exit-status",
-        "--sort",
-      ]);
+      const hit = await runCLI(["--no-color", "search", file, "status", "--exit-status", "--sort"]);
+      const miss = await runCLI(["--no-color", "search", file, "nope", "--exit-status", "--sort"]);
 
       expect(hit.exitCode).toBe(0);
       expect(miss.exitCode).toBe(1);
     });
 
     test("errors exit 2, so they differ from 'no match'", async () => {
-      const invalidJson = await runCLI(
-        ["--no-color", "search", "--exit-status", "a"],
-        '{"a":',
-      );
-      const invalidRegex = await runCLI(
-        ["--no-color", "search", "--exit-status", "--regex", "("],
-        DOC,
-      );
-      const missingFile = await runCLI([
-        "--no-color",
-        "search",
-        join(dir, "missing.json"),
-        "a",
-        "--exit-status",
-      ]);
+      const invalidJson = await runCLI(["--no-color", "search", "--exit-status", "a"], '{"a":');
+      const invalidRegex = await runCLI(["--no-color", "search", "--exit-status", "--regex", "("], DOC);
+      const missingFile = await runCLI(["--no-color", "search", join(dir, "missing.json"), "a", "--exit-status"]);
 
       for (const result of [invalidJson, invalidRegex, missingFile]) {
         expect(result.exitCode).toBe(2);
@@ -875,14 +600,8 @@ describe("agent features", () => {
     });
 
     test("usage errors exit 2 too", async () => {
-      const badCap = await runCLI(
-        ["search", "--exit-status", "-m", "0", "x"],
-        DOC,
-      );
-      const unknownOption = await runCLI(
-        ["search", "--exit-status", "--nope", "x"],
-        DOC,
-      );
+      const badCap = await runCLI(["search", "--exit-status", "-m", "0", "x"], DOC);
+      const unknownOption = await runCLI(["search", "--exit-status", "--nope", "x"], DOC);
 
       expect(badCap.exitCode).toBe(2);
       expect(unknownOption.exitCode).toBe(2);

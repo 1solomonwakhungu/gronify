@@ -6,9 +6,6 @@ import type { LineSink } from "./flatten-stream.js";
 import type { GronOutput } from "./output.js";
 import type { JsonGate, JsonSink } from "./tokenizer.js";
 
-const OBJECT = 0;
-const ARRAY = 1;
-
 const NEWLINE = 0x0a;
 const EMPTY = Buffer.alloc(0);
 
@@ -155,7 +152,8 @@ class Arena {
     this.spilled += this.used;
     this.store.resident -= this.used;
     this.used = 0;
-    if (this.buf.length > READ_CHUNK) this.buf = EMPTY;
+    // The capacity is not counted in `resident`, so give it back instead of holding it for a frame that may stay idle.
+    this.buf = EMPTY;
   }
 
   release(): void {
@@ -223,65 +221,85 @@ class Arena {
 }
 
 /**
- * One container being read. Its members are entries: a range of lines in `arena` (a scalar, or a small child copied
- * in), or a reference to a closed child frame that is too big to copy. Objects keep a key per entry so the entries
- * can be read back in key order; arrays merge neighbouring ranges and are always read in order.
+ * One container being read. Its members are entries: a range of lines in `arena` (a scalar, a small child copied in,
+ * or the container's own line, which is the first entry and sorts before every key), or a reference to a closed child
+ * frame that is too big to copy. Each entry has a key so the entries can be read back in key order. Entries that follow
+ * each other under the same key (the lines of an array, which has no frame of its own inside an object) share one range.
  */
 class Frame {
   readonly arena: Arena;
-  /** The container's own line (`json.a = {}`), when it passed the filter. */
-  head: Buffer | null = null;
-  /** Lines in the head and in all entries. */
+  /** Lines in all entries. */
   lines = 0;
-  /** Bytes in the head and in all entries, including the referenced children. */
+  /** Bytes in all entries, including the referenced children. */
   total = 0;
-  /** Key of the member being read (objects). */
+  /** Key of the member being read. It stays "" while the container's own line is added, so that line sorts first. */
   key = "";
   /** Some entry is a reference to another frame. */
   hasRefs = false;
-  readonly keys: string[] | null;
+  /** The entries are in key order already (duplicate keys count as ordered). */
+  sorted = true;
+  readonly keys: string[] = [];
   readonly starts: number[] = [];
   readonly counts: number[] = [];
+  /** Child frames by entry index. Shorter than `starts` when the last entries are plain ranges. */
   readonly kids: Array<Frame | undefined> = [];
-  private sorted = true;
 
   constructor(
-    readonly kind: number,
     /** An array with no object above it: its lines go straight to the output as they complete. */
     readonly streaming: boolean,
     private readonly store: Store,
   ) {
     this.arena = new Arena(store);
-    this.keys = kind === OBJECT ? [] : null;
   }
 
-  setHead(line: Buffer): void {
-    this.head = line;
-    this.lines += 1;
-    this.total += line.length;
+  /** True when the entries are plain ranges of the arena in memory, so they can be read without the walk. */
+  get plain(): boolean {
+    return !this.hasRefs && this.arena.spilled === 0;
   }
 
   /** Starts an entry of `lines` lines whose `bytes` bytes the caller appends to the arena next. */
   addRange(lines: number, bytes: number): void {
     this.lines += lines;
     this.total += bytes;
-    this.pushEntry(lines, undefined);
+    const keys = this.keys;
+    const last = keys.length - 1;
+    if (last >= 0 && keys[last] === this.key && this.kids[last] === undefined) {
+      this.counts[last]! += lines;
+      return;
+    }
+    this.push(lines, undefined);
   }
 
   addRef(child: Frame): void {
     this.lines += child.lines;
     this.total += child.total;
     this.hasRefs = true;
-    this.pushEntry(child.lines, child);
+    while (this.kids.length < this.starts.length) this.kids.push(undefined);
+    this.push(child.lines, child);
     this.store.retained.add(child);
   }
 
   /** Entry indexes in output order, or null when the entries already are in order. */
   order(): Uint32Array | null {
+    if (this.sorted) return null;
     const keys = this.keys;
-    if (keys === null || this.sorted) return null;
-    const order = Uint32Array.from({ length: keys.length }, (_, index) => index);
-    // The index tie-break keeps duplicate keys in document order.
+    const count = keys.length;
+    const order = new Uint32Array(count);
+    for (let i = 0; i < count; i += 1) order[i] = i;
+    // Comparing the index last keeps duplicate keys in document order.
+    if (count <= 16) {
+      for (let i = 1; i < count; i += 1) {
+        const index = order[i]!;
+        const key = keys[index]!;
+        let at = i - 1;
+        while (at >= 0 && keys[order[at]!]! > key) {
+          order[at + 1] = order[at]!;
+          at -= 1;
+        }
+        order[at + 1] = index;
+      }
+      return order;
+    }
     return order.sort((a, b) => (keys[a]! < keys[b]! ? -1 : keys[a]! > keys[b]! ? 1 : a - b));
   }
 
@@ -290,28 +308,36 @@ class Frame {
     return index + 1 < this.starts.length ? this.starts[index + 1]! : this.arena.length;
   }
 
+  /** Calls `write(buf, start, end, lines)` for the arena ranges of a plain frame in key order. */
+  forEachRange(write: (buf: Buffer, start: number, end: number, lines: number) => boolean | void): void {
+    const buf = this.arena.buf;
+    const order = this.order();
+    if (order === null) {
+      write(buf, 0, this.arena.used, this.lines);
+      return;
+    }
+    for (let i = 0; i < order.length; i += 1) {
+      const index = order[i]!;
+      if (write(buf, this.starts[index]!, this.rangeEnd(index), this.counts[index]!) === false) return;
+    }
+  }
+
   release(): void {
     this.store.retained.delete(this);
     this.arena.release();
-    this.head = null;
     this.starts.length = 0;
     this.counts.length = 0;
     this.kids.length = 0;
-    this.keys?.splice(0);
+    this.keys.length = 0;
   }
 
-  private pushEntry(lines: number, kid: Frame | undefined): void {
+  private push(lines: number, kid: Frame | undefined): void {
     const keys = this.keys;
-    if (keys !== null) {
-      if (this.sorted && keys.length > 0 && keys[keys.length - 1]! > this.key) this.sorted = false;
-      keys.push(this.key);
-    } else if (kid === undefined && this.kids.length > 0 && this.kids[this.kids.length - 1] === undefined) {
-      this.counts[this.counts.length - 1]! += lines;
-      return;
-    }
+    if (this.sorted && keys.length > 0 && keys[keys.length - 1]! > this.key) this.sorted = false;
+    keys.push(this.key);
     this.starts.push(this.arena.length);
     this.counts.push(lines);
-    this.kids.push(kid);
+    if (kid !== undefined) this.kids.push(kid);
   }
 }
 
@@ -323,28 +349,17 @@ interface Cursor {
 }
 
 /**
- * The lines of a closed frame in output order: its own line, then its entries sorted by key, with referenced children
- * read in place. Each frame is released as soon as it has been read. The walk uses an explicit stack, so nesting depth
- * does not matter.
+ * The lines of a closed frame in output order: its entries sorted by key (its own line is the first entry), with
+ * referenced children read in place. Each frame is released as soon as it has been read. The walk uses an explicit
+ * stack, so nesting depth does not matter.
  */
 function* walk(root: Frame): Generator<Chunk, void, undefined> {
-  const chunk = root.arena.store.chunk;
   const stack: Cursor[] = [];
-
-  const enter = (frame: Frame): Chunk | null => {
-    const order = frame.order();
-    stack.push({ frame, order, next: 0, count: frame.starts.length });
-    const head = frame.head;
-    if (head === null) return null;
-    chunk.buf = head;
-    chunk.start = 0;
-    chunk.end = head.length;
-    chunk.lines = 1;
-    return chunk;
+  const enter = (frame: Frame): void => {
+    stack.push({ frame, order: frame.order(), next: 0, count: frame.starts.length });
   };
 
-  const first = enter(root);
-  if (first !== null) yield first;
+  enter(root);
   while (stack.length > 0) {
     const cursor = stack[stack.length - 1]!;
     const frame = cursor.frame;
@@ -357,8 +372,7 @@ function* walk(root: Frame): Generator<Chunk, void, undefined> {
     cursor.next += 1;
     const kid = frame.kids[index];
     if (kid !== undefined) {
-      const head = enter(kid);
-      if (head !== null) yield head;
+      enter(kid);
       continue;
     }
     // Neighbouring ranges are contiguous in the arena when read in document order, so read them as one.
@@ -404,10 +418,11 @@ class LineCollector implements LineSink {
 
 /**
  * Wraps the flattener so object keys come out sorted (UTF-16 code unit order, like JS `sort()`), arrays keep their order,
- * and duplicate keys keep their document order. Nothing is parsed into JS values: each container's lines are kept as
- * bytes, next to a key and two offsets per member. Small members are copied into their parent's buffer; big ones stay
- * where they are and the parent points at them, so nothing is copied twice. When the document ends, one walk reads the
- * tree in key order and writes the lines out.
+ * and duplicate keys keep their document order. Nothing is parsed into JS values: each object's lines (its own line
+ * first) are kept as bytes, next to a key and two offsets per member. Small members are copied into their parent's
+ * buffer; big ones stay where they are and the parent points at them, so nothing is copied twice. An array inside an
+ * object has no buffer of its own: its lines are members of the object under the array's key. When the document ends,
+ * one walk reads the tree in key order and writes the lines out.
  *
  * Arrays that sit directly under the root or under other such arrays are written to the output as they go, so a
  * top-level array of records needs only one record at a time. Everything under an object waits for the document (or
@@ -421,6 +436,8 @@ export class SortingSink implements JsonSink, JsonGate {
   private readonly store: Store;
   private readonly flattener: JsonSink;
   private readonly stack: Frame[] = [];
+  /** One flag per open container, innermost last: whether it has a frame on `stack`. */
+  private readonly framed: boolean[] = [];
   private readonly queue: Frame[] = [];
   private opening: Frame | null = null;
 
@@ -444,11 +461,11 @@ export class SortingSink implements JsonSink, JsonGate {
   }
 
   startObject(): void {
-    this.open(OBJECT);
+    this.open(false);
   }
 
   startArray(): void {
-    this.open(ARRAY);
+    this.open(true);
   }
 
   endObject(): void {
@@ -505,17 +522,30 @@ export class SortingSink implements JsonSink, JsonGate {
     this.store.close();
   }
 
-  private open(kind: number): void {
+  private open(array: boolean): void {
     const parent = this.stack[this.stack.length - 1];
-    const frame = new Frame(kind, kind === ARRAY && (parent === undefined || parent.streaming), this.store);
-    this.opening = frame;
-    if (kind === OBJECT) this.flattener.startObject();
-    else this.flattener.startArray();
-    this.opening = null;
-    this.stack.push(frame);
+    // An array inside an object keeps its order, so it needs no frame: its lines are entries of the nearest frame, all
+    // under the key the array has there, and equal keys keep document order.
+    const framed = !array || parent === undefined || parent.streaming;
+    this.framed.push(framed);
+    if (framed) {
+      const frame = new Frame(array, this.store);
+      this.opening = frame;
+      this.startFlattener(array);
+      this.opening = null;
+      this.stack.push(frame);
+    } else {
+      this.startFlattener(array);
+    }
+  }
+
+  private startFlattener(array: boolean): void {
+    if (array) this.flattener.startArray();
+    else this.flattener.startObject();
   }
 
   private close(): void {
+    if (!this.framed.pop()) return;
     const frame = this.stack.pop()!;
     if (frame.streaming) return;
     if (frame.lines === 0) {
@@ -527,13 +557,14 @@ export class SortingSink implements JsonSink, JsonGate {
       this.emitFrame(frame);
       return;
     }
-    if (frame.total > INLINE_LIMIT || frame.hasRefs || frame.arena.spilled > 0) {
+    if (frame.total > INLINE_LIMIT || !frame.plain) {
       // Too big to copy again: the parent reads it in place when its own turn comes.
       parent.addRef(frame);
       return;
     }
     parent.addRange(frame.lines, frame.total);
-    for (const chunk of walk(frame)) parent.arena.append(chunk.buf, chunk.start, chunk.end);
+    frame.forEachRange((buf, start, end) => parent.arena.append(buf, start, end));
+    frame.release();
     this.spillIfNeeded();
   }
 
@@ -544,7 +575,10 @@ export class SortingSink implements JsonSink, JsonGate {
       if (opening.streaming) {
         this.emitLine(buf, start, end);
       } else {
-        opening.setHead(Buffer.from(buf.subarray(start, end)));
+        // The container's own line is its first entry, so it is counted and spilled like the rest.
+        opening.addRange(1, end - start);
+        opening.arena.append(buf, start, end);
+        this.spillIfNeeded();
       }
       return;
     }
@@ -564,8 +598,9 @@ export class SortingSink implements JsonSink, JsonGate {
       this.out.appendLines(buf, start, end, 1);
       return;
     }
-    const frame = new Frame(ARRAY, false, this.store);
-    frame.setHead(Buffer.from(buf.subarray(start, end)));
+    const frame = new Frame(false, this.store);
+    frame.addRange(1, end - start);
+    frame.arena.append(buf, start, end);
     this.queue.push(frame);
   }
 
@@ -575,9 +610,17 @@ export class SortingSink implements JsonSink, JsonGate {
       this.queue.push(frame);
       return;
     }
-    for (const chunk of walk(frame)) {
-      this.out.appendLines(chunk.buf, chunk.start, chunk.end, chunk.lines);
-      if (this.out.stopped) break;
+    const out = this.out;
+    if (frame.plain) {
+      frame.forEachRange((buf, start, end, lines) => {
+        out.appendLines(buf, start, end, lines);
+        return !out.stopped;
+      });
+    } else {
+      for (const chunk of walk(frame)) {
+        out.appendLines(chunk.buf, chunk.start, chunk.end, chunk.lines);
+        if (out.stopped) break;
+      }
     }
     frame.release();
   }
