@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
-import { readFileSync } from "fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
 import { join } from "path";
 
 // Helper function to run CLI commands and capture output
@@ -140,6 +141,145 @@ describe("Gronify CLI", () => {
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("Gron lines should look like");
+    });
+  });
+
+  describe("unflatten streaming", () => {
+    let dir: string;
+
+    beforeAll(() => {
+      dir = mkdtempSync(join(tmpdir(), "gronify-unflatten-"));
+    });
+
+    afterAll(() => {
+      rmSync(dir, { recursive: true, force: true });
+    });
+
+    test("should keep big integers and number spelling from stdin", async () => {
+      const result = await runCLI(
+        ["--no-color", "unflatten"],
+        "json = []\njson[0] = 12345678901234567890\njson[1] = 1.10\njson[2] = -0\njson[3] = 1e-7\n",
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toBe("[12345678901234567890,1.10,-0,1e-7]");
+    });
+
+    test("should print compact JSON that equals the original document", async () => {
+      const result = await runCLI(["--no-color", "unflatten", testGronFile]);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toBe(JSON.stringify(JSON.parse(result.stdout)));
+      expect(JSON.parse(result.stdout)).toEqual(
+        JSON.parse((await runCLI(["--no-color", "unflatten"], testGron)).stdout),
+      );
+    });
+
+    test("should pretty-print exactly like JSON.stringify with two spaces", async () => {
+      const compact = await runCLI(["--no-color", "unflatten", testGronFile]);
+      const pretty = await runCLI(["--no-color", "--pretty", "unflatten", testGronFile]);
+
+      expect(pretty.exitCode).toBe(0);
+      expect(pretty.stdout).toBe(JSON.stringify(JSON.parse(compact.stdout), null, 2));
+      expect(pretty.stdout).toContain("\n    \"id\": 12345,");
+    });
+
+    test("should pretty-print empty containers as {} and []", async () => {
+      const result = await runCLI(["--no-color", "--pretty", "unflatten"], "json = {}\njson.a = []\njson.b = {}\njson.c = [] \njson.c[0] = {}\n");
+
+      expect(result.stdout).toBe(JSON.stringify({ a: [], b: {}, c: [{}] }, null, 2));
+    });
+
+    test("should accept CRLF line endings, semicolons, and blank lines", async () => {
+      const result = await runCLI(["--no-color", "unflatten"], "json = {};\r\n\r\njson.a = \"x\";\r\njson.b = [];\r\njson.b[0] = null;");
+
+      expect(result.exitCode).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual({ a: "x", b: [null] });
+    });
+
+    test("should unflatten lexically sorted gron by rebuilding it in memory", async () => {
+      const lines = ["json = []", ...Array.from({ length: 12 }, (_, index) => `json[${index}] = ${index}`)].sort();
+      const result = await runCLI(["--no-color", "unflatten"], lines.join("\n"));
+
+      expect(result.exitCode).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual(Array.from({ length: 12 }, (_, index) => index));
+    });
+
+    test("should fill skipped array indexes with null", async () => {
+      const result = await runCLI(["--no-color", "unflatten"], "json = []\njson[3] = 1\n");
+
+      expect(result.stdout).toBe("[null,null,null,1]");
+    });
+
+    test("should name the failing line for invalid values", async () => {
+      const result = await runCLI(["--no-color", "unflatten"], "json = {}\njson.a = 1\njson.b = nope\n");
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("line 3: invalid JSON value");
+      expect(result.stderr).toContain("Gron lines should look like");
+    });
+
+    test("should reject input without assignments", async () => {
+      for (const input of ["", "\n\n", ";\n"]) {
+        const result = await runCLI(["--no-color", "unflatten"], input);
+
+        expect(result.exitCode).toBe(1);
+        expect(result.stderr).toContain("input contains no gron assignments");
+      }
+    });
+
+    test("should write to a file with -o", async () => {
+      const outputFile = join(dir, "out.json");
+      const result = await runCLI(["--no-color", "-o", outputFile, "unflatten", testGronFile]);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toContain(`Output written to ${outputFile}`);
+      const content = readFileSync(outputFile, "utf8");
+      expect(content.endsWith("\n")).toBe(true);
+      expect(JSON.parse(content).user.name).toBe("Alice");
+    });
+
+    test("should write pretty output from stdin to a file with -o", async () => {
+      const outputFile = join(dir, "pretty.json");
+      const result = await runCLI(["--no-color", "--pretty", "-o", outputFile, "unflatten"], testGron);
+
+      expect(result.exitCode).toBe(0);
+      expect(readFileSync(outputFile, "utf8")).toBe(`${JSON.stringify(JSON.parse(readFileSync(outputFile, "utf8")), null, 2)}\n`);
+    });
+
+    test("should leave an existing -o file alone when the input is invalid", async () => {
+      const outputFile = join(dir, "keep.json");
+      writeFileSync(outputFile, "original\n");
+      const result = await runCLI(["--no-color", "-o", outputFile, "unflatten"], "json = {}\njson.a = nope\n");
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("line 2: invalid JSON value");
+      expect(readFileSync(outputFile, "utf8")).toBe("original\n");
+    });
+
+    test("should report an unwritable -o path", async () => {
+      const result = await runCLI(["--no-color", "-o", join(dir, "missing", "out.json"), "unflatten", testGronFile]);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("ENOENT");
+    });
+
+    test("should stream a multi-megabyte file with sparse and nested data", async () => {
+      const inputFile = join(dir, "large.gron");
+      const lines = ["json = []"];
+      for (let index = 0; index < 60000; index += 1) {
+        lines.push(`json[${index * 2}] = {}`, `json[${index * 2}].id = ${index}`, `json[${index * 2}].tags = []`, `json[${index * 2}].tags[1] = "t${index}"`);
+      }
+      writeFileSync(inputFile, `${lines.join("\n")}\n`);
+      const result = await runCLI(["--no-color", "unflatten", inputFile]);
+
+      expect(result.exitCode).toBe(0);
+      const parsed = JSON.parse(result.stdout);
+      expect(parsed).toHaveLength(119999);
+      expect(parsed[0]).toEqual({ id: 0, tags: [null, "t0"] });
+      expect(parsed[1]).toBeNull();
+      expect(parsed[119998]).toEqual({ id: 59999, tags: [null, "t59999"] });
     });
   });
 

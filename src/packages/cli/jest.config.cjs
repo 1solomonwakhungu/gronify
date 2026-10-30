@@ -4,6 +4,8 @@ module.exports = {
   testEnvironment: "node",
   testMatch: ["**/__tests__/**/*.test.ts"],
   collectCoverageFrom: ["src/**/*.ts", "!src/**/*.d.ts"],
+  // Sources import siblings with the .js extension that Node's ESM resolution requires.
+  moduleNameMapper: { "^(\\.{1,2}/.*)\\.js$": "$1" },
   // Modern ts-jest configuration
   transform: {
     "^.+\\.ts$": [
