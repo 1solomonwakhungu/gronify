@@ -108,10 +108,38 @@ program
     const globalOptions = command.parent?.opts() ?? {};
     const formatter = createFormatterFromOptions(globalOptions);
     try {
-      const input = await readInput(file, formatter, "Usage: gronify unflatten <file> OR cat file.gron | gronify unflatten");
-      if (process.exitCode) return;
-      emit(formatter.formatJson(JSON.stringify(unflattenGron(input))), formatter, globalOptions.output);
+      if (file) {
+        validateFile(file);
+      } else if (!hasStdinData()) {
+        console.error(formatter.formatError("No input file provided and no data piped to stdin"));
+        console.error("Usage: gronify unflatten <file> OR cat file.gron | gronify unflatten");
+        process.exitCode = 1;
+        return;
+      }
+      const { closeOutput, createFileOutput, createMemoryOutput, openGronInput, unflattenStream } = await import("./unflatten-stream.js");
+      const outputFile: string | undefined = globalOptions.output;
+      const pretty = Boolean(globalOptions.pretty);
+      // Colour is applied to the finished text, so it is only used when the formatter would actually colour JSON.
+      const colorizer = createFormatterFromOptions({ ...globalOptions, pretty: false });
+      if (colorizer.formatJson("{}") !== "{}") {
+        const memory = createMemoryOutput();
+        await unflattenStream(openGronInput(file), memory.stream, { pretty });
+        emit(colorizer.formatJson(memory.text().replace(/\n$/, "")), formatter, outputFile);
+        return;
+      }
+      const stream = outputFile ? createFileOutput(outputFile) : process.stdout;
+      try {
+        await unflattenStream(openGronInput(file), stream, { pretty });
+      } catch (error) {
+        if (stream !== process.stdout) stream.destroy();
+        throw error;
+      }
+      if (stream !== process.stdout) {
+        await closeOutput(stream);
+        console.error(formatter.formatSuccess(`Output written to ${outputFile}`));
+      }
     } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EPIPE") return;
       fail(formatter, "unflattening gron", error);
       if (error instanceof Error && /^line \d+:/.test(error.message)) {
         console.error(formatter.formatInfo("Tip: Gron lines should look like: json.path = value"));
