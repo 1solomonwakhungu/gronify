@@ -166,11 +166,19 @@ export interface OutputOptions {
   countOnly?: boolean;
   /** Rewrites each kept line, for color and pretty output. */
   format?: ((line: string) => string) | null;
+  /** Stop after this many kept lines (written, or counted with `countOnly`). */
+  limit?: number | undefined;
 }
 
 const NEWLINE = 0x0a;
 const DEFAULT_BLOCK_SIZE = 1 << 20;
 const MAX_SPARE_BLOCKS = 4;
+
+function countNewlines(buf: Buffer, start: number, end: number): number {
+  let count = 0;
+  for (let at = buf.indexOf(NEWLINE, start); at >= 0 && at < end; at = buf.indexOf(NEWLINE, at + 1)) count += 1;
+  return count;
+}
 
 /**
  * Collects gron lines into large byte blocks and hands them to a stream. Producers call `reserve`, write bytes at
@@ -181,8 +189,10 @@ export class GronOutput {
   buf: Buffer;
   pos = 0;
   blocked = false;
-  /** Number of lines kept by the matcher (only counted when a matcher is set). */
+  /** Number of lines kept so far (by the matcher if there is one), counted or written. */
   matched = 0;
+  /** The `limit` was reached. `blocked` stays true so the producer stops, and `drain` no longer waits. */
+  stopped = false;
 
   private stream: Writable | null = null;
   private spare: Buffer[] = [];
@@ -196,6 +206,7 @@ export class GronOutput {
   private readonly invert: boolean;
   private readonly countOnly: boolean;
   private readonly format: ((line: string) => string) | null;
+  private readonly limit: number;
 
   constructor(options: OutputOptions) {
     this.sink = options.sink;
@@ -204,6 +215,7 @@ export class GronOutput {
     this.invert = options.invert ?? false;
     this.countOnly = options.countOnly ?? false;
     this.format = options.format ?? null;
+    this.limit = options.limit ?? Infinity;
     this.buf = Buffer.allocUnsafe(this.blockSize);
   }
 
@@ -215,24 +227,71 @@ export class GronOutput {
   /** Finishes the line that started at `start`: filters, formats and terminates it. Needs one reserved byte. */
   lineDone(start: number): void {
     const matcher = this.matcher;
-    if (matcher !== null) {
-      if (matcher.test(this.buf, start, this.pos) === this.invert) {
-        this.pos = start;
-        return;
-      }
-      this.matched += 1;
-      if (this.countOnly) {
-        this.pos = start;
-        return;
-      }
-    }
-    if (this.format !== null) {
-      const formatted = this.format(this.buf.toString("utf8", start, this.pos));
+    if (matcher !== null && matcher.test(this.buf, start, this.pos) === this.invert) {
       this.pos = start;
-      this.reserve(Buffer.byteLength(formatted) + 1);
-      this.pos += this.buf.write(formatted, this.pos, "utf8");
+      return;
     }
-    this.buf[this.pos++] = NEWLINE;
+    this.matched += 1;
+    if (this.countOnly) {
+      this.pos = start;
+    } else {
+      if (this.format !== null) {
+        const formatted = this.format(this.buf.toString("utf8", start, this.pos));
+        this.pos = start;
+        this.reserve(Buffer.byteLength(formatted) + 1);
+        this.pos += this.buf.write(formatted, this.pos, "utf8");
+      }
+      this.buf[this.pos++] = NEWLINE;
+    }
+    if (this.matched >= this.limit) this.stop();
+  }
+
+  /** Whether the line at `buf[start, end)` passes the matcher. Used by producers that filter before they buffer. */
+  accepts(buf: Buffer, start: number, end: number): boolean {
+    return this.matcher === null || this.matcher.test(buf, start, end) !== this.invert;
+  }
+
+  /**
+   * Writes lines that were already filtered. `src[start, end)` holds whole, newline-terminated lines; `lines` is how
+   * many (or -1 to count them). Respects the limit and the formatter, so the producer only has to check `stopped`.
+   */
+  appendLines(src: Buffer, start: number, end: number, lines: number): void {
+    if (this.stopped || end <= start) return;
+    const count = lines >= 0 ? lines : countNewlines(src, start, end);
+    if (this.format === null && this.matched + count <= this.limit) {
+      this.matched += count;
+      this.reserve(end - start);
+      src.copy(this.buf, this.pos, start, end);
+      this.pos += end - start;
+      if (this.matched >= this.limit) this.stop();
+      return;
+    }
+    // Formatting is per line, and so is stopping in the middle of a chunk.
+    for (let at = start; at < end; ) {
+      const newline = src.indexOf(NEWLINE, at);
+      const stop = newline < 0 || newline >= end ? end : newline;
+      if (this.format === null) {
+        this.reserve(stop - at + 1);
+        src.copy(this.buf, this.pos, at, stop);
+        this.pos += stop - at;
+      } else {
+        const formatted = this.format(src.toString("utf8", at, stop));
+        this.reserve(Buffer.byteLength(formatted) + 1);
+        this.pos += this.buf.write(formatted, this.pos, "utf8");
+      }
+      this.buf[this.pos++] = NEWLINE;
+      this.matched += 1;
+      if (this.matched >= this.limit) {
+        this.stop();
+        return;
+      }
+      at = stop + 1;
+    }
+  }
+
+  private stop(): void {
+    this.stopped = true;
+    this.blocked = true;
   }
 
   /** Hands everything written so far to the stream. */
@@ -256,7 +315,7 @@ export class GronOutput {
   /** Resolves once the stream has caught up; rejects if it failed. */
   async drain(): Promise<void> {
     if (this.failure) throw this.failure;
-    if (!this.blocked) return;
+    if (!this.blocked || this.stopped) return;
     await new Promise<void>((resolve) => this.waiters.push(resolve));
     if (this.failure) throw this.failure;
   }
@@ -314,7 +373,7 @@ export class GronOutput {
   private attach(): Writable {
     const stream = this.sink.open();
     stream.on("drain", () => {
-      if (!this.failure) this.blocked = false;
+      if (!this.failure && !this.stopped) this.blocked = false;
       this.release();
     });
     stream.on("error", (error: Error) => {

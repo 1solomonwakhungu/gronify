@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { Command } from "commander";
+import { Command, InvalidArgumentError } from "commander";
 import { accessSync, constants, createReadStream, existsSync, readFileSync } from "node:fs";
 import { extname } from "node:path";
 import { flattenStream } from "./flatten-stream.js";
@@ -19,7 +19,29 @@ program
   .option("--color", "Enable colored output (default: auto-detect)")
   .option("--no-color", "Disable colored output")
   .option("--pretty", "Enable pretty formatting with better readability")
-  .option("-o, --output <file>", "Write output to a file instead of stdout");
+  .option("-o, --output <file>", "Write output to a file instead of stdout")
+  .exitOverride((error) => {
+    // With --exit-status, 1 means "no match", so usage errors report 2 like every other failure of that command.
+    process.exit(error.exitCode !== 0 && process.argv.includes("--exit-status") ? 2 : error.exitCode);
+  });
+
+function parseCount(value: string): number {
+  const count = Number(value);
+  if (!/^[1-9][0-9]*$/.test(value) || !Number.isSafeInteger(count)) {
+    throw new InvalidArgumentError("Must be a positive integer.");
+  }
+  return count;
+}
+
+const SORT_HELP =
+  "Sort object keys at every level (UTF-16 order); arrays keep their order. Default: document order. " +
+  "Memory: arrays at the top level stream; an object is held until it closes, up to 64 MiB (GRONIFY_SORT_MEMORY bytes) " +
+  "before spilling to a temp file";
+
+/** Tells the reader (on stderr, so stdout stays clean) that a cap ended the run before the input did. */
+function reportStop(formatter: OutputFormatter, output: GronOutput, message: string): void {
+  if (output.stopped) console.error(formatter.formatInfo(message));
+}
 
 function hasStdinData(): boolean {
   return !process.stdin.isTTY;
@@ -108,17 +130,19 @@ async function emit(output: string, formatter: OutputFormatter, outputFile: stri
   console.error(formatter.formatSuccess(`Output written to ${outputFile}`));
 }
 
-function fail(formatter: OutputFormatter, context: string, error: unknown): void {
+function fail(formatter: OutputFormatter, context: string, error: unknown, exitCode = 1): void {
   const message = error instanceof Error ? error.message : String(error);
   console.error(formatter.formatError(`${context}: ${message}`));
-  process.exitCode = 1;
+  process.exitCode = exitCode;
 }
 
 program
   .command("flatten")
   .description("Convert JSON to gron format")
   .argument("[file]", "JSON file to flatten (or read from stdin if not provided)")
-  .action(async (file: string | undefined, _options: unknown, command: Command) => {
+  .option("--limit <n>", "Stop after n lines of output and stop reading the input", parseCount)
+  .option("--sort", SORT_HELP)
+  .action(async (file: string | undefined, options: { limit?: number; sort?: boolean }, command: Command) => {
     const globalOptions = command.parent?.opts() ?? {};
     const formatter = createFormatterFromOptions(globalOptions);
     try {
@@ -127,8 +151,9 @@ program
       }
       const input = openInput(file, formatter, "Usage: gronify flatten <file> OR cat file.json | gronify flatten");
       if (!input) return;
-      const output = createOutput(globalOptions.output, { format: formatter.createGronLineFormatter() });
-      await flattenStream(input, output);
+      const output = createOutput(globalOptions.output, { format: formatter.createGronLineFormatter(), limit: options.limit });
+      await flattenStream(input, output, { sort: options.sort });
+      reportStop(formatter, output, `Stopped after ${options.limit} lines (--limit); there may be more`);
       if (globalOptions.output) {
         console.error(formatter.formatSuccess(`Output written to ${globalOptions.output}`));
       }
@@ -169,11 +194,17 @@ program
   .option("-c, --case-sensitive", "Case sensitive search")
   .option("--count", "Show only the count of matches")
   .option("-v, --invert-match", "Invert match: show lines that do NOT match")
+  .option("-m, --max-count <n>", "Stop after n matching lines (n non-matching lines with -v) and stop reading the input", parseCount)
+  .option("--sort", SORT_HELP)
+  .option("--exit-status", "Exit 1 when nothing matches (like grep); errors then exit 2 instead of 1")
   .action(async (fileOrTerm: string, term: string | undefined, options: {
     regex?: boolean;
     caseSensitive?: boolean;
     count?: boolean;
     invertMatch?: boolean;
+    maxCount?: number;
+    sort?: boolean;
+    exitStatus?: boolean;
   }, command: Command) => {
     const globalOptions = command.parent?.opts() ?? {};
     const formatter = createFormatterFromOptions(globalOptions);
@@ -186,14 +217,27 @@ program
         caseSensitive: Boolean(options.caseSensitive)
       });
       const input = openInput(file, formatter, "Usage: gronify search <file> <term> OR cat file.json | gronify search <term>");
-      if (!input) return;
+      if (!input) {
+        if (options.exitStatus) process.exitCode = 2;
+        return;
+      }
       const output = createOutput(globalOptions.output, {
         matcher,
         invert: Boolean(options.invertMatch),
         countOnly: Boolean(options.count),
-        format: options.invertMatch ? formatter.createGronLineFormatter() : formatter.createSearchLineFormatter(searchTerm)
+        format: options.invertMatch ? formatter.createGronLineFormatter() : formatter.createSearchLineFormatter(searchTerm),
+        limit: options.maxCount
       });
-      await flattenStream(input, output);
+      // Counting needs no order, so --sort is skipped with --count.
+      await flattenStream(input, output, { sort: options.sort && !options.count });
+      reportStop(
+        formatter,
+        output,
+        options.count
+          ? `Stopped counting at ${options.maxCount} matches (--max-count)`
+          : `Stopped after ${options.maxCount} ${options.invertMatch ? "lines" : "matches"} (--max-count); there may be more`
+      );
+      if (options.exitStatus && output.matched === 0) process.exitCode = 1;
 
       if (options.count) {
         await emit(formatter.formatSuccess(String(output.matched)), formatter, globalOptions.output);
@@ -209,7 +253,7 @@ program
       }
     } catch (error) {
       if (isBrokenPipe(error)) return;
-      fail(formatter, options.regex ? "searching JSON (invalid regex or JSON)" : "searching JSON", error);
+      fail(formatter, options.regex ? "searching JSON (invalid regex or JSON)" : "searching JSON", error, options.exitStatus ? 2 : 1);
     }
   });
 
