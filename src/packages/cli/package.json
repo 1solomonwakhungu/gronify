@@ -39,6 +39,7 @@
     "format:check": "npx --yes prettier@3.6.2 --check package.json",
     "test": "jest",
     "test:watch": "jest --watch",
+    "bench": "node scripts/bench.mjs",
     "audit": "audit-ci --config audit-ci.jsonc"
   },
   "type": "module",
