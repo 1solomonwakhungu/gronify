@@ -134,3 +134,12 @@
   - npm docs: README and skill say the caps, `--sort` and `--exit-status` need Gronify 1.2.0 or newer (release-please makes the next release 1.2.0 for these `feat` commits; manifest is at 1.1.0), and tell agents to check `gronify --version` or `gronify search --help` first and fall back to `| head`.
   - Nits: "1 line"/"1 match" singular; the stop notice is silent when only whitespace and closing brackets follow the cap in the same chunk (`JsonTokenizer.finishesAt`), still hedged for `--sort` and when later chunks may follow; `GRONIFY_SORT_MEMORY` takes bytes or KB/MB/GB (powers of 1000) and KiB/MiB/GiB, and anything else is an error (exit 1, 2 with `--exit-status`) instead of being ignored.
 - Next: review and merge this PR. The landing page and `llms*.txt` still describe only flatten/search/unflatten; update them in a separate change.
+
+## 2026-10-31 — Open PR sweep
+
+- Reviewed all seven open PRs with Sonnet (Dependabot landing bumps) and Opus (#88, #90, #97) reviewers.
+- Merged #88 (release-please-action v5; only change is the node24 runtime) and #93 (@eslint/eslintrc patch).
+- Bundled #89 (React 19.3.1), #91 (posthog-js), #92 (@primer/react-brand 0.80.1) and #90 (eslint-config-next 16.4.3) into one PR. It also migrates `eslint.config.mjs` from FlatCompat to the native flat config, because eslint-config-next 16 no longer works with FlatCompat. `@eslint/eslintrc` was dropped as unused.
+- Landing audit: removed the braces allowlist entry (GHSA-vfj7-8cjw-p6xm), which no longer matches anything. Allowlisted GHSA-g3hv-75wg-m249 (minimatch, published 2026-10-30, fixed only in minimatch 11, dev-only lint tooling). That advisory also fails on main.
+- Landing ci, lint, build, and audit all pass locally. Release PR #97 (1.2.0) merges last.
+- CLI audit started failing on 2026-10-30 because of two jest-transitive advisories: glob (GHSA-3g3m-2fjr-6pw4) and minimatch (GHSA-g3hv-75wg-m249). Fixed with npm overrides `glob@^14.0.2` and `minimatch@^11.0.2`. Build, lint, format and all 548 tests pass. Removed the stale sprintf-js exception, so the CLI allowlist is now empty.
