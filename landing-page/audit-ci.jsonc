@@ -1,8 +1,9 @@
 {
   "moderate": true,
   "allowlist": [
-    // Unpatched braces recursion DoS via eslint-config-next (dev-only lint tooling).
-    // Remove this exception when GHSA-vfj7-8cjw-p6xm has a compatible fix.
-    "GHSA-vfj7-8cjw-p6xm",
+    // minimatch globparts DoS via eslint and its plugins (dev-only lint tooling).
+    // The only fix is minimatch 11, which the 3.x consumers cannot take.
+    // Remove this exception when the eslint plugin stack moves off minimatch 3.
+    "GHSA-g3hv-75wg-m249",
   ],
 }

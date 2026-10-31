@@ -10,20 +10,19 @@
     "audit": "audit-ci --config audit-ci.jsonc"
   },
   "dependencies": {
-    "@primer/react-brand": "^0.77.0",
+    "@primer/react-brand": "^0.80.1",
     "next": "16.4.3",
-    "posthog-js": "^1.418.10",
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "posthog-js": "^1.444.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "audit-ci": "^7.1.0",
     "eslint": "^9",
-    "eslint-config-next": "15.5.25",
+    "eslint-config-next": "16.4.3",
     "typescript": "^5"
   },
   "overrides": {
