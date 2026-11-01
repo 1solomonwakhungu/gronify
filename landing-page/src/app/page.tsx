@@ -58,7 +58,9 @@ function Terminal({
         >
           {line.kind === "command" ? (
             <>
-              <span className={styles.terminalPrompt}>$ </span>
+              <span className={styles.terminalPrompt} aria-hidden="true">
+                ${" "}
+              </span>
               {line.text}
             </>
           ) : (
@@ -108,7 +110,7 @@ const rivers = [
   {
     heading: "Unflatten gron output back into valid JSON",
     description:
-      "Stream document-order gron assignments through the built-in unflatten command to reconstruct valid JSON with source numbers preserved verbatim.",
+      "Stream document-order gron assignments through the built-in unflatten (ungron) command to reconstruct valid JSON with source numbers preserved verbatim.",
     label: "Round-tripping gron assignments back to JSON",
     lines: [
       { kind: "command", text: "gronify flatten data.json | gronify unflatten" },
@@ -118,7 +120,7 @@ const rivers = [
   {
     heading: "Stream multi-gigabyte JSON in ~100 MB memory",
     description:
-      "All three commands stream their input, keeping peak memory around 100 MB on the default path at any file size; --sort on a large top-level object and out-of-order unflatten input use more. With -m or --limit, Gronify stops reading at the cap, writes a notice to stderr (the last line below), and exits 0.",
+      "All three commands stream their input, keeping peak memory around 100 MB on the default path at any file size; --sort spills buffered object lines past 64 MiB to a temp file, and out-of-order unflatten input rebuilds in memory only within the first 16 MiB (failing past that). With -m or --limit, Gronify stops reading at the cap, writes a notice to stderr (the final line in the transcript), and exits 0.",
     label: "Stopping a JSON search after two matches",
     lines: [
       { kind: "command", text: 'gronify search events.json -m 2 "error"' },
@@ -146,7 +148,7 @@ const comparisons = [
     kicker: "vs. gron & fastgron",
     title: "Cross-platform npm install, built-in search, and streaming ungron",
     description:
-      "Install one TypeScript CLI on macOS, Linux, and Windows via npm with built-in regex search—no separate grep or native binary setup. Gronify keeps document order by default and streams single-document flatten and unflatten in one pass, reconstructing a 3 GB gron file in 7.31 s at 100 MB RSS.",
+      "A cross-platform gron and fastgron alternative for macOS, Linux, and Windows: install via npm with built-in regex search and zero external grep or native binary setup. Unlike gron, Gronify preserves document order by default and streams single-document flatten and unflatten in one pass—reconstructing a 3 GB gron file in 7.31 s at 100 MB RSS (Apple M5 Pro, Node.js 22).",
     label: "Streaming unflatten from gron paths to an atomic output file",
     lines: [
       { kind: "command", text: "gronify -o restored.json unflatten archive.gron" },
@@ -157,7 +159,7 @@ const comparisons = [
     kicker: "vs. raw grep on JSON",
     title: "Full path context on minified or deeply nested payloads",
     description:
-      "Running grep on minified JSON dumps an entire multi-megabyte line; on formatted JSON it prints an isolated key or value without parent array indexes. Gronify emits the complete root-to-leaf path on every line and handles 100,000 nesting levels in 63 MB RSS without call-stack overflow.",
+      "Running grep on minified JSON dumps an entire multi-megabyte line; on formatted JSON it prints an isolated key or value without parent array indexes. Gronify emits the complete root-to-leaf path on every line and handles 100,000 nesting levels in 63 MB RSS (Apple M5 Pro, Node.js 22) without call-stack overflow.",
     label: "Finding the exact parent path inside minified nested JSON",
     lines: [
       { kind: "command", text: 'gronify search cluster-state.min.json "unhealthy"' },
@@ -168,7 +170,7 @@ const comparisons = [
     kicker: "With system diff",
     title: "Sort object keys deterministically without breaking array order",
     description:
-      "Plain line-sorting interleaves sibling subtrees and orders [10] before [2]. Gronify's --sort orders object keys by UTF-16 code unit at every level, keeps each subtree contiguous, preserves array index order, and spills root objects above 64 MiB to disk so two payloads compare cleanly with system diff.",
+      "Plain line-sorting interleaves sibling subtrees and orders [10] before [2]. Gronify's --sort orders object keys by UTF-16 code unit at every level, keeps each subtree contiguous, preserves array index order, and spills buffered object lines above 64 MiB to a temp file so two payloads compare cleanly with system diff.",
     label:
       "Comparing two JSON files path by path using flatten --sort with system diff",
     lines: [
@@ -188,7 +190,7 @@ const agentRivers = [
   {
     heading: "Count and cap matches before reading into prompt context",
     description:
-      "Large JSON exports quickly exhaust an LLM context window if read whole. Pass --no-color, check match cardinality with --count first, then sample matches with -m or inspect schema shape with flatten --limit. Because Gronify stops reading the input stream at the cap, search -m 5 on a 1.2 GiB JSON array finishes in 0.03 s at 57 MB RSS.",
+      "Large JSON exports quickly exhaust an LLM context window if read whole. Pass --no-color, check match cardinality with --count first, then sample matches with -m or inspect schema shape with flatten --limit. Because Gronify stops reading the input stream at the cap, search -m 5 on a 1.2 GiB JSON array finishes in 0.03 s at 57 MB RSS (Apple M5 Pro, Node.js 22).",
     label: "Progressive JSON narrowing for AI coding agents",
     lines: [
       { kind: "command", text: "gronify --no-color search payload.json error --count" },
@@ -199,8 +201,9 @@ const agentRivers = [
       { kind: "output", text: 'json.events[29].error = "connection reset"' },
       { kind: "output", text: "Stopped after 3 matches (--max-count); there may be more" },
     ] satisfies TerminalLine[],
-    linkText: "Explore result-cap flags in the CLI reference",
+    linkText: "Explore result-cap flags",
     linkHref: "#commands",
+    isExternal: false,
   },
   {
     heading: "Automate checks with exit codes, atomic writes, and agent skills",
@@ -214,12 +217,13 @@ const agentRivers = [
       },
       {
         kind: "command",
-        text: 'gronify --no-color search --exit-status config.json -m 1 "debug = true"',
+        text: 'if gronify --no-color search --exit-status config.json -m 1 "debug = true" >/dev/null 2>&1; then echo "debug is on"; fi',
       },
-      { kind: "output", text: "json.features.debug = true" },
+      { kind: "output", text: "debug is on" },
     ] satisfies TerminalLine[],
-    linkText: "Browse the gronify-json-flatten-search skill on skills.sh",
+    linkText: "View agent skill on skills.sh",
     linkHref: skillsUrl,
+    isExternal: true,
   },
 ];
 
@@ -376,6 +380,10 @@ export default function Home() {
     posthog.capture("issue_report_link_clicked", { placement: "cta" });
   };
 
+  const captureSkillLinkClick = (placement: "agents" | "footer") => {
+    posthog.capture("skill_link_clicked", { placement });
+  };
+
   return (
     <>
       <a href="#top" className={styles.skipLink}>
@@ -464,11 +472,10 @@ export default function Home() {
               Flatten, search, and unflatten JSON in one standalone CLI.
             </SectionIntro.Heading>
             <SectionIntro.Description>
-              Traditional JSON parsing loads an entire document into memory with
-              JSON.parse() or requires upfront filter queries. Gronify tokenizes
-              raw JSON streams in 1 MB chunks so you can flatten paths, search
-              matches, and round-trip valid JSON in ~100 MB of memory on the
-              default path.
+              Traditional JSON parsing loads an entire document with
+              JSON.parse() or demands an upfront query DSL. Gronify tokenizes
+              raw byte streams in 1 MB chunks so you can flatten paths, filter
+              matches, and round-trip valid JSON at any file size.
             </SectionIntro.Description>
           </SectionIntro>
         </Section>
@@ -556,7 +563,17 @@ export default function Home() {
                     {river.heading}
                   </Heading>
                   <Text>{river.description}</Text>
-                  <Link href={river.linkHref}>{river.linkText}</Link>
+                  <Link
+                    href={river.linkHref}
+                    isExternal={river.isExternal}
+                    onClick={
+                      river.isExternal
+                        ? () => captureSkillLinkClick("agents")
+                        : undefined
+                    }
+                  >
+                    {river.linkText}
+                  </Link>
                 </River.Content>
               </River>
             ))}
@@ -818,7 +835,12 @@ export default function Home() {
             <Link href={npmPackageUrl} size="small" arrowDirection="none">
               npm
             </Link>
-            <Link href={skillsUrl} size="small" arrowDirection="none">
+            <Link
+              href={skillsUrl}
+              size="small"
+              arrowDirection="none"
+              onClick={() => captureSkillLinkClick("footer")}
+            >
               Agent Skill
             </Link>
             <Link
