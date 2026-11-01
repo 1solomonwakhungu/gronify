@@ -128,5 +128,6 @@ Checked on 2026-11-01.
 
 - Added `src/packages/cli/scripts/bench-compare.mjs` (`npm run bench:compare`): gronify vs gron 0.7.1, fastgron 0.7.7, jq 1.7.1, jaq 3.1.2 on generated records (1 MB to 1 GB), keyed-object, deeply nested, and big-integer inputs. Timing, peak RSS, and correctness checks are written by the script to `landing-page/src/app/benchmark-results.json` and `src/packages/cli/BENCHMARKS.md`; nothing in those files is hand-edited.
 - CLI tests (548) and `npm run lint` pass.
-- Next: wire the results JSON into the landing page.
 - Review fixes to `bench:compare` (schemaVersion 2): at least 3 runs at every size by JSON size, 5% tie rule, cache warm-up and tool rotation per run, compact fastgron unflatten, piped-output flatten variant, OS-kill handling, recorded options and binaries. Re-run took 45.6 min; results regenerated.
+- Landing page: added a `#benchmarks` section (bars for time and peak memory at 1 GB, wins and losses, capability matrix, machine and versions, reproduce command), a nav link, an FAQ entry, and llms.txt mentions. All figures are derived from `benchmark-results.json` in `benchmark-data.ts`, which fails the build if regenerated results stop supporting the copy.
+- Landing page claims follow schemaVersion 2: ties come from `isTie`, "fastest" from `isFastest`, status labels from `reasonCode`, and the 50,000-level headline uses the piped run. Next: re-run `npm run bench:compare` when tool versions change and rebuild the landing page.

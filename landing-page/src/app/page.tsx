@@ -17,6 +17,8 @@ import {
 } from "@primer/react-brand";
 import posthog from "posthog-js";
 
+import { Benchmarks } from "./benchmarks";
+import { reproduceCommand } from "./benchmark-data";
 import { GronifyLogo } from "./logo";
 import styles from "./page.module.css";
 import {
@@ -264,6 +266,12 @@ const installSteps = [
   },
 ];
 
+const reproduceLines: TerminalLine[] = [
+  { kind: "command", text: "cd gronify/src/packages/cli" },
+  { kind: "command", text: "npm ci && npm run build" },
+  { kind: "command", text: reproduceCommand },
+];
+
 const requirements = [
   ["Node.js", nodeRequirement],
   ["npm (from source)", npmBuildRequirement],
@@ -299,6 +307,9 @@ export default function Home() {
             </a>
             <a className={styles.navLink} href="#commands">
               Commands
+            </a>
+            <a className={styles.navLink} href="#benchmarks">
+              Benchmarks
             </a>
             <a className={styles.navLink} href="#install">
               Install
@@ -506,6 +517,15 @@ export default function Home() {
             </Grid.Column>
           </Grid>
         </Section>
+
+        <Benchmarks
+          reproduce={
+            <Terminal
+              label="Reproduce the cross-tool benchmark"
+              lines={reproduceLines}
+            />
+          }
+        />
 
         <Section id="install" paddingBlockStart="spacious" paddingBlockEnd="none">
           <SectionIntro align="center" fullWidth>

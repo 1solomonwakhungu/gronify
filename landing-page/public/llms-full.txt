@@ -391,6 +391,18 @@ gronify flatten data.json | wc -l
 gronify search data.json "user" | head -20
 ```
 
+## Benchmarks
+
+Gronify is compared with gron, fastgron, jq (`jq --stream`), and jaq on generated JSON from 1 MB to 1 GB, plus deeply nested and big-integer inputs. The page section is at https://gronify.vercel.app/#benchmarks and the full tables, methodology, and exact commands are in https://github.com/1solomonwakhungu/gronify/blob/main/src/packages/cli/BENCHMARKS.md.
+
+- Memory: Gronify's peak memory stays flat as input grows and is the lowest of the gron-format tools on large files. gron timed out at 1 GB and fastgron used gigabytes.
+- Unflatten: Gronify ties fastgron on time at large sizes and uses a small fraction of its memory.
+- Early exit: `--limit` and `--max-count` return in about the same short time at every input size.
+- Deep nesting: Gronify flattens a 50,000-level document, which gron and fastgron do not.
+- Where Gronify loses: fastgron flattens several times faster, `fastgron -F` is the fastest search, and `jq --stream` uses less memory.
+
+Reproduce with `npm run bench:compare` in `src/packages/cli`. Results depend on the machine and tool versions, so compare tools within one run.
+
 ## Use Cases
 
 ### Incident Response
