@@ -25,7 +25,7 @@ Users inspect service responses, generated configuration, CI artifacts, support 
 ## Capabilities and Constraints
 
 - Requires Node.js 20+ for the executable or source install; npm 10+ is required when building from source.
-- Supports flattening and unflattening files or stdin, streaming multi-gigabyte input in about 100 MB of memory.
+- Supports flattening and unflattening files or stdin, streaming multi-gigabyte input in about 100 MB of memory on the default path (`--sort` and out-of-order `unflatten` input use more).
 - Supports plain-text search, extended regex, case-sensitive matching, inverted matches, match counts, optional color, and pretty output.
 - Since 1.2.0: result caps (`search -m/--max-count`, `flatten --limit`), `--sort` for stable key order, and `search --exit-status`.
 - Numbers are printed exactly as written in the source.

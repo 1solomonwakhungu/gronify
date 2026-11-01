@@ -78,8 +78,12 @@ const rivers = [
     label: "Every value on one line",
     lines: [
       { kind: "command", text: "gronify flatten service.json" },
+      { kind: "output", text: "json = {}" },
+      { kind: "output", text: "json.service = {}" },
       { kind: "output", text: 'json.service.name = "checkout"' },
       { kind: "output", text: 'json.service.status = "degraded"' },
+      { kind: "output", text: "json.deployments = []" },
+      { kind: "output", text: "json.deployments[0] = {}" },
       { kind: "output", text: 'json.deployments[0].region = "us-central1"' },
     ] satisfies TerminalLine[],
   },
@@ -89,7 +93,7 @@ const rivers = [
       "Use plain text or extended regex, then choose case-sensitive output or a match count.",
     label: "Regex search across a payload",
     lines: [
-      { kind: "command", text: 'gronify search data.json --regex "users\\[[0-9]+\\]"' },
+      { kind: "command", text: 'gronify search data.json --regex "users\\[[0-9]+\\]\\.email"' },
       { kind: "output", text: 'json.users[0].email = "ada@example.com"' },
       { kind: "output", text: 'json.users[1].email = "grace@example.com"' },
     ] satisfies TerminalLine[],
@@ -107,7 +111,7 @@ const rivers = [
   {
     heading: "Large inputs: read only what you need",
     description:
-      "flatten, search, and unflatten stream their input, so memory stays around 100 MB at any file size. -m and --limit stop reading at the cap, print a notice on stderr, and exit 0.",
+      "flatten, search, and unflatten stream their input, so memory stays around 100 MB on the default path at any file size; --sort on a large top-level object and out-of-order unflatten input use more. -m and --limit stop reading at the cap, print a notice on stderr (the last line below), and exit 0.",
     label: "Stopping a search after two matches",
     lines: [
       { kind: "command", text: 'gronify search events.json -m 2 "error"' },
@@ -218,6 +222,7 @@ const installSteps = [
   {
     step: "01",
     title: "npm",
+    label: "Install with npm",
     lines: [
       { kind: "command", text: "npm install -g gronify" },
     ] satisfies TerminalLine[],
@@ -225,6 +230,7 @@ const installSteps = [
   {
     step: "02",
     title: "Homebrew",
+    label: "Install with Homebrew",
     lines: [
       { kind: "command", text: "brew install 1solomonwakhungu/tap/gronify" },
     ] satisfies TerminalLine[],
@@ -232,6 +238,7 @@ const installSteps = [
   {
     step: "03",
     title: "Build from source",
+    label: "How to build from source",
     lines: [
       { kind: "command", text: "git clone " + repositoryUrl + ".git" },
       { kind: "command", text: "cd gronify/src/packages/cli" },
@@ -241,6 +248,7 @@ const installSteps = [
   {
     step: "04",
     title: "Verify the CLI",
+    label: "How to verify the CLI",
     lines: [
       { kind: "command", text: "gronify --help" },
       { kind: "command", text: "gronify flatten data.json" },
@@ -269,7 +277,7 @@ const faqs = [
   {
     question: "How large a file can Gronify handle?",
     answer:
-      "flatten, search, and unflatten stream, so peak memory stays around 100 MB whether the input is 20 MB or several gigabytes. On an Apple M5 Pro, a 3 GB gron file unflattens in about 7 seconds at 100 MB RSS. With -m or --limit, Gronify stops reading once the cap is reached, so an early match in a large file returns in milliseconds.",
+      "flatten, search, and unflatten stream, so peak memory stays around 100 MB on the default path, whether the input is 20 MB or several gigabytes. --sort on a large top-level object and out-of-order unflatten input use more. On an Apple M5 Pro, a 3 GB gron file unflattens in about 7 seconds at 100 MB RSS. With -m or --limit, Gronify stops reading once the cap is reached, so an early match in a large file returns in milliseconds.",
   },
   {
     question: "Does --sort produce the same order as gron?",
@@ -535,7 +543,7 @@ export default function Home() {
                   </Stack>
                   <Box paddingBlockStart={16}>
                     <Terminal
-                      label={`How to ${step.title.toLowerCase()}`}
+                      label={step.label}
                       lines={step.lines}
                     />
                   </Box>

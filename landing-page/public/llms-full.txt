@@ -12,7 +12,7 @@ The project is open source under the MIT license. The current release is 1.2.0 (
 
 ## Features
 
-- Flatten JSON files or stdin into gron-style path assignments, streaming multi-gigabyte inputs in about 100 MB of memory.
+- Flatten JSON files or stdin into gron-style path assignments, streaming multi-gigabyte inputs in about 100 MB of memory on the default path (`--sort` and out-of-order `unflatten` input use more).
 - Unflatten gron files or stdin back into JSON, also streaming.
 - Search flattened paths with plain text, extended regex, case-sensitive matching, inverted matching, and match counts.
 - Cap the output with `search -m/--max-count` and `flatten --limit`. Gronify stops reading the input at the cap, so a large file returns in milliseconds when the cap is hit early. (1.2.0)
@@ -122,7 +122,7 @@ cat data.gron | gronify unflatten
 gronify --output data.json unflatten data.gron
 ```
 
-`unflatten` streams. Gron in document order (each container before its children, siblings together, array indexes ascending), which is what `flatten` and `flatten --sort` write, converts in one pass at any size. Out-of-order input is rebuilt in memory only while the first 16 MiB are read; after that it fails with `line N: ...`. Do not run plain `sort` on gron you plan to unflatten: it puts `[10]` before `[2]`.
+`unflatten` streams. Gron in document order (each container before its children, siblings together, array indexes ascending), which is what `flatten` and `flatten --sort` write, converts in one pass at any size. Out-of-order input is rebuilt in memory only while under 16 MiB of input has been read and under 16 MiB of output produced; after that it fails with `line N: ...`. The rebuild holds the whole document in memory. Do not run plain `sort` on gron you plan to unflatten: it puts `[10]` before `[2]`.
 
 ### `search <file_or_term> [term]`
 
@@ -189,7 +189,7 @@ json.b = 1
 - The output is stable: two documents that differ only in key order give identical lines, so `diff <(gronify flatten --sort a.json) <(gronify flatten --sort b.json)` shows real changes.
 - The output is in document order, so `gronify flatten --sort data.json | gronify unflatten` streams in one pass.
 - This is not gron's order. gron puts bare keys (`json.b`) before bracketed keys (`json["10"]`) at each level and compares UTF-8 bytes, so the two outputs can differ. It is also not what plain `sort` on the lines gives.
-- A top-level array is sorted record by record as it streams. An object is held until it closes, using up to 64 MiB of memory and then a temp file in `$TMPDIR`. Set `GRONIFY_SORT_MEMORY` (bytes, or a size such as `256MiB`) to change the 64 MiB.
+- A top-level array is sorted record by record as it streams. An object is held until it closes: up to 64 MiB of line data stays in memory before spilling to a temp file in `$TMPDIR`, plus about 100–150 bytes per object member (a 1.5M-key object peaked at about 500 MB RSS). Set `GRONIFY_SORT_MEMORY` (bytes, or a size such as `256MiB`) to change the 64 MiB.
 
 ### Exit Codes
 
@@ -201,7 +201,7 @@ json.b = 1
 
 ### Streaming and Large Inputs
 
-`flatten`, `search`, and `unflatten` read their input in chunks and write output as they go. Peak memory stays around 100 MB whether the input is 20 MB or several gigabytes. Measured on an Apple M5 Pro with Node 22:
+`flatten`, `search`, and `unflatten` read their input in chunks and write output as they go. On the default path, peak memory stays around 100 MB whether the input is 20 MB or several gigabytes. `--sort` on a large top-level object and out-of-order input to `unflatten` use more. Measured on an Apple M5 Pro with Node 22:
 
 | Input                    | Command          | Time   | Peak RSS |
 | ------------------------ | ---------------- | ------ | -------- |
@@ -354,7 +354,7 @@ curl -s https://example.com/payload.json | gronify search --regex "metadata|stat
 Flatten, search for specific paths, and unflatten the matching subset back into JSON:
 
 ```bash
-gronify search data.json "deployments" | gronify unflatten
+gronify search data.json --regex '^json = |deployments' | gronify unflatten
 ```
 
 ### Count Matches
@@ -515,7 +515,7 @@ No. Flattening, unflattening, and search are all built into the standalone CLI.
 Yes. Install from npm, use the release archive for your platform or Homebrew where supported, or build the TypeScript CLI from source with Node.js 20 or newer.
 
 **How large a file can Gronify handle?**
-`flatten`, `search`, and `unflatten` stream, so peak memory stays around 100 MB whether the input is 20 MB or several gigabytes. With `-m` or `--limit`, Gronify stops reading once the cap is reached.
+`flatten`, `search`, and `unflatten` stream, so peak memory stays around 100 MB on the default path, whether the input is 20 MB or several gigabytes. `--sort` on a large top-level object and out-of-order input to `unflatten` use more. With `-m` or `--limit`, Gronify stops reading once the cap is reached.
 
 **Does `--sort` produce the same order as gron?**
 No. `--sort` compares keys by UTF-16 code unit at each level, keeps each subtree together, and leaves array order alone. gron puts bare keys before bracketed ones and compares UTF-8 bytes.

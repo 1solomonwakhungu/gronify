@@ -4,9 +4,9 @@
 
 Gronify is a TypeScript CLI that flattens JSON documents into one assignment per path, searches those paths with plain text or extended regex, and unflattens gron output back into valid JSON. Flattening, unflattening, and search are all built in — no external command-line tools such as grep or fastgron are required at runtime.
 
-The CLI reads from files or stdin and writes to stdout or, with `-o`, atomically to a file, so it composes with pipes, redirection, and other shell tools. `flatten`, `search`, and `unflatten` stream their input, so peak memory stays around 100 MB whether the input is 20 MB or several gigabytes. Numbers are printed exactly as written (`12345678901234567890` and `1.10` are not rounded).
+The CLI reads from files or stdin and writes to stdout or, with `-o`, atomically to a file, so it composes with pipes, redirection, and other shell tools. `flatten`, `search`, and `unflatten` stream their input, so peak memory stays around 100 MB on the default path, whether the input is 20 MB or several gigabytes. `--sort` on a large top-level object and out-of-order input to `unflatten` use more. Numbers are printed exactly as written (`12345678901234567890` and `1.10` are not rounded).
 
-Version 1.2.0 adds result caps (`search -m/--max-count`, `flatten --limit`) that stop reading the input once reached, `--sort` for a stable key order that makes JSON diffable, and `search --exit-status` for grep-style exit codes. Older versions fail with `error: unknown option '-m'`; check `gronify --version`.
+Version 1.2.0 adds result caps (`search -m/--max-count`, `flatten --limit`) that stop reading the input once reached, `--sort` for a stable key order that makes JSON diffable, and `search --exit-status` for grep-style exit codes. Older versions fail with `error: unknown option '-m'`; check with `gronify search --help | grep -e --max-count` or `gronify --version`.
 
 Gronify is designed for platform engineers, SREs, developer-experience teams, support engineers, AI coding agents, and developers who inspect large JSON payloads in CI logs, service responses, support bundles, generated configuration, or incident debugging sessions.
 
