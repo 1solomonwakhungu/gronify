@@ -375,6 +375,8 @@ node scripts/bench-unflatten.mjs --huge 3        # one 3 GB input; needs about 3
 
 `npm run bench` generates inputs in a temporary directory, times `flatten`, `search --count`, `flatten --sort`, and an early-stopping `search -m 5`, and deletes the files afterwards. Pass options after `--`, for example `npm run bench -- --sizes 23,129 --big 3 --deep 100000 --baseline path/to/older/dist/index.js`.
 
+`npm run bench:compare` benchmarks gronify against gron, fastgron, jq, and jaq on the same generated inputs (flatten, search, unflatten, early-exit caps, and correctness checks) and rewrites [`src/packages/cli/BENCHMARKS.md`](src/packages/cli/BENCHMARKS.md) and `landing-page/src/app/benchmark-results.json`. The default run takes about 20 minutes.
+
 ## Releasing
 
 Releases are automated with [release-please](https://github.com/googleapis/release-please) from [Conventional Commits](https://www.conventionalcommits.org/) that touch `src/packages/cli`:
