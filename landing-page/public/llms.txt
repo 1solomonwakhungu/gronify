@@ -1,12 +1,12 @@
 # Gronify
 
-> Local-first, standalone CLI for turning JSON into greppable paths, searching those paths, and round-tripping gron output back to JSON.
+> Local-first, standalone streaming JSON parsing CLI for turning nested JSON into greppable paths, searching those paths, and round-tripping gron output back to JSON.
 
-Gronify is a TypeScript CLI that flattens JSON documents into one assignment per path, searches those paths with plain text or extended regex, and unflattens gron output back into valid JSON. Flattening, unflattening, and search are all built in — no external command-line tools such as grep or fastgron are required at runtime.
+Gronify is a TypeScript CLI (cross-platform `gron` and `fastgron` alternative) that flattens JSON documents into one assignment per path, searches those paths with plain text or extended regex, and unflattens (`ungron`) gron assignments back into valid JSON. Flattening, unflattening, and search are all built in — no external command-line tools such as `grep` or `fastgron` are required at runtime.
 
-The CLI reads from files or stdin and writes to stdout or, with `-o`, atomically to a file, so it composes with pipes, redirection, and other shell tools. `flatten`, `search`, and `unflatten` stream their input, so peak memory stays around 100 MB on the default path, whether the input is 20 MB or several gigabytes. `--sort` on a large top-level object and out-of-order input to `unflatten` use more. Numbers are printed exactly as written (`12345678901234567890` and `1.10` are not rounded).
+The CLI reads from files or stdin and writes to stdout or, with `-o`, atomically to a file, so it composes with pipes, redirection, and other shell tools. `flatten`, `search`, and `unflatten` stream their input in 1 MB byte chunks, keeping peak memory around 100 MB on the default path whether the file is 20 MB or multiple gigabytes. `--sort` spills buffered object lines above 64 MiB to a temp file, and out-of-order `unflatten` input rebuilds in memory only within the first 16 MiB (failing past that). Numbers are printed verbatim as written (`12345678901234567890` and `1.10` are never rounded to IEEE-754 floats).
 
-Version 1.2.0 adds result caps (`search -m/--max-count`, `flatten --limit`) that stop reading the input once reached, `--sort` for a stable key order that makes JSON diffable, and `search --exit-status` for grep-style exit codes. Older versions fail with `error: unknown option '-m'`; check with `gronify search --help | grep -e --max-count` or `gronify --version`.
+Version 1.2.0 adds result caps (`search -m/--max-count`, `flatten --limit`) that stop reading the input once reached, `--sort` for deterministic key order that makes flattened paths diffable with system `diff`, and `search --exit-status` for grep-style exit codes. Older versions fail with `error: unknown option '-m'`; check with `gronify search --help | grep -e --max-count` or `gronify --version`.
 
 Gronify is designed for platform engineers, SREs, developer-experience teams, support engineers, AI coding agents, and developers who inspect large JSON payloads in CI logs, service responses, support bundles, generated configuration, or incident debugging sessions.
 
@@ -14,19 +14,22 @@ The project is open source under the MIT license and requires Node.js 20 or newe
 
 ## Documentation
 
-- [Core workflow: flatten, search, unflatten](https://gronify.vercel.app/#workflow): Flatten JSON into greppable path assignments, search for specific fields, and reconstruct valid JSON.
+- [Core workflow: flatten, search, unflatten](https://gronify.vercel.app/#workflow): Stream-parse JSON into greppable path assignments, filter matches, and reconstruct valid JSON.
+- [Ecosystem comparison: jq, gron, fastgron, and grep](https://gronify.vercel.app/#compare): When to use Gronify vs. `jq`, `JSON.parse()`, `gron`, `fastgron`, raw `grep`, and system `diff`.
+- [AI coding agents & context-safe exploration](https://gronify.vercel.app/#agents): Count matches first (`--count`), stop reading early (`-m`, `--limit`), branch on `--exit-status`, and install the `gronify-json-flatten-search` agent skill.
 - [Command: flatten](https://gronify.vercel.app/#commands): `gronify flatten [file]` — Convert JSON from a file or stdin into one greppable assignment per path, in document order. Options: `--limit <n>` (stop after n lines and stop reading the input), `--sort` (sort object keys at every level by UTF-16 code unit; arrays keep their order; not the same order as gron).
 - [Command: search](https://gronify.vercel.app/#commands): `gronify search <file_or_term> [term]` — Flatten and filter in one step. Options: `-r, --regex` (extended regular expressions), `-c, --case-sensitive` (exact case matching), `--count` (print match count only), `-v, --invert-match` (show lines that do not match), `-m, --max-count <n>` (stop after n matches and stop reading the input), `--sort` (as for flatten; ignored with `--count`), `--exit-status` (exit 1 when nothing matches; errors then exit 2).
 - [Command: unflatten](https://gronify.vercel.app/#commands): `gronify unflatten [file]` — Turn gron assignments from a file or stdin back into valid JSON. Streams gron in document order, which is what `flatten` and `flatten --sort` write.
 - [Global options](https://gronify.vercel.app/#commands): `--color` (enable color), `--no-color` (disable color), `--pretty` (readable grouping), `-o, --output <file>` (write to a file, replaced only after the run succeeds), `-h, --help` (show help), `-V, --version` (show version).
-- [Install via npm](https://www.npmjs.com/package/gronify): `npm install -g gronify`, or run once with `npx gronify --help`.
+- [Install via npm](https://www.npmjs.com/package/gronify): `npm install -g gronify` on macOS, Linux, or Windows, or run once with `npx gronify --help`.
 - [Install via Homebrew](https://gronify.vercel.app/#install): `brew install 1solomonwakhungu/tap/gronify`
 - [Install from release archive](https://github.com/1solomonwakhungu/gronify/releases): Download the archive for the latest version. Requires Node.js 20 or newer.
 - [Build from source](https://gronify.vercel.app/#install): Clone the repository, run `npm ci && npm run build && npm link` in `src/packages/cli`.
+- [Frequently asked questions](https://gronify.vercel.app/#faq): Streaming scale, Windows support, exact 64-bit numbers, `--sort` vs. `gron`, `jq`/`fastgron` comparison, and AI agent usage.
 
 ## Optional
 
-- [Full documentation](https://gronify.vercel.app/llms-full.txt): Complete reference with all commands, options, exit codes, examples, demo data, pipeline recipes, and troubleshooting.
+- [Full documentation](https://gronify.vercel.app/llms-full.txt): Complete reference with all commands, options, exit codes, benchmarks, ecosystem comparisons, AI agent workflows, pipeline recipes, and troubleshooting.
 - [Agent skill](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search): Install with `npx skills add https://github.com/1solomonwakhungu/gronify --skill gronify-json-flatten-search`.
 - [GitHub repository](https://github.com/1solomonwakhungu/gronify): Source code, CI, and contribution guidelines.
 - [Issues](https://github.com/1solomonwakhungu/gronify/issues): Bug reports and feature requests.

@@ -73,6 +73,7 @@ function Terminal({
 }
 
 const heroTranscript: TerminalLine[] = [
+  { kind: "command", text: "npm install -g gronify" },
   { kind: "command", text: 'gronify search payload.json --regex "status|version"' },
   { kind: "output", text: 'json.service.status = "degraded"' },
   { kind: "output", text: 'json.deployments[0].version = "2026.05.22"' },
@@ -120,10 +121,10 @@ const rivers = [
   {
     heading: "Stream multi-gigabyte JSON in ~100 MB memory",
     description:
-      "All three commands stream their input, keeping peak memory around 100 MB on the default path at any file size; --sort spills buffered object lines past 64 MiB to a temp file, and out-of-order unflatten input rebuilds in memory only within the first 16 MiB (failing past that). With -m or --limit, Gronify stops reading at the cap, writes a notice to stderr (the final line in the transcript), and exits 0.",
-    label: "Stopping a JSON search after two matches",
+      "All three commands stream files or stdin pipes, keeping peak memory around 100 MB on the default path at any file size; --sort spills buffered object lines past 64 MiB to a temp file, and out-of-order unflatten input rebuilds in memory only within the first 16 MiB (failing past that). With -m or --limit, Gronify stops reading at the cap, writes a notice to stderr (the final line in the transcript), and exits 0.",
+    label: "Streaming a compressed JSON export into gronify search with a two-match cap",
     lines: [
-      { kind: "command", text: 'gronify search events.json -m 2 "error"' },
+      { kind: "command", text: 'gzip -dc events.json.gz | gronify search -m 2 "error"' },
       { kind: "output", text: 'json[0].error = "timeout"' },
       { kind: "output", text: 'json[7].error = "connection reset"' },
       { kind: "output", text: "Stopped after 2 matches (--max-count); there may be more" },
@@ -326,7 +327,7 @@ const optionGroups = [
 
 const installSteps = [
   {
-    step: "01",
+    step: "npm",
     title: "npm or npx",
     label: "Install Gronify with npm or run via npx",
     lines: [
@@ -335,7 +336,7 @@ const installSteps = [
     ] satisfies TerminalLine[],
   },
   {
-    step: "02",
+    step: "brew",
     title: "Homebrew",
     label: "Install Gronify with Homebrew",
     lines: [
@@ -343,7 +344,7 @@ const installSteps = [
     ] satisfies TerminalLine[],
   },
   {
-    step: "03",
+    step: "source",
     title: "Build from source",
     label: "Build Gronify TypeScript CLI from source",
     lines: [
@@ -353,7 +354,7 @@ const installSteps = [
     ] satisfies TerminalLine[],
   },
   {
-    step: "04",
+    step: "verify",
     title: "Verify the CLI",
     label: "Verify Gronify CLI installation",
     lines: [
@@ -372,7 +373,9 @@ const requirements = [
 ];
 
 export default function Home() {
-  const captureRepositoryLinkClick = (placement: "header" | "cta") => {
+  const captureRepositoryLinkClick = (
+    placement: "header" | "cta" | "footer",
+  ) => {
     posthog.capture("repository_link_clicked", { placement });
   };
 
@@ -440,8 +443,9 @@ export default function Home() {
               <Hero.Description>
                 A standalone streaming JSON parser and gron CLI that flattens
                 nested payloads into greppable path assignments, filters keys
-                and values with plain text or regex, and reconstructs valid
-                JSON—without loading multi-gigabyte files into memory.
+                and values with plain text or regex, and unflattens (ungron)
+                back to valid JSON—without loading multi-gigabyte files into
+                memory.
               </Hero.Description>
               <Hero.ButtonGroup>
                 <Button as="a" href="#install" variant="primary">
@@ -829,7 +833,12 @@ export default function Home() {
             <Link href="#faq" size="small" arrowDirection="none">
               FAQ
             </Link>
-            <Link href={repositoryUrl} size="small" arrowDirection="none">
+            <Link
+              href={repositoryUrl}
+              size="small"
+              arrowDirection="none"
+              onClick={() => captureRepositoryLinkClick("footer")}
+            >
               Repository
             </Link>
             <Link href={npmPackageUrl} size="small" arrowDirection="none">
