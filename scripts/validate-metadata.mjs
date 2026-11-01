@@ -130,6 +130,9 @@ scanForStaleClaims("landing-page/public/llms.txt");
 scanForStaleClaims("landing-page/public/llms-full.txt");
 scanForStaleClaims("landing-page/src/app/layout.tsx");
 scanForStaleClaims("landing-page/src/app/page.tsx");
+scanForStaleClaims("landing-page/src/app/home.tsx");
+scanForStaleClaims("landing-page/src/app/benchmarks.tsx");
+scanForStaleClaims("landing-page/src/app/benchmark-data.ts");
 scanForStaleClaims("landing-page/src/app/seo-data.ts");
 scanForStaleClaims("landing-page/src/app/opengraph-image.tsx");
 
@@ -138,7 +141,15 @@ if (
   existsSync("landing-page/src/app/page.tsx")
 ) {
   const llmsTxt = readFileSync("landing-page/public/llms.txt", "utf8");
-  const pageTsx = readFileSync("landing-page/src/app/page.tsx", "utf8");
+  // The page body lives in home.tsx and benchmarks.tsx; page.tsx composes them.
+  const pageTsx = [
+    "landing-page/src/app/page.tsx",
+    "landing-page/src/app/home.tsx",
+    "landing-page/src/app/benchmarks.tsx",
+  ]
+    .filter((file) => existsSync(file))
+    .map((file) => readFileSync(file, "utf8"))
+    .join("\n");
   const anchors = new Set(
     Array.from(
       llmsTxt.matchAll(/https:\/\/gronify\.vercel\.app\/#([a-z0-9-]+)/g),
@@ -148,7 +159,7 @@ if (
   for (const anchor of anchors) {
     if (!pageTsx.includes(`id="${anchor}"`)) {
       errors.push(
-        `landing-page/public/llms.txt links to #${anchor}, which is missing from landing-page/src/app/page.tsx`,
+        `landing-page/public/llms.txt links to #${anchor}, which is missing from the landing page components`,
       );
     }
   }
