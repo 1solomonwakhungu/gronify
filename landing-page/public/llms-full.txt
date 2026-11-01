@@ -1,24 +1,24 @@
 # Gronify
 
-> Local-first, standalone CLI for turning JSON into greppable paths, searching those paths, and round-tripping gron output back to JSON.
+> Local-first, standalone streaming JSON parsing CLI for turning nested JSON into greppable paths, searching those paths, and round-tripping gron output back to JSON.
 
-Gronify is a TypeScript CLI that flattens JSON documents into one gron-style assignment per path, searches those paths with plain text or extended regex, and unflattens gron output back into valid JSON. Flattening, unflattening, and search are all built in — no external command-line tools such as grep or fastgron are required at runtime.
+Gronify is a TypeScript CLI (cross-platform `gron` and `fastgron` alternative) that flattens JSON documents into one gron-style assignment per path, searches those paths with plain text or extended regex, and unflattens (`ungron`) gron output back into valid JSON. Flattening, unflattening, and search are all built in — no external command-line tools such as `grep` or `fastgron` are required at runtime.
 
-The CLI reads from files or stdin and writes to stdout, so it composes naturally with pipes, redirection, and other shell tools. Optional flags control colored output, pretty indentation, output files, case-sensitive and inverted matching, match counts, result caps, key sorting, and exit codes.
+The CLI reads from files or stdin and writes to stdout or atomically to `-o <file>`, so it composes naturally with pipes, redirection, and other shell tools. Optional flags control colored output, pretty indentation, output files, case-sensitive and inverted matching, match counts, result caps, key sorting, and exit codes.
 
-Gronify is designed for platform engineers, SREs, developer-experience teams, support engineers, and developers who inspect large JSON payloads in CI logs, service responses, support bundles, generated configuration, or incident debugging sessions.
+Gronify is designed for platform engineers, SREs, developer-experience teams, support engineers, AI coding agents, and developers who inspect large JSON payloads in CI logs, service responses, support bundles, generated configuration, or incident debugging sessions.
 
-The project is open source under the MIT license. The current release is 1.2.0 (2026-10-31).
+The project is open source under the MIT license. The current release is 1.2.0 (2026-10-31). Official website: <https://gronify.vercel.app>.
 
 ## Features
 
-- Flatten JSON files or stdin into gron-style path assignments, streaming multi-gigabyte inputs in about 100 MB of memory on the default path (`--sort` and out-of-order `unflatten` input use more).
-- Unflatten gron files or stdin back into JSON, also streaming.
+- Flatten JSON files or stdin into gron-style path assignments, streaming multi-gigabyte inputs in about 100 MB of memory on the default path (`--sort` spills buffered object lines above 64 MiB to a temp file, and out-of-order `unflatten` input rebuilds in memory only within the first 16 MiB).
+- Unflatten (`ungron`) gron files or stdin back into JSON, streaming document-order input in one pass.
 - Search flattened paths with plain text, extended regex, case-sensitive matching, inverted matching, and match counts.
 - Cap the output with `search -m/--max-count` and `flatten --limit`. Gronify stops reading the input at the cap, so a large file returns in milliseconds when the cap is hit early. (1.2.0)
-- Sort object keys at every level with `--sort` for stable, diffable output. The default is document order. (1.2.0)
+- Sort object keys at every level with `--sort` for stable, diffable output with system `diff`. The default is document order. (1.2.0)
 - Opt in to grep-style exit codes with `search --exit-status`. (1.2.0)
-- Keep numbers exactly as written: `12345678901234567890` and `1.10` come out unchanged.
+- Keep numbers verbatim as written: `12345678901234567890` and `1.10` come out unchanged without IEEE-754 float rounding.
 - Write output files atomically with `-o`: the target is replaced only after the run succeeds.
 - Use stdin/stdout workflows so Gronify can sit inside shell pipelines.
 - Format terminal output with optional colors and pretty indentation.
@@ -201,20 +201,49 @@ json.b = 1
 
 ### Streaming and Large Inputs
 
-`flatten`, `search`, and `unflatten` read their input in chunks and write output as they go. On the default path, peak memory stays around 100 MB whether the input is 20 MB or several gigabytes. `--sort` on a large top-level object and out-of-order input to `unflatten` use more. Measured on an Apple M5 Pro with Node 22:
+`flatten`, `search`, and `unflatten` read their input in 1 MB byte chunks and write output as they go. On the default path, peak memory stays around 100 MB whether the input is 20 MB or multiple gigabytes. `--sort` spills buffered object lines above 64 MiB to a temp file, and out-of-order `unflatten` input rebuilds in memory only within the first 16 MiB (failing past that). Measured on an Apple M5 Pro with Node 22:
 
 | Input                    | Command          | Time   | Peak RSS |
 | ------------------------ | ---------------- | ------ | -------- |
 | 3.50 GB JSON             | `flatten`        | 22.1 s | 98 MB    |
 | 3.50 GB JSON             | `search --count` | 24.5 s | 96 MB    |
-| 3 GB gron                | `unflatten`      | 7.3 s  | 100 MB   |
+| 3 GB gron                | `unflatten`      | 7.31 s | 100 MB   |
+| 100,000 nesting levels   | `flatten`        | 0.17 s | 63 MB    |
 | 1.2 GiB array of records | `search -m 5`    | 0.03 s | 57 MB    |
 
 - Input is strict JSON. Errors report the byte offset, line, and column.
-- Numbers are printed exactly as written: `12345678901234567890`, `1.10`, `1e2`, and `-0` come out unchanged through `flatten`, `search`, and `unflatten`.
+- Numbers are printed verbatim as written: `12345678901234567890`, `1.10`, `1e2`, and `-0` come out unchanged through `flatten`, `search`, and `unflatten`.
 - Output starts before the input has been read in full, so when input turns out to be invalid, stdout may already hold some lines. The error message and non-zero exit code are always produced; check the exit status or use `set -o pipefail`.
 - With `-o`, output goes to a temporary file that replaces the target only after the run succeeds. A failed run leaves an existing target untouched, and `-o` may name the input file.
 - Colored `unflatten` output is built in memory; use `--no-color` for very large inputs.
+
+## When to Use Gronify vs. jq, gron, fastgron, and grep
+
+- **vs. `jq` & `JSON.parse()`:** Use `jq` when you already know the exact schema and need expressive data transformations; meanwhile Node's `JSON.parse()` hits V8 string limits (~512 MB, `ERR_STRING_TOO_LONG`) on multi-gigabyte dumps. Use Gronify when you want schema-free path discovery, built-in plain-text or regex search, and exact 64-bit integer IDs (`> 2^53`) and trailing decimals (`1.10`) without IEEE-754 float rounding.
+- **vs. `gron` & `fastgron`:** Gronify is a zero-native-binary TypeScript alternative that installs via `npm` across macOS, Linux, and Windows with built-in regex search (no external `grep` required). Unlike `gron`, Gronify preserves document order by default and streams single-document `flatten` and `unflatten` (`ungron`) in one pass.
+- **vs. raw `grep` on JSON:** Running `grep` on minified JSON dumps an entire multi-megabyte line; on formatted JSON it prints an isolated key or value without parent array indexes. Gronify emits the complete root-to-leaf path on every line and handles 100,000 nesting levels in 63 MB RSS without call-stack overflow.
+- **With system `diff`:** Gronify has no `diff` subcommand; instead, `flatten --sort` orders object keys deterministically by UTF-16 code unit at every nesting level while keeping each object's subtree contiguous and leaving array indexes in numeric order (`[2]` before `[10]`), so `diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten --sort new.json)` highlights only real data changes.
+
+## AI Coding Agents and Context-Safe Exploration
+
+Install the open Gronify skill for supported AI coding agents:
+
+```bash
+npx skills add https://github.com/1solomonwakhungu/gronify --skill gronify-json-flatten-search
+```
+
+Browse the skill on [skills.sh](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search).
+
+When exploring unknown or multi-gigabyte JSON files inside an LLM session, always pass `--no-color` and narrow progressively from cheap to specific so the prompt context window is never flooded:
+
+```bash
+gronify --no-color search payload.json error --count                            # 1. check match volume first
+gronify --no-color search payload.json error -m 20                              # 2. inspect the first 20 matches
+gronify --no-color flatten --limit 50 payload.json                              # 3. inspect top-level schema shape
+gronify --no-color search payload.json --regex 'users\[[0-9]+\]\.email' -m 20   # 4. narrow with regex, still capped
+```
+
+Use `--exit-status` (`0` match, `1` no match, `2` error) for deterministic shell branching and `-o <file>` for atomic file output.
 
 ## Usage Examples
 
@@ -461,6 +490,7 @@ The source code is organized under `src/packages/cli` within the repository. Int
 |-- branding/              # Logo and icon assets
 |-- landing-page/          # Next.js marketing/demo page
 |-- scripts/               # Repository validation and package discovery helpers
+|-- skills/                # Open agent skill (gronify-json-flatten-search)
 |-- src/
 |   |-- README.md          # Source tree orientation
 |   `-- packages/cli/      # TypeScript CLI package
@@ -509,19 +539,34 @@ Gronify is licensed under the [MIT License](https://github.com/1solomonwakhungu/
 ## FAQ
 
 **Does Gronify require fastgron or grep?**
-No. Flattening, unflattening, and search are all built into the standalone CLI.
+No. Streaming JSON parsing, path flattening, regex search, and unflattening gron output back to JSON are all built into the standalone Gronify CLI with zero external binaries required.
 
-**Can I use Gronify on Windows?**
-Yes. Install from npm, use the release archive for your platform or Homebrew where supported, or build the TypeScript CLI from source with Node.js 20 or newer.
+**Can I use Gronify on Windows, macOS, and Linux?**
+Yes. Install globally with `npm install -g gronify` (or run `npx gronify`) on Windows, macOS, or Linux, install via Homebrew where supported, download a GitHub release archive, or build the TypeScript CLI from source with Node.js 20 or newer. Because `gronify search` is built in, Windows PowerShell and CMD users get consistent text and regex filtering without installing `grep` or rewriting pipelines around `Select-String`.
 
-**How large a file can Gronify handle?**
-`flatten`, `search`, and `unflatten` stream, so peak memory stays around 100 MB on the default path, whether the input is 20 MB or several gigabytes. `--sort` on a large top-level object and out-of-order input to `unflatten` use more. With `-m` or `--limit`, Gronify stops reading once the cap is reached.
+**How large a JSON file can Gronify parse and search?**
+All three commands (`flatten`, `search`, and `unflatten`) stream their input in 1 MB byte chunks, keeping peak memory around 100 MB on the default path whether the file is 20 MB or multiple gigabytes. `--sort` on a large open object spills buffered lines past 64 MiB to a temp file, and out-of-order `unflatten` input rebuilds in memory only when detected within the first 16 MiB (failing past that).
 
-**Does `--sort` produce the same order as gron?**
-No. `--sort` compares keys by UTF-16 code unit at each level, keeps each subtree together, and leaves array order alone. gron puts bare keys before bracketed ones and compares UTF-8 bytes.
+**Does `--sort` produce the same key order as gron?**
+No. `--sort` compares object keys by UTF-16 code unit at each level, keeps each subtree together, and leaves array index order unchanged (`[2]` before `[10]`). Upstream `gron` puts bare keys before bracketed ones and compares UTF-8 bytes.
+
+**Does Gronify preserve exact 64-bit integers and decimal precision?**
+Yes. Gronify validates JSON numbers without converting them to 64-bit IEEE-754 floats, printing every number verbatim as written so `12345678901234567890` (above `2^53`), `1.10`, and `-0` survive `flatten`, `search`, and `unflatten` unchanged.
+
+**How does Gronify report invalid JSON syntax errors?**
+Gronify enforces strict JSON parsing—rejecting trailing commas, comments, single quotes, invalid UTF-8, and truncated inputs—and exits non-zero while reporting the exact byte offset, line, and column of the syntax error.
+
+**How does Gronify compare to jq, gron, and fastgron?**
+Use `jq` when you already know the exact schema and need data transformations. Compared to `gron` and `fastgron`, Gronify is a zero-native-binary TypeScript alternative that installs via `npm` on macOS, Linux, and Windows with built-in regex search—no separate `grep` required. It preserves exact 64-bit integers and trailing decimals, keeps document order by default, and streams single-document `flatten`, `search`, and `unflatten` (`ungron`) in ~100 MB of memory on the default path.
+
+**How do I compare two JSON files using Gronify and system diff?**
+Run `diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten --sort new.json)` in bash or zsh, or write two sorted files with `-o` on Windows and compare them with `diff`. Gronify has no `diff` subcommand; instead, `--sort` normalizes object key order at every nesting level while keeping each object's subtree intact and array elements in numeric index order.
+
+**How can AI coding agents explore large JSON files without flooding LLM context?**
+Pass `--no-color` and narrow progressively: run `gronify --no-color search file.json term --count` to check match volume first, sample matches with `search -m 20`, or inspect top-level schema shape with `flatten --limit 50`. Agents can also install the `gronify-json-flatten-search` skill from `skills.sh`.
 
 **Why do the integration tests fail before assertions run?**
 Run `npm run build` first, so that `dist/index.js` exists before the integration tests start.
 
-**Does Gronify send JSON to a service?**
-No. Gronify is local-first. Every payload is processed by the CLI on your own machine.
+**Does Gronify send JSON payloads to an external service?**
+No. Gronify is 100% local-first. Every file and stdin stream is parsed, searched, and reconstructed directly on your own machine.

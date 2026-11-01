@@ -83,7 +83,7 @@ export const structuredData = {
       url: siteUrl,
       name: "Gronify",
       description:
-        "Gronify is a local-first JSON parsing CLI: stream multi-GB files in ~100 MB memory, flatten to greppable paths, search with regex, and round-trip JSON.",
+        "Gronify is a local-first JSON parsing CLI: stream multi-GB files (~100 MB default), flatten greppable paths, search with regex, and round-trip gron.",
       inLanguage: "en",
       publisher: {
         "@id": `${siteUrl}/#author`,

@@ -4,6 +4,11 @@ const requiredFiles = [
   "README.md",
   "src/README.md",
   "landing-page/README.md",
+  "landing-page/public/llms.txt",
+  "landing-page/public/llms-full.txt",
+  "landing-page/src/app/seo-data.ts",
+  "landing-page/src/app/sitemap.ts",
+  "landing-page/src/app/opengraph-image.tsx",
   "LICENSE",
   "CONTRIBUTING.md",
   "SECURITY.md",
@@ -110,6 +115,8 @@ if (existsSync("README.md")) {
 }
 
 scanForStaleClaims("skills/gronify-json-flatten-search/SKILL.md");
+scanForStaleClaims("landing-page/public/llms.txt");
+scanForStaleClaims("landing-page/public/llms-full.txt");
 scanForStaleClaims("landing-page/src/app/layout.tsx");
 scanForStaleClaims("landing-page/src/app/page.tsx");
 scanForStaleClaims("landing-page/src/app/seo-data.ts");
