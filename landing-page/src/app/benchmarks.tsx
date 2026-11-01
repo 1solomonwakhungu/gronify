@@ -166,7 +166,12 @@ export function Benchmarks({
           </SectionIntro.Heading>
           <SectionIntro.Description>
             {view.headlineDescription} Every number on this page comes from one
-            run of the benchmark script, published in BENCHMARKS.md.
+            run of the benchmark script, published in BENCHMARKS.md. For when to
+            pick which tool, see the{" "}
+            <a className={styles.inlineLink} href="#compare">
+              ecosystem comparison
+            </a>
+            .
           </SectionIntro.Description>
         </SectionIntro>
       </Section>

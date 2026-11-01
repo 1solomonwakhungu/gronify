@@ -105,8 +105,9 @@ export default function OpenGraphImage() {
               maxWidth: "980px",
             }}
           >
-            Stream multi-gigabyte JSON in ~100 MB memory, filter greppable paths
-            with text or regex, keep exact source numbers, and unflatten gron.
+            Stream multi-gigabyte JSON in ~100 MB default RAM, filter greppable
+            paths with text or regex, keep exact source numbers, and unflatten
+            gron.
           </div>
         </div>
 
@@ -114,15 +115,19 @@ export default function OpenGraphImage() {
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: "8px",
-            padding: "22px 28px",
+            gap: "7px",
+            padding: "20px 28px",
             borderRadius: "12px",
             backgroundColor: "#101119",
             border: "1px solid #232533",
             borderLeft: "3px solid #5b67e8",
-            fontSize: 21,
+            fontSize: 20,
           }}
         >
+          <div style={{ display: "flex", color: "#f5f6fa" }}>
+            <span style={{ color: "#9499ad", marginRight: "10px" }}>$</span>
+            <span>npm install -g gronify</span>
+          </div>
           <div style={{ display: "flex", color: "#f5f6fa" }}>
             <span style={{ color: "#9499ad", marginRight: "10px" }}>$</span>
             <span>
@@ -134,9 +139,6 @@ export default function OpenGraphImage() {
           </div>
           <div style={{ display: "flex", color: "#9499ad" }}>
             json.deployments[0].version = &quot;2026.05.22&quot;
-          </div>
-          <div style={{ display: "flex", color: "#9499ad" }}>
-            json.deployments[1].version = &quot;2026.05.21&quot;
           </div>
         </div>
       </div>

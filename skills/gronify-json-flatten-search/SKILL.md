@@ -39,7 +39,7 @@ gronify --no-color search payload.json --regex 'users\[[0-9]+\]\.email' -m 20   
 ## Commands
 
 - `gronify flatten [file]`: every value with its full path. Reads stdin when no file is given.
-- `gronify search [file] <term>`: path or value filtering, no separate `grep` needed. Plain terms are case-insensitive and literal. Options: `--regex`, `--case-sensitive`, `--count`, `-v/--invert-match`, `-m/--max-count`, `--sort`, `--exit-status`. Quote shell-sensitive patterns.
+- `gronify search <file_or_term> [term]`: path or value filtering, no separate `grep` needed. Plain terms are case-insensitive and literal. Options: `-r/--regex`, `-c/--case-sensitive`, `--count`, `-v/--invert-match`, `-m/--max-count`, `--sort`, `--exit-status`. Quote shell-sensitive patterns.
 - `gronify unflatten [file]`: gron assignments back to JSON; the root and parent containers must appear before their children. It streams, so multi-gigabyte gron is fine as long as it is in document order, which is what `gronify flatten` and `flatten --sort` write.
 
 ```bash
@@ -100,3 +100,5 @@ Large and edited gron:
 - Skipped array indexes come out as `null`.
 
 Gronify accepts JSON, not arbitrary JavaScript objects or comments. If parsing fails, report the failing input and error rather than silently rewriting the data.
+
+Reference: [Website & CLI docs](https://gronify.vercel.app) · [Full LLM reference](https://gronify.vercel.app/llms-full.txt) · [GitHub](https://github.com/1solomonwakhungu/gronify)

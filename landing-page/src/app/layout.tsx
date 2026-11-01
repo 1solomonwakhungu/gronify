@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Gronify — Streaming JSON Parsing CLI: Flatten & Search",
   description:
-    "Gronify is a local-first JSON parsing CLI: stream multi-GB files in ~100 MB memory, flatten to greppable paths, search with regex, and round-trip JSON.",
+    "Gronify streams multi-GB JSON in ~100 MB default RAM: local-first CLI to flatten greppable paths, search with regex, and unflatten (ungron) JSON.",
   applicationName: "Gronify",
   category: "developer tools",
   authors: [
@@ -38,7 +38,13 @@ export const metadata: Metadata = {
     "sort JSON keys for diff CLI",
   ],
   alternates: {
-    canonical: "/",
+    canonical: siteUrl,
+  },
+  verification: {
+    google: "xyVGHAcB_FRi2uCmXvTCCamJ9joip8AgsBtQp9dMrXs",
+    other: {
+      "msvalidate.01": "1631CA4303F0822BAA029D7DBDACFD1D",
+    },
   },
   robots: {
     index: true,
@@ -54,8 +60,8 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Gronify — Streaming JSON Parsing CLI: Flatten & Search",
     description:
-      "Stream-parse multi-gigabyte JSON in ~100 MB memory, flatten nested payloads into greppable paths, search with regex, and round-trip gron back to JSON.",
-    url: "/",
+      "Stream-parse multi-gigabyte JSON in ~100 MB default RAM, flatten nested payloads into greppable paths, search with regex, and unflatten (ungron) JSON.",
+    url: siteUrl,
     siteName: "Gronify",
     locale: "en_US",
     type: "website",
@@ -64,7 +70,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Gronify — Streaming JSON Parsing CLI: Flatten & Search",
     description:
-      "Stream-parse multi-gigabyte JSON in ~100 MB memory, flatten nested payloads into greppable paths, search with regex, and round-trip gron back to JSON.",
+      "Stream-parse multi-gigabyte JSON in ~100 MB default RAM, flatten nested payloads into greppable paths, search with regex, and unflatten (ungron) JSON.",
   },
 };
 

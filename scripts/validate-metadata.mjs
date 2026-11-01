@@ -4,6 +4,15 @@ const requiredFiles = [
   "README.md",
   "src/README.md",
   "landing-page/README.md",
+  "skills/gronify-json-flatten-search/SKILL.md",
+  "landing-page/public/robots.txt",
+  "landing-page/public/llms.txt",
+  "landing-page/public/llms-full.txt",
+  "landing-page/src/app/layout.tsx",
+  "landing-page/src/app/page.tsx",
+  "landing-page/src/app/seo-data.ts",
+  "landing-page/src/app/sitemap.ts",
+  "landing-page/src/app/opengraph-image.tsx",
   "LICENSE",
   "CONTRIBUTING.md",
   "SECURITY.md",
@@ -49,7 +58,7 @@ const staleClaimPatterns = [
         String.raw`\bdiffs?\s+(?:two|2|any|your|the two)\s+(?:JSON|payloads?)\b`,
         String.raw`\b(?:JSON|gron)\s+diff(?:s|ing)?\b`,
         String.raw`(?<!\b(?:no|not\s+an?|without\s+an?)\s+)\bdiff(?:ing)?\s+(?:command|subcommand|support|mode|feature)s?\b`,
-        String.raw`\bbuilt-in\s+diff(?:s|ing)?\b`,
+        String.raw`(?<!\b(?:no|not\s+an?|without\s+an?)\s+)\bbuilt-in\s+diff(?:s|ing)?\b`,
       ].join("|"),
       "i",
     ),
@@ -64,7 +73,8 @@ const staleClaimPatterns = [
     message: "claims syntax highlighting that is not documented as supported",
   },
   {
-    pattern: /\bDiscussions\b/i,
+    pattern:
+      /github\.com\/1solomonwakhungu\/gronify\/discussions\b|\bDiscussions\b/,
     message:
       "links to Discussions even though repository discussions are disabled",
   },
@@ -76,10 +86,10 @@ function scanForStaleClaims(file) {
   }
 
   const contents = readFileSync(file, "utf8");
-  // Fenced blocks and inline code hold commands and examples, not claims about what Gronify does.
-  const prose = contents
-    .replace(/^ *```[\s\S]*?^ *```/gm, " ")
-    .replace(/`[^`\n]*`/g, " ");
+  // In Markdown and plain-text docs, fenced blocks and inline code hold commands and examples rather than prose claims.
+  const prose = /\.(?:md|txt)$/i.test(file)
+    ? contents.replace(/^ *```[\s\S]*?^ *```/gm, " ").replace(/`[^`\n]*`/g, " ")
+    : contents;
   for (const { pattern, message, prose: proseOnly } of staleClaimPatterns) {
     if (pattern.test(proseOnly ? prose : contents)) {
       errors.push(`${file} ${message}`);
@@ -106,10 +116,18 @@ if (existsSync("README.md")) {
     errors.push("README.md still contains the duplicated Gronify heading");
   }
 
+  if (!readme.includes("https://gronify.vercel.app")) {
+    errors.push("README.md missing canonical landing-page URL");
+  }
+
   scanForStaleClaims("README.md");
 }
 
+scanForStaleClaims("PRODUCT.md");
+scanForStaleClaims("landing-page/README.md");
 scanForStaleClaims("skills/gronify-json-flatten-search/SKILL.md");
+scanForStaleClaims("landing-page/public/llms.txt");
+scanForStaleClaims("landing-page/public/llms-full.txt");
 scanForStaleClaims("landing-page/src/app/layout.tsx");
 scanForStaleClaims("landing-page/src/app/page.tsx");
 scanForStaleClaims("landing-page/src/app/home.tsx");
@@ -117,6 +135,35 @@ scanForStaleClaims("landing-page/src/app/benchmarks.tsx");
 scanForStaleClaims("landing-page/src/app/benchmark-data.ts");
 scanForStaleClaims("landing-page/src/app/seo-data.ts");
 scanForStaleClaims("landing-page/src/app/opengraph-image.tsx");
+
+if (
+  existsSync("landing-page/public/llms.txt") &&
+  existsSync("landing-page/src/app/page.tsx")
+) {
+  const llmsTxt = readFileSync("landing-page/public/llms.txt", "utf8");
+  // The page body lives in home.tsx and benchmarks.tsx; page.tsx composes them.
+  const pageTsx = [
+    "landing-page/src/app/page.tsx",
+    "landing-page/src/app/home.tsx",
+    "landing-page/src/app/benchmarks.tsx",
+  ]
+    .filter((file) => existsSync(file))
+    .map((file) => readFileSync(file, "utf8"))
+    .join("\n");
+  const anchors = new Set(
+    Array.from(
+      llmsTxt.matchAll(/https:\/\/gronify\.vercel\.app\/#([a-z0-9-]+)/g),
+      (match) => match[1],
+    ),
+  );
+  for (const anchor of anchors) {
+    if (!pageTsx.includes(`id="${anchor}"`)) {
+      errors.push(
+        `landing-page/public/llms.txt links to #${anchor}, which is missing from the landing page components`,
+      );
+    }
+  }
+}
 
 if (existsSync("src/packages/cli/package.json")) {
   const pkg = JSON.parse(readFileSync("src/packages/cli/package.json", "utf8"));
