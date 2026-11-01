@@ -1,18 +1,22 @@
-export const siteUrl = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://gronify.vercel.app"
-).replace(/\/+$/, "");
+import { benchmarkFaqAnswer } from "./benchmark-data";
+import {
+  cliVersion,
+  homebrewTapUrl,
+  lastReleaseIsoDate,
+  nodeRequirement,
+  npmPackageUrl,
+  repositoryUrl,
+  siteUrl,
+  skillsUrl,
+} from "./site-config";
 
-export const repositoryUrl = "https://github.com/1solomonwakhungu/gronify";
-export const npmPackageUrl = "https://www.npmjs.com/package/gronify";
-export const homebrewTapUrl =
-  "https://github.com/1solomonwakhungu/homebrew-tap";
-export const skillsUrl =
-  "https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search";
-
-export const cliVersion = "1.2.0";
-export const nodeRequirement = "20 or newer";
-export const npmBuildRequirement = "10 or newer";
-export const lastReleaseIsoDate = "2026-10-31";
+export {
+  cliVersion,
+  lastReleaseIsoDate,
+  npmPackageUrl,
+  repositoryUrl,
+  siteUrl,
+};
 
 export type FaqItem = {
   question: string;
@@ -33,7 +37,7 @@ export const faqs: FaqItem[] = [
   {
     question: "How large a JSON file can Gronify parse and search?",
     answer:
-      "All three commands (flatten, search, and unflatten) stream their input in 1 MB byte chunks, keeping peak memory around 100 MB on the default path whether the file is 20 MB or multiple gigabytes. --sort on a large open object spills buffered lines past 64 MiB to a temp file, and out-of-order unflatten input rebuilds in memory only when detected within the first 16 MiB (failing past that). Pass --no-color or -o when unflattening multi-gigabyte files in an interactive terminal. On an Apple M5 Pro (Node.js 22), Gronify flattens a 3.50 GB JSON file in 22.1 seconds at 98 MB RSS and unflattens a 3 GB gron file in 7.31 seconds at 100 MB RSS.",
+      "All three commands (flatten, search, and unflatten) stream their input in 1 MB byte chunks, keeping peak memory around 100 MB on the default path whether the file is 20 MB or multiple gigabytes. --sort on a large open object spills buffered lines past 64 MiB to a temp file, and out-of-order unflatten input rebuilds in memory only when detected within the first 16 MiB (failing past that). Pass --no-color or -o when unflattening multi-gigabyte files in an interactive terminal. In the README's separate multi-gigabyte runs on an Apple M5 Pro (Node.js 22), Gronify flattens a 3.50 GB JSON file in 22.1 seconds at 98 MB RSS and unflattens a 3 GB gron file in 7.31 seconds at 100 MB RSS.",
   },
   {
     question: "Does --sort produce the same key order as gron?",
@@ -54,7 +58,7 @@ export const faqs: FaqItem[] = [
   {
     question: "How does Gronify compare to jq, gron, and fastgron?",
     answer:
-      "Use jq when you already know the exact schema and need data transformations. Compared to gron and fastgron, Gronify is a zero-native-binary TypeScript alternative that installs via npm on macOS, Linux, and Windows with built-in regex search—no separate grep required. It preserves exact 64-bit integers and trailing decimals, keeps document order by default, and streams single-document flatten, search, and unflatten (ungron) in ~100 MB of memory on the default path.",
+      `Use jq when you already know the exact schema and need data transformations. Compared to gron and fastgron, Gronify is a zero-native-binary TypeScript alternative that installs via npm on macOS, Linux, and Windows with built-in regex search—no separate grep required. It prints numbers exactly as written, keeps document order by default, and streams single-document flatten, search, and unflatten (ungron) in ~100 MB of memory on the default path. Measured results: ${benchmarkFaqAnswer}`,
   },
   {
     question: "How do I compare two JSON files using Gronify and system diff?",

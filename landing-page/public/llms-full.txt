@@ -201,7 +201,7 @@ json.b = 1
 
 ### Streaming and Large Inputs
 
-`flatten`, `search`, and `unflatten` read their input in 1 MB byte chunks and write output as they go. On the default path, peak memory stays around 100 MB whether the input is 20 MB or multiple gigabytes. `--sort` spills buffered object lines above 64 MiB to a temp file, and out-of-order `unflatten` input rebuilds in memory only within the first 16 MiB (failing past that). Measured on an Apple M5 Pro with Node 22:
+`flatten`, `search`, and `unflatten` read their input in 1 MB byte chunks and write output as they go. On the default path, peak memory stays around 100 MB whether the input is 20 MB or multiple gigabytes. `--sort` spills buffered object lines above 64 MiB to a temp file, and out-of-order `unflatten` input rebuilds in memory only within the first 16 MiB (failing past that). Measured in separate large-file runs on an Apple M5 Pro with Node 22. The cross-tool benchmarks in the Benchmarks section use different inputs, so compare numbers within one table:
 
 | Input                    | Command          | Time   | Peak RSS |
 | ------------------------ | ---------------- | ------ | -------- |
@@ -219,9 +219,9 @@ json.b = 1
 
 ## When to Use Gronify vs. jq, gron, fastgron, and grep
 
-- **vs. `jq` & `JSON.parse()`:** Use `jq` when you already know the exact schema and need expressive data transformations; meanwhile Node's `JSON.parse()` hits V8 string limits (~512 MB, `ERR_STRING_TOO_LONG`) on multi-gigabyte dumps. Use Gronify when you want schema-free path discovery, built-in plain-text or regex search, and exact 64-bit integer IDs (`> 2^53`) and trailing decimals (`1.10`) without IEEE-754 float rounding.
+- **vs. `jq` & `JSON.parse()`:** Use `jq` when you already know the exact schema and need expressive data transformations; meanwhile Node's `JSON.parse()` hits V8 string limits (~512 MB, `ERR_STRING_TOO_LONG`) on multi-gigabyte dumps. Use Gronify when you want schema-free path discovery, built-in plain-text or regex search, and numbers printed exactly as written: 64-bit integer IDs (`> 2^53`), trailing decimals (`1.10`), and spellings such as `1E+2` or `-0.0`, which the benchmark found jq normalises. `JSON.parse()` rounds integers above `2^53`, and some jq versions or arithmetic filters can too. The benchmarks section compares speed and memory against all of these tools.
 - **vs. `gron` & `fastgron`:** Gronify is a zero-native-binary TypeScript alternative that installs via `npm` across macOS, Linux, and Windows with built-in regex search (no external `grep` required). Unlike `gron`, Gronify preserves document order by default and streams single-document `flatten` and `unflatten` (`ungron`) in one pass.
-- **vs. raw `grep` on JSON:** Running `grep` on minified JSON dumps an entire multi-megabyte line; on formatted JSON it prints an isolated key or value without parent array indexes. Gronify emits the complete root-to-leaf path on every line and handles 100,000 nesting levels in 63 MB RSS without call-stack overflow.
+- **vs. raw `grep` on JSON:** Running `grep` on minified JSON dumps an entire multi-megabyte line; on formatted JSON it prints an isolated key or value without parent array indexes. Gronify emits the complete root-to-leaf path on every line and handles documents nested tens of thousands of levels deep without call-stack overflow.
 - **With system `diff`:** Gronify has no `diff` subcommand; instead, `flatten --sort` orders object keys deterministically by UTF-16 code unit at every nesting level while keeping each object's subtree contiguous and leaving array indexes in numeric order (`[2]` before `[10]`), so `diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten --sort new.json)` highlights only real data changes.
 
 ## AI Coding Agents and Context-Safe Exploration
@@ -419,6 +419,18 @@ gronify flatten --sort data.json
 gronify flatten data.json | wc -l
 gronify search data.json "user" | head -20
 ```
+
+## Benchmarks
+
+Gronify is compared with gron, fastgron, jq (`jq --stream`), and jaq on generated JSON from 1 MB to 1 GB, plus deeply nested and big-integer inputs. The page section is at https://gronify.vercel.app/#benchmarks and the full tables, methodology, and exact commands are in https://github.com/1solomonwakhungu/gronify/blob/main/src/packages/cli/BENCHMARKS.md.
+
+- Memory: Gronify's peak memory stays flat as input grows and is the lowest of the gron-format tools on large files. gron timed out at 1 GB and fastgron used gigabytes.
+- Unflatten: Gronify ties fastgron on time at large sizes and uses a small fraction of its memory.
+- Early exit: `--limit` and `--max-count` return in about the same short time at every input size.
+- Deep nesting: Gronify flattens a 50,000-level document, which gron and fastgron do not.
+- Where Gronify loses: fastgron flattens several times faster, `fastgron -F` is the fastest search, and `jq --stream` uses less memory.
+
+Reproduce with `npm run bench:compare` in `src/packages/cli`. Results depend on the machine and tool versions, so compare tools within one run.
 
 ## Use Cases
 

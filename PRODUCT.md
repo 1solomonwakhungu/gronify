@@ -37,7 +37,7 @@ The product name is Gronify. The existing logo is in `branding/logo.svg`. Produc
 
 ## Evidence on Hand
 
-The repository README, CLI implementation, integration tests, example commands, logo, and MIT license are available. No customer logos, testimonials, commercial benchmarks, or adoption metrics are available and must not be fabricated.
+The repository README, CLI implementation, integration tests, example commands, logo, and MIT license are available. No customer logos, testimonials, or adoption metrics are available and must not be fabricated. Measured cross-tool benchmarks are in `src/packages/cli/BENCHMARKS.md`; quote only figures from that file.
 
 ## Product Principles
 
