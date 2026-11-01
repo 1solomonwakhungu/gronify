@@ -359,6 +359,10 @@
     var(--brand-color-border-muted);
 }
 
+.barHeader {
+  display: none;
+}
+
 .barRow {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -473,6 +477,15 @@
 }
 
 @media screen and (min-width: 48rem) {
+  .barHeader {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: var(--base-size-24);
+    padding-block-end: var(--base-size-8);
+    font-size: var(--brand-text-size-100);
+    color: var(--brand-color-text-muted);
+  }
+
   .barRow {
     grid-template-columns: 9rem minmax(0, 1fr) minmax(0, 1fr);
     column-gap: var(--base-size-24);
@@ -531,7 +544,6 @@
 
 .matrix {
   inline-size: 100%;
-  min-inline-size: 44rem;
   border-collapse: collapse;
   font-size: var(--brand-text-size-200);
   line-height: var(--brand-text-lineHeight-200);
@@ -543,27 +555,101 @@
   padding: var(--base-size-12) var(--base-size-16);
   text-align: start;
   vertical-align: top;
-  border-block-end: var(--brand-borderWidth-thin) solid
-    var(--brand-color-border-muted);
-}
-
-.matrix thead th {
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 .matrix tbody th {
   font-weight: 600;
-  min-inline-size: 13rem;
 }
 
-.matrix tbody tr:last-child th,
-.matrix tbody tr:last-child td {
-  border-block-end: 0;
+/* Narrow screens: each check becomes a stacked record, one labelled line per
+   tool, so nothing scrolls sideways. */
+@media screen and (max-width: 47.99rem) {
+  .matrix,
+  .matrix tbody,
+  .matrix tr,
+  .matrix th,
+  .matrix td {
+    display: block;
+  }
+
+  .matrix thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .matrix tbody tr {
+    padding-block: var(--base-size-12);
+    border-block-end: var(--brand-borderWidth-thin) solid
+      var(--brand-color-border-muted);
+  }
+
+  .matrix tbody tr:last-child {
+    border-block-end: 0;
+  }
+
+  .matrix th,
+  .matrix td {
+    padding: var(--base-size-4) var(--base-size-16);
+  }
+
+  .matrix td.matrixCell {
+    display: grid;
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+    column-gap: var(--base-size-12);
+    align-items: baseline;
+  }
+
+  .matrixCell::before {
+    content: attr(data-label);
+    font-family: var(--brand-fontStack-monospace);
+    font-size: var(--brand-text-size-100);
+    color: var(--brand-color-text-muted);
+    overflow-wrap: anywhere;
+  }
+
+  .matrixCell > :first-child {
+    grid-column: 2;
+  }
+
+  .matrixCell > .matrixDetail {
+    grid-column: 2;
+    margin-block-start: 0;
+  }
 }
 
-.matrixCell {
-  white-space: nowrap;
+@media screen and (min-width: 48rem) {
+  .matrix {
+    min-inline-size: 40rem;
+  }
+
+  .matrix th,
+  .matrix td {
+    border-block-end: var(--brand-borderWidth-thin) solid
+      var(--brand-color-border-muted);
+  }
+
+  .matrix thead th {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .matrix tbody th {
+    min-inline-size: 13rem;
+  }
+
+  .matrix tbody tr:last-child th,
+  .matrix tbody tr:last-child td {
+    border-block-end: 0;
+  }
+
+  .matrixCell {
+    white-space: nowrap;
+  }
 }
 
 .matrixDetail {

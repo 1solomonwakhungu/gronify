@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Grid,
   Heading,
@@ -8,23 +10,7 @@ import {
 } from "@primer/react-brand";
 import type { ReactNode } from "react";
 
-import {
-  barBlocks,
-  benchmarkUrl,
-  displayTool,
-  environment,
-  headline,
-  losses,
-  matrix,
-  matrixNote,
-  matrixTools,
-  tiePercent,
-  timeoutSeconds,
-  type BarRow,
-  type MatrixCell,
-  type Point,
-  wins,
-} from "./benchmark-data";
+import type { BarRow, BenchmarkView, MatrixCell, Point } from "./benchmark-data";
 import styles from "./page.module.css";
 
 function Bar({
@@ -96,7 +82,13 @@ function BarRowItem({ row }: { row: BarRow }) {
   );
 }
 
-function MatrixCellView({ cell }: { cell: MatrixCell }) {
+function MatrixCellView({
+  cell,
+  label,
+}: {
+  cell: MatrixCell;
+  label: string;
+}) {
   const glyph = cell.kind === "pass" ? "✓" : cell.kind === "fail" ? "✕" : "–";
   const tone =
     cell.kind === "pass"
@@ -106,7 +98,7 @@ function MatrixCellView({ cell }: { cell: MatrixCell }) {
         : styles.cellNa;
 
   return (
-    <td className={styles.matrixCell}>
+    <td className={styles.matrixCell} data-label={label} role="cell">
       <span className={tone}>
         <span aria-hidden="true">{glyph} </span>
         {cell.text}
@@ -140,7 +132,26 @@ function PointList({ title, points }: { title: string; points: Point[] }) {
   );
 }
 
-export function Benchmarks({ reproduce }: { reproduce: ReactNode }) {
+export function Benchmarks({
+  view,
+  reproduce,
+}: {
+  view: BenchmarkView;
+  reproduce: ReactNode;
+}) {
+  const {
+    barBlocks,
+    benchmarkUrl,
+    environment,
+    losses,
+    matrix,
+    matrixNote,
+    matrixTools,
+    tiePercent,
+    timeoutSeconds,
+    wins,
+  } = view;
+
   return (
     <>
       <Section
@@ -154,8 +165,8 @@ export function Benchmarks({ reproduce }: { reproduce: ReactNode }) {
             How Gronify compares with gron, fastgron, jq, and jaq.
           </SectionIntro.Heading>
           <SectionIntro.Description>
-            {headline.description} Every number on this page comes from a
-            single benchmark run, published in BENCHMARKS.md.
+            {view.headlineDescription} Every number on this page comes from one
+            run of the benchmark script, published in BENCHMARKS.md.
           </SectionIntro.Description>
         </SectionIntro>
       </Section>
@@ -172,6 +183,11 @@ export function Benchmarks({ reproduce }: { reproduce: ReactNode }) {
                   <Text as="p" size="200" variant="muted">
                     {block.subtitle}
                   </Text>
+                  <div className={styles.barHeader} aria-hidden="true">
+                    <span>Tool</span>
+                    <span>Time</span>
+                    <span>Peak memory</span>
+                  </div>
                   <ul
                     className={styles.barList}
                     aria-label={`${block.title}: time and peak memory by tool`}
@@ -186,8 +202,12 @@ export function Benchmarks({ reproduce }: { reproduce: ReactNode }) {
           </Grid.Column>
         </Grid>
         <Text as="p" size="100" variant="muted" className={styles.benchCaption}>
-          Bars in each chart share one linear scale. Lower is better. MB and GB are 1024-based,
-          as reported by /usr/bin/time -l. A tie means the two times are within {`${tiePercent}%`} of each other.
+          Bars in each chart share one linear scale. Lower is better. Output
+          goes to /dev/null in these charts; the piped-output results are in
+          BENCHMARKS.md. Memory is 1024-based and input sizes are nominal. Peak
+          memory for a run that timed out is the largest value seen while
+          sampling the process tree. A tie means the two times are within{" "}
+          {`${tiePercent}%`} of each other.
         </Text>
       </Section>
 
@@ -216,24 +236,26 @@ export function Benchmarks({ reproduce }: { reproduce: ReactNode }) {
                   aria-label="Correctness and capability matrix"
                   tabIndex={0}
                 >
-                  <table className={styles.matrix}>
+                  <table className={styles.matrix} role="table">
                     <caption className={styles.srOnly}>
                       Correctness and capability checks for each tool
                     </caption>
-                    <thead>
-                      <tr>
-                        <th scope="col">Check</th>
+                    <thead role="rowgroup">
+                      <tr role="row">
+                        <th scope="col" role="columnheader">
+                          Check
+                        </th>
                         {matrixTools.map((tool) => (
-                          <th key={tool} scope="col">
-                            <code>{displayTool(tool)}</code>
+                          <th key={tool.key} scope="col" role="columnheader">
+                            <code>{tool.label}</code>
                           </th>
                         ))}
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody role="rowgroup">
                       {matrix.map((row) => (
-                        <tr key={row.label}>
-                          <th scope="row">
+                        <tr key={row.label} role="row">
+                          <th scope="row" role="rowheader">
                             {row.label}
                             <span className={styles.matrixDetail}>
                               {row.description}
@@ -241,8 +263,9 @@ export function Benchmarks({ reproduce }: { reproduce: ReactNode }) {
                           </th>
                           {row.cells.map((cell, index) => (
                             <MatrixCellView
-                              key={matrixTools[index]}
+                              key={matrixTools[index].key}
                               cell={cell}
+                              label={matrixTools[index].label}
                             />
                           ))}
                         </tr>

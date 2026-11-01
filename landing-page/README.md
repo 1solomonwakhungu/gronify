@@ -30,10 +30,14 @@ npm run audit
 
 The audit checks production and development dependencies at moderate severity or higher. `audit-ci.jsonc` allows only the currently unpatched `braces` advisory (GHSA-vfj7-8cjw-p6xm) in the lint-time dependency chain; new advisories fail the check.
 
-The repository metadata validation also scans `landing-page/src/app/layout.tsx` and `landing-page/src/app/page.tsx` for stale claims that are not supported by the current project.
+The repository metadata validation also scans `landing-page/src/app/layout.tsx`, `page.tsx`, `home.tsx`, `benchmarks.tsx`, and `benchmark-data.ts` for stale claims that are not supported by the current project.
 
 ## Deploy Notes
 
 The landing page can be deployed as a standard Next.js app from the `landing-page` directory. Keep deployment configuration outside this package unless the repository adds a checked-in deployment workflow.
 
 Before using a deployed URL as repository homepage metadata, verify that the deployment returns a successful HTTP response.
+
+## Benchmark section
+
+The "How Gronify compares" section renders from `src/app/benchmark-results.json`, which `npm run bench:compare` writes. `benchmark-data.ts` derives every figure in the copy from that file and fails the build if the data stops supporting a sentence. It is server-only: `page.tsx` renders `benchmarks.tsx` on the server and passes it to the client `home.tsx` as a prop, so the results JSON does not ship in a client bundle. `llms.txt` and `llms-full.txt` are static, so keep their benchmark text qualitative.

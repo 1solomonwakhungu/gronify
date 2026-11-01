@@ -112,6 +112,9 @@ if (existsSync("README.md")) {
 scanForStaleClaims("skills/gronify-json-flatten-search/SKILL.md");
 scanForStaleClaims("landing-page/src/app/layout.tsx");
 scanForStaleClaims("landing-page/src/app/page.tsx");
+scanForStaleClaims("landing-page/src/app/home.tsx");
+scanForStaleClaims("landing-page/src/app/benchmarks.tsx");
+scanForStaleClaims("landing-page/src/app/benchmark-data.ts");
 scanForStaleClaims("landing-page/src/app/seo-data.ts");
 scanForStaleClaims("landing-page/src/app/opengraph-image.tsx");
 

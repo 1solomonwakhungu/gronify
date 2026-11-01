@@ -1,16 +1,20 @@
 import rawResults from "./benchmark-results.json";
 
 /*
+ * Server-only module: it imports the full results JSON (samples, commands,
+ * paths), so it must only be imported from server components. Client code gets
+ * the slim values it needs as props.
+ *
  * Everything the benchmark section says is derived from benchmark-results.json,
  * which `npm run bench:compare` writes. Nothing here is a typed-in measurement.
- * Claims that the copy depends on are checked by `claim()` at build time, so
+ * Every claim the copy depends on is checked by `claim()` at build time, so
  * regenerated results that no longer support a sentence fail the build instead
- * of shipping a stale or false statement.
+ * of shipping a false statement.
  */
 
-export type ResultStatus = "ok" | "timeout" | "failed" | "skipped";
+type ResultStatus = "ok" | "timeout" | "failed" | "skipped";
 
-export type ReasonCode =
+type ReasonCode =
   | "not-installed"
   | "unsupported"
   | "over-budget"
@@ -22,9 +26,8 @@ export type ReasonCode =
   | "exit-nonzero"
   | "wrong-output";
 
-export type BenchResult = {
+type BenchResult = {
   tool: string;
-  command: string;
   seconds: number | null;
   peakRssBytes: number | null;
   status: ResultStatus;
@@ -34,16 +37,17 @@ export type BenchResult = {
   note?: string;
 };
 
-export type Workload = {
+type Measured = BenchResult & { seconds: number; peakRssBytes: number };
+
+type Workload = {
   id: string;
-  operation: string;
   label: string;
   inputBytes: number;
   runs?: number;
   results: BenchResult[];
 };
 
-export type Check = {
+type Check = {
   check: string;
   results: { tool: string; pass: boolean | null; note: string }[];
 };
@@ -59,16 +63,20 @@ type BenchmarkResults = {
 
 const data = rawResults as unknown as BenchmarkResults;
 
-export const benchmarkUrl =
+const benchmarkUrl =
   "https://github.com/1solomonwakhungu/gronify/blob/main/src/packages/cli/BENCHMARKS.md";
 export const reproduceCommand = "npm run bench:compare";
+const timeoutSeconds = data.options.timeoutSeconds;
+const tiePercent = data.options.tieThreshold * 100;
 
 const MIB = 1024 * 1024;
 const GIB = MIB * 1024;
 
 function claim(condition: boolean, message: string): void {
   if (!condition) {
-    throw new Error(`benchmark-results.json no longer supports the copy: ${message}`);
+    throw new Error(
+      `benchmark-results.json no longer supports the copy: ${message}`,
+    );
   }
 }
 
@@ -83,18 +91,12 @@ function result(workloadId: string, tool: string): BenchResult {
     (candidate) => candidate.tool === tool,
   );
   if (!found) {
-    throw new Error(`benchmark-results.json has no "${tool}" result for "${workloadId}"`);
+    throw new Error(
+      `benchmark-results.json has no "${tool}" result for "${workloadId}"`,
+    );
   }
   return found;
 }
-
-function okResult(workloadId: string, tool: string): Measured {
-  const found = result(workloadId, tool);
-  claim(found.status === "ok", `${tool} did not finish ${workloadId}`);
-  return found as Measured;
-}
-
-type Measured = BenchResult & { seconds: number; peakRssBytes: number };
 
 function isMeasured(value: BenchResult): value is Measured {
   return (
@@ -104,11 +106,19 @@ function isMeasured(value: BenchResult): value is Measured {
   );
 }
 
-export function formatSeconds(seconds: number): string {
+function okResult(workloadId: string, tool: string): Measured {
+  const found = result(workloadId, tool);
+  claim(isMeasured(found), `${tool} should finish ${workloadId}`);
+  return found as Measured;
+}
+
+/** Under 0.1 s the second fraction hides the difference, so use milliseconds. */
+function formatSeconds(seconds: number): string {
+  if (seconds < 0.1) return `${Math.round(seconds * 1000)} ms`;
   return `${seconds >= 10 ? seconds.toFixed(1) : seconds.toFixed(2)} s`;
 }
 
-export function formatBytes(bytes: number): string {
+function formatBytes(bytes: number): string {
   return bytes >= GIB
     ? `${(bytes / GIB).toFixed(2)} GB`
     : `${Math.round(bytes / MIB)} MB`;
@@ -118,11 +128,15 @@ function formatRatio(ratio: number): string {
   return `${ratio.toFixed(1)}x`;
 }
 
-function formatRange(low: number, high: number, format: (n: number) => string) {
-  return `${format(low)} to ${format(high)}`;
+function ratioRange(ratios: number[]): string {
+  return `${Math.min(...ratios).toFixed(1)} to ${Math.max(...ratios).toFixed(1)}x`;
 }
 
-export function displayTool(tool: string): string {
+function timeRange(times: number[]): string {
+  return `${formatSeconds(Math.min(...times))} to ${formatSeconds(Math.max(...times))}`;
+}
+
+function displayTool(tool: string): string {
   return tool === "jq" ? "jq --stream" : tool;
 }
 
@@ -132,14 +146,20 @@ function sizeLabel(id: string): string {
   return label.replace(/^records /, "");
 }
 
-const recordSizes = ["1mb", "10mb", "100mb", "1000mb"] as const;
+const sizes = ["1mb", "10mb", "100mb", "1000mb"] as const;
+type Size = (typeof sizes)[number];
+const operations = ["flatten", "search", "unflatten"] as const;
 const gronFormatTools = ["gron", "gron --no-sort", "fastgron", "fastgron -F"];
+const recordsId = (operation: string, size: Size) =>
+  `${operation}-records-${size}`;
+const bigSize: Size = "1000mb";
+const bigLabel = sizeLabel(recordsId("flatten", bigSize));
 
 /* ------------------------------------------------------------------ */
 /* Environment                                                         */
 /* ------------------------------------------------------------------ */
 
-export const environment = {
+const environment = {
   date: data.generatedAt.slice(0, 10),
   machine: `${data.machine.cpu}, ${data.machine.memGB} GB RAM`,
   os: data.machine.os,
@@ -158,12 +178,9 @@ export type BarRow = {
   tool: string;
   label: string;
   highlight: boolean;
-  status: ResultStatus;
   statusLabel: string;
   statusTone: "danger" | "neutral";
   statusNote?: string;
-  seconds?: number;
-  rss?: number;
   timeText?: string;
   rssText?: string;
   timePercent?: number;
@@ -193,15 +210,15 @@ const reasonLabels: Record<ReasonCode, { label: string; danger: boolean }> = {
   "wrong-output": { label: "Wrong output", danger: true },
 };
 
-const statusFallback: Record<ResultStatus, { label: string; danger: boolean }> = {
-  ok: { label: "Finished", danger: false },
-  timeout: reasonLabels.timeout,
-  failed: reasonLabels["exit-nonzero"],
-  skipped: reasonLabels["after-failure"],
+const statusFallback: Record<ResultStatus, ReasonCode> = {
+  ok: "after-failure",
+  timeout: "timeout",
+  failed: "exit-nonzero",
+  skipped: "after-failure",
 };
 
 function statusDisplay(row: BenchResult) {
-  return (row.reasonCode && reasonLabels[row.reasonCode]) || statusFallback[row.status];
+  return reasonLabels[row.reasonCode ?? statusFallback[row.status]];
 }
 
 function statusNote(row: BenchResult): string | undefined {
@@ -210,11 +227,7 @@ function statusNote(row: BenchResult): string | undefined {
   return row.note.replace(/^not run: /i, "");
 }
 
-function buildBlock(
-  id: string,
-  title: string,
-  subtitle: string,
-): BarBlock {
+function buildBlock(id: string, title: string, subtitle: string): BarBlock {
   const rows = workload(id).results;
   const measured = rows.filter(isMeasured);
   const maxSeconds = Math.max(...measured.map((row) => row.seconds));
@@ -225,14 +238,14 @@ function buildBlock(
     id,
     title,
     subtitle: `${subtitle}, best of ${workload(id).runs ?? 3} runs`,
-    rows: rows.map((row) => {
+    rows: rows.map((row): BarRow => {
+      const display = statusDisplay(row);
       const base = {
         tool: row.tool,
         label: displayTool(row.tool),
         highlight: row.tool === "gronify",
-        status: row.status,
-        statusLabel: statusDisplay(row).label,
-        statusTone: statusDisplay(row).danger ? ("danger" as const) : ("neutral" as const),
+        statusLabel: display.label,
+        statusTone: display.danger ? ("danger" as const) : ("neutral" as const),
         statusNote: statusNote(row),
         fastest: false,
         tie: false,
@@ -241,8 +254,6 @@ function buildBlock(
       if (!isMeasured(row)) return base;
       return {
         ...base,
-        seconds: row.seconds,
-        rss: row.peakRssBytes,
         timeText: formatSeconds(row.seconds),
         rssText: formatBytes(row.peakRssBytes),
         timePercent: (row.seconds / maxSeconds) * 100,
@@ -255,56 +266,55 @@ function buildBlock(
   };
 }
 
-const unflattenBig = workload("unflatten-records-1000mb");
+const unflattenBigId = recordsId("unflatten", bigSize);
+const unflattenBigBytes = workload(unflattenBigId).inputBytes;
 
-export const barBlocks: BarBlock[] = [
+const barBlocks: BarBlock[] = [
+  buildBlock(recordsId("flatten", bigSize), "Flatten", `${bigLabel} JSON file`),
   buildBlock(
-    "flatten-records-1000mb",
-    "Flatten",
-    `${sizeLabel("flatten-records-1000mb")} JSON file`,
-  ),
-  buildBlock(
-    "search-records-1000mb",
+    recordsId("search", bigSize),
     "Search (count matches)",
-    `${sizeLabel("search-records-1000mb")} JSON file, case-sensitive match`,
+    `${bigLabel} JSON file, case-sensitive match`,
   ),
   buildBlock(
-    "unflatten-records-1000mb",
+    unflattenBigId,
     "Unflatten",
-    `${formatBytes(unflattenBig.inputBytes)} of gron statements (the ${sizeLabel("unflatten-records-1000mb")} file, flattened)`,
+    `${formatBytes(unflattenBigBytes)} of gron statements (the ${bigLabel} file, flattened)`,
   ),
 ];
 
 /* ------------------------------------------------------------------ */
-/* Derived numbers used in prose                                       */
+/* Derived numbers, each guarded by a claim()                          */
 /* ------------------------------------------------------------------ */
 
-const gronifyFlattenBig = okResult("flatten-records-1000mb", "gronify");
-const fastgronFlattenBig = okResult("flatten-records-1000mb", "fastgron");
-const gronFlattenBig = result("flatten-records-1000mb", "gron");
+const flattenBigId = recordsId("flatten", bigSize);
+const gronifyFlattenBig = okResult(flattenBigId, "gronify");
+const fastgronFlattenBig = okResult(flattenBigId, "fastgron");
+const gronNoSortFlattenBig = okResult(flattenBigId, "gron --no-sort");
+const gronFlattenBig = result(flattenBigId, "gron");
 claim(gronFlattenBig.status === "timeout", "gron should time out flattening 1 GB");
-export const tiePercent = data.options.tieThreshold * 100;
-export const timeoutSeconds = data.options.timeoutSeconds;
-const gronNoSortFlattenBig = okResult("flatten-records-1000mb", "gron --no-sort");
-const gronPeakObserved = /peak observed ([\d.]+ GB)/.exec(gronFlattenBig.note ?? "")?.[1];
+const gronPeakObserved = /peak observed ([\d.]+ GB)/.exec(
+  gronFlattenBig.note ?? "",
+)?.[1];
 claim(
-  Number.isFinite(timeoutSeconds) && gronPeakObserved !== undefined,
-  "gron's timeout note should state the peak observed and the options the limit",
+  gronPeakObserved !== undefined,
+  "gron's timeout result should record the peak memory observed",
 );
 
-// Gronify memory across every size and operation of the main workloads.
-const gronifyRss = recordSizes.flatMap((size) =>
-  ["flatten", "search", "unflatten"].map(
-    (operation) => okResult(`${operation}-records-${size}`, "gronify").peakRssBytes,
-  ),
+// Memory. Gronify stays flat; it is the lowest gron-format tool from some size up.
+const gronifyRss = sizes.flatMap((size) =>
+  operations.map((op) => okResult(recordsId(op, size), "gronify").peakRssBytes),
 );
 const gronifyRssLow = Math.min(...gronifyRss);
 const gronifyRssHigh = Math.max(...gronifyRss);
+claim(
+  gronifyRssHigh < 2 * gronifyRssLow,
+  "Gronify's peak memory should stay within 2x across sizes and operations",
+);
 
-// Where Gronify's memory drops below every other gron-format tool that finished.
-function lowestOfGronFormat(size: (typeof recordSizes)[number]): boolean {
-  return ["flatten", "search", "unflatten"].every((operation) => {
-    const id = `${operation}-records-${size}`;
+function gronifyIsLowest(size: Size): boolean {
+  return operations.every((op) => {
+    const id = recordsId(op, size);
     const gronify = okResult(id, "gronify").peakRssBytes;
     return workload(id)
       .results.filter(
@@ -313,103 +323,123 @@ function lowestOfGronFormat(size: (typeof recordSizes)[number]): boolean {
       .every((row) => gronify < (row.peakRssBytes as number));
   });
 }
-const lowestFrom = recordSizes.find(lowestOfGronFormat);
-claim(lowestFrom !== undefined, "Gronify should use the least memory at some size");
-const lowestFromIndex = recordSizes.indexOf(lowestFrom as (typeof recordSizes)[number]);
+const lowestFrom = sizes.find(gronifyIsLowest);
+claim(lowestFrom !== undefined, "Gronify should be the lowest-memory gron-format tool at some size");
+const lowestFromIndex = sizes.indexOf(lowestFrom as Size);
+claim(lowestFromIndex > 0, "the crossover should not be the smallest size");
 claim(
-  recordSizes.slice(lowestFromIndex).every(lowestOfGronFormat),
+  sizes.slice(lowestFromIndex).every(gronifyIsLowest),
   "Gronify should stay the lowest-memory gron-format tool at every larger size",
 );
 claim(
-  recordSizes
-    .slice(0, lowestFromIndex)
+  sizes.slice(0, lowestFromIndex).every((size) =>
+    operations.every(
+      (op) =>
+        okResult(recordsId(op, size), "fastgron").peakRssBytes <
+        okResult(recordsId(op, size), "gronify").peakRssBytes,
+    ),
+  ),
+  "fastgron should use less memory than Gronify for flatten, search, and unflatten below the crossover",
+);
+claim(
+  sizes
+    .slice(lowestFromIndex)
     .every(
       (size) =>
-        okResult(`flatten-records-${size}`, "fastgron").peakRssBytes <
-        okResult(`flatten-records-${size}`, "gronify").peakRssBytes,
+        okResult(recordsId("flatten", size), "gronify").peakRssBytes <
+        0.5 * okResult(recordsId("flatten", size), "fastgron").peakRssBytes,
     ),
-  "fastgron should use less memory than Gronify on the sizes below the crossover",
+  "Gronify should use under half of fastgron's flatten memory from the crossover up",
 );
-const lowestFromLabel = sizeLabel(`flatten-records-${lowestFrom}`);
+const lowestFromLabel = sizeLabel(recordsId("flatten", lowestFrom as Size));
+const smallLabel = sizeLabel(recordsId("flatten", sizes[0]));
+const fastgronSmallRss = okResult(recordsId("flatten", sizes[0]), "fastgron").peakRssBytes;
 
-// Speed against gron, on the sizes where gron finished and the input is big
-// enough for the whole-document parse to dominate.
-const gronSizes = ["10mb", "100mb"] as const;
-const speedupVsGron = gronSizes.map(
-  (size) =>
-    okResult(`flatten-records-${size}`, "gron").seconds /
-    okResult(`flatten-records-${size}`, "gronify").seconds,
-);
-const speedupVsGronNoSort = gronSizes.map(
-  (size) =>
-    okResult(`flatten-records-${size}`, "gron --no-sort").seconds /
-    okResult(`flatten-records-${size}`, "gronify").seconds,
-);
+// Speed against gron, on the sizes where gron finished and the whole-document
+// parse dominates.
+const gronSizes: Size[] = ["10mb", "100mb"];
+const speedupVs = (tool: string) =>
+  gronSizes.map((size) => {
+    const ratio =
+      okResult(recordsId("flatten", size), tool).seconds /
+      okResult(recordsId("flatten", size), "gronify").seconds;
+    claim(ratio > 1, `Gronify should flatten ${size} faster than ${tool}`);
+    return ratio;
+  });
+const speedupVsGron = speedupVs("gron");
+const speedupVsGronNoSort = speedupVs("gron --no-sort");
 
 // fastgron's raw flatten lead.
-const fastgronLead = recordSizes.map(
-  (size) =>
-    okResult(`flatten-records-${size}`, "gronify").seconds /
-    okResult(`flatten-records-${size}`, "fastgron").seconds,
-);
+const fastgronLead = sizes.map((size) => {
+  const ratio =
+    okResult(recordsId("flatten", size), "gronify").seconds /
+    okResult(recordsId("flatten", size), "fastgron").seconds;
+  claim(ratio > 1, `fastgron should flatten ${size} faster than Gronify`);
+  return ratio;
+});
+
+// fastgron -F is the fastest 1 GB search.
+const searchBigId = recordsId("search", bigSize);
+const gronifySearchBig = okResult(searchBigId, "gronify");
+const fastgronFSearchBig = okResult(searchBigId, "fastgron -F");
 claim(
-  fastgronLead.every((ratio) => ratio > 1),
-  "fastgron should flatten faster than Gronify at every size",
+  fastgronFSearchBig.isFastest === true,
+  "fastgron -F should be marked fastest on the 1 GB search",
 );
 
-// fastgron -F is the fastest search.
-const gronifySearchBig = okResult("search-records-1000mb", "gronify");
-const fastgronFSearchBig = okResult("search-records-1000mb", "fastgron -F");
-claim(
-  workload("search-records-1000mb")
-    .results.filter(isMeasured)
-    .every((row) => row.seconds >= fastgronFSearchBig.seconds),
-  "fastgron -F should be the fastest 1 GB search",
-);
-
-// Unflatten: the harness marks Gronify and fastgron as a tie on large inputs.
-const unflattenTieIds = [
-  "unflatten-records-100mb",
-  "unflatten-records-1000mb",
+// Unflatten: the harness marks Gronify and fastgron as tied on large inputs and
+// fastgron as clearly faster on small ones.
+for (const id of [
+  recordsId("unflatten", "100mb"),
+  unflattenBigId,
   "unflatten-keyed-100mb",
-];
-for (const id of unflattenTieIds) {
+]) {
   claim(
-    okResult(id, "gronify").isTie === true && okResult(id, "fastgron").isTie === true,
+    okResult(id, "gronify").isTie === true &&
+      okResult(id, "fastgron").isTie === true,
     `Gronify and fastgron should be marked as a tie on ${id}`,
   );
 }
-const gronifyUnflattenBig = okResult("unflatten-records-1000mb", "gronify");
-const fastgronUnflattenBig = okResult("unflatten-records-1000mb", "fastgron");
+for (const size of ["1mb", "10mb"] as const) {
+  const id = recordsId("unflatten", size);
+  claim(
+    okResult(id, "fastgron").isFastest === true &&
+      okResult(id, "fastgron").seconds < okResult(id, "gronify").seconds,
+    `fastgron should unflatten ${size} faster than Gronify`,
+  );
+}
+const gronifyUnflattenBig = okResult(unflattenBigId, "gronify");
+const fastgronUnflattenBig = okResult(unflattenBigId, "fastgron");
 claim(
-  fastgronUnflattenBig.peakRssBytes > gronifyUnflattenBig.peakRssBytes,
-  "fastgron should use more memory than Gronify to unflatten 1 GB",
+  fastgronUnflattenBig.peakRssBytes > 10 * gronifyUnflattenBig.peakRssBytes,
+  "fastgron should use over 10x Gronify's memory to unflatten 1 GB",
 );
 
 // Early-exit caps.
-const cappedIds = recordSizes.flatMap((size) => [
+const cappedFlattenIds = sizes.map((size) => `capped-flatten-records-${size}`);
+const cappedIds = sizes.flatMap((size) => [
   `capped-flatten-records-${size}`,
   `capped-search-records-${size}`,
 ]);
 const gronifyCapped = cappedIds.map((id) => okResult(id, "gronify").seconds);
-const cappedLow = Math.min(...gronifyCapped);
-const cappedHigh = Math.max(...gronifyCapped);
 const gronCapped100 = okResult("capped-flatten-records-100mb", "gron");
-const jqCappedBig = okResult("capped-flatten-records-1000mb", "jq");
+const cappedFlattenBigId = cappedFlattenIds[cappedFlattenIds.length - 1];
+const jqCappedBig = okResult(cappedFlattenBigId, "jq");
+const gronifyCappedBig = okResult(cappedFlattenBigId, "gronify");
 claim(
-  jqCappedBig.seconds < okResult("capped-flatten-records-1000mb", "gronify").seconds,
-  "jq --stream should finish capped runs sooner than Gronify",
+  cappedFlattenIds.every((id) => okResult(id, "jq").isFastest === true),
+  "jq --stream should be marked fastest on every capped flatten",
 );
 
-// jq --stream.
-const jqFlattenBig = okResult("flatten-records-1000mb", "jq");
-const jqRss = recordSizes.map(
-  (size) => okResult(`flatten-records-${size}`, "jq").peakRssBytes,
+// jq --stream memory.
+const jqRss = sizes.map(
+  (size) => okResult(recordsId("flatten", size), "jq").peakRssBytes,
 );
 claim(
   Math.max(...jqRss) < gronifyRssLow,
-  "jq --stream should use less memory than Gronify",
+  "jq --stream should use less memory than Gronify at every size",
 );
+const jqFlattenBig = okResult(flattenBigId, "jq");
 
 // Deep nesting.
 const deepId = "flatten-deep-50000";
@@ -417,39 +447,104 @@ const deepPipedId = "flatten-piped-deep-50000";
 const deepGronify = okResult(deepPipedId, "gronify");
 const deepGronifyDevNull = okResult(deepId, "gronify");
 const deepJq = okResult(deepPipedId, "jq");
-claim(deepGronify.isFastest === true, "Gronify should be the fastest piped 50,000-level flatten");
+claim(deepGronify.isFastest === true, "Gronify should be fastest on the piped 50,000-level flatten");
 const deepDepth = workload(deepId).label.match(/(\d+) levels/)?.[1];
 claim(deepDepth !== undefined, "the deep workload label should state its depth");
-const deepOtherGronFormat = ["gron", "fastgron", "jaq"].map((tool) => result(deepId, tool));
 claim(
-  deepOtherGronFormat.every((row) => row.status === "failed"),
+  ["gron", "gron --no-sort", "fastgron", "jaq"].every(
+    (tool) => result(deepId, tool).status === "failed",
+  ),
   "gron, fastgron, and jaq should all fail on the deep document",
 );
 const deepDepthText = Number(deepDepth).toLocaleString("en-US");
 
-export const headline = {
-  description: `On a ${sizeLabel("flatten-records-1000mb")} file Gronify flattens in ${formatSeconds(gronifyFlattenBig.seconds)} using ${formatBytes(gronifyFlattenBig.peakRssBytes)}. gron timed out at ${timeoutSeconds} s, and gron --no-sort took ${formatSeconds(gronNoSortFlattenBig.seconds)} at ${formatBytes(gronNoSortFlattenBig.peakRssBytes)}. fastgron finished in ${formatSeconds(fastgronFlattenBig.seconds)} but peaked at ${formatBytes(fastgronFlattenBig.peakRssBytes)}.`,
-  fastgronAcknowledgement: `fastgron is faster at raw flatten, ${formatRange(Math.min(...fastgronLead), Math.max(...fastgronLead), (n) => n.toFixed(1))}x across these sizes. Gronify uses a fraction of the memory and doesn't fall over: at ${sizeLabel("flatten-records-1000mb")} fastgron peaked at ${formatBytes(fastgronFlattenBig.peakRssBytes)}, ${formatRatio(fastgronFlattenBig.peakRssBytes / gronifyFlattenBig.peakRssBytes)} Gronify's ${formatBytes(gronifyFlattenBig.peakRssBytes)}, and on a ${deepDepthText}-level document it failed.`,
+/* ------------------------------------------------------------------ */
+/* Round-trip checks                                                   */
+/* ------------------------------------------------------------------ */
+
+function checkResult(prefix: string, tool: string) {
+  const check = data.correctness.find((candidate) =>
+    candidate.check.startsWith(prefix),
+  );
+  const found = check?.results.find((candidate) => candidate.tool === tool);
+  if (!found) {
+    throw new Error(
+      `benchmark-results.json has no "${tool}" result for check "${prefix}"`,
+    );
+  }
+  return found;
+}
+
+const bigIntPrefix = "big integers and trailing-zero decimals survive flatten (";
+const roundTripPrefix = "round trip equals the input (3.2 MB";
+const edgePrefix = "round trip equals the input (edge cases";
+const roundTripTools = ["gronify", "gron", "fastgron", "jq"] as const;
+
+function edgeCase(tool: string) {
+  const found = checkResult(edgePrefix, tool);
+  return {
+    keyOrder: /key order (preserved|changed)/.exec(found.note)?.[1],
+    numbers: /number spellings (kept verbatim|normalised)/.exec(found.note)?.[1],
+    examples: /number spellings [^(]*\(([^)]*)\)/.exec(found.note)?.[1],
+    pass: found.pass,
+  };
+}
+
+const edge = Object.fromEntries(
+  roundTripTools.map((tool) => [tool, edgeCase(tool)]),
+);
+const spellings = edge.gronify.examples;
+claim(spellings !== undefined, "the edge-case check should list its number spellings");
+claim(
+  roundTripTools.every((tool) => edge[tool].pass === true) &&
+    edge.gronify.keyOrder === "preserved" &&
+    edge.gronify.numbers === "kept verbatim",
+  "Gronify should round trip the edge cases with key order and number spellings intact",
+);
+const reordersKeys = roundTripTools.filter((tool) => edge[tool].keyOrder === "changed");
+const normalisesNumbers = roundTripTools.filter((tool) => edge[tool].numbers === "normalised");
+claim(
+  reordersKeys.join() === "gron,fastgron" && normalisesNumbers.join() === "jq" && edge.jq.keyOrder === "preserved",
+  "gron and fastgron should reorder keys, and jq should keep order but normalise number spellings",
+);
+for (const tool of roundTripTools) {
+  claim(
+    checkResult(roundTripPrefix, tool).note.includes("key order preserved") ===
+      (edge[tool].keyOrder === "preserved"),
+    `the 3.2 MB and edge-case round trips should agree on key order for ${tool}`,
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Prose                                                               */
+/* ------------------------------------------------------------------ */
+
+const fastgronAcknowledgement = `fastgron is faster at raw flatten, ${ratioRange(fastgronLead)} across these sizes. From ${lowestFromLabel} up Gronify uses a fraction of the memory: at ${bigLabel} fastgron peaked at ${formatBytes(fastgronFlattenBig.peakRssBytes)}, ${formatRatio(fastgronFlattenBig.peakRssBytes / gronifyFlattenBig.peakRssBytes)} Gronify's ${formatBytes(gronifyFlattenBig.peakRssBytes)}. fastgron also failed on a ${Number(deepDepth).toLocaleString("en-US")}-level document.`;
+
+const headline = {
+  description: `On a ${bigLabel} file Gronify flattens in ${formatSeconds(gronifyFlattenBig.seconds)} using ${formatBytes(gronifyFlattenBig.peakRssBytes)}. gron timed out at ${timeoutSeconds} s, and gron --no-sort took ${formatSeconds(gronNoSortFlattenBig.seconds)} at ${formatBytes(gronNoSortFlattenBig.peakRssBytes)}. fastgron finished in ${formatSeconds(fastgronFlattenBig.seconds)} but peaked at ${formatBytes(fastgronFlattenBig.peakRssBytes)}.`,
 };
 
 export type Point = { title: string; body: string };
 
-export const wins: Point[] = [
+const keyOrderBody = `A flatten and unflatten round trip gives back the original key order and keeps number spellings (${spellings}) as written. ${reordersKeys.join(" and ")} reorder keys. ${normalisesNumbers.map(displayTool).join(" and ")} keeps key order but normalises those number spellings.`;
+
+const wins: Point[] = [
   {
     title: "Flat memory",
-    body: `Peak memory stays between ${formatBytes(gronifyRssLow)} and ${formatBytes(gronifyRssHigh)} for flatten, search, and unflatten from ${sizeLabel("flatten-records-1mb")} to ${sizeLabel("flatten-records-1000mb")}. From ${lowestFromLabel} up it is the lowest of the gron-format tools.`,
+    body: `Peak memory stays between ${formatBytes(gronifyRssLow)} and ${formatBytes(gronifyRssHigh)} for flatten, search, and unflatten from ${smallLabel} to ${bigLabel}. From ${lowestFromLabel} up it is the lowest of the gron-format tools.`,
   },
   {
-    title: "Unflatten",
-    body: `Unflatten speed is a tie with fastgron from ${sizeLabel("unflatten-records-100mb")} up (${formatSeconds(gronifyUnflattenBig.seconds)} against ${formatSeconds(fastgronUnflattenBig.seconds)} on ${formatBytes(unflattenBig.inputBytes)} of gron). The difference is memory: ${formatBytes(gronifyUnflattenBig.peakRssBytes)} against fastgron's ${formatBytes(fastgronUnflattenBig.peakRssBytes)}, ${formatRatio(fastgronUnflattenBig.peakRssBytes / gronifyUnflattenBig.peakRssBytes)} as much.`,
+    title: "Unflatten memory",
+    body: `Unflatten speed is a tie with fastgron from ${sizeLabel(recordsId("unflatten", "100mb"))} up (${formatSeconds(gronifyUnflattenBig.seconds)} against ${formatSeconds(fastgronUnflattenBig.seconds)} on the ${bigLabel} file's ${formatBytes(unflattenBigBytes)} of gron). The difference is memory: ${formatBytes(gronifyUnflattenBig.peakRssBytes)} against fastgron's ${formatBytes(fastgronUnflattenBig.peakRssBytes)}, ${formatRatio(fastgronUnflattenBig.peakRssBytes / gronifyUnflattenBig.peakRssBytes)} as much.`,
   },
   {
     title: "Against gron",
-    body: `${formatRange(Math.min(...speedupVsGron), Math.max(...speedupVsGron), (n) => n.toFixed(1))}x faster to flatten ${sizeLabel("flatten-records-10mb")} and ${sizeLabel("flatten-records-100mb")} files (${formatRange(Math.min(...speedupVsGronNoSort), Math.max(...speedupVsGronNoSort), (n) => n.toFixed(1))}x against gron --no-sort). At ${sizeLabel("flatten-records-1000mb")} gron timed out after ${timeoutSeconds} s, having reached ${gronPeakObserved}. gron --no-sort finished in ${formatSeconds(gronNoSortFlattenBig.seconds)} using ${formatBytes(gronNoSortFlattenBig.peakRssBytes)}.`,
+    body: `${ratioRange(speedupVsGron)} faster to flatten ${sizeLabel(recordsId("flatten", "10mb"))} and ${sizeLabel(recordsId("flatten", "100mb"))} files (${ratioRange(speedupVsGronNoSort)} against gron --no-sort). At ${bigLabel} gron timed out after ${timeoutSeconds} s, having reached ${gronPeakObserved}. gron --no-sort finished in ${formatSeconds(gronNoSortFlattenBig.seconds)} using ${formatBytes(gronNoSortFlattenBig.peakRssBytes)}.`,
   },
   {
     title: "Early exit",
-    body: `With --limit or --max-count, Gronify returns in ${formatRange(cappedLow, cappedHigh, (n) => n.toFixed(2))} s on every size up to ${sizeLabel("flatten-records-1000mb")}. gron needs ${formatSeconds(gronCapped100.seconds)} for the same ten lines of a ${sizeLabel("flatten-records-100mb")} file because it parses the whole document first.`,
+    body: `With --limit or --max-count, Gronify returns in ${timeRange(gronifyCapped)} on every size up to ${bigLabel}. gron needs ${formatSeconds(gronCapped100.seconds)} for the same ten lines of a ${sizeLabel("flatten-records-100mb")} file because it parses the whole document first.`,
   },
   {
     title: "Deep documents",
@@ -457,43 +552,43 @@ export const wins: Point[] = [
   },
   {
     title: "Key order",
-    body: "A flatten and unflatten round trip gives back the original key order. gron and fastgron reorder keys. Numbers stay exact, as they do in the other tools in these checks.",
+    body: keyOrderBody,
   },
 ];
 
-export const losses: Point[] = [
+const losses: Point[] = [
   {
     title: "fastgron flattens faster",
-    body: headline.fastgronAcknowledgement,
+    body: fastgronAcknowledgement,
   },
   {
     title: "fastgron -F searches faster",
-    body: `Its fixed-string filter counted the same matches in ${formatSeconds(fastgronFSearchBig.seconds)} against Gronify's ${formatSeconds(gronifySearchBig.seconds)} on ${sizeLabel("search-records-1000mb")}, at ${formatBytes(fastgronFSearchBig.peakRssBytes)}.`,
+    body: `Its fixed-string filter counted the same matches in ${formatSeconds(fastgronFSearchBig.seconds)} against Gronify's ${formatSeconds(gronifySearchBig.seconds)} on ${bigLabel}, at ${formatBytes(fastgronFSearchBig.peakRssBytes)}.`,
   },
   {
     title: "jq --stream is smaller",
-    body: `jq --stream holds about ${formatBytes(Math.max(...jqRss))} at any size and is the fastest on capped runs (${formatSeconds(jqCappedBig.seconds)} against ${formatSeconds(okResult("capped-flatten-records-1000mb", "gronify").seconds)} on ${sizeLabel("capped-flatten-records-1000mb")}). It emits [path, leaf] events instead of gron lines, and flattening ${sizeLabel("flatten-records-1000mb")} took ${formatSeconds(jqFlattenBig.seconds)}.`,
+    body: `jq --stream holds about ${formatBytes(Math.max(...jqRss))} at any size and is the fastest on every capped flatten (${formatSeconds(jqCappedBig.seconds)} against ${formatSeconds(gronifyCappedBig.seconds)} on ${bigLabel}). It emits [path, leaf] events instead of gron lines, and flattening ${bigLabel} took ${formatSeconds(jqFlattenBig.seconds)}.`,
   },
   {
     title: "Small inputs",
-    body: `Below ${lowestFromLabel}, fastgron also uses less memory. A small file still costs Gronify about ${formatBytes(gronifyRssLow)}. fastgron also unflattens ${sizeLabel("unflatten-records-1mb")} and ${sizeLabel("unflatten-records-10mb")} files faster.`,
+    body: `Below ${lowestFromLabel}, fastgron uses less memory for flatten, search, and unflatten (${formatBytes(fastgronSmallRss)} against Gronify's ${formatBytes(okResult(recordsId("flatten", sizes[0]), "gronify").peakRssBytes)} to flatten ${smallLabel}). fastgron also unflattens ${sizeLabel(recordsId("unflatten", "1mb"))} and ${sizeLabel(recordsId("unflatten", "10mb"))} files faster.`,
   },
 ];
 
-// The "small inputs" sentence about unflatten must hold.
-for (const size of ["1mb", "10mb"]) {
-  claim(
-    okResult(`unflatten-records-${size}`, "fastgron").seconds <
-      okResult(`unflatten-records-${size}`, "gronify").seconds,
-    `fastgron should unflatten ${size} faster than Gronify`,
-  );
-}
+/** Plain-text summary for the FAQ and its JSON-LD. Every figure comes from the results. */
+export const benchmarkFaqAnswer = [
+  `Gronify's peak memory stays between ${formatBytes(gronifyRssLow)} and ${formatBytes(gronifyRssHigh)} from ${smallLabel} to ${bigLabel}, and from ${lowestFromLabel} up it is the lowest of the gron-format tools. Below that, fastgron uses less.`,
+  `It flattens ${ratioRange(speedupVsGron)} faster than gron at ${sizeLabel(recordsId("flatten", "10mb"))} and ${sizeLabel(recordsId("flatten", "100mb"))}, and gron timed out after ${timeoutSeconds} s at ${bigLabel}.`,
+  `Unflatten speed is a tie with fastgron from ${sizeLabel(recordsId("unflatten", "100mb"))} up: ${formatSeconds(gronifyUnflattenBig.seconds)} against ${formatSeconds(fastgronUnflattenBig.seconds)} on the ${bigLabel} file's ${formatBytes(unflattenBigBytes)} of gron. Gronify uses ${formatBytes(gronifyUnflattenBig.peakRssBytes)} and fastgron uses ${formatBytes(fastgronUnflattenBig.peakRssBytes)}.`,
+  `fastgron flattens faster, ${ratioRange(fastgronLead)} across these sizes, and fastgron -F is the fastest ${bigLabel} search. jq --stream uses about ${formatBytes(Math.max(...jqRss))} at any size.`,
+  `Measured ${environment.date} on ${environment.machine}. Methodology and every result: ${benchmarkUrl}`,
+].join(" ");
 
 /* ------------------------------------------------------------------ */
 /* Capability matrix                                                   */
 /* ------------------------------------------------------------------ */
 
-export const matrixTools = ["gronify", "gron", "fastgron", "jq", "jaq"] as const;
+const matrixTools = ["gronify", "gron", "fastgron", "jq", "jaq"] as const;
 
 export type MatrixCell = {
   kind: "pass" | "fail" | "na";
@@ -506,17 +601,6 @@ export type MatrixRow = {
   description: string;
   cells: MatrixCell[];
 };
-
-function checkResult(prefix: string, tool: string) {
-  const check = data.correctness.find((candidate) =>
-    candidate.check.startsWith(prefix),
-  );
-  const found = check?.results.find((candidate) => candidate.tool === tool);
-  if (!found) {
-    throw new Error(`benchmark-results.json has no "${tool}" result for check "${prefix}"`);
-  }
-  return found;
-}
 
 function checkCell(
   prefix: string,
@@ -536,10 +620,10 @@ function workloadCell(id: string, tool: string): MatrixCell {
   if (isMeasured(found)) {
     return { kind: "pass", text: "Yes", detail: formatSeconds(found.seconds) };
   }
-  if (found.status === "skipped") {
-    return { kind: "na", text: statusDisplay(found).label };
-  }
-  return { kind: "fail", text: statusDisplay(found).label };
+  return {
+    kind: found.status === "skipped" ? "na" : "fail",
+    text: statusDisplay(found).label,
+  };
 }
 
 /** Piped timing where it exists; otherwise the /dev/null run that explains the failure. */
@@ -548,22 +632,40 @@ function deepCell(tool: string): MatrixCell {
   return workloadCell(piped.status === "skipped" ? deepId : deepPipedId, tool);
 }
 
-function cappedCell(id: string, tool: string): MatrixCell {
-  const found = result(id, tool);
-  if (isMeasured(found)) {
-    return { kind: "pass", text: formatSeconds(found.seconds) };
+/**
+ * A tool exits early when it returns without holding much of the file. A tool
+ * that is quick only because it maps the whole file gets a neutral mark.
+ */
+const earlyExitMaxShare = 0.1;
+function cappedCell(tool: string): MatrixCell {
+  const found = result(cappedFlattenBigId, tool);
+  if (!isMeasured(found)) {
+    return { kind: "na", text: statusDisplay(found).label };
   }
-  return { kind: "na", text: statusDisplay(found).label };
+  const inputBytes = workload(cappedFlattenBigId).inputBytes;
+  return found.peakRssBytes < earlyExitMaxShare * inputBytes
+    ? { kind: "pass", text: formatSeconds(found.seconds) }
+    : {
+        kind: "na",
+        text: formatSeconds(found.seconds),
+        detail: `peak memory ${formatBytes(found.peakRssBytes)}`,
+      };
 }
 
-const bigIntPrefix = "big integers and trailing-zero decimals survive flatten (";
-const roundTripPrefix = "round trip equals the input (3.2 MB";
+const cappedKinds = Object.fromEntries(
+  matrixTools.map((tool) => [tool, cappedCell(tool).kind]),
+);
+claim(
+  cappedKinds.gronify === "pass" &&
+    cappedKinds.jq === "pass" &&
+    cappedKinds.fastgron === "na",
+  "Gronify and jq should stop early on the 1 GB capped flatten and fastgron should hold the file in memory",
+);
 
-export const matrix: MatrixRow[] = [
+const matrix: MatrixRow[] = [
   {
     label: "Big integers kept exact",
-    description:
-      "12345678901234567890 and 1.10 come out of flatten unchanged",
+    description: "12345678901234567890 and 1.10 come out of flatten unchanged",
     cells: matrixTools.map((tool) =>
       checkCell(bigIntPrefix, tool, { pass: "Yes", fail: "No" }),
     ),
@@ -580,10 +682,22 @@ export const matrix: MatrixRow[] = [
     description: "the round trip keeps keys in their original order",
     cells: matrixTools.map((tool) =>
       checkCell(
-        roundTripPrefix,
+        edgePrefix,
         tool,
         { pass: "Yes", fail: "Reordered" },
         (note) => note.includes("key order preserved"),
+      ),
+    ),
+  },
+  {
+    label: "Number spellings kept",
+    description: `${spellings} come out of the round trip as written`,
+    cells: matrixTools.map((tool) =>
+      checkCell(
+        edgePrefix,
+        tool,
+        { pass: "Yes", fail: "Normalised" },
+        (note) => note.includes("number spellings kept verbatim"),
       ),
     ),
   },
@@ -594,44 +708,66 @@ export const matrix: MatrixRow[] = [
   },
   {
     label: "Early exit on caps",
-    description: `time to return the first 10 lines of a ${sizeLabel("capped-flatten-records-1000mb")} file`,
-    cells: matrixTools.map((tool) =>
-      cappedCell("capped-flatten-records-1000mb", tool),
-    ),
+    description: `time to return the first 10 lines of a ${bigLabel} file. A check mark means peak memory stayed under ${earlyExitMaxShare * 100}% of the file`,
+    cells: matrixTools.map((tool) => cappedCell(tool)),
   },
 ];
 
+const cellKind = (row: number, tool: (typeof matrixTools)[number]) =>
+  matrix[row].cells[matrixTools.indexOf(tool)].kind;
 claim(
-  matrix[0].cells[0].kind === "pass" &&
-    matrix[1].cells[0].kind === "pass" &&
-    matrix[2].cells[0].kind === "pass" &&
-    matrix[3].cells[0].kind === "pass",
+  [0, 1, 2, 3, 4, 5].every((row) => cellKind(row, "gronify") === "pass"),
   "Gronify should pass every capability check",
 );
-
 claim(
-  matrix[2].cells[1].kind === "fail" && matrix[2].cells[2].kind === "fail",
-  "gron and fastgron should both reorder keys",
+  cellKind(2, "gron") === "fail" &&
+    cellKind(2, "fastgron") === "fail" &&
+    cellKind(2, "jq") === "pass" &&
+    cellKind(3, "jq") === "fail",
+  "the key-order and number-spelling rows should match the copy",
 );
 claim(
-  matrix.every((row) => row.cells[4].kind !== "pass" || row.label !== matrix[1].label),
-  "jaq should not be able to round trip",
+  matrixTools.every(
+    (tool) => tool === "jaq" || cellKind(1, tool) === "pass",
+  ) && cellKind(1, "jaq") === "na",
+  "every tool except jaq should round trip, and jaq should be not applicable",
 );
 
-const bigIntFailures = matrixTools.filter(
-  (_, index) => matrix[0].cells[index].kind === "fail",
+const bigIntFailures = matrixTools.filter((tool) => cellKind(0, tool) === "fail");
+
+const jaqNote = checkResult(roundTripPrefix, "jaq").note.replace(/^n\/a: /, "");
+claim(jaqNote.startsWith("jaq "), "jaq's not-applicable note should explain jaq's limit");
+
+const notRunNotes = data.workloads.flatMap((w) =>
+  w.results
+    .filter((row) => row.reasonCode === "after-failure")
+    .map((row) => row.note ?? ""),
 );
-export const matrixNote = `Correctness checks ran on small documents before timing. ${
+claim(
+  notRunNotes.length > 0 &&
+    notRunNotes.every((note) => /timed out|timeout|failed/.test(note)),
+  'every "Not run" result should follow a timeout or failure',
+);
+
+const matrixNote = `Correctness checks ran on small documents before timing. ${
   bigIntFailures.length === 0
-    ? "Every tool that supports the check kept big integers exact, so that row is parity, not a Gronify advantage."
-    : `${bigIntFailures.join(", ")} did not keep big integers exact.`
-} jaq has no inverse of a path and value listing, so it cannot round trip. Cells marked "Not run" were skipped after the tool had already timed out on a smaller step.`;
+    ? "Every tool kept big integers exact, so that row is parity, not a Gronify advantage."
+    : `${bigIntFailures.map(displayTool).join(", ")} did not keep big integers exact.`
+} ${jaqNote}. "Not run" means the tool timed out or failed on the same input or a smaller one in an earlier workload.`;
 
-/** Plain-text summary for the FAQ and its JSON-LD. Every figure comes from the results. */
-export const benchmarkFaqAnswer = [
-  `Gronify's peak memory stays between ${formatBytes(gronifyRssLow)} and ${formatBytes(gronifyRssHigh)} from ${sizeLabel("flatten-records-1mb")} to ${sizeLabel("flatten-records-1000mb")}, and from ${lowestFromLabel} up it is the lowest of the gron-format tools.`,
-  `It flattens ${formatRange(Math.min(...speedupVsGron), Math.max(...speedupVsGron), (n) => n.toFixed(1))}x faster than gron at ${sizeLabel("flatten-records-10mb")} and ${sizeLabel("flatten-records-100mb")}, and gron timed out after ${timeoutSeconds} s at ${sizeLabel("flatten-records-1000mb")}.`,
-  `Unflatten speed is a tie with fastgron from ${sizeLabel("unflatten-records-100mb")} up (${formatSeconds(gronifyUnflattenBig.seconds)} against ${formatSeconds(fastgronUnflattenBig.seconds)} at ${sizeLabel("unflatten-records-1000mb")}), but Gronify uses ${formatBytes(gronifyUnflattenBig.peakRssBytes)} where fastgron uses ${formatBytes(fastgronUnflattenBig.peakRssBytes)}.`,
-  `fastgron flattens faster, ${formatRange(Math.min(...fastgronLead), Math.max(...fastgronLead), (n) => n.toFixed(1))}x across these sizes, and fastgron -F is the fastest search. jq --stream uses about ${formatBytes(Math.max(...jqRss))} at any size.`,
-  `Measured ${environment.date} on ${environment.machine}. Methodology and every result: ${benchmarkUrl}`,
-].join(" ");
+/** The only thing client code receives: plain, already-derived values. */
+export const benchmarkView = {
+  headlineDescription: headline.description,
+  benchmarkUrl,
+  timeoutSeconds,
+  tiePercent,
+  environment,
+  barBlocks,
+  wins,
+  losses,
+  matrixNote,
+  matrixTools: matrixTools.map((tool) => ({ key: tool, label: displayTool(tool) })),
+  matrix,
+};
+
+export type BenchmarkView = typeof benchmarkView;
