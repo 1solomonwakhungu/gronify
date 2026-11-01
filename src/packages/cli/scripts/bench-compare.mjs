@@ -42,6 +42,8 @@ const usage = `Usage: node scripts/bench-compare.mjs [options]
 
 const DEFAULT_TERM = "timeout";
 const TIE_THRESHOLD = 0.05;
+// The piped-sink variant is repeated only where it stays cheap: the deep documents and records up to this size.
+const PIPED_MAX_MB = 100;
 const here = fileURLToPath(new URL(".", import.meta.url));
 const cliRoot = resolve(here, "..");
 const cli = join(cliRoot, "dist/index.js");
@@ -247,6 +249,8 @@ const OPS = [
     label: "flatten, output piped to wc -c",
     input: "json",
     tools: Object.fromEntries(Object.entries(FLATTEN_TOOLS).map(([tool, command]) => [tool, `${command} | wc -c`])),
+    // `wc -c` prints the byte count, which is checked so a tool that exits 0 with truncated output does not count.
+    capture: "bytes",
   },
   {
     key: "search",
@@ -751,7 +755,7 @@ async function runWorkload({ family, inputId, inputLabel, operation, file, gronF
   console.error(`\n== ${operation.key} / ${inputId} (${(bytes / 1048576).toFixed(0)} MB fed to the tool, ${(jsonBytes / 1048576).toFixed(0)} MB JSON, best of ${runs})`);
   const samples = new Map(plan.map((tool) => [tool, []]));
   const failures = new Map();
-  const retried = new Set();
+  const retried = new Map();
   const runOptions = {
     timeoutMs: options.timeout * 1000,
     maxRssBytes: options.maxRssGb * 1024 ** 3,
@@ -775,8 +779,8 @@ async function runWorkload({ family, inputId, inputLabel, operation, file, gronF
         console.error(`   ${tool}: killed by the OS, retrying once`);
         warmCache(inputPath);
         const retry = await runOnce(command, runOptions);
-        if (retry.kind === "ok") retried.add(tool);
-        outcome = retry;
+        retried.set(tool, (retried.get(tool) ?? 0) + 1);
+        outcome = retry.kind === "ok" ? retry : { ...retry, note: `${retry.note} (retried once after an OS kill)` };
       }
       if (outcome.kind === "ok") samples.get(tool).push(outcome);
       else failures.set(tool, outcome);
@@ -799,8 +803,25 @@ async function runWorkload({ family, inputId, inputLabel, operation, file, gronF
     entry.seconds = Number(best.seconds.toFixed(4));
     entry.peakRssBytes = best.rssBytes;
     entry.samples = taken.map((s) => Number(s.seconds.toFixed(4)));
-    if (operation.capture === "count") entry.matchCount = Number(best.output);
-    if (retried.has(tool)) entry.note = "an earlier attempt was killed by the OS (likely out of memory); this run is the retry";
+    if (operation.capture === "count") {
+      const seen = new Set(taken.map((s) => Number(s.output)));
+      entry.matchCount = seen.size === 1 ? Number(best.output) : null;
+    }
+    if (operation.capture === "bytes") {
+      const seen = new Set(taken.map((s) => Number(s.output)));
+      const size = Number(best.output);
+      if (seen.size === 1 && size > 0) entry.outputBytes = size;
+      else {
+        entry.status = "failed";
+        entry.reasonCode = "wrong-output";
+        entry.note = seen.size === 1 ? "wrote no output" : `output size differed between runs (${[...seen].join(", ")} bytes)`;
+        entry.seconds = null;
+        entry.peakRssBytes = null;
+        delete entry.samples;
+        continue;
+      }
+    }
+    if (retried.has(tool)) entry.note = `${retried.get(tool)} of ${taken.length + retried.get(tool)} attempts killed by the OS (likely out of memory), each retried once`;
   }
 
   // Search: a tool that reports the wrong number of matches did not do the job, whatever its speed.
@@ -810,7 +831,10 @@ async function runWorkload({ family, inputId, inputLabel, operation, file, gronF
     const expected = expectedMatches ?? mode;
     for (const r of entries.values()) {
       if (r.status === "ok" && r.matchCount !== expected) {
-        r.note = `reported ${r.matchCount} matches, expected ${expected} (${formatSeconds(r.seconds)} measured)`;
+        r.note =
+          r.matchCount === null
+            ? `reported different match counts across runs, expected ${expected} (${formatSeconds(r.seconds)} measured)`
+            : `reported ${r.matchCount} matches, expected ${expected} (${formatSeconds(r.seconds)} measured)`;
         r.status = "failed";
         r.reasonCode = "wrong-output";
         r.seconds = null;
@@ -869,6 +893,8 @@ function cell(result) {
 
 function renderMarkdown(report, fullCommands) {
   const { options } = report;
+  const tiePercent = (options.tieThreshold ?? TIE_THRESHOLD) * 100;
+  const pipedMaxMB = options.pipedMaxMB ?? PIPED_MAX_MB;
   const lines = [];
   const push = (text = "") => lines.push(text);
   push("# Gronify benchmarks");
@@ -894,9 +920,13 @@ function renderMarkdown(report, fullCommands) {
   push("  - `deep`: `{\"a\":{\"a\":{...1}}}` nested N levels. Flattening it emits N lines whose paths grow with the depth, so the output is quadratic in N.");
   push("  - `bigint`: records with integers beyond 2^53 (12345678901234567890 and up) and decimals with trailing zeros (1.10).");
   push("- **Timing**: wall time of `bash -c '<command>'` under `/usr/bin/time -l`, which includes process start-up (for gronify, Node start-up). Output goes to `/dev/null`. The search workloads print one number and the capped workloads ten lines; those few bytes are captured to validate the run.");
-  push("- **Runs**: the reported time is the best of N runs, where N depends on the size of the JSON input (also for unflatten, whose actual input is the larger gron form): 5 runs up to 16 MB (3 if the first run takes over 10 s), 3 runs above, at every size including 1 GB. All run times are in the JSON (`samples`). A run that fails ends that tool's measurement for the workload.");
+  push(
+    options.runsOverride
+      ? `- **Runs**: the reported time is the best of ${options.runsOverride} runs (set with \`--runs\`) for every workload. All run times are in the JSON (\`samples\`). A run that fails ends that tool's measurement for the workload.`
+      : "- **Runs**: the reported time is the best of N runs, where N depends on the size of the JSON input (also for unflatten, whose actual input is the larger gron form): 5 runs up to 16 MB (3 if the first run takes over 10 s), 3 runs above, at every size including 1 GB. All run times are in the JSON (`samples`). A run that fails ends that tool's measurement for the workload.",
+  );
   push("- **Fairness of order and cache**: the input is read once to warm the page cache immediately before every single run, and the tool order rotates from round to round, so no tool always runs first or benefits from another tool's warm-up.");
-  push(`- **Ties**: results within ${TIE_THRESHOLD * 100}% of the fastest time in a column are a tie. They are not bold and carry \`isTie\` in the JSON; only a result that is more than ${TIE_THRESHOLD * 100}% ahead of every other is bold (\`isFastest\`).`);
+  push(`- **Ties**: results within ${tiePercent}% of the fastest time in a column are a tie. They are not bold and carry \`isTie\` in the JSON; only a result that is more than ${tiePercent}% ahead of every other is bold (\`isFastest\`).`);
   push("- **Peak RSS** is the maximum resident set size reported by `/usr/bin/time -l`, which for a pipeline is the largest single process in it (not the sum), taken from the same run as the reported time.");
   push(`- **Limits**: each run is killed after ${options.timeoutSeconds} s (status \`timeout\`) or when its process tree exceeds ${options.maxRssGB} GB (status \`failed\`, to protect the machine from tools that load the whole document). A SIGKILL that the script did not send is reported as an OS out-of-memory kill; it is retried once, and skips are not cascaded from a single OS kill. Otherwise a tool that fails or times out at one size is not run at larger sizes. A tool whose previous size, scaled linearly, would take more than ${options.projectSkip}x the timeout is also not run (\`over-budget\`, with the projection in the note), and so is everything once the ${options.budgetMinutes} min total budget is used up; these are time-budget shortcuts, not measurements.`);
   push("- **Fair equivalents**: each tool is run the way its documentation suggests for the job, in its default mode unless stated. Notes on the choices:");
@@ -906,12 +936,12 @@ function renderMarkdown(report, fullCommands) {
   push("  - jq and jaq do not produce gron. For jq the closest honest equivalent is `jq --stream -c .`, which emits one `[path, leaf]` event per leaf (plus closing events) with constant memory. jaq has no `--stream`, so it runs `paths(scalars|true) as $p | [$p, getpath($p)]` on the fully parsed document. That is the fastest idiom that still reports every leaf: plain `paths(scalars)` is faster still but silently drops null and false values, and a hand-written `path(..)` filter is about 1.8x slower. It omits empty containers. Their output is not byte-compatible with gron, and they cannot read gron statements, so they are not run for unflatten.");
   push("  - Capped workloads compare early exit: gronify `--limit`/`--max-count` stop reading the input; the others run through `head -n 10` or `grep -m 10`, which stops the pipeline only if the producer notices the closed pipe. Tools that must read and parse the whole document first (gron, jaq) cannot exit early. The matches are near the start of the file, which is the favorable case for early exit.");
   push("  - The unflatten input is `fastgron --semicolon` output (gron-format statements in document order) for every tool, since gron needs the trailing semicolons. gronify and `fastgron -u --no-indent --no-newline` write compact JSON. gron has no compact mode and writes indented JSON, so it writes more bytes to `/dev/null` than the others.");
-  push("  - **Output sink**: the main flatten workloads write to `/dev/null`, which costs nothing. Some tools behave very differently when the output is consumed through a pipe (a deeply nested document can be several times slower into a pipe than into /dev/null), so `flatten, output piped to wc -c` repeats flatten with `| wc -c` for the deep documents and the records up to 100 MB. Read the two tables together; neither alone describes what a user piping into grep or a file will see.");
+  push("  - **Output sink**: the main flatten workloads write to `/dev/null`, which costs nothing. Some tools behave very differently when the output is consumed through a pipe (a deeply nested document can be several times slower into a pipe than into /dev/null), so `flatten, output piped to wc -c` repeats flatten with `| wc -c` for the deep documents and the records up to " + pipedMaxMB + " MB. Read the two tables together; neither alone describes what a user piping into grep or a file will see.");
   push("- **Correctness checks** are run on small documents before timing and are listed at the end of this file. They are not timed.");
   push();
   push("## Results");
   push();
-  push(`Each cell is \`wall time / peak RSS\`; the fastest time in a column is **bold** unless another result is within ${TIE_THRESHOLD * 100}% of it (a tie). Lower is better. Results that were not measured say why: not installed, unsupported, over budget, or after an earlier failure.`);
+  push(`Each cell is \`wall time / peak RSS\`; the fastest time in a column is **bold** unless another result is within ${tiePercent}% of it (a tie). Lower is better. Results that were not measured say why: not installed, unsupported, over budget, or after an earlier failure.`);
   const byOp = new Map();
   for (const workload of report.workloads) {
     if (!byOp.has(workload.operation)) byOp.set(workload.operation, []);
@@ -994,7 +1024,20 @@ for (const [tool, template] of Object.entries(ROUNDTRIP)) if (typeof template ==
 if (options.renderOnly) {
   const saved = JSON.parse(readFileSync(options.renderOnly, "utf8"));
   if (!saved.options) throw new Error(`${options.renderOnly} has no recorded options; it was written by an older version of this script`);
-  writeFileSync(options.outMd, renderMarkdown(saved, commandRows));
+  // Render the commands that were measured, not the current templates, so the Markdown always agrees with the JSON.
+  const savedRows = [];
+  const seen = new Set();
+  for (const workload of saved.workloads) {
+    const label = OPS.find((operation) => operation.key === workload.operation)?.label ?? workload.operation;
+    for (const result of workload.results) {
+      const key = `${label}|${result.tool}`;
+      if (!result.command || seen.has(key)) continue;
+      seen.add(key);
+      savedRows.push([[label, result.tool], result.command]);
+    }
+  }
+  const roundTripRows = commandRows.filter(([[label]]) => label === "round-trip check");
+  writeFileSync(options.outMd, renderMarkdown(saved, [...savedRows, ...roundTripRows]));
   console.error(`Wrote ${options.outMd}`);
   process.exit(0);
 }
@@ -1056,8 +1099,6 @@ try {
   };
   const byKey = (...keys) => keys.map(op);
   const humanSize = (mb) => (mb >= 1000 && mb % 1000 === 0 ? `${mb / 1000} GB` : `${mb} MB`);
-  // The piped-sink variant is repeated only where it stays cheap: the deep documents and records up to 100 MB.
-  const PIPED_MAX_MB = 100;
 
   for (const mb of options.sizes) {
     const file = join(dir, `records-${mb}mb.json`);
@@ -1121,6 +1162,7 @@ try {
       projectSkip: options.projectSkip,
       runsOverride: options.runs,
       tieThreshold: TIE_THRESHOLD,
+      pipedMaxMB: PIPED_MAX_MB,
       sizesMB: options.sizes,
       keyedMB: options.keyed,
       deepLevels: options.deep,
