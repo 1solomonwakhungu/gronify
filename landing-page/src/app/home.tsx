@@ -106,7 +106,7 @@ const buildComparisons = (facts: ComparisonFacts) => [
   {
     kicker: "vs. gron & fastgron",
     title: "Cross-platform npm install, built-in search, and streaming ungron",
-    description: `A cross-platform gron and fastgron alternative for macOS, Linux, and Windows: install via npm with built-in regex search and zero external grep or native binary setup. Unlike gron, Gronify preserves document order by default and streams single-document flatten and unflatten in one pass: ${facts.unflatten} (Apple M5 Pro, Node.js 22, from the benchmark below).`,
+    description: `A cross-platform gron and fastgron alternative for macOS, Linux, and Windows: install via npm with built-in regex search and zero external grep or native binary setup. Unlike gron, Gronify preserves document order by default and streams single-document flatten and unflatten in one pass: ${facts.unflatten} (${facts.measuredOn}, from the benchmark below).`,
     label: "Streaming unflatten from gron paths to an atomic output file",
     lines: [
       { kind: "command", text: "gronify -o restored.json unflatten archive.gron" },
@@ -116,7 +116,7 @@ const buildComparisons = (facts: ComparisonFacts) => [
   {
     kicker: "vs. raw grep on JSON",
     title: "Full path context on minified or deeply nested payloads",
-    description: `Running grep on minified JSON dumps an entire multi-megabyte line; on formatted JSON it prints an isolated key or value without parent array indexes. Gronify emits the complete root-to-leaf path on every line and ${facts.deep} without call-stack overflow (Apple M5 Pro, Node.js 22).`,
+    description: `Running grep on minified JSON dumps an entire multi-megabyte line; on formatted JSON it prints an isolated key or value without parent array indexes. Gronify emits the complete root-to-leaf path on every line and ${facts.deep} without call-stack overflow (${facts.measuredOn}).`,
     label: "Finding the exact parent path inside minified nested JSON",
     lines: [
       { kind: "command", text: 'gronify search cluster-state.min.json "unhealthy"' },
@@ -146,7 +146,7 @@ const buildComparisons = (facts: ComparisonFacts) => [
 const buildAgentRivers = (facts: ComparisonFacts) => [
   {
     heading: "Count and cap matches before reading into prompt context",
-    description: `Large JSON exports quickly exhaust an LLM context window if read whole. Pass --no-color, check match cardinality with --count first, then sample matches with -m or inspect schema shape with flatten --limit. Because Gronify stops reading the input stream at the cap, in our benchmark ${facts.capped} (Apple M5 Pro, Node.js 22).`,
+    description: `Large JSON exports quickly exhaust an LLM context window if read whole. Pass --no-color, check match cardinality with --count first, then sample matches with -m or inspect schema shape with flatten --limit. Because Gronify stops reading the input stream at the cap, in our benchmark ${facts.capped} (${facts.measuredOn}).`,
     label: "Progressive JSON narrowing for AI coding agents",
     lines: [
       { kind: "command", text: "gronify --no-color search payload.json error --count" },
