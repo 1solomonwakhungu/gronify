@@ -1,0 +1,1686 @@
+{
+  "generatedAt": "2026-11-01T17:31:14.514Z",
+  "machine": {
+    "cpu": "Apple M5 Pro",
+    "memGB": 48,
+    "os": "macOS 26.6.1 (Darwin 25.6.0, arm64)",
+    "node": "v22.23.1"
+  },
+  "tools": {
+    "gronify": "1.2.0",
+    "gron": "0.7.1",
+    "fastgron": "0.7.7",
+    "jq": "1.7.1-apple",
+    "jaq": "3.1.2"
+  },
+  "workloads": [
+    {
+      "id": "flatten-records-1mb",
+      "operation": "flatten",
+      "label": "flatten: records 1 MB",
+      "inputBytes": 1116969,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify flatten $INPUT",
+          "seconds": 0.052,
+          "peakRssBytes": 61997056,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT",
+          "seconds": 0.096,
+          "peakRssBytes": 56492032,
+          "status": "ok"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT",
+          "seconds": 0.074,
+          "peakRssBytes": 56737792,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT",
+          "seconds": 0.009,
+          "peakRssBytes": 10354688,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT",
+          "seconds": 0.066,
+          "peakRssBytes": 2473984,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT",
+          "seconds": 0.26,
+          "peakRssBytes": 18399232,
+          "status": "ok"
+        }
+      ]
+    },
+    {
+      "id": "search-records-1mb",
+      "operation": "search",
+      "label": "search (count matches): records 1 MB",
+      "inputBytes": 1116969,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify search $INPUT $TERM --count --case-sensitive",
+          "seconds": 0.051,
+          "peakRssBytes": 59867136,
+          "status": "ok",
+          "note": "count 26"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT | grep -c $TERM",
+          "seconds": 0.104,
+          "peakRssBytes": 58376192,
+          "status": "ok",
+          "note": "count 26"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT | grep -c $TERM",
+          "seconds": 0.084,
+          "peakRssBytes": 55558144,
+          "status": "ok",
+          "note": "count 26"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT | grep -c $TERM",
+          "seconds": 0.018,
+          "peakRssBytes": 10338304,
+          "status": "ok",
+          "note": "count 26"
+        },
+        {
+          "tool": "fastgron -F",
+          "command": "fastgron -F $TERM $INPUT | wc -l",
+          "seconds": 0.01,
+          "peakRssBytes": 8257536,
+          "status": "ok",
+          "note": "count 26"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT | grep -c $TERM",
+          "seconds": 0.072,
+          "peakRssBytes": 2408448,
+          "status": "ok",
+          "note": "count 26"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT | grep -c $TERM",
+          "seconds": 0.281,
+          "peakRssBytes": 18399232,
+          "status": "ok",
+          "note": "count 26"
+        }
+      ]
+    },
+    {
+      "id": "unflatten-records-1mb",
+      "operation": "unflatten",
+      "label": "unflatten (gron to JSON): records 1 MB",
+      "inputBytes": 2375313,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify unflatten $GRON",
+          "seconds": 0.058,
+          "peakRssBytes": 63242240,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron -u $GRON",
+          "seconds": 0.372,
+          "peakRssBytes": 2011086848,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron -u $GRON",
+          "seconds": 0.014,
+          "peakRssBytes": 16515072,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jq reads JSON, not gron statements"
+        },
+        {
+          "tool": "jaq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jaq reads JSON, not gron statements"
+        }
+      ]
+    },
+    {
+      "id": "capped-flatten-records-1mb",
+      "operation": "capped-flatten",
+      "label": "capped flatten (first 10 lines): records 1 MB",
+      "inputBytes": 1116969,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify flatten --limit 10 $INPUT",
+          "seconds": 0.037,
+          "peakRssBytes": 55771136,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT | head -n 10",
+          "seconds": 0.053,
+          "peakRssBytes": 50970624,
+          "status": "ok"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT | head -n 10",
+          "seconds": 0.033,
+          "peakRssBytes": 48742400,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT | head -n 10",
+          "seconds": 0.008,
+          "peakRssBytes": 10305536,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT | head -n 10",
+          "seconds": 0.006,
+          "peakRssBytes": 2408448,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT | head -n 10",
+          "seconds": 0.011,
+          "peakRssBytes": 17645568,
+          "status": "ok"
+        }
+      ]
+    },
+    {
+      "id": "capped-search-records-1mb",
+      "operation": "capped-search",
+      "label": "capped search (first 10 matches): records 1 MB",
+      "inputBytes": 1116969,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify search $INPUT $TERM --case-sensitive --max-count 10",
+          "seconds": 0.043,
+          "peakRssBytes": 59883520,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT | grep -m 10 $TERM",
+          "seconds": 0.066,
+          "peakRssBytes": 53985280,
+          "status": "ok"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT | grep -m 10 $TERM",
+          "seconds": 0.047,
+          "peakRssBytes": 53952512,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT | grep -m 10 $TERM",
+          "seconds": 0.01,
+          "peakRssBytes": 10305536,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron -F",
+          "command": "fastgron -F $TERM $INPUT | head -n 10",
+          "seconds": 0.009,
+          "peakRssBytes": 8273920,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT | grep -m 10 $TERM",
+          "seconds": 0.023,
+          "peakRssBytes": 2408448,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT | grep -m 10 $TERM",
+          "seconds": 0.086,
+          "peakRssBytes": 17858560,
+          "status": "ok"
+        }
+      ]
+    },
+    {
+      "id": "flatten-records-10mb",
+      "operation": "flatten",
+      "label": "flatten: records 10 MB",
+      "inputBytes": 11192936,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify flatten $INPUT",
+          "seconds": 0.106,
+          "peakRssBytes": 71516160,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT",
+          "seconds": 0.905,
+          "peakRssBytes": 474447872,
+          "status": "ok"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT",
+          "seconds": 0.65,
+          "peakRssBytes": 470712320,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT",
+          "seconds": 0.028,
+          "peakRssBytes": 29474816,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT",
+          "seconds": 0.583,
+          "peakRssBytes": 2473984,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT",
+          "seconds": 2.494,
+          "peakRssBytes": 148094976,
+          "status": "ok"
+        }
+      ]
+    },
+    {
+      "id": "search-records-10mb",
+      "operation": "search",
+      "label": "search (count matches): records 10 MB",
+      "inputBytes": 11192936,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify search $INPUT $TERM --count --case-sensitive",
+          "seconds": 0.112,
+          "peakRssBytes": 67633152,
+          "status": "ok",
+          "note": "count 289"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT | grep -c $TERM",
+          "seconds": 0.985,
+          "peakRssBytes": 496156672,
+          "status": "ok",
+          "note": "count 289"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT | grep -c $TERM",
+          "seconds": 0.716,
+          "peakRssBytes": 418578432,
+          "status": "ok",
+          "note": "count 289"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT | grep -c $TERM",
+          "seconds": 0.113,
+          "peakRssBytes": 29458432,
+          "status": "ok",
+          "note": "count 289"
+        },
+        {
+          "tool": "fastgron -F",
+          "command": "fastgron -F $TERM $INPUT | wc -l",
+          "seconds": 0.032,
+          "peakRssBytes": 27459584,
+          "status": "ok",
+          "note": "count 289"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT | grep -c $TERM",
+          "seconds": 0.617,
+          "peakRssBytes": 2408448,
+          "status": "ok",
+          "note": "count 289"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT | grep -c $TERM",
+          "seconds": 2.745,
+          "peakRssBytes": 148111360,
+          "status": "ok",
+          "note": "count 289"
+        }
+      ]
+    },
+    {
+      "id": "unflatten-records-10mb",
+      "operation": "unflatten",
+      "label": "unflatten (gron to JSON): records 10 MB",
+      "inputBytes": 24429341,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify unflatten $GRON",
+          "seconds": 0.115,
+          "peakRssBytes": 94863360,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron -u $GRON",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "failed",
+          "note": "exit 137: /bin/bash: line 1: 99210 Killed: 9 gron -u '/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/gronify-compare-P7OgrZ/records-10mb.gron'"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron -u $GRON",
+          "seconds": 0.082,
+          "peakRssBytes": 93159424,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jq reads JSON, not gron statements"
+        },
+        {
+          "tool": "jaq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jaq reads JSON, not gron statements"
+        }
+      ]
+    },
+    {
+      "id": "capped-flatten-records-10mb",
+      "operation": "capped-flatten",
+      "label": "capped flatten (first 10 lines): records 10 MB",
+      "inputBytes": 11192936,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify flatten --limit 10 $INPUT",
+          "seconds": 0.05,
+          "peakRssBytes": 57098240,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT | head -n 10",
+          "seconds": 0.497,
+          "peakRssBytes": 387350528,
+          "status": "ok"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT | head -n 10",
+          "seconds": 0.239,
+          "peakRssBytes": 371736576,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT | head -n 10",
+          "seconds": 0.013,
+          "peakRssBytes": 29425664,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT | head -n 10",
+          "seconds": 0.007,
+          "peakRssBytes": 2408448,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT | head -n 10",
+          "seconds": 0.069,
+          "peakRssBytes": 140492800,
+          "status": "ok"
+        }
+      ]
+    },
+    {
+      "id": "capped-search-records-10mb",
+      "operation": "capped-search",
+      "label": "capped search (first 10 matches): records 10 MB",
+      "inputBytes": 11192936,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify search $INPUT $TERM --case-sensitive --max-count 10",
+          "seconds": 0.044,
+          "peakRssBytes": 60882944,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT | grep -m 10 $TERM",
+          "seconds": 0.527,
+          "peakRssBytes": 378617856,
+          "status": "ok"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT | grep -m 10 $TERM",
+          "seconds": 0.266,
+          "peakRssBytes": 367820800,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT | grep -m 10 $TERM",
+          "seconds": 0.015,
+          "peakRssBytes": 29425664,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron -F",
+          "command": "fastgron -F $TERM $INPUT | head -n 10",
+          "seconds": 0.034,
+          "peakRssBytes": 27459584,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT | grep -m 10 $TERM",
+          "seconds": 0.028,
+          "peakRssBytes": 2408448,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT | grep -m 10 $TERM",
+          "seconds": 0.146,
+          "peakRssBytes": 140722176,
+          "status": "ok"
+        }
+      ]
+    },
+    {
+      "id": "flatten-records-100mb",
+      "operation": "flatten",
+      "label": "flatten: records 100 MB",
+      "inputBytes": 105584449,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify flatten $INPUT",
+          "seconds": 0.979,
+          "peakRssBytes": 90718208,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT",
+          "seconds": 10.688,
+          "peakRssBytes": 4130816000,
+          "status": "ok"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT",
+          "seconds": 7.522,
+          "peakRssBytes": 3950788608,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT",
+          "seconds": 0.192,
+          "peakRssBytes": 208125952,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT",
+          "seconds": 5.719,
+          "peakRssBytes": 2490368,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT",
+          "seconds": 23.516,
+          "peakRssBytes": 1357791232,
+          "status": "ok"
+        }
+      ]
+    },
+    {
+      "id": "search-records-100mb",
+      "operation": "search",
+      "label": "search (count matches): records 100 MB",
+      "inputBytes": 105584449,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify search $INPUT $TERM --count --case-sensitive",
+          "seconds": 0.641,
+          "peakRssBytes": 74956800,
+          "status": "ok",
+          "note": "count 2797"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT | grep -c $TERM",
+          "seconds": 9.512,
+          "peakRssBytes": 3985784832,
+          "status": "ok",
+          "note": "count 2797"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT | grep -c $TERM",
+          "seconds": 6.554,
+          "peakRssBytes": 3906502656,
+          "status": "ok",
+          "note": "count 2797"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT | grep -c $TERM",
+          "seconds": 0.901,
+          "peakRssBytes": 208125952,
+          "status": "ok",
+          "note": "count 2797"
+        },
+        {
+          "tool": "fastgron -F",
+          "command": "fastgron -F $TERM $INPUT | wc -l",
+          "seconds": 0.235,
+          "peakRssBytes": 206520320,
+          "status": "ok",
+          "note": "count 2797"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT | grep -c $TERM",
+          "seconds": 5.782,
+          "peakRssBytes": 2424832,
+          "status": "ok",
+          "note": "count 2797"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT | grep -c $TERM",
+          "seconds": 25.712,
+          "peakRssBytes": 1357807616,
+          "status": "ok",
+          "note": "count 2797"
+        }
+      ]
+    },
+    {
+      "id": "unflatten-records-100mb",
+      "operation": "unflatten",
+      "label": "unflatten (gron to JSON): records 100 MB",
+      "inputBytes": 236097192,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify unflatten $GRON",
+          "seconds": 0.84,
+          "peakRssBytes": 118079488,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron -u $GRON",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "skipped after failed on the smaller records 10 MB input"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron -u $GRON",
+          "seconds": 0.854,
+          "peakRssBytes": 808992768,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jq reads JSON, not gron statements"
+        },
+        {
+          "tool": "jaq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jaq reads JSON, not gron statements"
+        }
+      ]
+    },
+    {
+      "id": "capped-flatten-records-100mb",
+      "operation": "capped-flatten",
+      "label": "capped flatten (first 10 lines): records 100 MB",
+      "inputBytes": 105584449,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify flatten --limit 10 $INPUT",
+          "seconds": 0.039,
+          "peakRssBytes": 56639488,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT | head -n 10",
+          "seconds": 5.326,
+          "peakRssBytes": 3341320192,
+          "status": "ok"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT | head -n 10",
+          "seconds": 2.113,
+          "peakRssBytes": 3281780736,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT | head -n 10",
+          "seconds": 0.05,
+          "peakRssBytes": 208093184,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT | head -n 10",
+          "seconds": 0.006,
+          "peakRssBytes": 2408448,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT | head -n 10",
+          "seconds": 0.513,
+          "peakRssBytes": 1286488064,
+          "status": "ok"
+        }
+      ]
+    },
+    {
+      "id": "capped-search-records-100mb",
+      "operation": "capped-search",
+      "label": "capped search (first 10 matches): records 100 MB",
+      "inputBytes": 105584449,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify search $INPUT $TERM --case-sensitive --max-count 10",
+          "seconds": 0.044,
+          "peakRssBytes": 60669952,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT | grep -m 10 $TERM",
+          "seconds": 5.272,
+          "peakRssBytes": 3349921792,
+          "status": "ok"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT | grep -m 10 $TERM",
+          "seconds": 2.2,
+          "peakRssBytes": 3277291520,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT | grep -m 10 $TERM",
+          "seconds": 0.052,
+          "peakRssBytes": 208076800,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron -F",
+          "command": "fastgron -F $TERM $INPUT | head -n 10",
+          "seconds": 0.266,
+          "peakRssBytes": 206503936,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT | grep -m 10 $TERM",
+          "seconds": 0.048,
+          "peakRssBytes": 2457600,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT | grep -m 10 $TERM",
+          "seconds": 2.254,
+          "peakRssBytes": 1284505600,
+          "status": "ok"
+        }
+      ]
+    },
+    {
+      "id": "flatten-records-1000mb",
+      "operation": "flatten",
+      "label": "flatten: records 1 GB",
+      "inputBytes": 1049407501,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify flatten $INPUT",
+          "seconds": 5.735,
+          "peakRssBytes": 84918272,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "timeout",
+          "note": "killed after 120 s timeout (peak observed 18.95 GB)"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "timeout",
+          "note": "killed after 120 s timeout (peak observed 19.37 GB)"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT",
+          "seconds": 1.82,
+          "peakRssBytes": 1991639040,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT",
+          "seconds": 54.478,
+          "peakRssBytes": 2490368,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "timeout",
+          "note": "killed after 120 s timeout (peak observed 12.18 GB)"
+        }
+      ]
+    },
+    {
+      "id": "search-records-1000mb",
+      "operation": "search",
+      "label": "search (count matches): records 1 GB",
+      "inputBytes": 1049407501,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify search $INPUT $TERM --count --case-sensitive",
+          "seconds": 5.951,
+          "peakRssBytes": 76070912,
+          "status": "ok",
+          "note": "count 28103"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT | grep -c $TERM",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "not run: gron already timed out on this input in flatten (it parses the whole document first)"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT | grep -c $TERM",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "not run: gron --no-sort already timed out on this input in flatten (it parses the whole document first)"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT | grep -c $TERM",
+          "seconds": 8.293,
+          "peakRssBytes": 1991639040,
+          "status": "ok",
+          "note": "count 28103"
+        },
+        {
+          "tool": "fastgron -F",
+          "command": "fastgron -F $TERM $INPUT | wc -l",
+          "seconds": 2.245,
+          "peakRssBytes": 1991622656,
+          "status": "ok",
+          "note": "count 28103"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT | grep -c $TERM",
+          "seconds": 59.135,
+          "peakRssBytes": 2424832,
+          "status": "ok",
+          "note": "count 28103"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT | grep -c $TERM",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "not run: jaq already timed out on this input in flatten (it parses the whole document first)"
+        }
+      ]
+    },
+    {
+      "id": "unflatten-records-1000mb",
+      "operation": "unflatten",
+      "label": "unflatten (gron to JSON): records 1 GB",
+      "inputBytes": 2404194438,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify unflatten $GRON",
+          "seconds": 6.1,
+          "peakRssBytes": 97927168,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron -u $GRON",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "skipped after failed on the smaller records 10 MB input"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron -u $GRON",
+          "seconds": 6.176,
+          "peakRssBytes": 8008974336,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jq reads JSON, not gron statements"
+        },
+        {
+          "tool": "jaq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jaq reads JSON, not gron statements"
+        }
+      ]
+    },
+    {
+      "id": "capped-flatten-records-1000mb",
+      "operation": "capped-flatten",
+      "label": "capped flatten (first 10 lines): records 1 GB",
+      "inputBytes": 1049407501,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify flatten --limit 10 $INPUT",
+          "seconds": 0.035,
+          "peakRssBytes": 56770560,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT | head -n 10",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "not run: gron already timed out on this input in flatten (it parses the whole document first)"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT | head -n 10",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "not run: gron --no-sort already timed out on this input in flatten (it parses the whole document first)"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT | head -n 10",
+          "seconds": 0.362,
+          "peakRssBytes": 1991622656,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT | head -n 10",
+          "seconds": 0.007,
+          "peakRssBytes": 2408448,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT | head -n 10",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "not run: jaq already timed out on this input in flatten (it parses the whole document first)"
+        }
+      ]
+    },
+    {
+      "id": "capped-search-records-1000mb",
+      "operation": "capped-search",
+      "label": "capped search (first 10 matches): records 1 GB",
+      "inputBytes": 1049407501,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify search $INPUT $TERM --case-sensitive --max-count 10",
+          "seconds": 0.042,
+          "peakRssBytes": 60768256,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT | grep -m 10 $TERM",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "not run: gron already timed out on this input in flatten (it parses the whole document first)"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT | grep -m 10 $TERM",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "not run: gron --no-sort already timed out on this input in flatten (it parses the whole document first)"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT | grep -m 10 $TERM",
+          "seconds": 0.365,
+          "peakRssBytes": 1991622656,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron -F",
+          "command": "fastgron -F $TERM $INPUT | head -n 10",
+          "seconds": 1.334,
+          "peakRssBytes": 1991622656,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT | grep -m 10 $TERM",
+          "seconds": 0.028,
+          "peakRssBytes": 2408448,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT | grep -m 10 $TERM",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "not run: jaq already timed out on this input in flatten (it parses the whole document first)"
+        }
+      ]
+    },
+    {
+      "id": "unflatten-keyed-10mb",
+      "operation": "unflatten",
+      "label": "unflatten (gron to JSON): keyed object 10 MB",
+      "inputBytes": 24437442,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify unflatten $GRON",
+          "seconds": 0.109,
+          "peakRssBytes": 94961664,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron -u $GRON",
+          "seconds": 1.266,
+          "peakRssBytes": 1829453824,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron -u $GRON",
+          "seconds": 0.079,
+          "peakRssBytes": 93339648,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jq reads JSON, not gron statements"
+        },
+        {
+          "tool": "jaq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jaq reads JSON, not gron statements"
+        }
+      ]
+    },
+    {
+      "id": "unflatten-keyed-100mb",
+      "operation": "unflatten",
+      "label": "unflatten (gron to JSON): keyed object 100 MB",
+      "inputBytes": 230981739,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify unflatten $GRON",
+          "seconds": 0.666,
+          "peakRssBytes": 96157696,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron -u $GRON",
+          "seconds": 11.927,
+          "peakRssBytes": 16625467392,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron -u $GRON",
+          "seconds": 0.744,
+          "peakRssBytes": 797966336,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jq reads JSON, not gron statements"
+        },
+        {
+          "tool": "jaq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jaq reads JSON, not gron statements"
+        }
+      ]
+    },
+    {
+      "id": "flatten-deep-5000",
+      "operation": "flatten",
+      "label": "flatten: 5000 levels deep",
+      "inputBytes": 30001,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify flatten $INPUT",
+          "seconds": 0.042,
+          "peakRssBytes": 59801600,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT",
+          "seconds": 0.336,
+          "peakRssBytes": 1383809024,
+          "status": "ok"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT",
+          "seconds": 0.295,
+          "peakRssBytes": 1417216000,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT",
+          "seconds": 0.012,
+          "peakRssBytes": 91176960,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT",
+          "seconds": 0.822,
+          "peakRssBytes": 2801664,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT",
+          "seconds": 2.524,
+          "peakRssBytes": 11403264,
+          "status": "ok"
+        }
+      ]
+    },
+    {
+      "id": "unflatten-deep-5000",
+      "operation": "unflatten",
+      "label": "unflatten (gron to JSON): 5000 levels deep",
+      "inputBytes": 25060010,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify unflatten $GRON",
+          "seconds": 0.138,
+          "peakRssBytes": 84459520,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron -u $GRON",
+          "seconds": 2.384,
+          "peakRssBytes": 5484363776,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron -u $GRON",
+          "seconds": 0.025,
+          "peakRssBytes": 34324480,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jq reads JSON, not gron statements"
+        },
+        {
+          "tool": "jaq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jaq reads JSON, not gron statements"
+        }
+      ]
+    },
+    {
+      "id": "flatten-deep-50000",
+      "operation": "flatten",
+      "label": "flatten: 50000 levels deep",
+      "inputBytes": 300001,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify flatten $INPUT",
+          "seconds": 0.069,
+          "peakRssBytes": 64307200,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "failed",
+          "note": "exit 3: failed to form statements: invalid character '{' exceeded max depth"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "failed",
+          "note": "exit 3: failed to form statements: invalid character '{' exceeded max depth"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "failed",
+          "note": "exit 139: /bin/bash: line 1: 84854 Segmentation fault: 11 fastgron '/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/gronify-compare-P7OgrZ/deep-50000.json'"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT",
+          "seconds": 82.054,
+          "peakRssBytes": 6455296,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "failed",
+          "note": "exit 134: thread 'main' (99337284) has overflowed its stack fatal runtime error: stack overflow, aborting /bin/bash: line 1: 25893 Abort trap: 6 jaq -c 'path(..) as $p | "
+        }
+      ]
+    },
+    {
+      "id": "flatten-bigint-10mb",
+      "operation": "flatten",
+      "label": "flatten: big integers 10 MB",
+      "inputBytes": 10643372,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify flatten $INPUT",
+          "seconds": 0.118,
+          "peakRssBytes": 69140480,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron $INPUT",
+          "seconds": 0.909,
+          "peakRssBytes": 480444416,
+          "status": "ok"
+        },
+        {
+          "tool": "gron --no-sort",
+          "command": "gron --no-sort $INPUT",
+          "seconds": 0.607,
+          "peakRssBytes": 433618944,
+          "status": "ok"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron $INPUT",
+          "seconds": 0.025,
+          "peakRssBytes": 28491776,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "jq --stream -c . $INPUT",
+          "seconds": 0.502,
+          "peakRssBytes": 2441216,
+          "status": "ok"
+        },
+        {
+          "tool": "jaq",
+          "command": "jaq -c 'path(..) as $p | getpath($p) | select(((type==\"object\" or type==\"array\") and length>0)|not) | [$p, .]' $INPUT",
+          "seconds": 2.544,
+          "peakRssBytes": 126599168,
+          "status": "ok"
+        }
+      ]
+    },
+    {
+      "id": "unflatten-bigint-10mb",
+      "operation": "unflatten",
+      "label": "unflatten (gron to JSON): big integers 10 MB",
+      "inputBytes": 23787392,
+      "results": [
+        {
+          "tool": "gronify",
+          "command": "gronify unflatten $GRON",
+          "seconds": 0.108,
+          "peakRssBytes": 93831168,
+          "status": "ok"
+        },
+        {
+          "tool": "gron",
+          "command": "gron -u $GRON",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "timeout",
+          "note": "killed after 120 s timeout (peak observed 23.06 GB)"
+        },
+        {
+          "tool": "fastgron",
+          "command": "fastgron -u $GRON",
+          "seconds": 0.073,
+          "peakRssBytes": 89620480,
+          "status": "ok"
+        },
+        {
+          "tool": "jq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jq reads JSON, not gron statements"
+        },
+        {
+          "tool": "jaq",
+          "command": "",
+          "seconds": null,
+          "peakRssBytes": null,
+          "status": "skipped",
+          "note": "jaq reads JSON, not gron statements"
+        }
+      ]
+    }
+  ],
+  "correctness": [
+    {
+      "check": "big integers and trailing-zero decimals survive flatten (12345678901234567890, 98765432109876543210, 1.10)",
+      "results": [
+        {
+          "tool": "gronify",
+          "pass": true,
+          "note": "all literals kept verbatim"
+        },
+        {
+          "tool": "gron",
+          "pass": true,
+          "note": "all literals kept verbatim"
+        },
+        {
+          "tool": "fastgron",
+          "pass": true,
+          "note": "all literals kept verbatim"
+        },
+        {
+          "tool": "jq",
+          "pass": true,
+          "note": "all literals kept verbatim"
+        },
+        {
+          "tool": "jaq",
+          "pass": true,
+          "note": "all literals kept verbatim"
+        }
+      ]
+    },
+    {
+      "check": "big integers and trailing-zero decimals survive a flatten and unflatten round trip",
+      "results": [
+        {
+          "tool": "gronify",
+          "pass": true,
+          "note": "all literals kept verbatim"
+        },
+        {
+          "tool": "gron",
+          "pass": true,
+          "note": "all literals kept verbatim"
+        },
+        {
+          "tool": "fastgron",
+          "pass": true,
+          "note": "all literals kept verbatim"
+        },
+        {
+          "tool": "jq",
+          "pass": true,
+          "note": "all literals kept verbatim"
+        },
+        {
+          "tool": "jaq",
+          "pass": null,
+          "note": "n/a: jaq has no inverse of a path/value listing: its setpath does not create missing parents"
+        }
+      ]
+    },
+    {
+      "check": "round trip equals the input (3.2 MB of generated records)",
+      "results": [
+        {
+          "tool": "gronify",
+          "pass": true,
+          "note": "equal, key order preserved"
+        },
+        {
+          "tool": "gron",
+          "pass": true,
+          "note": "equal, key order changed"
+        },
+        {
+          "tool": "fastgron",
+          "pass": true,
+          "note": "equal, key order changed"
+        },
+        {
+          "tool": "jq",
+          "pass": true,
+          "note": "equal, key order preserved"
+        },
+        {
+          "tool": "jaq",
+          "pass": null,
+          "note": "n/a: jaq has no inverse of a path/value listing: its setpath does not create missing parents"
+        }
+      ]
+    },
+    {
+      "check": "round trip equals the input (edge cases: empty containers, unicode, escapes, dotted/quoted/empty keys, -0, exponents)",
+      "results": [
+        {
+          "tool": "gronify",
+          "pass": true,
+          "note": "equal, key order preserved"
+        },
+        {
+          "tool": "gron",
+          "pass": true,
+          "note": "equal, key order changed"
+        },
+        {
+          "tool": "fastgron",
+          "pass": true,
+          "note": "equal, key order changed"
+        },
+        {
+          "tool": "jq",
+          "pass": true,
+          "note": "equal, key order preserved"
+        },
+        {
+          "tool": "jaq",
+          "pass": null,
+          "note": "n/a: jaq has no inverse of a path/value listing: its setpath does not create missing parents"
+        }
+      ]
+    },
+    {
+      "check": "unflatten of fastgron output equals the input (the gron statements used by the unflatten workloads)",
+      "results": [
+        {
+          "tool": "gronify",
+          "pass": true,
+          "note": "equal, key order preserved"
+        },
+        {
+          "tool": "gron",
+          "pass": true,
+          "note": "equal, key order changed"
+        },
+        {
+          "tool": "fastgron",
+          "pass": true,
+          "note": "equal, key order changed"
+        }
+      ]
+    },
+    {
+      "check": "search count matches the `gron | grep -c timeout` reference (84)",
+      "results": [
+        {
+          "tool": "gronify",
+          "pass": true,
+          "note": "count 84"
+        },
+        {
+          "tool": "gron",
+          "pass": true,
+          "note": "count 84"
+        },
+        {
+          "tool": "gron --no-sort",
+          "pass": true,
+          "note": "count 84"
+        },
+        {
+          "tool": "fastgron",
+          "pass": true,
+          "note": "count 84"
+        },
+        {
+          "tool": "fastgron -F",
+          "pass": true,
+          "note": "count 84"
+        },
+        {
+          "tool": "jq",
+          "pass": true,
+          "note": "count 84"
+        },
+        {
+          "tool": "jaq",
+          "pass": true,
+          "note": "count 84"
+        }
+      ]
+    },
+    {
+      "check": "capped flatten returns exactly 10 lines that match the start of the full output",
+      "results": [
+        {
+          "tool": "gronify",
+          "pass": true,
+          "note": "10 lines, same as the head of the uncapped output"
+        },
+        {
+          "tool": "gron",
+          "pass": true,
+          "note": "10 lines, same as the head of the uncapped output"
+        },
+        {
+          "tool": "gron --no-sort",
+          "pass": false,
+          "note": "10 lines, but not the same as the head of a second run of the uncapped command (output order is not stable)"
+        },
+        {
+          "tool": "fastgron",
+          "pass": true,
+          "note": "10 lines, same as the head of the uncapped output"
+        },
+        {
+          "tool": "jq",
+          "pass": true,
+          "note": "10 lines, same as the head of the uncapped output"
+        },
+        {
+          "tool": "jaq",
+          "pass": true,
+          "note": "10 lines, same as the head of the uncapped output"
+        }
+      ]
+    },
+    {
+      "check": "capped search returns exactly 10 lines that match the start of the full result",
+      "results": [
+        {
+          "tool": "gronify",
+          "pass": true,
+          "note": "10 lines, same as the head of the uncapped output"
+        },
+        {
+          "tool": "gron",
+          "pass": true,
+          "note": "10 lines, same as the head of the uncapped output"
+        },
+        {
+          "tool": "gron --no-sort",
+          "pass": true,
+          "note": "10 lines, same as the head of the uncapped output"
+        },
+        {
+          "tool": "fastgron",
+          "pass": true,
+          "note": "10 lines, same as the head of the uncapped output"
+        },
+        {
+          "tool": "fastgron -F",
+          "pass": true,
+          "note": "10 lines, same as the head of the uncapped output"
+        },
+        {
+          "tool": "jq",
+          "pass": true,
+          "note": "10 lines, same as the head of the uncapped output"
+        },
+        {
+          "tool": "jaq",
+          "pass": true,
+          "note": "10 lines, same as the head of the uncapped output"
+        }
+      ]
+    }
+  ]
+}
