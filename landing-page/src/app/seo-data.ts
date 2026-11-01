@@ -52,6 +52,22 @@ export const faqs: FaqItem[] = [
       "Gronify enforces strict JSON parsing—rejecting trailing commas, comments, single quotes, invalid UTF-8, and truncated inputs—and exits non-zero while reporting the exact byte offset, line, and column of the syntax error.",
   },
   {
+    question: "How does Gronify compare to jq, gron, and fastgron?",
+    answer:
+      "Use jq when you already know the exact schema and want expressive data transformations. Use Gronify when you want to discover unknown JSON structure, search keys and values in one pass without learning a query DSL, preserve exact 64-bit integers and trailing decimals that IEEE-754 floats round, or install a single cross-platform npm CLI on macOS, Linux, and Windows that streams single-document flatten, search, and unflatten in ~100 MB of memory on the default path.",
+  },
+  {
+    question: "How do I compare two JSON files using Gronify and system diff?",
+    answer:
+      "Gronify has no diff subcommand; instead, flatten --sort orders object keys deterministically by UTF-16 code unit at every level while keeping each key's subtree together and leaving array indexes in numeric order ([2] before [10]). Run diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten --sort new.json) in bash or zsh to compare two payloads path by path.",
+  },
+  {
+    question:
+      "How can AI coding agents explore large JSON files without flooding LLM context?",
+    answer:
+      "Agents should pass --no-color and narrow progressively: run gronify --no-color search file.json term --count to get a single match count first, sample matches with -m 20, or inspect top-level structure with flatten --limit 50. Because Gronify stops reading the input stream as soon as -m or --limit is reached, a search -m 5 on a 1.2 GiB JSON array finishes in 0.03 seconds at 57 MB RSS without dumping megabytes into the prompt. You can also install the gronify-json-flatten-search agent skill from skills.sh.",
+  },
+  {
     question: "Does Gronify send JSON payloads to an external service?",
     answer:
       "No. Gronify is 100% local-first. Every file and stdin stream is parsed, searched, and reconstructed directly on your own machine.",

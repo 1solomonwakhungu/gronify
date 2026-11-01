@@ -202,7 +202,7 @@
 .navBarInner {
   display: flex;
   align-items: center;
-  gap: var(--base-size-24);
+  gap: var(--base-size-16);
   max-inline-size: var(--gronify-content-max-width);
   margin-inline: auto;
   padding-inline: var(--base-size-16);
@@ -212,6 +212,12 @@
 @media screen and (min-width: 48rem) {
   .navBarInner {
     padding-inline: var(--base-size-40);
+  }
+}
+
+@media screen and (min-width: 64rem) {
+  .navBarInner {
+    gap: var(--base-size-24);
   }
 }
 
@@ -236,7 +242,7 @@
 .navLinks {
   display: none;
   align-items: center;
-  gap: var(--base-size-20);
+  gap: var(--base-size-16);
   margin-inline-start: auto;
 }
 
