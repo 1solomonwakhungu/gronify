@@ -18,7 +18,6 @@ Checked on 2026-11-01.
 
 ## Open items
 
-- **Landing page and `llms*.txt` for 1.2.0:** they still describe only flatten, search, and unflatten. Update them for result caps, `--sort`, `--exit-status`, and streaming.
 - **Landing audit exception `GHSA-g3hv-75wg-m249`** (minimatch, reached only through eslint and its plugins, dev-only). The only fix is minimatch 11, which the 3.x consumers cannot take. Remove the entry once the eslint plugin stack moves off minimatch 3 and `npm run audit` in `landing-page` passes with an empty allowlist.
 - **`unflattenGron` in `src/packages/cli/src/gron.ts`:** no longer used by the CLI. It stays as the reference implementation for the streaming `unflatten` differential tests; drop it if those tests are retired.
 - **Roadmap issues still open, by theme:**
@@ -29,6 +28,12 @@ Checked on 2026-11-01.
   - Product and growth: #12 (pro features), #13 (payments), #14 (team management), #15 (marketing campaigns), #16 (SEO content), #17 (referrals).
 
 ## History
+
+### 2026-11-01 — Landing page and llms.txt for 1.2.0 (#101)
+
+- The landing page, `llms.txt`, `llms-full.txt`, and `PRODUCT.md` now cover npm install, streaming, result caps, `--sort`, `--exit-status`, `-o`, and `-v`. Memory claims say about 100 MB on the default path; `--sort` on a large object and out-of-order `unflatten` input use more.
+- Page transcripts were wrong (trailing `;`, sorted keys, multi-line `unflatten` output without `--pretty`) and now match the 1.2.0 CLI. The `flatten | sort` recipe became `diff` on `flatten --sort` output, and the filter-and-reconstruct recipe keeps the `json = ...` root line so `unflatten` accepts it.
+- Issues #3, #4, and #18 stay open with comments listing what shipped and what remains.
 
 ### 2026-10-31 — Dependency sweep and 1.2.0 release
 
