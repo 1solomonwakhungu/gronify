@@ -12,14 +12,13 @@ Checked on 2026-11-01.
 - **CI:** Release and Quality Checks are green on `main` (`eeb6e3a`). `NPM_TOKEN` and `RELEASE_PLEASE_TOKEN` are set, so release-please opens release PRs and merged releases publish without manual steps.
 - **Audits:** the CLI allowlist (`src/packages/cli/audit-ci.jsonc`) is empty. The landing allowlist (`landing-page/audit-ci.jsonc`) has one entry; see Open items.
 - **What 1.2.0 adds:**
-  - `flatten`, `search`, and `unflatten` stream, so memory stays around 100 MB regardless of input size (multi-GB inputs tested). `-o` writes atomically. (#95, #94)
-  - Numbers are printed exactly as written (`12345678901234567890`, `1.10`), object keys keep document order, and JSON errors report byte offset, line, and column.
+  - `flatten`, `search`, and `unflatten` stream, so on the default path memory stays around 100 MB regardless of input size (multi-GB inputs tested); `--sort` and out-of-order `unflatten` input buffer more. `-o` writes atomically. (#95, #94)
+  - Numbers are printed exactly as written (`12345678901234567890`, `1.10`), object keys keep document order, and JSON errors report byte offset, line, and column. (#95)
   - Result caps (`search -m/--max-count`, `flatten --limit`) stop reading early; `--sort` gives stable, diffable key order; `search --exit-status` exits 1 on no match and 2 on error. (#98)
-  - `-o/--output`, `search -v/--invert-match`, and error tips arrived earlier in #44.
 
 ## Open items
 
-- **Landing page and `llms*.txt` for 1.2.0:** they still describe only flatten, search, and unflatten. Another agent is opening a PR to cover the 1.2.0 features.
+- **Landing page and `llms*.txt` for 1.2.0:** they still describe only flatten, search, and unflatten. Update them for result caps, `--sort`, `--exit-status`, and streaming.
 - **Landing audit exception `GHSA-g3hv-75wg-m249`** (minimatch, reached only through eslint and its plugins, dev-only). The only fix is minimatch 11, which the 3.x consumers cannot take. Remove the entry once the eslint plugin stack moves off minimatch 3 and `npm run audit` in `landing-page` passes with an empty allowlist.
 - **`unflattenGron` in `src/packages/cli/src/gron.ts`:** no longer used by the CLI. It stays as the reference implementation for the streaming `unflatten` differential tests; drop it if those tests are retired.
 - **Roadmap issues still open, by theme:**
@@ -40,15 +39,16 @@ Checked on 2026-11-01.
 
 ### 2026-10-30 — Agent features: result caps, sorting, exit status (#98)
 
-- `search -m/--max-count <n>` and `flatten --limit <n>` stop after `n` lines with grep semantics (`-v` counts non-matching lines, `--count` counts up to `n`). The rest of the input is never read. Exit 0, with a one-line notice on stderr. `-o` commits capped output through the atomic sink.
+- `search -m/--max-count <n>` and `flatten --limit <n>` stop after `n` lines with grep semantics (`-v` counts non-matching lines, `--count` counts up to `n`). The rest of the input is never read. Exit 0, with a one-line notice on stderr. `n` must be a positive integer. With `--sort`, caps apply to sorted order, so a root object is read fully first. `-o` commits capped output through the atomic sink.
 - `--sort` on `flatten` and `search` sorts object keys at every level by UTF-16 code unit order, keeps subtrees together, and leaves arrays in index order. It is not gron's order: gron 0.7.1 puts bare keys before bracketed keys, compares UTF-8 bytes, and merges duplicate keys. `src/sort.ts` (`SortingSink`) buffers lines as bytes, never JS values, and spills to an unlinked temp file above 64 MiB (`GRONIFY_SORT_MEMORY`, bytes or KB/MB/GB/KiB/MiB/GiB). Arrays at the root stream one record at a time. `--sort` is ignored with `--count`.
-- `search --exit-status`: exit 1 when nothing is selected, 2 on errors (including usage errors). Without the flag nothing changes.
+- `search --exit-status`: exit 1 when nothing is selected, 2 on errors (including usage errors). A reached cap counts as a match; `--count` still prints `0`. Without the flag nothing changes.
 - The agent skill was rewritten (explore with `--count`, then cap; `--sort` for diffing; check exit status; exact numbers) and README gained an npm install section. `scripts/validate-metadata.mjs` now allows the npm install line, scans `SKILL.md`, and flags only claim-shaped `diff` phrases outside code.
 - Benchmarks (Node 22.23.1, macOS arm64, best of 3). The default path did not regress:
 
   | Input          | Command        | Before            | After              |
   | -------------- | -------------- | ----------------- | ------------------ |
   | 23 MB          | flatten        | 0.18 s, 81 MB RSS | 0.19 s, 81 MB RSS  |
+  | 23 MB          | search --count | 0.19 s, 78 MB RSS | 0.19 s, 79 MB RSS  |
   | 129 MB         | flatten        | 0.81 s, 92 MB RSS | 0.83 s, 92 MB RSS  |
   | 129 MB         | search --count | 0.88 s, 90 MB RSS | 0.87 s, 90 MB RSS  |
   | 23 MB          | flatten --sort | n/a               | 0.44 s, 84 MB RSS  |
@@ -71,6 +71,8 @@ Checked on 2026-11-01.
   | 600 MB gron                         | fails (string too long) | 1.70 s, 97 MB RSS   |
   | 3 GB gron (9.8M records)            | not possible            | 7.31 s, 100 MB RSS  |
   | 285 MB gron, out of order at line 3 | 5.50 s, 2100 MB RSS     | 3.28 s, 1259 MB RSS |
+
+  Before is `main` at `07c1c86`. The 600 MB, 3 GB, and out-of-order rows are from the pre-merge run.
 
 - A 1.0 GB JSON file round-tripped through `flatten | unflatten` in 19.8 s with byte-identical output and 93 MB peak RSS for `unflatten`. 67 random documents round-trip with 0 failures. Tests: 425 passing on Node 20.20.2 and 22.23.1.
 - Behavior changes: numbers keep their spelling (`1e999` no longer becomes `null`); keys containing `=` and values containing U+2028 parse; repeated keys are written twice; out-of-order input past 16 MiB is an error; array indexes above 4294967294 are rejected; `\v` and `\f` inside values are rejected.
