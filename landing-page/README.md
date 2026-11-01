@@ -40,4 +40,4 @@ Before using a deployed URL as repository homepage metadata, verify that the dep
 
 ## Benchmark section
 
-The "How Gronify compares" section renders from `src/app/benchmark-results.json`, which `npm run bench:compare` writes. `benchmark-data.ts` derives every figure in the copy from that file and fails the build if the data stops supporting a sentence. It is server-only: `page.tsx` renders `benchmarks.tsx` on the server and passes it to the client `home.tsx` as a prop, so the results JSON does not ship in a client bundle. `llms.txt` and `llms-full.txt` are static, so keep their benchmark text qualitative.
+The "How Gronify compares" section renders from `src/app/benchmark-results.json`, which `npm run bench:compare` writes. `benchmark-data.ts` derives every figure in the copy from that file and fails the build if the data stops supporting a sentence. It is server-only: `page.tsx`, a server component, derives the copy and passes only those plain values as props to the client components `home.tsx` and `benchmarks.tsx`, so the results JSON does not ship in a client bundle. `llms.txt` and `llms-full.txt` are static, so keep their benchmark text qualitative.

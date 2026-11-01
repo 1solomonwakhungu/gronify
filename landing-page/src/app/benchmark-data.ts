@@ -200,9 +200,9 @@ export type BarBlock = {
 const reasonLabels: Record<ReasonCode, { label: string; danger: boolean }> = {
   "not-installed": { label: "Not installed", danger: false },
   unsupported: { label: "Not applicable", danger: false },
-  "over-budget": { label: "Not run", danger: false },
+  "over-budget": { label: "Skipped (time budget)", danger: false },
   "after-failure": { label: "Not run", danger: false },
-  "no-input": { label: "Not run", danger: false },
+  "no-input": { label: "Skipped (no input)", danger: false },
   timeout: { label: "Timed out", danger: true },
   "memory-guard": { label: "Stopped at memory limit", danger: true },
   "os-oom-kill": { label: "OS out-of-memory kill", danger: true },
@@ -224,7 +224,8 @@ function statusDisplay(row: BenchResult) {
 function statusNote(row: BenchResult): string | undefined {
   // Failed runs carry raw shell output and temp paths. Keep those on GitHub.
   if (!row.note || row.status === "failed") return undefined;
-  return row.note.replace(/^not run: /i, "");
+  // The label already says "Timed out", so keep only the peak memory seen.
+  return row.note.replace(/^not run: /i, "").replace(/^killed after \d+ s timeout /, "");
 }
 
 function buildBlock(id: string, title: string, subtitle: string): BarBlock {
@@ -769,6 +770,7 @@ const deepGronifyRss = deepGronify.peakRssBytes;
  */
 const comparisonFacts = {
   jqVersion: data.tools.jq,
+  measuredOn: `${data.machine.cpu}, Node.js ${data.machine.node.replace(/^v(\d+).*/, "$1")}`,
   numberSpellings: spellings,
   unflatten: `unflattening the ${bigLabel} file's ${formatBytes(unflattenBigBytes)} of gron takes ${formatSeconds(gronifyUnflattenBig.seconds)} at ${formatBytes(gronifyUnflattenBig.peakRssBytes)} RSS, a tie with fastgron, which needs ${formatBytes(fastgronUnflattenBig.peakRssBytes)} of memory`,
   deep: `flattens a ${deepDepthText}-level document in ${formatSeconds(deepGronify.seconds)} at ${formatBytes(deepGronifyRss)} RSS`,

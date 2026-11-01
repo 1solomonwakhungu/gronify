@@ -165,8 +165,8 @@ export function Benchmarks({
             How Gronify compares with gron, fastgron, jq, and jaq.
           </SectionIntro.Heading>
           <SectionIntro.Description>
-            {view.headlineDescription} Every number on this page comes from one
-            run of the benchmark script, published in BENCHMARKS.md. For when to
+            {view.headlineDescription} Every number in this section comes from
+            one run of the benchmark script, published in BENCHMARKS.md. For when to
             pick which tool, see the{" "}
             <a className={styles.inlineLink} href="#compare">
               ecosystem comparison
