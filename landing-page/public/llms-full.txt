@@ -40,7 +40,7 @@ npm install -g gronify
 npx gronify --help
 ```
 
-Update an existing install with `npm install -g gronify@latest`.
+Update an existing install with `npm install -g gronify@latest`. Published on [npm as `gronify`](https://www.npmjs.com/package/gronify).
 
 ### Homebrew
 
@@ -545,7 +545,7 @@ No. Streaming JSON parsing, path flattening, regex search, and unflattening gron
 Yes. Install globally with `npm install -g gronify` (or run `npx gronify`) on Windows, macOS, or Linux, install via Homebrew where supported, download a GitHub release archive, or build the TypeScript CLI from source with Node.js 20 or newer. Because `gronify search` is built in, Windows PowerShell and CMD users get consistent text and regex filtering without installing `grep` or rewriting pipelines around `Select-String`.
 
 **How large a JSON file can Gronify parse and search?**
-All three commands (`flatten`, `search`, and `unflatten`) stream their input in 1 MB byte chunks, keeping peak memory around 100 MB on the default path whether the file is 20 MB or multiple gigabytes. `--sort` on a large open object spills buffered lines past 64 MiB to a temp file, and out-of-order `unflatten` input rebuilds in memory only when detected within the first 16 MiB (failing past that).
+All three commands (`flatten`, `search`, and `unflatten`) stream their input in 1 MB byte chunks, keeping peak memory around 100 MB on the default path whether the file is 20 MB or multiple gigabytes. `--sort` on a large open object spills buffered lines past 64 MiB to a temp file, and out-of-order `unflatten` input rebuilds in memory only when detected within the first 16 MiB (failing past that). Pass `--no-color` or `-o` when unflattening multi-gigabyte files in an interactive terminal.
 
 **Does `--sort` produce the same key order as gron?**
 No. `--sort` compares object keys by UTF-16 code unit at each level, keeps each subtree together, and leaves array index order unchanged (`[2]` before `[10]`). Upstream `gron` puts bare keys before bracketed ones and compares UTF-8 bytes.
@@ -564,9 +564,6 @@ Run `diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color fla
 
 **How can AI coding agents explore large JSON files without flooding LLM context?**
 Pass `--no-color` and narrow progressively: run `gronify --no-color search file.json term --count` to check match volume first, sample matches with `search -m 20`, or inspect top-level schema shape with `flatten --limit 50`. Agents can also install the `gronify-json-flatten-search` skill from `skills.sh`.
-
-**Why do the integration tests fail before assertions run?**
-Run `npm run build` first, so that `dist/index.js` exists before the integration tests start.
 
 **Does Gronify send JSON payloads to an external service?**
 No. Gronify is 100% local-first. Every file and stdin stream is parsed, searched, and reconstructed directly on your own machine.
