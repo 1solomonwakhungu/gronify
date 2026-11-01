@@ -23,6 +23,7 @@ import {
   cliVersion,
   faqs,
   nodeRequirement,
+  npmBuildRequirement,
   npmPackageUrl,
   repositoryUrl,
 } from "./seo-data";
@@ -79,7 +80,7 @@ const rivers = [
   {
     heading: "Flatten nested JSON into greppable paths",
     description:
-      "Stream-parse nested objects and arrays into one line-oriented path assignment per value in document order, ready for standard shell pipelines.",
+      "Stream nested objects and arrays into one path assignment per line in document order, ready for standard shell pipelines.",
     label: "Every JSON value on one greppable path line",
     lines: [
       { kind: "command", text: "gronify flatten service.json" },
@@ -106,7 +107,7 @@ const rivers = [
   {
     heading: "Unflatten gron output back into valid JSON",
     description:
-      "Stream document-order gron path assignments back through the built-in unflatten engine to reconstruct strict, valid JSON with exact source number digits intact.",
+      "Stream document-order gron assignments through the built-in unflatten command to reconstruct valid JSON with source numbers preserved verbatim.",
     label: "Round-tripping gron assignments back to JSON",
     lines: [
       { kind: "command", text: "gronify flatten data.json | gronify unflatten" },
@@ -116,7 +117,7 @@ const rivers = [
   {
     heading: "Stream multi-gigabyte JSON in ~100 MB memory",
     description:
-      "flatten, search, and unflatten stream their input, so peak memory stays around 100 MB on the default path at any file size; --sort on a large top-level object and out-of-order unflatten input use more. -m and --limit stop reading at the cap, print a notice on stderr (the last line below), and exit 0.",
+      "All three commands stream their input, keeping peak memory around 100 MB on the default path at any file size; --sort on a large top-level object and out-of-order unflatten input use more. With -m or --limit, Gronify stops reading at the cap, writes a notice to stderr (the last line below), and exits 0.",
     label: "Stopping a JSON search after two matches",
     lines: [
       { kind: "command", text: 'gronify search events.json -m 2 "error"' },
@@ -164,9 +165,9 @@ const commands = [
   },
   {
     name: "search",
-    signature: "gronify search <file> [term]",
+    signature: "gronify search <file_or_term> [term]",
     description:
-      "Parse, flatten, and filter JSON in one step with plain text, extended regex, case sensitivity, match caps, or counts.",
+      "Stream-filter JSON from a file or stdin with plain text, extended regex, case sensitivity, match caps, or counts.",
     examples: [
       'gronify search data.json "service"',
       'gronify search data.json --regex "users\\[[0-9]+\\]"',
@@ -191,12 +192,13 @@ const optionGroups = [
     options: [
       ["--color", "Enable color when the terminal supports it"],
       ["--no-color", "Force plain output for pipes and logs"],
-      ["--pretty", "Add readable grouping to flattened output"],
+      ["--pretty", "Indent and group formatted flatten or unflatten output"],
       [
         "-o, --output <file>",
         "Write to a file, replaced only after the run succeeds",
       ],
       ["-h, --help", "Show help for any command"],
+      ["-V, --version", "Show the CLI version"],
     ],
   },
   {
@@ -264,6 +266,7 @@ const installSteps = [
 
 const requirements = [
   ["Node.js", nodeRequirement],
+  ["npm (from source)", npmBuildRequirement],
   ["External tools", "None required"],
   ["License", "MIT"],
   ["Current release", `v${cliVersion}`],
@@ -280,10 +283,14 @@ export default function Home() {
 
   return (
     <>
+      <a href="#top" className={styles.skipLink}>
+        Skip to main content
+      </a>
+
       <header className={styles.navBar}>
         <div className={styles.navBarInner}>
           <a className={styles.wordmark} href="#top" aria-label="Gronify, home">
-            <GronifyLogo height={18} />
+            <GronifyLogo height={18} decorative />
             <span className={styles.wordmarkText}>Gronify</span>
           </a>
           <nav className={styles.navLinks} aria-label="Page sections">
@@ -319,7 +326,7 @@ export default function Home() {
           <div className={styles.heroReveal}>
             <Hero align="start" variant="gridline-expressive">
               <Hero.Label>
-                Gronify v{cliVersion} · Local-first TypeScript JSON CLI
+                v{cliVersion} · Local-first TypeScript CLI · MIT
               </Hero.Label>
               <Hero.Heading>
                 Gronify: Parse, flatten, and search JSON in the terminal.
@@ -431,9 +438,9 @@ export default function Home() {
               Three Gronify commands: flatten, search, and unflatten.
             </SectionIntro.Heading>
             <SectionIntro.Description>
-              Three commands cover the round trip from raw JSON to greppable
-              paths and back. Global options control formatting and atomic
-              output files; flatten and search options cap, sort, and filter.
+              Move from raw JSON to greppable paths and back over files or
+              stdin. Global options control formatting and atomic file writes;
+              command flags cap, sort, and filter output.
             </SectionIntro.Description>
           </SectionIntro>
         </Section>
@@ -507,10 +514,10 @@ export default function Home() {
               Install Gronify via npm, Homebrew, or source.
             </SectionIntro.Heading>
             <SectionIntro.Description>
-              Install on macOS, Linux, or Windows from npm, use Homebrew where
-              supported, or clone the repository and build the TypeScript CLI
-              from source. Result caps, --sort, and --exit-status require v1.2.0
-              or newer.
+              Install on macOS, Linux, or Windows via npm, use Homebrew where
+              supported, download a GitHub release archive, or build the
+              TypeScript CLI from source. Result caps, --sort, and --exit-status
+              require v{cliVersion} or newer.
             </SectionIntro.Description>
           </SectionIntro>
         </Section>
@@ -563,11 +570,20 @@ export default function Home() {
 
         <Box paddingBlockStart={64} paddingBlockEnd={64} id="faq">
           <FAQ variant="gridline">
-            <FAQ.Heading as="h2" size="4" align="center">
-              Gronify CLI &amp; JSON parsing: frequently asked questions
+            <FAQ.Heading
+              as="h2"
+              size="4"
+              align="center"
+              className={styles.faqHeading}
+            >
+              Frequently asked questions
             </FAQ.Heading>
             {faqs.map((faq, index) => (
-              <FAQ.Item key={faq.question} name="gronify-faq" open={index === 0}>
+              <FAQ.Item
+                key={faq.question}
+                open={index === 0}
+                disableAnimation
+              >
                 <FAQ.Question as="h3">{faq.question}</FAQ.Question>
                 <FAQ.Answer>
                   <Text as="p" variant="muted">
@@ -611,7 +627,7 @@ export default function Home() {
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <div className={styles.footerBrand}>
-            <GronifyLogo height={18} />
+            <GronifyLogo height={18} decorative />
             <Text as="p" size="200" variant="muted">
               Gronify — local-first streaming JSON parsing and search CLI for
               the terminal. MIT licensed.

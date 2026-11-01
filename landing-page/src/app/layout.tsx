@@ -12,9 +12,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Gronify — Streaming JSON Parsing, Flatten & Search CLI",
+  title: "Gronify — Streaming JSON Parsing CLI: Flatten & Search",
   description:
-    "Gronify is a local-first TypeScript CLI for streaming JSON parsing: flatten nested JSON into greppable paths, search with regex, and unflatten to JSON.",
+    "Gronify is a local-first JSON parsing CLI: stream multi-GB files in ~100 MB memory, flatten to greppable paths, search with regex, and round-trip JSON.",
   applicationName: "Gronify",
   category: "developer tools",
   authors: [
@@ -23,26 +23,19 @@ export const metadata: Metadata = {
   creator: "Solomon Wakhungu",
   keywords: [
     "gronify",
-    "gronify CLI",
     "JSON parsing",
     "JSON parsing CLI",
     "parse JSON command line",
-    "streaming JSON parser CLI",
     "streaming gron CLI",
     "streaming ungron",
     "gron alternative",
     "fastgron alternative",
     "gron typescript",
-    "gron npm",
     "gron windows",
-    "flatten JSON to paths",
-    "unflatten JSON CLI",
     "grep nested JSON",
-    "grep large JSON file",
     "JSON CLI for AI coding agents",
     "preserve exact numbers JSON CLI",
     "sort JSON keys for diff CLI",
-    "diffable JSON paths",
   ],
   alternates: {
     canonical: "/",
@@ -59,9 +52,9 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Gronify — Streaming JSON Parsing, Flatten & Search CLI",
+    title: "Gronify — Streaming JSON Parsing CLI: Flatten & Search",
     description:
-      "Stream-parse multi-gigabyte JSON in ~100 MB memory, flatten nested payloads into greppable paths, search with regex, and unflatten gron back to JSON.",
+      "Stream-parse multi-gigabyte JSON in ~100 MB memory, flatten nested payloads into greppable paths, search with regex, and round-trip gron back to JSON.",
     url: "/",
     siteName: "Gronify",
     locale: "en_US",
@@ -69,9 +62,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Gronify — Streaming JSON Parsing, Flatten & Search CLI",
+    title: "Gronify — Streaming JSON Parsing CLI: Flatten & Search",
     description:
-      "Stream-parse multi-gigabyte JSON in ~100 MB memory, flatten nested payloads into greppable paths, search with regex, and unflatten gron back to JSON.",
+      "Stream-parse multi-gigabyte JSON in ~100 MB memory, flatten nested payloads into greppable paths, search with regex, and round-trip gron back to JSON.",
   },
 };
 
