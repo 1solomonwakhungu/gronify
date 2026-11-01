@@ -1,9 +1,11 @@
 export function GronifyLogo({
   height = 20,
   title = "Gronify",
+  decorative = false,
 }: {
   height?: number;
   title?: string;
+  decorative?: boolean;
 }) {
   return (
     <svg
@@ -12,8 +14,9 @@ export function GronifyLogo({
       height={height}
       width={(height * 347) / 226}
       fill="currentColor"
-      role="img"
-      aria-label={title}
+      role={decorative ? undefined : "img"}
+      aria-label={decorative ? undefined : title}
+      aria-hidden={decorative ? true : undefined}
       focusable="false"
       style={{ display: "block", flexShrink: 0 }}
     >
