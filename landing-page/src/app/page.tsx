@@ -65,9 +65,9 @@ function Terminal({
 
 const heroTranscript: TerminalLine[] = [
   { kind: "command", text: 'gronify search payload.json --regex "status|version"' },
-  { kind: "output", text: 'json.deployments[0].version = "2026.05.22";' },
-  { kind: "output", text: 'json.deployments[1].version = "2026.05.21";' },
-  { kind: "output", text: 'json.service.status = "degraded";' },
+  { kind: "output", text: 'json.service.status = "degraded"' },
+  { kind: "output", text: 'json.deployments[0].version = "2026.05.22"' },
+  { kind: "output", text: 'json.deployments[1].version = "2026.05.21"' },
 ];
 
 const rivers = [
@@ -78,9 +78,9 @@ const rivers = [
     label: "Every value on one line",
     lines: [
       { kind: "command", text: "gronify flatten service.json" },
-      { kind: "output", text: 'json.service.name = "checkout";' },
-      { kind: "output", text: 'json.service.status = "degraded";' },
-      { kind: "output", text: 'json.deployments[0].region = "us-central1";' },
+      { kind: "output", text: 'json.service.name = "checkout"' },
+      { kind: "output", text: 'json.service.status = "degraded"' },
+      { kind: "output", text: 'json.deployments[0].region = "us-central1"' },
     ] satisfies TerminalLine[],
   },
   {
@@ -90,8 +90,8 @@ const rivers = [
     label: "Regex search across a payload",
     lines: [
       { kind: "command", text: 'gronify search data.json --regex "users\\[[0-9]+\\]"' },
-      { kind: "output", text: 'json.users[0].email = "ada@example.com";' },
-      { kind: "output", text: 'json.users[1].email = "grace@example.com";' },
+      { kind: "output", text: 'json.users[0].email = "ada@example.com"' },
+      { kind: "output", text: 'json.users[1].email = "grace@example.com"' },
     ] satisfies TerminalLine[],
   },
   {
@@ -101,9 +101,19 @@ const rivers = [
     label: "Round-tripping gron back to JSON",
     lines: [
       { kind: "command", text: "gronify flatten data.json | gronify unflatten" },
-      { kind: "output", text: "{" },
-      { kind: "output", text: '  "service": { "name": "checkout" }' },
-      { kind: "output", text: "}" },
+      { kind: "output", text: '{"service":{"name":"checkout"}}' },
+    ] satisfies TerminalLine[],
+  },
+  {
+    heading: "Large inputs: read only what you need",
+    description:
+      "flatten, search, and unflatten stream their input, so memory stays around 100 MB at any file size. -m and --limit stop reading at the cap, print a notice on stderr, and exit 0.",
+    label: "Stopping a search after two matches",
+    lines: [
+      { kind: "command", text: 'gronify search events.json -m 2 "error"' },
+      { kind: "output", text: 'json[0].error = "timeout"' },
+      { kind: "output", text: 'json[7].error = "connection reset"' },
+      { kind: "output", text: "Stopped after 2 matches (--max-count); there may be more" },
     ] satisfies TerminalLine[],
   },
 ];
@@ -127,7 +137,7 @@ const useCases = [
   {
     title: "Configuration review",
     description:
-      "Compare meaningful paths instead of visually tracing braces through a large document.",
+      "Flatten both versions with --sort so keys line up, then compare paths with diff instead of tracing braces.",
   },
 ];
 
@@ -136,8 +146,12 @@ const commands = [
     name: "flatten",
     signature: "gronify flatten [file]",
     description:
-      "Convert JSON from a file or stdin into one greppable assignment per path.",
-    examples: ["gronify flatten data.json", "cat data.json | gronify flatten"],
+      "Convert JSON from a file or stdin into one greppable assignment per path. Numbers keep their exact digits.",
+    examples: [
+      "gronify flatten data.json",
+      "cat data.json | gronify flatten",
+      "gronify flatten --sort --limit 100 data.json",
+    ],
   },
   {
     name: "search",
@@ -147,13 +161,14 @@ const commands = [
     examples: [
       'gronify search data.json "service"',
       'gronify search data.json --regex "users\\[[0-9]+\\]"',
+      'gronify search --exit-status data.json -m 1 "debug = true"',
     ],
   },
   {
     name: "unflatten",
     signature: "gronify unflatten [file]",
     description:
-      "Turn gron assignments from a file or stdin back into valid JSON.",
+      "Turn gron assignments from a file or stdin back into valid JSON. Input in document order, as flatten writes it, converts in one pass.",
     examples: [
       "gronify unflatten data.gron",
       "gronify flatten data.json | gronify unflatten",
@@ -161,29 +176,61 @@ const commands = [
   },
 ];
 
-const globalOptions = [
-  ["--color", "Enable color when the terminal supports it"],
-  ["--no-color", "Force plain output for pipes and logs"],
-  ["--pretty", "Add readable grouping to flattened output"],
-  ["-h, --help", "Show help for any command"],
-];
-
-const searchOptions = [
-  ["-r, --regex", "Match with extended regular expressions"],
-  ["-c, --case-sensitive", "Respect exact letter case"],
-  ["--count", "Print only the number of matches"],
+const optionGroups = [
+  {
+    title: "Global options",
+    options: [
+      ["--color", "Enable color when the terminal supports it"],
+      ["--no-color", "Force plain output for pipes and logs"],
+      ["--pretty", "Add readable grouping to flattened output"],
+      [
+        "-o, --output <file>",
+        "Write to a file, replaced only after the run succeeds",
+      ],
+      ["-h, --help", "Show help for any command"],
+    ],
+  },
+  {
+    title: "Flatten options",
+    options: [
+      ["--limit <n>", "Stop after n lines and stop reading the input"],
+      [
+        "--sort",
+        "Sort object keys at every level by UTF-16 code unit; arrays keep their order",
+      ],
+    ],
+  },
+  {
+    title: "Search options",
+    options: [
+      ["-r, --regex", "Match with extended regular expressions"],
+      ["-c, --case-sensitive", "Respect exact letter case"],
+      ["--count", "Print only the number of matches"],
+      ["-v, --invert-match", "Show lines that do not match"],
+      ["-m, --max-count <n>", "Stop after n matches and stop reading the input"],
+      ["--sort", "Sort matching lines by object key, as flatten --sort does"],
+      ["--exit-status", "Exit 1 when nothing matches; errors then exit 2"],
+    ],
+  },
 ];
 
 const installSteps = [
   {
     step: "01",
+    title: "npm",
+    lines: [
+      { kind: "command", text: "npm install -g gronify" },
+    ] satisfies TerminalLine[],
+  },
+  {
+    step: "02",
     title: "Homebrew",
     lines: [
       { kind: "command", text: "brew install 1solomonwakhungu/tap/gronify" },
     ] satisfies TerminalLine[],
   },
   {
-    step: "02",
+    step: "03",
     title: "Build from source",
     lines: [
       { kind: "command", text: "git clone " + repositoryUrl + ".git" },
@@ -192,7 +239,7 @@ const installSteps = [
     ] satisfies TerminalLine[],
   },
   {
-    step: "03",
+    step: "04",
     title: "Verify the CLI",
     lines: [
       { kind: "command", text: "gronify --help" },
@@ -205,7 +252,7 @@ const requirements = [
   ["Node.js", "20 or newer"],
   ["External tools", "None required"],
   ["License", "MIT"],
-  ["Current release", "v1.0.0"],
+  ["Current release", "v1.2.0"],
 ];
 
 const faqs = [
@@ -217,7 +264,22 @@ const faqs = [
   {
     question: "Can I use Gronify on Windows?",
     answer:
-      "Yes. Use the release archive for your platform, Homebrew where supported, or build the TypeScript CLI from source with Node.js 20 or newer.",
+      "Yes. Install from npm, use the release archive for your platform or Homebrew where supported, or build the TypeScript CLI from source with Node.js 20 or newer.",
+  },
+  {
+    question: "How large a file can Gronify handle?",
+    answer:
+      "flatten, search, and unflatten stream, so peak memory stays around 100 MB whether the input is 20 MB or several gigabytes. On an Apple M5 Pro, a 3 GB gron file unflattens in about 7 seconds at 100 MB RSS. With -m or --limit, Gronify stops reading once the cap is reached, so an early match in a large file returns in milliseconds.",
+  },
+  {
+    question: "Does --sort produce the same order as gron?",
+    answer:
+      "No. --sort compares keys by UTF-16 code unit at each level, keeps each subtree together, and leaves array order alone. gron puts bare keys before bracketed ones and compares UTF-8 bytes, so the two can differ. Sorted output is stable across key reorderings and still streams back through unflatten.",
+  },
+  {
+    question: "Does Gronify change numbers?",
+    answer:
+      "No. Numbers are printed exactly as written in the source, so 12345678901234567890 and 1.10 survive flatten, search, and unflatten unchanged.",
   },
   {
     question: "Why do the integration tests fail before assertions run?",
@@ -373,7 +435,8 @@ export default function Home() {
           </SectionIntro.Heading>
           <SectionIntro.Description>
             Three commands cover the round trip. Global options control
-            presentation; search options control matching.
+            presentation and output files; flatten and search options cap,
+            sort, and filter.
           </SectionIntro.Description>
         </SectionIntro>
       </Section>
@@ -415,41 +478,26 @@ export default function Home() {
       <Section paddingBlockStart="normal" paddingBlockEnd="none">
         <Grid>
           <Grid.Column span={12}>
-            <div className={`${styles.gridFrame} ${styles.gridFrameTwoUp}`}>
-              <div className={styles.gridCell}>
-                <Heading as="h3" size="6">
-                  Global options
-                </Heading>
-                <Box paddingBlockStart={8}>
-                  <Stack direction="vertical" gap="condensed" padding="none">
-                    {globalOptions.map(([flag, description]) => (
-                      <Text key={flag} as="p" size="200">
-                        <code className={styles.wrapAnywhere}>{flag}</code>{" "}
-                        <Text as="span" variant="muted" size="200">
-                          {description}
+            <div className={`${styles.gridFrame} ${styles.gridFrameThreeUp}`}>
+              {optionGroups.map((group) => (
+                <div key={group.title} className={styles.gridCell}>
+                  <Heading as="h3" size="6">
+                    {group.title}
+                  </Heading>
+                  <Box paddingBlockStart={8}>
+                    <Stack direction="vertical" gap="condensed" padding="none">
+                      {group.options.map(([flag, description]) => (
+                        <Text key={flag} as="p" size="200">
+                          <code className={styles.wrapAnywhere}>{flag}</code>{" "}
+                          <Text as="span" variant="muted" size="200">
+                            {description}
+                          </Text>
                         </Text>
-                      </Text>
-                    ))}
-                  </Stack>
-                </Box>
-              </div>
-              <div className={styles.gridCell}>
-                <Heading as="h3" size="6">
-                  Search options
-                </Heading>
-                <Box paddingBlockStart={8}>
-                  <Stack direction="vertical" gap="condensed" padding="none">
-                    {searchOptions.map(([flag, description]) => (
-                      <Text key={flag} as="p" size="200">
-                        <code className={styles.wrapAnywhere}>{flag}</code>{" "}
-                        <Text as="span" variant="muted" size="200">
-                          {description}
-                        </Text>
-                      </Text>
-                    ))}
-                  </Stack>
-                </Box>
-              </div>
+                      ))}
+                    </Stack>
+                  </Box>
+                </div>
+              ))}
             </div>
           </Grid.Column>
         </Grid>
@@ -460,8 +508,8 @@ export default function Home() {
           <SectionIntro.Label>Installation</SectionIntro.Label>
           <SectionIntro.Heading size="3">Install it your way.</SectionIntro.Heading>
           <SectionIntro.Description>
-            Use Homebrew for the shortest path, or clone the repository and build
-            the CLI from source.
+            Install from npm or Homebrew, or clone the repository and build the
+            CLI from source. Caps, --sort, and --exit-status need 1.2.0 or newer.
           </SectionIntro.Description>
         </SectionIntro>
       </Section>
