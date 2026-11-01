@@ -123,3 +123,10 @@ Checked on 2026-11-01.
 - Kept the published `v1.0.0`, bundled executable, Homebrew formula, and standalone TypeScript engine.
 - Rebuilt the landing page as a dark, Linear-derived workbench with facts for built-in flatten, unflatten, and search (no external CLI needed). Added product and design-system records (`PRODUCT.md`, `DESIGN.md`).
 - Motion follows the transitions.dev token scale, with a CSS-only hero reveal and a `prefers-reduced-motion` guard. Lint, production build, and responsive checks at 320–1280px passed.
+
+## 2026-11-01 — Cross-tool benchmark
+
+- Added `src/packages/cli/scripts/bench-compare.mjs` (`npm run bench:compare`): gronify vs gron 0.7.1, fastgron 0.7.7, jq 1.7.1, jaq 3.1.2 on generated records (1 MB to 1 GB), keyed-object, deeply nested, and big-integer inputs. Timing, peak RSS, and correctness checks are written by the script to `landing-page/src/app/benchmark-results.json` and `src/packages/cli/BENCHMARKS.md`; nothing in those files is hand-edited.
+- CLI tests (548) and `npm run lint` pass.
+- Next: wire the results JSON into the landing page.
+- Review fixes to `bench:compare` (schemaVersion 2): at least 3 runs at every size by JSON size, 5% tie rule, cache warm-up and tool rotation per run, compact fastgron unflatten, piped-output flatten variant, OS-kill handling, recorded options and binaries. Re-run took 45.6 min; results regenerated.
