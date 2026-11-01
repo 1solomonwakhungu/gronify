@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/1solomonwakhungu/gronify/compare/v1.2.0...v1.3.0) (2026-11-01)
+
+
+### Features
+
+* **cli:** add cross-tool benchmark against gron, fastgron, jq and jaq ([#104](https://github.com/1solomonwakhungu/gronify/issues/104)) ([6719604](https://github.com/1solomonwakhungu/gronify/commit/6719604fbe15512673b2cca692163ded271af4b6))
+
 ## [1.2.0](https://github.com/1solomonwakhungu/gronify/compare/v1.1.0...v1.2.0) (2026-10-31)
 
 
