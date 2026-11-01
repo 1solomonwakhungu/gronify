@@ -1,3 +1,5 @@
+import { benchmarkFaqAnswer } from "./benchmark-data";
+
 export const siteUrl = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://gronify.vercel.app"
 ).replace(/\/+$/, "");
@@ -34,6 +36,10 @@ export const faqs: FaqItem[] = [
     question: "How large a JSON file can Gronify parse and search?",
     answer:
       "All three commands (flatten, search, and unflatten) stream raw JSON in 1 MB chunks, keeping peak memory around 100 MB on the default path whether the input is 20 MB or multiple gigabytes. --sort on a large top-level object and out-of-order unflatten input use more. On an Apple M5 Pro (Node.js 22), Gronify flattens a 3.50 GB JSON file in 22.1 seconds at 98 MB RSS and unflattens a 3 GB gron file in 7.31 seconds at 100 MB RSS. With -m or --limit, Gronify stops reading once the cap is reached, returning early matches in milliseconds.",
+  },
+  {
+    question: "How does Gronify compare with gron, fastgron, and jq?",
+    answer: benchmarkFaqAnswer,
   },
   {
     question: "Does --sort produce the same key order as gron?",
