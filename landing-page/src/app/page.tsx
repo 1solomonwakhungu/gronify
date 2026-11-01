@@ -14,6 +14,7 @@ export default function Page() {
   return (
     <Home
       faqs={faqs}
+      facts={benchmarkView.comparisonFacts}
       benchmarks={
         <Benchmarks
           view={benchmarkView}

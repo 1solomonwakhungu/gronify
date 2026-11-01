@@ -28,13 +28,13 @@ npm run build
 npm run audit
 ```
 
-The audit checks production and development dependencies at moderate severity or higher. `audit-ci.jsonc` allows only the currently unpatched `braces` advisory (GHSA-vfj7-8cjw-p6xm) in the lint-time dependency chain; new advisories fail the check.
+The audit checks production and development dependencies at moderate severity or higher. `audit-ci.jsonc` allows only the currently unpatched dev-only `minimatch` advisory (`GHSA-g3hv-75wg-m249`) in the ESLint plugin chain; new advisories fail the check.
 
-The repository metadata validation also scans `landing-page/src/app/layout.tsx`, `page.tsx`, `home.tsx`, `benchmarks.tsx`, and `benchmark-data.ts` for stale claims that are not supported by the current project.
+The repository metadata validation (`scripts/validate-metadata.mjs`) also scans `landing-page/src/app/layout.tsx`, `page.tsx`, `home.tsx`, `benchmarks.tsx`, `benchmark-data.ts`, `seo-data.ts`, `opengraph-image.tsx`, `landing-page/public/llms.txt`, and `landing-page/public/llms-full.txt` for stale claims that are not supported by the current project.
 
 ## Deploy Notes
 
-The landing page can be deployed as a standard Next.js app from the `landing-page` directory. Keep deployment configuration outside this package unless the repository adds a checked-in deployment workflow.
+The landing page is deployed at <https://gronify.vercel.app> from the `landing-page` directory. Keep deployment configuration outside this package unless the repository adds a checked-in deployment workflow.
 
 Before using a deployed URL as repository homepage metadata, verify that the deployment returns a successful HTTP response.
 

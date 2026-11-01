@@ -20,16 +20,18 @@ export function Terminal({
       role="figure"
       aria-label={label}
     >
-      {lines.map((line) => (
+      {lines.map((line, index) => (
         <code
-          key={line.text}
+          key={`${index}-${line.text}`}
           className={`${styles.terminalLine} ${
             line.kind === "command" ? "" : styles.terminalPath
           }`}
         >
           {line.kind === "command" ? (
             <>
-              <span className={styles.terminalPrompt}>$ </span>
+              <span className={styles.terminalPrompt} aria-hidden="true">
+                ${" "}
+              </span>
               {line.text}
             </>
           ) : (

@@ -37,11 +37,7 @@ export const faqs: FaqItem[] = [
   {
     question: "How large a JSON file can Gronify parse and search?",
     answer:
-      "All three commands (flatten, search, and unflatten) stream raw JSON in 1 MB chunks, keeping peak memory around 100 MB on the default path whether the input is 20 MB or multiple gigabytes. --sort on a large top-level object and out-of-order unflatten input use more. On an Apple M5 Pro (Node.js 22), Gronify flattens a 3.50 GB JSON file in 22.1 seconds at 98 MB RSS and unflattens a 3 GB gron file in 7.31 seconds at 100 MB RSS. With -m or --limit, Gronify stops reading once the cap is reached, returning early matches in milliseconds.",
-  },
-  {
-    question: "How does Gronify compare with gron, fastgron, and jq?",
-    answer: benchmarkFaqAnswer,
+      "All three commands (flatten, search, and unflatten) stream their input in 1 MB byte chunks, keeping peak memory around 100 MB on the default path whether the file is 20 MB or multiple gigabytes. --sort on a large open object spills buffered lines past 64 MiB to a temp file, and out-of-order unflatten input rebuilds in memory only when detected within the first 16 MiB (failing past that). Pass --no-color or -o when unflattening multi-gigabyte files in an interactive terminal. In the README's separate multi-gigabyte runs on an Apple M5 Pro (Node.js 22), Gronify flattens a 3.50 GB JSON file in 22.1 seconds at 98 MB RSS and unflattens a 3 GB gron file in 7.31 seconds at 100 MB RSS.",
   },
   {
     question: "Does --sort produce the same key order as gron?",
@@ -60,6 +56,22 @@ export const faqs: FaqItem[] = [
       "Gronify enforces strict JSON parsing—rejecting trailing commas, comments, single quotes, invalid UTF-8, and truncated inputs—and exits non-zero while reporting the exact byte offset, line, and column of the syntax error.",
   },
   {
+    question: "How does Gronify compare to jq, gron, and fastgron?",
+    answer:
+      `Use jq when you already know the exact schema and need data transformations. Compared to gron and fastgron, Gronify is a zero-native-binary TypeScript alternative that installs via npm on macOS, Linux, and Windows with built-in regex search—no separate grep required. It prints numbers exactly as written, keeps document order by default, and streams single-document flatten, search, and unflatten (ungron) in ~100 MB of memory on the default path. Measured results: ${benchmarkFaqAnswer}`,
+  },
+  {
+    question: "How do I compare two JSON files using Gronify and system diff?",
+    answer:
+      "Run diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten --sort new.json) in bash or zsh, or write two sorted files with -o on Windows and compare them with diff. Gronify has no diff subcommand; instead, --sort normalizes object key order at every nesting level while keeping each object's subtree intact and array elements in numeric index order, so system diff highlights only real data changes.",
+  },
+  {
+    question:
+      "How can AI coding agents explore large JSON files without flooding LLM context?",
+    answer:
+      "Pass --no-color and narrow progressively: run gronify --no-color search file.json term --count to check match volume first, sample matches with search -m 20, or inspect top-level schema shape with flatten --limit 50. Gronify closes the input stream immediately when -m or --limit is hit, returning early matches from multi-gigabyte files in milliseconds. Agents can also install the gronify-json-flatten-search skill from skills.sh.",
+  },
+  {
     question: "Does Gronify send JSON payloads to an external service?",
     answer:
       "No. Gronify is 100% local-first. Every file and stdin stream is parsed, searched, and reconstructed directly on your own machine.",
@@ -75,7 +87,7 @@ export const structuredData = {
       url: siteUrl,
       name: "Gronify",
       description:
-        "Gronify is a local-first JSON parsing CLI: stream multi-GB files in ~100 MB memory, flatten to greppable paths, search with regex, and round-trip JSON.",
+        "Gronify streams multi-GB JSON in ~100 MB default RAM: local-first CLI to flatten greppable paths, search with regex, and unflatten (ungron) JSON.",
       inLanguage: "en",
       publisher: {
         "@id": `${siteUrl}/#author`,
@@ -92,8 +104,9 @@ export const structuredData = {
       "@id": `${siteUrl}/#software`,
       name: "Gronify",
       url: siteUrl,
+      image: `${siteUrl}/opengraph-image`,
       description:
-        "Local-first, standalone TypeScript CLI that stream-parses multi-gigabyte JSON into greppable path assignments, filters keys and values with plain text or extended regex, preserves exact source numbers (including 64-bit integers and trailing decimals), and unflattens gron output back into valid JSON.",
+        "Local-first, standalone TypeScript CLI that stream-parses multi-gigabyte JSON into greppable path assignments, filters keys and values with plain text or extended regex, preserves exact source numbers (including 64-bit integers and trailing decimals), and unflattens (ungron) path assignments back into valid JSON.",
       applicationCategory: "DeveloperApplication",
       applicationSubCategory: "Command Line Interface",
       operatingSystem: "macOS, Linux, Windows",
@@ -101,6 +114,14 @@ export const structuredData = {
       runtimePlatform: "Node.js",
       softwareVersion: cliVersion,
       softwareRequirements: `Node.js ${nodeRequirement}`,
+      featureList: [
+        "Stream-parse multi-gigabyte JSON in ~100 MB default RAM",
+        "Flatten nested JSON into greppable path assignments in document order",
+        "Built-in plain-text and extended regex search with result caps and exit codes",
+        "Preserve exact 64-bit integers above 2^53 and trailing decimals verbatim",
+        "Stream-unflatten (ungron) document-order gron assignments back to valid JSON",
+        "Deterministic UTF-16 object key sorting (--sort) for system diff",
+      ],
       dateModified: lastReleaseIsoDate,
       license: `${repositoryUrl}/blob/main/LICENSE`,
       codeRepository: repositoryUrl,
@@ -120,7 +141,8 @@ export const structuredData = {
     {
       "@type": "FAQPage",
       "@id": `${siteUrl}/#faq`,
-      url: `${siteUrl}/#faq`,
+      name: "Gronify — Frequently Asked Questions",
+      url: siteUrl,
       inLanguage: "en",
       isPartOf: {
         "@id": `${siteUrl}/#website`,

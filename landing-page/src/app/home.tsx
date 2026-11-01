@@ -18,6 +18,7 @@ import {
 import posthog from "posthog-js";
 import type { ReactNode } from "react";
 
+import type { BenchmarkView } from "./benchmark-data";
 import { GronifyLogo } from "./logo";
 import styles from "./page.module.css";
 import {
@@ -26,10 +27,12 @@ import {
   npmBuildRequirement,
   npmPackageUrl,
   repositoryUrl,
+  skillsUrl,
 } from "./site-config";
 import { Terminal, type TerminalLine } from "./terminal";
 
 const heroTranscript: TerminalLine[] = [
+  { kind: "command", text: "npm install -g gronify" },
   { kind: "command", text: 'gronify search payload.json --regex "status|version"' },
   { kind: "output", text: 'json.service.status = "degraded"' },
   { kind: "output", text: 'json.deployments[0].version = "2026.05.22"' },
@@ -67,7 +70,7 @@ const rivers = [
   {
     heading: "Unflatten gron output back into valid JSON",
     description:
-      "Stream document-order gron assignments through the built-in unflatten command to reconstruct valid JSON with source numbers preserved verbatim.",
+      "Stream document-order gron assignments through the built-in unflatten (ungron) command to reconstruct valid JSON with source numbers preserved verbatim.",
     label: "Round-tripping gron assignments back to JSON",
     lines: [
       { kind: "command", text: "gronify flatten data.json | gronify unflatten" },
@@ -77,14 +80,106 @@ const rivers = [
   {
     heading: "Stream multi-gigabyte JSON in ~100 MB memory",
     description:
-      "All three commands stream their input, keeping peak memory around 100 MB on the default path at any file size; --sort on a large top-level object and out-of-order unflatten input use more. With -m or --limit, Gronify stops reading at the cap, writes a notice to stderr (the last line below), and exits 0.",
-    label: "Stopping a JSON search after two matches",
+      "All three commands stream files or stdin pipes, keeping peak memory around 100 MB on the default path at any file size; --sort spills buffered object lines past 64 MiB to a temp file, and out-of-order unflatten input rebuilds in memory only within the first 16 MiB (failing past that). With -m or --limit, Gronify stops reading at the cap, writes a notice to stderr (the final line in the transcript), and exits 0.",
+    label: "Streaming a compressed JSON export into gronify search with a two-match cap",
     lines: [
-      { kind: "command", text: 'gronify search events.json -m 2 "error"' },
+      { kind: "command", text: 'gzip -dc events.json.gz | gronify search -m 2 "error"' },
       { kind: "output", text: 'json[0].error = "timeout"' },
       { kind: "output", text: 'json[7].error = "connection reset"' },
       { kind: "output", text: "Stopped after 2 matches (--max-count); there may be more" },
     ] satisfies TerminalLine[],
+  },
+];
+
+const buildComparisons = (facts: ComparisonFacts) => [
+  {
+    kicker: "vs. jq & JSON.parse()",
+    title: "Explore unknown schemas and preserve exact numbers",
+    description: `jq excels when you already know the exact path and want data transformations, while Node's JSON.parse() hits V8 string limits (~512 MB, ERR_STRING_TOO_LONG) on multi-gigabyte dumps. Gronify streams raw bytes with zero upfront query DSL and prints numbers as written. jq ${facts.jqVersion} also keeps big integers such as 12345678901234567890 intact in our checks, but it normalises spellings such as ${facts.numberSpellings}, which Gronify leaves alone. JSON.parse() rounds integers above 2^53, and some jq versions or arithmetic filters can too.`,
+    label: "Printing 64-bit integers and trailing decimals as written during search",
+    lines: [
+      { kind: "command", text: 'gronify search ledger.json --regex "id|amount"' },
+      { kind: "output", text: "json.entries[0].id = 12345678901234567890" },
+      { kind: "output", text: "json.entries[0].amount = 1.10" },
+    ] satisfies TerminalLine[],
+  },
+  {
+    kicker: "vs. gron & fastgron",
+    title: "Cross-platform npm install, built-in search, and streaming ungron",
+    description: `A cross-platform gron and fastgron alternative for macOS, Linux, and Windows: install via npm with built-in regex search and zero external grep or native binary setup. Unlike gron, Gronify preserves document order by default and streams single-document flatten and unflatten in one pass: ${facts.unflatten} (Apple M5 Pro, Node.js 22, from the benchmark below).`,
+    label: "Streaming unflatten from gron paths to an atomic output file",
+    lines: [
+      { kind: "command", text: "gronify -o restored.json unflatten archive.gron" },
+      { kind: "output", text: "Output written to restored.json" },
+    ] satisfies TerminalLine[],
+  },
+  {
+    kicker: "vs. raw grep on JSON",
+    title: "Full path context on minified or deeply nested payloads",
+    description: `Running grep on minified JSON dumps an entire multi-megabyte line; on formatted JSON it prints an isolated key or value without parent array indexes. Gronify emits the complete root-to-leaf path on every line and ${facts.deep} without call-stack overflow (Apple M5 Pro, Node.js 22).`,
+    label: "Finding the exact parent path inside minified nested JSON",
+    lines: [
+      { kind: "command", text: 'gronify search cluster-state.min.json "unhealthy"' },
+      { kind: "output", text: 'json.clusters[2].nodes[14].status = "unhealthy"' },
+    ] satisfies TerminalLine[],
+  },
+  {
+    kicker: "With system diff",
+    title: "Sort object keys deterministically without breaking array order",
+    description:
+      "Plain line-sorting interleaves sibling subtrees and orders [10] before [2]. Gronify's --sort orders object keys by UTF-16 code unit at every level, keeps each subtree contiguous, preserves array index order, and spills buffered object lines above 64 MiB to a temp file so two payloads compare cleanly with system diff.",
+    label:
+      "Comparing two JSON files path by path using flatten --sort with system diff",
+    lines: [
+      {
+        kind: "command",
+        text: "diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten --sort new.json)",
+      },
+      { kind: "output", text: "4c4" },
+      { kind: "output", text: '< json.service.version = "2026.05.21"' },
+      { kind: "output", text: "---" },
+      { kind: "output", text: '> json.service.version = "2026.05.22"' },
+    ] satisfies TerminalLine[],
+  },
+];
+
+const buildAgentRivers = (facts: ComparisonFacts) => [
+  {
+    heading: "Count and cap matches before reading into prompt context",
+    description: `Large JSON exports quickly exhaust an LLM context window if read whole. Pass --no-color, check match cardinality with --count first, then sample matches with -m or inspect schema shape with flatten --limit. Because Gronify stops reading the input stream at the cap, in our benchmark ${facts.capped} (Apple M5 Pro, Node.js 22).`,
+    label: "Progressive JSON narrowing for AI coding agents",
+    lines: [
+      { kind: "command", text: "gronify --no-color search payload.json error --count" },
+      { kind: "output", text: "482" },
+      { kind: "command", text: "gronify --no-color search payload.json error -m 3" },
+      { kind: "output", text: 'json.events[0].error = "upstream timeout"' },
+      { kind: "output", text: 'json.events[14].error = "rate limit exceeded"' },
+      { kind: "output", text: 'json.events[29].error = "connection reset"' },
+      { kind: "output", text: "Stopped after 3 matches (--max-count); there may be more" },
+    ] satisfies TerminalLine[],
+    linkText: "Explore result-cap flags",
+    linkHref: "#commands",
+    isExternal: false,
+  },
+  {
+    heading: "Automate checks with exit codes, atomic writes, and agent skills",
+    description:
+      "Use --exit-status for deterministic shell branching (0 match, 1 no match, 2 error) and -o to write output atomically only after a run succeeds. Install the open gronify-json-flatten-search skill so supported AI coding agents automatically apply capped, context-safe JSON exploration.",
+    label: "Installing the Gronify agent skill and checking JSON exit status",
+    lines: [
+      {
+        kind: "command",
+        text: "npx skills add https://github.com/1solomonwakhungu/gronify --skill gronify-json-flatten-search",
+      },
+      {
+        kind: "command",
+        text: 'if gronify --no-color search --exit-status config.json -m 1 "debug = true" >/dev/null 2>&1; then echo "debug is on"; fi',
+      },
+      { kind: "output", text: "debug is on" },
+    ] satisfies TerminalLine[],
+    linkText: "View agent skill on skills.sh",
+    linkHref: skillsUrl,
+    isExternal: true,
   },
 ];
 
@@ -187,7 +282,7 @@ const optionGroups = [
 
 const installSteps = [
   {
-    step: "01",
+    step: "npm",
     title: "npm or npx",
     label: "Install Gronify with npm or run via npx",
     lines: [
@@ -196,7 +291,7 @@ const installSteps = [
     ] satisfies TerminalLine[],
   },
   {
-    step: "02",
+    step: "brew",
     title: "Homebrew",
     label: "Install Gronify with Homebrew",
     lines: [
@@ -204,7 +299,7 @@ const installSteps = [
     ] satisfies TerminalLine[],
   },
   {
-    step: "03",
+    step: "source",
     title: "Build from source",
     label: "Build Gronify TypeScript CLI from source",
     lines: [
@@ -214,7 +309,7 @@ const installSteps = [
     ] satisfies TerminalLine[],
   },
   {
-    step: "04",
+    step: "verify",
     title: "Verify the CLI",
     label: "Verify Gronify CLI installation",
     lines: [
@@ -232,19 +327,32 @@ const requirements = [
   ["Current release", `v${cliVersion}`],
 ];
 
+type ComparisonFacts = BenchmarkView["comparisonFacts"];
+
 type HomeProps = {
+  /** Figures quoted by the comparison copy, derived from the benchmark results. */
+  facts: ComparisonFacts;
   faqs: { question: string; answer: string }[];
   /** Server-rendered benchmark section, so its data never ships to the client. */
   benchmarks: ReactNode;
 };
 
-export function Home({ faqs, benchmarks }: HomeProps) {
-  const captureRepositoryLinkClick = (placement: "header" | "cta") => {
+export function Home({ faqs, facts, benchmarks }: HomeProps) {
+  const comparisons = buildComparisons(facts);
+  const agentRivers = buildAgentRivers(facts);
+
+  const captureRepositoryLinkClick = (
+    placement: "header" | "cta" | "footer",
+  ) => {
     posthog.capture("repository_link_clicked", { placement });
   };
 
   const captureIssueReportLinkClick = () => {
     posthog.capture("issue_report_link_clicked", { placement: "cta" });
+  };
+
+  const captureSkillLinkClick = (placement: "agents" | "footer") => {
+    posthog.capture("skill_link_clicked", { placement });
   };
 
   return (
@@ -263,17 +371,20 @@ export function Home({ faqs, benchmarks }: HomeProps) {
             <a className={styles.navLink} href="#workflow">
               Workflow
             </a>
-            <a className={styles.navLink} href="#commands">
-              Commands
+            <a className={styles.navLink} href="#compare">
+              Compare
             </a>
             <a className={styles.navLink} href="#benchmarks">
               Benchmarks
             </a>
+            <a className={styles.navLink} href="#agents">
+              Agents
+            </a>
+            <a className={styles.navLink} href="#commands">
+              Commands
+            </a>
             <a className={styles.navLink} href="#install">
               Install
-            </a>
-            <a className={styles.navLink} href="#faq">
-              FAQ
             </a>
           </nav>
           <Button
@@ -303,8 +414,9 @@ export function Home({ faqs, benchmarks }: HomeProps) {
               <Hero.Description>
                 A standalone streaming JSON parser and gron CLI that flattens
                 nested payloads into greppable path assignments, filters keys
-                and values with plain text or regex, and reconstructs valid
-                JSON—without loading multi-gigabyte files into memory.
+                and values with plain text or regex, and unflattens (ungron)
+                back to valid JSON—without loading multi-gigabyte files into
+                memory.
               </Hero.Description>
               <Hero.ButtonGroup>
                 <Button as="a" href="#install" variant="primary">
@@ -335,11 +447,10 @@ export function Home({ faqs, benchmarks }: HomeProps) {
               Flatten, search, and unflatten JSON in one standalone CLI.
             </SectionIntro.Heading>
             <SectionIntro.Description>
-              Traditional JSON parsing loads an entire document into memory with
-              JSON.parse() or requires upfront filter queries. Gronify tokenizes
-              raw JSON streams in 1 MB chunks so you can flatten paths, search
-              matches, and round-trip valid JSON in ~100 MB of memory on the
-              default path.
+              Traditional JSON parsing loads an entire document with
+              JSON.parse() or demands an upfront query DSL. Gronify tokenizes
+              raw byte streams in 1 MB chunks so you can flatten paths, filter
+              matches, and round-trip valid JSON at any file size.
             </SectionIntro.Description>
           </SectionIntro>
         </Section>
@@ -356,6 +467,95 @@ export function Home({ faqs, benchmarks }: HomeProps) {
                     {river.heading}
                   </Heading>
                   <Text>{river.description}</Text>
+                </River.Content>
+              </River>
+            ))}
+          </Stack>
+        </Section>
+
+        <Section id="compare" paddingBlockStart="spacious" paddingBlockEnd="none">
+          <SectionIntro align="center" fullWidth>
+            <SectionIntro.Label>Ecosystem comparison</SectionIntro.Label>
+            <SectionIntro.Heading size="3">
+              When to use Gronify vs. jq, gron, fastgron, and grep.
+            </SectionIntro.Heading>
+            <SectionIntro.Description>
+              Pick the right command-line tool for the payload in front of you:
+              schema-free path discovery, numbers printed as written, single-document
+              streaming unflatten, and deterministic key order for system diff. Measured
+              speed and memory for the same tools are in the{" "}
+              <a className={styles.inlineLink} href="#benchmarks">
+                benchmarks below
+              </a>
+              .
+            </SectionIntro.Description>
+          </SectionIntro>
+        </Section>
+
+        <Section paddingBlockStart="normal" paddingBlockEnd="none">
+          <Grid>
+            <Grid.Column span={12}>
+              <div className={`${styles.gridFrame} ${styles.gridFrameTwoUp}`}>
+                {comparisons.map((item) => (
+                  <div key={item.kicker} className={styles.gridCell}>
+                    <Text as="p" size="100" font="monospace" variant="muted">
+                      {item.kicker}
+                    </Text>
+                    <Heading as="h3" size="6">
+                      {item.title}
+                    </Heading>
+                    <Text as="p" variant="muted" size="200">
+                      {item.description}
+                    </Text>
+                    <Box paddingBlockStart={16} className={styles.cellFooter}>
+                      <Terminal label={item.label} lines={item.lines} />
+                    </Box>
+                  </div>
+                ))}
+              </div>
+            </Grid.Column>
+          </Grid>
+        </Section>
+
+        {benchmarks}
+
+        <Section id="agents" paddingBlockStart="spacious" paddingBlockEnd="none">
+          <SectionIntro align="center" fullWidth>
+            <SectionIntro.Label>AI coding agents & automation</SectionIntro.Label>
+            <SectionIntro.Heading size="3">
+              Explore large JSON files without flooding LLM context.
+            </SectionIntro.Heading>
+            <SectionIntro.Description>
+              Built for shell scripts and AI coding agents that inspect unknown
+              JSON payloads: count matches first, stop reading early at a line
+              cap, branch on grep-style exit codes, and write output atomically.
+            </SectionIntro.Description>
+          </SectionIntro>
+        </Section>
+
+        <Section paddingBlockStart="normal" paddingBlockEnd="none">
+          <Stack direction="vertical" padding="none" gap="spacious">
+            {agentRivers.map((river) => (
+              <River key={river.heading} variant="gridline" align="start">
+                <River.Visual>
+                  <Terminal label={river.label} lines={river.lines} />
+                </River.Visual>
+                <River.Content>
+                  <Heading as="h3" size="4">
+                    {river.heading}
+                  </Heading>
+                  <Text>{river.description}</Text>
+                  <Link
+                    href={river.linkHref}
+                    isExternal={river.isExternal}
+                    onClick={
+                      river.isExternal
+                        ? () => captureSkillLinkClick("agents")
+                        : undefined
+                    }
+                  >
+                    {river.linkText}
+                  </Link>
                 </River.Content>
               </River>
             ))}
@@ -475,8 +675,6 @@ export function Home({ faqs, benchmarks }: HomeProps) {
             </Grid.Column>
           </Grid>
         </Section>
-
-        {benchmarks}
 
         <Section id="install" paddingBlockStart="spacious" paddingBlockEnd="none">
           <SectionIntro align="center" fullWidth>
@@ -610,11 +808,27 @@ export function Home({ faqs, benchmarks }: HomeProps) {
             padding="none"
             flexWrap="wrap"
           >
-            <Link href={repositoryUrl} size="small" arrowDirection="none">
+            <Link href="#faq" size="small" arrowDirection="none">
+              FAQ
+            </Link>
+            <Link
+              href={repositoryUrl}
+              size="small"
+              arrowDirection="none"
+              onClick={() => captureRepositoryLinkClick("footer")}
+            >
               Repository
             </Link>
             <Link href={npmPackageUrl} size="small" arrowDirection="none">
               npm
+            </Link>
+            <Link
+              href={skillsUrl}
+              size="small"
+              arrowDirection="none"
+              onClick={() => captureSkillLinkClick("footer")}
+            >
+              Agent Skill
             </Link>
             <Link
               href={`${repositoryUrl}/issues`}

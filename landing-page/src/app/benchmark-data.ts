@@ -581,7 +581,7 @@ export const benchmarkFaqAnswer = [
   `It flattens ${ratioRange(speedupVsGron)} faster than gron at ${sizeLabel(recordsId("flatten", "10mb"))} and ${sizeLabel(recordsId("flatten", "100mb"))}, and gron timed out after ${timeoutSeconds} s at ${bigLabel}.`,
   `Unflatten speed is a tie with fastgron from ${sizeLabel(recordsId("unflatten", "100mb"))} up: ${formatSeconds(gronifyUnflattenBig.seconds)} against ${formatSeconds(fastgronUnflattenBig.seconds)} on the ${bigLabel} file's ${formatBytes(unflattenBigBytes)} of gron. Gronify uses ${formatBytes(gronifyUnflattenBig.peakRssBytes)} and fastgron uses ${formatBytes(fastgronUnflattenBig.peakRssBytes)}.`,
   `fastgron flattens faster, ${ratioRange(fastgronLead)} across these sizes, and fastgron -F is the fastest ${bigLabel} search. jq --stream uses about ${formatBytes(Math.max(...jqRss))} at any size.`,
-  `Measured ${environment.date} on ${environment.machine}. Methodology and every result: ${benchmarkUrl}`,
+  `Measured ${environment.date} on ${environment.machine}; jq was ${data.tools.jq}. Methodology and every result: ${benchmarkUrl}`,
 ].join(" ");
 
 /* ------------------------------------------------------------------ */
@@ -755,8 +755,29 @@ const matrixNote = `Correctness checks ran on small documents before timing. ${
     : `${bigIntFailures.map(displayTool).join(", ")} did not keep big integers exact.`
 } ${jaqNote}. "Not run" means the tool timed out or failed on the same input or a smaller one in an earlier workload.`;
 
+const jqBigInt = checkResult(bigIntPrefix, "jq");
+claim(
+  jqBigInt.pass === true && edge.jq.numbers === "normalised",
+  "jq should keep big integers verbatim and normalise number spellings",
+);
+const cappedSearchBig = okResult("capped-search-records-1000mb", "gronify");
+const deepGronifyRss = deepGronify.peakRssBytes;
+
+/**
+ * Figures the ecosystem-comparison copy quotes, so the two sections cannot
+ * disagree. Derived, never typed in.
+ */
+const comparisonFacts = {
+  jqVersion: data.tools.jq,
+  numberSpellings: spellings,
+  unflatten: `unflattening the ${bigLabel} file's ${formatBytes(unflattenBigBytes)} of gron takes ${formatSeconds(gronifyUnflattenBig.seconds)} at ${formatBytes(gronifyUnflattenBig.peakRssBytes)} RSS, a tie with fastgron, which needs ${formatBytes(fastgronUnflattenBig.peakRssBytes)} of memory`,
+  deep: `flattens a ${deepDepthText}-level document in ${formatSeconds(deepGronify.seconds)} at ${formatBytes(deepGronifyRss)} RSS`,
+  capped: `search -m 10 on a ${bigLabel} file returns in ${formatSeconds(cappedSearchBig.seconds)} at ${formatBytes(cappedSearchBig.peakRssBytes)} RSS`,
+};
+
 /** The only thing client code receives: plain, already-derived values. */
 export const benchmarkView = {
+  comparisonFacts,
   headlineDescription: headline.description,
   benchmarkUrl,
   timeoutSeconds,
