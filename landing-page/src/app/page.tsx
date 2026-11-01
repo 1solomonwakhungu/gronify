@@ -19,8 +19,13 @@ import posthog from "posthog-js";
 
 import { GronifyLogo } from "./logo";
 import styles from "./page.module.css";
-
-const repositoryUrl = "https://github.com/1solomonwakhungu/gronify";
+import {
+  cliVersion,
+  faqs,
+  nodeRequirement,
+  npmPackageUrl,
+  repositoryUrl,
+} from "./seo-data";
 
 type TerminalLine = {
   kind: "command" | "output";
@@ -72,10 +77,10 @@ const heroTranscript: TerminalLine[] = [
 
 const rivers = [
   {
-    heading: "Flatten: expose every path",
+    heading: "Flatten nested JSON into greppable paths",
     description:
-      "Nested values become line-oriented assignments that standard text tools can inspect.",
-    label: "Every value on one line",
+      "Stream-parse nested objects and arrays into one line-oriented path assignment per value in document order, ready for standard shell pipelines.",
+    label: "Every JSON value on one greppable path line",
     lines: [
       { kind: "command", text: "gronify flatten service.json" },
       { kind: "output", text: "json = {}" },
@@ -88,10 +93,10 @@ const rivers = [
     ] satisfies TerminalLine[],
   },
   {
-    heading: "Search: keep only the signal",
+    heading: "Search JSON keys and values with text or regex",
     description:
-      "Use plain text or extended regex, then choose case-sensitive output or a match count.",
-    label: "Regex search across a payload",
+      "Filter flattened JSON paths in one pass with plain text or extended regex, case-sensitive matching, inverted matches, match counts, or grep-style exit codes—no external grep required.",
+    label: "Regex search across a JSON payload",
     lines: [
       { kind: "command", text: 'gronify search data.json --regex "users\\[[0-9]+\\]\\.email"' },
       { kind: "output", text: 'json.users[0].email = "ada@example.com"' },
@@ -99,20 +104,20 @@ const rivers = [
     ] satisfies TerminalLine[],
   },
   {
-    heading: "Unflatten: return to valid JSON",
+    heading: "Unflatten gron output back into valid JSON",
     description:
-      "Send structurally valid gron data back through the built-in engine when a JSON document is needed.",
-    label: "Round-tripping gron back to JSON",
+      "Stream document-order gron path assignments back through the built-in unflatten engine to reconstruct strict, valid JSON with exact source number digits intact.",
+    label: "Round-tripping gron assignments back to JSON",
     lines: [
       { kind: "command", text: "gronify flatten data.json | gronify unflatten" },
       { kind: "output", text: '{"service":{"name":"checkout"}}' },
     ] satisfies TerminalLine[],
   },
   {
-    heading: "Large inputs: read only what you need",
+    heading: "Stream multi-gigabyte JSON in ~100 MB memory",
     description:
-      "flatten, search, and unflatten stream their input, so memory stays around 100 MB on the default path at any file size; --sort on a large top-level object and out-of-order unflatten input use more. -m and --limit stop reading at the cap, print a notice on stderr (the last line below), and exit 0.",
-    label: "Stopping a search after two matches",
+      "flatten, search, and unflatten stream their input, so peak memory stays around 100 MB on the default path at any file size; --sort on a large top-level object and out-of-order unflatten input use more. -m and --limit stop reading at the cap, print a notice on stderr (the last line below), and exit 0.",
+    label: "Stopping a JSON search after two matches",
     lines: [
       { kind: "command", text: 'gronify search events.json -m 2 "error"' },
       { kind: "output", text: 'json[0].error = "timeout"' },
@@ -126,22 +131,22 @@ const useCases = [
   {
     title: "Incident response",
     description:
-      "Find status, version, region, and error fields in service payloads without opening an editor.",
+      "Parse service responses and logs to find status, version, region, and error paths immediately without opening an editor.",
   },
   {
     title: "CI investigation",
     description:
-      "Inspect generated manifests and artifacts with grep-compatible output that fits existing scripts.",
+      "Inspect generated JSON manifests and build artifacts with deterministic path output and --exit-status checks that fit shell scripts.",
   },
   {
     title: "Support bundles",
     description:
-      "Search deeply nested exports locally while keeping customer data inside your shell workflow.",
+      "Stream and search deeply nested multi-gigabyte exports locally while keeping sensitive customer payloads on your machine.",
   },
   {
     title: "Configuration review",
     description:
-      "Flatten both versions with --sort so keys line up, then compare paths with diff instead of tracing braces.",
+      "Flatten both JSON versions with --sort so object keys line up deterministically, then compare paths with diff instead of tracing braces.",
   },
 ];
 
@@ -150,7 +155,7 @@ const commands = [
     name: "flatten",
     signature: "gronify flatten [file]",
     description:
-      "Convert JSON from a file or stdin into one greppable assignment per path. Numbers keep their exact digits.",
+      "Stream-parse JSON from a file or stdin into one greppable assignment per path. Numbers keep their exact source digits.",
     examples: [
       "gronify flatten data.json",
       "cat data.json | gronify flatten",
@@ -161,7 +166,7 @@ const commands = [
     name: "search",
     signature: "gronify search <file> [term]",
     description:
-      "Flatten and filter in one step with plain text, regex, case sensitivity, or counts.",
+      "Parse, flatten, and filter JSON in one step with plain text, extended regex, case sensitivity, match caps, or counts.",
     examples: [
       'gronify search data.json "service"',
       'gronify search data.json --regex "users\\[[0-9]+\\]"',
@@ -172,7 +177,7 @@ const commands = [
     name: "unflatten",
     signature: "gronify unflatten [file]",
     description:
-      "Turn gron assignments from a file or stdin back into valid JSON. Input in document order, as flatten writes it, converts in one pass.",
+      "Turn gron path assignments from a file or stdin back into valid JSON. Input in document order, as flatten writes it, streams in one pass.",
     examples: [
       "gronify unflatten data.gron",
       "gronify flatten data.json | gronify unflatten",
@@ -221,16 +226,17 @@ const optionGroups = [
 const installSteps = [
   {
     step: "01",
-    title: "npm",
-    label: "Install with npm",
+    title: "npm or npx",
+    label: "Install Gronify with npm or run via npx",
     lines: [
       { kind: "command", text: "npm install -g gronify" },
+      { kind: "command", text: "npx gronify --help" },
     ] satisfies TerminalLine[],
   },
   {
     step: "02",
     title: "Homebrew",
-    label: "Install with Homebrew",
+    label: "Install Gronify with Homebrew",
     lines: [
       { kind: "command", text: "brew install 1solomonwakhungu/tap/gronify" },
     ] satisfies TerminalLine[],
@@ -238,7 +244,7 @@ const installSteps = [
   {
     step: "03",
     title: "Build from source",
-    label: "How to build from source",
+    label: "Build Gronify TypeScript CLI from source",
     lines: [
       { kind: "command", text: "git clone " + repositoryUrl + ".git" },
       { kind: "command", text: "cd gronify/src/packages/cli" },
@@ -248,57 +254,19 @@ const installSteps = [
   {
     step: "04",
     title: "Verify the CLI",
-    label: "How to verify the CLI",
+    label: "Verify Gronify CLI installation",
     lines: [
-      { kind: "command", text: "gronify --help" },
+      { kind: "command", text: "gronify --version" },
       { kind: "command", text: "gronify flatten data.json" },
     ] satisfies TerminalLine[],
   },
 ];
 
 const requirements = [
-  ["Node.js", "20 or newer"],
+  ["Node.js", nodeRequirement],
   ["External tools", "None required"],
   ["License", "MIT"],
-  ["Current release", "v1.2.0"],
-];
-
-const faqs = [
-  {
-    question: "Does Gronify require fastgron or grep?",
-    answer:
-      "No. Flattening, unflattening, and search are all built into the standalone CLI.",
-  },
-  {
-    question: "Can I use Gronify on Windows?",
-    answer:
-      "Yes. Install from npm, use the release archive for your platform or Homebrew where supported, or build the TypeScript CLI from source with Node.js 20 or newer.",
-  },
-  {
-    question: "How large a file can Gronify handle?",
-    answer:
-      "flatten, search, and unflatten stream, so peak memory stays around 100 MB on the default path, whether the input is 20 MB or several gigabytes. --sort on a large top-level object and out-of-order unflatten input use more. On an Apple M5 Pro, a 3 GB gron file unflattens in about 7 seconds at 100 MB RSS. With -m or --limit, Gronify stops reading once the cap is reached, so an early match in a large file returns in milliseconds.",
-  },
-  {
-    question: "Does --sort produce the same order as gron?",
-    answer:
-      "No. --sort compares keys by UTF-16 code unit at each level, keeps each subtree together, and leaves array order alone. gron puts bare keys before bracketed ones and compares UTF-8 bytes, so the two can differ. Sorted output is stable across key reorderings and still streams back through unflatten.",
-  },
-  {
-    question: "Does Gronify change numbers?",
-    answer:
-      "No. Numbers are printed exactly as written in the source, so 12345678901234567890 and 1.10 survive flatten, search, and unflatten unchanged.",
-  },
-  {
-    question: "Why do the integration tests fail before assertions run?",
-    answer:
-      "Run npm run build first, so that dist/index.js exists before the integration tests start.",
-  },
-  {
-    question: "Does Gronify send JSON to a service?",
-    answer:
-      "No. Gronify is local-first. Every payload is processed by the CLI on your own machine.",
-  },
+  ["Current release", `v${cliVersion}`],
 ];
 
 export default function Home() {
@@ -312,7 +280,7 @@ export default function Home() {
 
   return (
     <>
-      <div className={styles.navBar}>
+      <header className={styles.navBar}>
         <div className={styles.navBarInner}>
           <a className={styles.wordmark} href="#top" aria-label="Gronify, home">
             <GronifyLogo height={18} />
@@ -328,6 +296,9 @@ export default function Home() {
             <a className={styles.navLink} href="#install">
               Install
             </a>
+            <a className={styles.navLink} href="#faq">
+              FAQ
+            </a>
           </nav>
           <Button
             as="a"
@@ -339,290 +310,311 @@ export default function Home() {
             View on GitHub
           </Button>
         </div>
-      </div>
+      </header>
 
-      <Box paddingBlockStart={64} id="top" />
+      <main id="top">
+        <Box paddingBlockStart={64} />
 
-      <Section paddingBlockStart="none" paddingBlockEnd="none" fullWidth>
-        <div className={styles.heroReveal}>
-          <Hero align="start" variant="gridline-expressive">
-            <Hero.Label>Local-first JSON tooling</Hero.Label>
-            <Hero.Heading>Search JSON. Find answers.</Hero.Heading>
-            <Hero.Description>
-              Flatten large payloads into greppable paths, search the fields that
-              matter, and reconstruct valid JSON without leaving the terminal.
-            </Hero.Description>
-            <Hero.ButtonGroup>
-              <Button as="a" href="#install" variant="primary">
-                Install Gronify
-              </Button>
-              <Button as="a" href="#workflow" variant="secondary">
-                See the workflow
-              </Button>
-            </Hero.ButtonGroup>
-          </Hero>
+        <Section as="div" paddingBlockStart="none" paddingBlockEnd="none" fullWidth>
+          <div className={styles.heroReveal}>
+            <Hero align="start" variant="gridline-expressive">
+              <Hero.Label>
+                Gronify v{cliVersion} · Local-first TypeScript JSON CLI
+              </Hero.Label>
+              <Hero.Heading>
+                Gronify: Parse, flatten, and search JSON in the terminal.
+              </Hero.Heading>
+              <Hero.Description>
+                A standalone streaming JSON parser and gron CLI that flattens
+                nested payloads into greppable path assignments, filters keys
+                and values with plain text or regex, and reconstructs valid
+                JSON—without loading multi-gigabyte files into memory.
+              </Hero.Description>
+              <Hero.ButtonGroup>
+                <Button as="a" href="#install" variant="primary">
+                  Install Gronify
+                </Button>
+                <Button as="a" href="#workflow" variant="secondary">
+                  See the workflow
+                </Button>
+              </Hero.ButtonGroup>
+            </Hero>
+          </div>
+        </Section>
+
+        <div className={styles.heroBand}>
+          <div className={styles.heroBandInner}>
+            <Terminal
+              label="Searching a deployment JSON payload with Gronify"
+              lines={heroTranscript}
+              className={styles.terminalReveal}
+            />
+          </div>
         </div>
-      </Section>
 
-      <div className={styles.heroBand}>
-        <div className={styles.heroBandInner}>
-          <Terminal
-            label="Searching a deployment payload with Gronify"
-            lines={heroTranscript}
-            className={styles.terminalReveal}
-          />
-        </div>
-      </div>
+        <Section id="workflow" paddingBlockStart="spacious" paddingBlockEnd="none">
+          <SectionIntro align="center" fullWidth>
+            <SectionIntro.Label>Streaming JSON parsing workflow</SectionIntro.Label>
+            <SectionIntro.Heading size="3">
+              Flatten, search, and unflatten JSON in one standalone CLI.
+            </SectionIntro.Heading>
+            <SectionIntro.Description>
+              Traditional JSON parsing loads an entire document into memory with
+              JSON.parse() or requires upfront filter queries. Gronify tokenizes
+              raw JSON streams in 1 MB chunks so you can flatten paths, search
+              matches, and round-trip valid JSON in ~100 MB of memory on the
+              default path.
+            </SectionIntro.Description>
+          </SectionIntro>
+        </Section>
 
-      <Section id="workflow" paddingBlockStart="spacious" paddingBlockEnd="none">
-        <SectionIntro align="center" fullWidth>
-          <SectionIntro.Label>The workflow</SectionIntro.Label>
-          <SectionIntro.Heading size="3">
-            Structure first. Search second. Pipe everything.
-          </SectionIntro.Heading>
-          <SectionIntro.Description>
-            Gronify ships flattening, unflattening, and search in one standalone
-            TypeScript CLI.
-          </SectionIntro.Description>
-        </SectionIntro>
-      </Section>
-
-      <Section paddingBlockStart="normal" paddingBlockEnd="none">
-        <Stack direction="vertical" padding="none" gap="spacious">
-          {rivers.map((river) => (
-            <River key={river.heading} variant="gridline" align="start">
-              <River.Visual>
-                <Terminal label={river.label} lines={river.lines} />
-              </River.Visual>
-              <River.Content>
-                <Heading size="4">{river.heading}</Heading>
-                <Text>{river.description}</Text>
-              </River.Content>
-            </River>
-          ))}
-        </Stack>
-      </Section>
-
-      <Section paddingBlockStart="spacious" paddingBlockEnd="none">
-        <SectionIntro align="center" fullWidth>
-          <SectionIntro.Label>Where it fits</SectionIntro.Label>
-          <SectionIntro.Heading size="3">
-            One tool, four operational moments.
-          </SectionIntro.Heading>
-          <SectionIntro.Description>
-            The interface stays small because the shell already provides
-            composition, redirection, diffing, and automation.
-          </SectionIntro.Description>
-        </SectionIntro>
-      </Section>
-
-      <Section paddingBlockStart="normal" paddingBlockEnd="none">
-        <Grid>
-          <Grid.Column span={12}>
-            <div className={`${styles.gridFrame} ${styles.gridFrameTwoUp}`}>
-              {useCases.map((useCase) => (
-                <div key={useCase.title} className={styles.gridCell}>
-                  <Heading as="h3" size="6">
-                    {useCase.title}
+        <Section paddingBlockStart="normal" paddingBlockEnd="none">
+          <Stack direction="vertical" padding="none" gap="spacious">
+            {rivers.map((river) => (
+              <River key={river.heading} variant="gridline" align="start">
+                <River.Visual>
+                  <Terminal label={river.label} lines={river.lines} />
+                </River.Visual>
+                <River.Content>
+                  <Heading as="h3" size="4">
+                    {river.heading}
                   </Heading>
-                  <Text as="p" variant="muted" size="200">
-                    {useCase.description}
-                  </Text>
-                </div>
-              ))}
-            </div>
-          </Grid.Column>
-        </Grid>
-      </Section>
+                  <Text>{river.description}</Text>
+                </River.Content>
+              </River>
+            ))}
+          </Stack>
+        </Section>
 
-      <Section id="commands" paddingBlockStart="spacious" paddingBlockEnd="none">
-        <SectionIntro align="center" fullWidth>
-          <SectionIntro.Label>Command reference</SectionIntro.Label>
-          <SectionIntro.Heading size="3">
-            A small surface area by design.
-          </SectionIntro.Heading>
-          <SectionIntro.Description>
-            Three commands cover the round trip. Global options control
-            presentation and output files; flatten and search options cap,
-            sort, and filter.
-          </SectionIntro.Description>
-        </SectionIntro>
-      </Section>
+        <Section
+          id="use-cases"
+          paddingBlockStart="spacious"
+          paddingBlockEnd="none"
+        >
+          <SectionIntro align="center" fullWidth>
+            <SectionIntro.Label>Operational JSON use cases</SectionIntro.Label>
+            <SectionIntro.Heading size="3">
+              Built for terminal JSON debugging and shell pipelines.
+            </SectionIntro.Heading>
+            <SectionIntro.Description>
+              Inspect API responses, CI artifacts, support bundles, and
+              generated manifests locally over stdin and stdout, with strict
+              JSON syntax diagnostics reporting exact byte offset, line, and
+              column.
+            </SectionIntro.Description>
+          </SectionIntro>
+        </Section>
 
-      <Section paddingBlockStart="normal" paddingBlockEnd="none">
-        <Grid>
-          <Grid.Column span={12}>
-            <div className={`${styles.gridFrame} ${styles.gridFrameThreeUp}`}>
-              {commands.map((command) => (
-                <div key={command.name} className={styles.gridCell}>
-                  <Text
-                    as="p"
-                    size="100"
-                    font="monospace"
-                    weight="semibold"
-                    className={styles.wrapAnywhere}
-                  >
-                    {command.signature}
-                  </Text>
-                  <Text as="p" variant="muted" size="200">
-                    {command.description}
-                  </Text>
-                  <Box paddingBlockStart={16} className={styles.cellFooter}>
-                    <Terminal
-                      label={`Examples for gronify ${command.name}`}
-                      lines={command.examples.map((example) => ({
-                        kind: "command" as const,
-                        text: example,
-                      }))}
-                    />
-                  </Box>
-                </div>
-              ))}
-            </div>
-          </Grid.Column>
-        </Grid>
-      </Section>
+        <Section paddingBlockStart="normal" paddingBlockEnd="none">
+          <Grid>
+            <Grid.Column span={12}>
+              <div className={`${styles.gridFrame} ${styles.gridFrameTwoUp}`}>
+                {useCases.map((useCase) => (
+                  <div key={useCase.title} className={styles.gridCell}>
+                    <Heading as="h3" size="6">
+                      {useCase.title}
+                    </Heading>
+                    <Text as="p" variant="muted" size="200">
+                      {useCase.description}
+                    </Text>
+                  </div>
+                ))}
+              </div>
+            </Grid.Column>
+          </Grid>
+        </Section>
 
-      <Section paddingBlockStart="normal" paddingBlockEnd="none">
-        <Grid>
-          <Grid.Column span={12}>
-            <div className={`${styles.gridFrame} ${styles.gridFrameThreeUp}`}>
-              {optionGroups.map((group) => (
-                <div key={group.title} className={styles.gridCell}>
+        <Section id="commands" paddingBlockStart="spacious" paddingBlockEnd="none">
+          <SectionIntro align="center" fullWidth>
+            <SectionIntro.Label>CLI command reference</SectionIntro.Label>
+            <SectionIntro.Heading size="3">
+              Three Gronify commands: flatten, search, and unflatten.
+            </SectionIntro.Heading>
+            <SectionIntro.Description>
+              Three commands cover the round trip from raw JSON to greppable
+              paths and back. Global options control formatting and atomic
+              output files; flatten and search options cap, sort, and filter.
+            </SectionIntro.Description>
+          </SectionIntro>
+        </Section>
+
+        <Section paddingBlockStart="normal" paddingBlockEnd="none">
+          <Grid>
+            <Grid.Column span={12}>
+              <div className={`${styles.gridFrame} ${styles.gridFrameThreeUp}`}>
+                {commands.map((command) => (
+                  <div key={command.name} className={styles.gridCell}>
+                    <Heading
+                      as="h3"
+                      size="subhead-medium"
+                      font="monospace"
+                      weight="semibold"
+                      className={styles.wrapAnywhere}
+                    >
+                      {command.signature}
+                    </Heading>
+                    <Text as="p" variant="muted" size="200">
+                      {command.description}
+                    </Text>
+                    <Box paddingBlockStart={16} className={styles.cellFooter}>
+                      <Terminal
+                        label={`Examples for gronify ${command.name}`}
+                        lines={command.examples.map((example) => ({
+                          kind: "command" as const,
+                          text: example,
+                        }))}
+                      />
+                    </Box>
+                  </div>
+                ))}
+              </div>
+            </Grid.Column>
+          </Grid>
+        </Section>
+
+        <Section paddingBlockStart="normal" paddingBlockEnd="none">
+          <Grid>
+            <Grid.Column span={12}>
+              <div className={`${styles.gridFrame} ${styles.gridFrameThreeUp}`}>
+                {optionGroups.map((group) => (
+                  <div key={group.title} className={styles.gridCell}>
+                    <Heading as="h3" size="6">
+                      {group.title}
+                    </Heading>
+                    <Box paddingBlockStart={8}>
+                      <Stack direction="vertical" gap="condensed" padding="none">
+                        {group.options.map(([flag, description]) => (
+                          <Text key={flag} as="p" size="200">
+                            <code className={styles.wrapAnywhere}>{flag}</code>{" "}
+                            <Text as="span" variant="muted" size="200">
+                              {description}
+                            </Text>
+                          </Text>
+                        ))}
+                      </Stack>
+                    </Box>
+                  </div>
+                ))}
+              </div>
+            </Grid.Column>
+          </Grid>
+        </Section>
+
+        <Section id="install" paddingBlockStart="spacious" paddingBlockEnd="none">
+          <SectionIntro align="center" fullWidth>
+            <SectionIntro.Label>Cross-platform installation</SectionIntro.Label>
+            <SectionIntro.Heading size="3">
+              Install Gronify via npm, Homebrew, or source.
+            </SectionIntro.Heading>
+            <SectionIntro.Description>
+              Install on macOS, Linux, or Windows from npm, use Homebrew where
+              supported, or clone the repository and build the TypeScript CLI
+              from source. Result caps, --sort, and --exit-status require v1.2.0
+              or newer.
+            </SectionIntro.Description>
+          </SectionIntro>
+        </Section>
+
+        <Section paddingBlockStart="normal" paddingBlockEnd="none">
+          <Grid>
+            <Grid.Column span={12}>
+              <div className={styles.gridFrame}>
+                {installSteps.map((step) => (
+                  <div key={step.step} className={styles.gridCell}>
+                    <Stack
+                      direction="horizontal"
+                      gap="normal"
+                      padding="none"
+                      alignItems="center"
+                    >
+                      <Text as="p" size="100" font="monospace" variant="muted">
+                        {step.step}
+                      </Text>
+                      <Heading as="h3" size="6">
+                        {step.title}
+                      </Heading>
+                    </Stack>
+                    <Box paddingBlockStart={16}>
+                      <Terminal label={step.label} lines={step.lines} />
+                    </Box>
+                  </div>
+                ))}
+                <div className={styles.gridCell}>
                   <Heading as="h3" size="6">
-                    {group.title}
+                    Requirements
                   </Heading>
                   <Box paddingBlockStart={8}>
                     <Stack direction="vertical" gap="condensed" padding="none">
-                      {group.options.map(([flag, description]) => (
-                        <Text key={flag} as="p" size="200">
-                          <code className={styles.wrapAnywhere}>{flag}</code>{" "}
+                      {requirements.map(([label, value]) => (
+                        <Text key={label} as="p" size="200">
+                          {label} —{" "}
                           <Text as="span" variant="muted" size="200">
-                            {description}
+                            {value}
                           </Text>
                         </Text>
                       ))}
                     </Stack>
                   </Box>
                 </div>
-              ))}
-            </div>
-          </Grid.Column>
-        </Grid>
-      </Section>
-
-      <Section id="install" paddingBlockStart="spacious" paddingBlockEnd="none">
-        <SectionIntro align="center" fullWidth>
-          <SectionIntro.Label>Installation</SectionIntro.Label>
-          <SectionIntro.Heading size="3">Install it your way.</SectionIntro.Heading>
-          <SectionIntro.Description>
-            Install from npm or Homebrew, or clone the repository and build the
-            CLI from source. Caps, --sort, and --exit-status need 1.2.0 or newer.
-          </SectionIntro.Description>
-        </SectionIntro>
-      </Section>
-
-      <Section paddingBlockStart="normal" paddingBlockEnd="none">
-        <Grid>
-          <Grid.Column span={12}>
-            <div className={styles.gridFrame}>
-              {installSteps.map((step) => (
-                <div key={step.step} className={styles.gridCell}>
-                  <Stack
-                    direction="horizontal"
-                    gap="normal"
-                    padding="none"
-                    alignItems="center"
-                  >
-                    <Text as="p" size="100" font="monospace" variant="muted">
-                      {step.step}
-                    </Text>
-                    <Heading as="h3" size="6">
-                      {step.title}
-                    </Heading>
-                  </Stack>
-                  <Box paddingBlockStart={16}>
-                    <Terminal
-                      label={step.label}
-                      lines={step.lines}
-                    />
-                  </Box>
-                </div>
-              ))}
-              <div className={styles.gridCell}>
-                <Heading as="h3" size="6">
-                  Requirements
-                </Heading>
-                <Box paddingBlockStart={8}>
-                  <Stack direction="vertical" gap="condensed" padding="none">
-                    {requirements.map(([label, value]) => (
-                      <Text key={label} as="p" size="200">
-                        {label} —{" "}
-                        <Text as="span" variant="muted" size="200">
-                          {value}
-                        </Text>
-                      </Text>
-                    ))}
-                  </Stack>
-                </Box>
               </div>
-            </div>
-          </Grid.Column>
-        </Grid>
-      </Section>
+            </Grid.Column>
+          </Grid>
+        </Section>
 
-      <Box paddingBlockStart={64} paddingBlockEnd={64}>
-        <FAQ variant="gridline">
-          <FAQ.Heading size="4" align="center">
-            Frequently asked questions
-          </FAQ.Heading>
-          {faqs.map((faq, index) => (
-            <FAQ.Item key={faq.question} name="gronify-faq" open={index === 0}>
-              <FAQ.Question>{faq.question}</FAQ.Question>
-              <FAQ.Answer>
-                <Text as="p" variant="muted">
-                  {faq.answer}
-                </Text>
-              </FAQ.Answer>
-            </FAQ.Item>
-          ))}
-        </FAQ>
-      </Box>
+        <Box paddingBlockStart={64} paddingBlockEnd={64} id="faq">
+          <FAQ variant="gridline">
+            <FAQ.Heading as="h2" size="4" align="center">
+              Gronify CLI &amp; JSON parsing: frequently asked questions
+            </FAQ.Heading>
+            {faqs.map((faq, index) => (
+              <FAQ.Item key={faq.question} name="gronify-faq" open={index === 0}>
+                <FAQ.Question as="h3">{faq.question}</FAQ.Question>
+                <FAQ.Answer>
+                  <Text as="p" variant="muted">
+                    {faq.answer}
+                  </Text>
+                </FAQ.Answer>
+              </FAQ.Item>
+            ))}
+          </FAQ>
+        </Box>
 
-      <CTABanner align="center" hasGridLines className={styles.ctaBanner}>
-        <CTABanner.Heading size="3">
-          Stop tracing braces. Start searching paths.
-        </CTABanner.Heading>
-        <CTABanner.Description>
-          Gronify is open source and MIT licensed. Read the source, report an
-          issue, or build the CLI locally.
-        </CTABanner.Description>
-        <CTABanner.ButtonGroup>
-          <Button
-            as="a"
-            href={repositoryUrl}
-            variant="primary"
-            onClick={() => captureRepositoryLinkClick("cta")}
-          >
-            View the repository
-          </Button>
-          <Button
-            as="a"
-            href={`${repositoryUrl}/issues`}
-            variant="secondary"
-            onClick={captureIssueReportLinkClick}
-          >
-            Report an issue
-          </Button>
-        </CTABanner.ButtonGroup>
-      </CTABanner>
+        <CTABanner align="center" hasGridLines className={styles.ctaBanner}>
+          <CTABanner.Heading as="h2" size="3">
+            Parse and search nested JSON locally with Gronify.
+          </CTABanner.Heading>
+          <CTABanner.Description>
+            Gronify is open source and MIT licensed. Read the source, report an
+            issue, or build the standalone TypeScript CLI locally.
+          </CTABanner.Description>
+          <CTABanner.ButtonGroup>
+            <Button
+              as="a"
+              href={repositoryUrl}
+              variant="primary"
+              onClick={() => captureRepositoryLinkClick("cta")}
+            >
+              View the repository
+            </Button>
+            <Button
+              as="a"
+              href={`${repositoryUrl}/issues`}
+              variant="secondary"
+              onClick={captureIssueReportLinkClick}
+            >
+              Report an issue
+            </Button>
+          </CTABanner.ButtonGroup>
+        </CTABanner>
+      </main>
 
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <div className={styles.footerBrand}>
             <GronifyLogo height={18} />
             <Text as="p" size="200" variant="muted">
-              Local-first JSON inspection for the terminal. MIT licensed.
+              Gronify — local-first streaming JSON parsing and search CLI for
+              the terminal. MIT licensed.
             </Text>
           </div>
           <Stack
@@ -633,6 +625,9 @@ export default function Home() {
           >
             <Link href={repositoryUrl} size="small" arrowDirection="none">
               Repository
+            </Link>
+            <Link href={npmPackageUrl} size="small" arrowDirection="none">
+              npm
             </Link>
             <Link
               href={`${repositoryUrl}/issues`}
@@ -657,6 +652,9 @@ export default function Home() {
             </Link>
             <Link href="/llms.txt" size="small" arrowDirection="none">
               llms.txt
+            </Link>
+            <Link href="/llms-full.txt" size="small" arrowDirection="none">
+              llms-full.txt
             </Link>
           </Stack>
         </div>
