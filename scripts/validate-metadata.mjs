@@ -112,6 +112,8 @@ if (existsSync("README.md")) {
 scanForStaleClaims("skills/gronify-json-flatten-search/SKILL.md");
 scanForStaleClaims("landing-page/src/app/layout.tsx");
 scanForStaleClaims("landing-page/src/app/page.tsx");
+scanForStaleClaims("landing-page/src/app/seo-data.ts");
+scanForStaleClaims("landing-page/src/app/opengraph-image.tsx");
 
 if (existsSync("src/packages/cli/package.json")) {
   const pkg = JSON.parse(readFileSync("src/packages/cli/package.json", "utf8"));
