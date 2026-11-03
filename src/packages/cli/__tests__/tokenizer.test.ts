@@ -334,6 +334,22 @@ describe("JsonTokenizer", () => {
       expect(failure(["[1, 01]"]).offset).toBe(4);
     });
 
+    test("validates complete and misspelled literals across every chunk boundary", () => {
+      for (const literal of ["true", "false", "null", "tru", "fals", "nul", "truf", "falze", "nulk", "truex", "falsex", "nullx"]) {
+        const valid = literal === "true" || literal === "false" || literal === "null";
+        for (const text of [literal, `[${literal}]`]) {
+          const document = Buffer.from(text);
+          const expected = valid ? tokenize([document]) : failure([document]).message;
+          const partitions = Array.from({ length: document.length + 1 }, (_, index) => splitAt(document, index));
+          partitions.push(Array.from(document, (_, index) => document.subarray(index, index + 1)));
+          for (const chunks of partitions) {
+            if (valid) expect(tokenize(chunks)).toEqual(expected);
+            else expect(failure(chunks).message).toBe(expected);
+          }
+        }
+      }
+    });
+
     test("does not buffer an unbounded run of letters", () => {
       const error = failure(["tru" + "e".repeat(1000)]);
       expect(error.offset).toBe(0);
