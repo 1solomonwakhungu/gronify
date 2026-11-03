@@ -38,4 +38,6 @@ jobs:
         working-directory: src/packages/cli
         run: npm ci --no-audit --no-fund && npm run build
       - name: Compare CLI behavior
-        run: python3 native/scripts/compat.py
+        run: |
+          python3 native/scripts/compat.py
+          python3 native/scripts/search_compat.py
