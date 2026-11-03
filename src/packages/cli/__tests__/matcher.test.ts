@@ -78,6 +78,35 @@ describe("createLineMatcher", () => {
     expect(matches('json.k = "école"', "ÉCOLE", { caseSensitive: true })).toBe(false);
   });
 
+  test("long-line searches stay within the line and match across chunk boundaries", () => {
+    for (const caseSensitive of [false, true]) {
+      for (const term of ["timeout", "TIMEOUT", "[x].*", "é", "", "日本"]) {
+        const line = "x".repeat(65534) + "timeout [x].* é 日本" + "x".repeat(65536);
+        expect(matches(line, term, { caseSensitive })).toBe(referenceMatch(line, term, caseSensitive));
+      }
+      const buf = Buffer.from("timeout" + "x".repeat(100000) + "timeout");
+      const matcher = createLineMatcher("timeout", { caseSensitive });
+      expect(matcher.test(buf, 7, buf.length - 7)).toBe(false);
+      expect(matcher.test(buf, 0, 6)).toBe(false);
+      expect(matcher.test(buf, 0, buf.length - 1)).toBe(true);
+    }
+  });
+
+  test("long ASCII folding rejects Unicode lookalikes and neighbouring matches", () => {
+    for (const term of ["k", "s", "a.*"]) {
+      const line = "Kſ".repeat(400) + "x".repeat(140000);
+      expect(matches(line, term)).toBe(referenceMatch(line, term, false));
+    }
+    const buf = Buffer.from("x".repeat(1000) + "timeout");
+    expect(createLineMatcher("timeout").test(buf, 0, buf.length - 1)).toBe(false);
+  });
+
+  test("very long literal needles do not require a compilable regular expression", () => {
+    const term = "x".repeat(70000) + "!";
+    expect(matches("x".repeat(140000), term)).toBe(false);
+    expect(matches("X".repeat(70000) + "!", term)).toBe(true);
+  });
+
   test("regex mode honours flags and throws on invalid patterns", () => {
     expect(matches("json.user[3] = 1", String.raw`user\[\d+\]`, { regex: true })).toBe(true);
     expect(matches("json.USER = 1", "user", { regex: true })).toBe(true);
