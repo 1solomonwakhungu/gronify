@@ -28,10 +28,14 @@ class SubstringMatcher implements LineMatcher {
   private readonly needle: Uint8Array;
   private readonly fold: Uint8Array;
   private readonly shift = new Uint32Array(256);
+  private readonly longPattern: RegExp | null;
+  private readonly bytes: Buffer;
 
   constructor(term: string, foldCase: boolean) {
     this.fold = foldCase ? ASCII_LOWER : IDENTITY;
     const bytes = Buffer.from(term, "utf8");
+    this.bytes = bytes;
+    this.longPattern = foldCase && bytes.length <= 256 ? new RegExp(escapeRegex(term), "i") : null;
     this.needle = bytes.map((byte) => this.fold[byte]!);
     const last = this.needle.length - 1;
     this.shift.fill(this.needle.length);
@@ -39,6 +43,22 @@ class SubstringMatcher implements LineMatcher {
   }
 
   test(buf: Buffer, start: number, end: number): boolean {
+    // Native search pays off on long lines; keep the allocation-free loop for short ones.
+    // Bound the native search to this line, including when the needle is absent.
+    if (end - start >= 512 && (this.fold === IDENTITY || this.longPattern !== null)) {
+      if (this.longPattern !== null) {
+        // Only ASCII needles use folded byte matching. Latin-1 decoding preserves ASCII and
+        // no non-ASCII byte folds to ASCII under a non-Unicode /i regex.
+        // Limit temporary strings even when a JSON value occupies a very large line.
+        const size = 64 << 10;
+        const overlap = Math.max(0, this.bytes.length - 1);
+        for (let at = start; at < end; at += size - overlap) {
+          if (this.longPattern.test(buf.toString("latin1", at, Math.min(end, at + size)))) return true;
+        }
+        return false;
+      }
+      return buf.subarray(start, end).indexOf(this.bytes) >= 0;
+    }
     const { needle, fold, shift } = this;
     const last = needle.length - 1;
     if (last < 0) return true;
