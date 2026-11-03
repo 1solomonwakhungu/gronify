@@ -128,6 +128,8 @@ describe("LineParser paths", () => {
     ["json.a.b = 1", ["a", "b"]],
     ["json[0] = 1", [0]],
     ["json[12][3].x = 1", [12, 3, "x"]],
+    ["json[4294967294] = 1", [4294967294]],
+    ["json[123 ].x = 1", [123, "x"]],
     ["json.$ref._x1 = 1", ["$ref", "_x1"]],
     ['json["a b"] = 1', ["a b"]],
     ['json["a]b"] = 1', ["a]b"]],
@@ -145,6 +147,44 @@ describe("LineParser paths", () => {
     ["﻿json.a = 1", ["a"]]
   ])("parses %s", (line, expected) => {
     expect(segments(line)).toEqual(expected);
+  });
+
+  test("reuses parent paths without confusing longer keys, indexes, or spellings", () => {
+    const cases: Array<[string, Array<string | number>]> = [
+      ["json.user.name = 1", ["user", "name"]],
+      ["json.user.age = 2", ["user", "age"]],
+      ["json.username.age = 3", ["username", "age"]],
+      ["json.user[10].name = 4", ["user", 10, "name"]],
+      ["json.user[10].age = 5", ["user", 10, "age"]],
+      ["json.user[100].age = 6", ["user", 100, "age"]],
+      ['json["user"][100].name = 7', ["user", 100, "name"]],
+      ['json["user"][100]["\\u0061ge"] = 8', ["user", 100, "age"]],
+      ["json = {}", []],
+      ["json.user.age = 9", ["user", "age"]]
+    ];
+    for (const [line, expected] of cases) expect(segments(line)).toEqual(expected);
+  });
+
+  test("reuses a parent after segment arrays and key storage grow", () => {
+    const keys = Array.from({ length: 80 }, (_, i) => `property${i}_${"x".repeat(20)}`);
+    const parent = `json.${keys.join(".")}`;
+    expect(segments(`${parent}.first = 1`)).toEqual([...keys, "first"]);
+    expect(segments(`${parent}.second = 2`)).toEqual([...keys, "second"]);
+  });
+
+  test("does not cache bytes owned by a reused input buffer", () => {
+    const buf = Buffer.from("json.aaaa.x = 1");
+    parser.parse(buf, 0, buf.length, 1);
+    buf.write("json.bbbb.y = 2");
+    parser.parse(buf, 0, buf.length, 2);
+    expect(parser.keyAsLatin1(0)).toBe("bbbb");
+    expect(parser.keyAsLatin1(1)).toBe("y");
+  });
+
+  test("invalidates cached segments when a parse fails", () => {
+    segments("json.aaaa.bbbb.x = 1");
+    expect(failure("json.cccc.dddd.x = nope")).toBe("line 7: invalid JSON value");
+    expect(segments("json.aaaa.bbbb.y = 2")).toEqual(["aaaa", "bbbb", "y"]);
   });
 
   test("treats .name and [\"name\"] as the same key", () => {
@@ -166,6 +206,11 @@ describe("LineParser paths", () => {
     ["json.a- = 1", "line 7: invalid character in path"],
     ["json[abc] = 1", "line 7: invalid bracket property"],
     ["json[01] = 1", "line 7: invalid bracket property"],
+    ["json[00] = 1", "line 7: invalid bracket property"],
+    ["json[1e2] = 1", "line 7: bracket properties must be strings or indexes"],
+    ["json[4294967295x] = 1", "line 7: invalid bracket property"],
+    ["json[4294967295 = 1", "line 7: unclosed bracket property"],
+    [`json[${"9".repeat(400)}] = 1`, "line 7: array index is too large"],
     ["json[-1] = 1", "line 7: bracket properties must be strings or indexes"],
     ["json[1.5] = 1", "line 7: bracket properties must be strings or indexes"],
     ["json[true] = 1", "line 7: bracket properties must be strings or indexes"],
@@ -682,7 +727,7 @@ describe("one-line compound values", () => {
   });
 
   test("nest deeper than the call stack allows", async () => {
-    const depth = 200000;
+    const depth = 600000;
     const out = await unflatten(`json = {}\njson.a = ${"[".repeat(depth)}1${"]".repeat(depth)}\n`);
     expect(out).toBe(`{"a":${"[".repeat(depth)}1${"]".repeat(depth)}}\n`);
   });
