@@ -1,9 +1,9 @@
 import { Writable } from "node:stream";
-import { flattenStream } from "../src/flatten-stream";
+import { flattenStream, GronFlattener } from "../src/flatten-stream";
 import { flattenJson } from "../src/gron";
 import { createLineMatcher } from "../src/matcher";
 import { GronOutput, type OutputOptions, type OutputSink } from "../src/output";
-import { JsonSyntaxError } from "../src/tokenizer";
+import { JsonSyntaxError, JsonTokenizer } from "../src/tokenizer";
 
 /** A sink that ends the stream on commit and destroys it on abort, like a file sink without the rename. */
 function streamSink(open: () => Writable): OutputSink {
@@ -220,6 +220,33 @@ describe("flattenStream", () => {
       expect(lines).toHaveLength(depth + 2);
       expect(lines[0]).toBe("json = {}");
       expect(lines[depth]).toBe(`json${".a".repeat(depth)} = 1`);
+    });
+
+    test("emits all paths at 50,000 levels with bounded output storage", () => {
+      const depth = 50_000;
+      let lines = 0;
+      const out = {
+        buf: Buffer.alloc(depth * 2 + 16),
+        pos: 0,
+        reserve() { this.pos = 0; },
+        lineDone() {
+          expect(this.pos).toBe(lines === depth ? depth * 2 + 8 : lines * 2 + 9);
+          lines += 1;
+        },
+      };
+      const tokenizer = new JsonTokenizer(new GronFlattener(out));
+      const bytes = Buffer.from('{"a":'.repeat(depth) + "1" + "}".repeat(depth));
+      for (let at = 0; at < bytes.length; at += 65536) tokenizer.write(bytes.subarray(at, at + 65536));
+      tokenizer.end();
+      expect(lines).toBe(depth + 1);
+      expect(out.buf.toString("utf8", 0, out.pos)).toBe(`json${".a".repeat(depth)} = 1`);
+    });
+
+    test("copies paths and values around short-copy boundaries", async () => {
+      for (let length = 0; length <= 65; length += 1) {
+        const text = JSON.stringify({ ["a".repeat(length)]: ["b".repeat(length), true, false, null, 1.10] });
+        expect(await flatten(text, { blockSize: 64 })).toBe(oldFlatten(text));
+      }
     });
 
     test("writes a line larger than the block size", async () => {
