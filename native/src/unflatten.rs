@@ -19,8 +19,20 @@ struct Frame {
     array: bool,
     count: u64,
 }
+fn gron_space(b: u8) -> bool {
+    matches!(b, b' ' | b'\t'..=b'\r')
+}
+fn trim_start(s: &[u8]) -> &[u8] {
+    &s[s.iter().position(|&b| !gron_space(b)).unwrap_or(s.len())..]
+}
 fn trim(s: &[u8]) -> &[u8] {
-    s.trim_ascii()
+    let s = trim_start(s);
+    &s[..s.iter().rposition(|&b| !gron_space(b)).map_or(0, |i| i + 1)]
+}
+fn next_line(current: u64) -> Result<u64> {
+    current
+        .checked_add(1)
+        .ok_or_else(|| "physical line count exceeds u64 limit".into())
 }
 fn string(s: &[u8]) -> Result<(Vec<u8>, usize)> {
     let mut input = Input::new(s, 4096);
@@ -57,7 +69,7 @@ fn parse(line: &[u8]) -> Result<Option<(Vec<Segment>, Vec<u8>)>> {
                 s = &s[end..];
             }
             Some(b'[') => {
-                s = s[1..].trim_ascii_start();
+                s = trim_start(&s[1..]);
                 let segment = if s.first() == Some(&b'"') {
                     let (key, end) = string(s)?;
                     s = &s[end..];
@@ -81,8 +93,7 @@ fn parse(line: &[u8]) -> Result<Option<(Vec<Segment>, Vec<u8>)>> {
                     s = &s[end..];
                     Segment::Index(index)
                 };
-                s = s
-                    .trim_ascii_start()
+                s = trim_start(s)
                     .strip_prefix(b"]")
                     .ok_or("expected closing bracket")?;
                 path.push(segment);
@@ -209,7 +220,7 @@ fn convert(mut input: impl BufRead, out: &mut impl Write) -> Result<()> {
     let mut line = Vec::new();
     let mut stack = Vec::new();
     let mut seen = false;
-    let mut number = 0;
+    let mut number = 0u64;
     loop {
         line.clear();
         // Take caps allocation even when no newline ever arrives.
@@ -221,7 +232,7 @@ fn convert(mut input: impl BufRead, out: &mut impl Write) -> Result<()> {
         if read == 0 {
             break;
         }
-        number += 1;
+        number = next_line(number)?;
         if line.len() > LINE_MAX {
             return Err(format!("line {number}: exceeds 64 MiB resource limit"));
         }
@@ -277,6 +288,27 @@ mod tests {
         let mut out = Vec::new();
         convert(BufReader::with_capacity(chunk, s), &mut out)?;
         Ok(out)
+    }
+    #[test]
+    fn physical_line_count_is_checked_u64() {
+        assert_eq!(next_line(i32::MAX as u64).unwrap(), 2_147_483_648);
+        assert_eq!(next_line(u64::MAX - 1).unwrap(), u64::MAX);
+        assert!(next_line(u64::MAX).is_err());
+    }
+    #[test]
+    fn vertical_tab_is_gron_whitespace_only() {
+        for chunk in [1, 7, 65536] {
+            assert_eq!(
+                convert_text(b"\x0bjson\x0b=\x0b1\x0b\n", chunk).unwrap(),
+                b"1\n"
+            );
+            assert_eq!(
+                convert_text(b"json = {}\njson[\x0b\"x\"\x0b] = 1\n", chunk).unwrap(),
+                b"{\"x\":1}\n"
+            );
+            assert!(convert_text(b"json = {\x0b}\n", chunk).is_err());
+            assert!(convert_text(b"json = \"\x0b\"\n", chunk).is_err());
+        }
     }
     #[test]
     fn ordered_and_normalized() {

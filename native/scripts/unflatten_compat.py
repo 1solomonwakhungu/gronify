@@ -13,7 +13,7 @@ def run(command, source):
     return subprocess.run(command, input=source, capture_output=True, timeout=30)
 
 def main():
-    cases = [b'json = -0', b'json = 1.230e+999', b'json = 123456789012345678901234567890',
+    cases = [b'\x0bjson\x0b=\x0b1\x0b\n', b'json = {}\njson[\x0b"x"\x0b] = 1\n', b'json = []\njson[\x0b0\x0b] = 1', b'json = -0', b'json = 1.230e+999', b'json = 123456789012345678901234567890',
              b'json = {}\r\njson["a.b[0]=x"] = []\r\njson["a.b[0]=x"][3] = "\\ud800";',
              b'json = {}\njson.a = {}\njson.a.x = 1\njson.a = []\njson.a[1] = 2',
              b'json = {}\njson["\\u0061"] = {}\njson.a["\\ud83d\\ude00"] = "\\u0062"',
