@@ -233,7 +233,7 @@ fn flatten_lines<R: Read>(
     let mut stack = Vec::<Frame>::new();
     let mut path = b"json".to_vec();
     let mut token = Vec::new();
-    let mut lines = 0;
+    let mut root_started = false;
     loop {
         input.whitespace()?;
         if let Some(frame) = stack.last_mut() {
@@ -328,7 +328,7 @@ fn flatten_lines<R: Read>(
                 }
                 _ => unreachable!(),
             }
-        } else if lines != 0 {
+        } else if root_started {
             if input.peek()?.is_some() {
                 return Err("trailing input after root value".into());
             }
@@ -370,7 +370,7 @@ fn flatten_lines<R: Read>(
             }
             _ => return Err("expected a value".into()),
         };
-        lines += 1;
+        root_started = true;
         if emit(&path, &token)? {
             return Ok(true);
         }
@@ -472,6 +472,31 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn root_completion_is_independent_of_assignment_count() {
+        for document in ["0", "[]", "{}", "[0,1,2]", "{\"a\":[0,1]}"] {
+            for chunk in [1, 7, 65536] {
+                let mut seen = 0u64;
+                assert!(
+                    !flatten_lines(&mut Input::new(document.as_bytes(), chunk), |_, _| {
+                        seen += 1;
+                        Ok(false)
+                    })
+                    .unwrap()
+                );
+                assert!(seen > 0);
+                let trailing = format!("{document} 1");
+                assert!(
+                    flatten_lines(&mut Input::new(trailing.as_bytes(), chunk), |_, _| Ok(
+                        false
+                    ))
+                    .unwrap_err()
+                    .contains("trailing input")
+                );
+            }
+        }
+    }
+
     #[test]
     fn fragmented_unicode_and_numbers() {
         let source = br#"{"\u0061":[-0,1.10,1e+999,"\ud800","\ud83d\ude00","\u0000\/"],"":true}"#;
