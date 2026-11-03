@@ -42,7 +42,15 @@ def main():
     parser.add_argument('--output', default=str(ROOT / 'native/results-local.json'))
     args = parser.parse_args()
     assert 1 <= args.runs <= 10
-    report = {'platform': platform.platform(), 'machine': platform.machine(),
+    build_commands = [['cargo', 'build', '--release', '--locked', '--manifest-path', 'native/Cargo.toml'],
+                      ['npm', 'run', 'build', '--prefix', 'src/packages/cli']]
+    for command in build_commands:
+        subprocess.run(command, cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
+    artifacts = [pathlib.Path(NATIVE), *sorted((ROOT / 'src/packages/cli/dist').rglob('*.js'))]
+    report = {'build_commands': build_commands,
+              'dirty_state': version(['git', '-C', str(ROOT), 'status', '--porcelain']),
+              'artifact_sha256': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in artifacts},
+              'platform': platform.platform(), 'machine': platform.machine(),
               'checkout_commit': version(['git', '-C', str(ROOT), 'rev-parse', 'HEAD']),
               'baseline_cli_tree': version(['git', '-C', str(ROOT), 'rev-parse', 'HEAD:src/packages/cli/src']),
               'started_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
