@@ -2,6 +2,7 @@
 import { Command, InvalidArgumentError } from "commander";
 import { accessSync, constants, createReadStream, existsSync } from "node:fs";
 import { extname } from "node:path";
+import { Socket } from "node:net";
 import { flattenStream } from "./flatten-stream.js";
 import { createFormatter, shouldUseColor, type FormatOptions, type OutputFormatter } from "./formatter.js";
 import { createLineMatcher } from "./matcher.js";
@@ -95,8 +96,15 @@ function createOutput(outputFile: string | undefined, options: Omit<OutputOption
 }
 
 /** A closed downstream pipe (for example `| head`) is a normal way to stop, not a failure. */
-function isBrokenPipe(error: unknown): boolean {
-  return error instanceof Error && (error as NodeJS.ErrnoException).code === "EPIPE";
+function isBrokenPipe(error: unknown, outputFile: string | undefined): boolean {
+  if (!(error instanceof Error)) return false;
+  const { code, syscall } = error as NodeJS.ErrnoException;
+  if (code === "EPIPE") return true;
+  // Node child-process pipes use sockets. On macOS a downstream close can race with a write and return
+  // ENOTCONN instead of EPIPE. Only a write to socket-backed stdout is a normal downstream disconnect;
+  // the same error from an input or an explicitly selected output file must still fail.
+  return code === "ENOTCONN" && syscall === "write" && !outputFile &&
+    !process.stdout.isTTY && process.stdout instanceof Socket;
 }
 
 async function emit(output: string, formatter: OutputFormatter, outputFile: string | undefined): Promise<void> {
@@ -143,7 +151,7 @@ program
         console.error(formatter.formatSuccess(`Output written to ${globalOptions.output}`));
       }
     } catch (error) {
-      if (isBrokenPipe(error)) return;
+      if (isBrokenPipe(error, globalOptions.output)) return;
       fail(formatter, "flattening JSON", error);
       if (error instanceof SyntaxError) {
         console.error(formatter.formatInfo("Tip: Validate your JSON with a linter like https://jsonlint.com"));
@@ -176,7 +184,7 @@ program
         console.error(formatter.formatSuccess(`Output written to ${globalOptions.output}`));
       }
     } catch (error) {
-      if (isBrokenPipe(error)) return;
+      if (isBrokenPipe(error, globalOptions.output)) return;
       fail(formatter, "unflattening gron", error);
       if (error instanceof Error && /^line \d+:/.test(error.message)) {
         console.error(formatter.formatInfo("Tip: Gron lines should look like: json.path = value"));
@@ -249,7 +257,7 @@ program
         console.error(formatter.formatSuccess(`Output written to ${globalOptions.output}`));
       }
     } catch (error) {
-      if (isBrokenPipe(error)) return;
+      if (isBrokenPipe(error, globalOptions.output)) return;
       fail(formatter, options.regex ? "searching JSON (invalid regex or JSON)" : "searching JSON", error, options.exitStatus ? 2 : 1);
     }
   });
