@@ -1,0 +1,40 @@
+   Compiling gronify-native v0.0.1 (/Users/solomonwakhungu/.t3/worktrees/gronify/t3-52b3888a/native)
+    Finished `release` profile [optimized] target(s) in 5.34s
+     Running unittests src/main.rs (native/target/release/deps/gronify_native-c69303f587380964)
+
+running 32 tests
+test boundary_tests::extra_independent::io_failures ... ok
+test boundary_tests::independent::cancellation_and_reused_input ... ok
+test boundary_tests::independent::write_failures_and_interrupted_read ... ok
+test cli::tests::output_failure_stops_before_another_read ... ok
+test cli::tests::platform_enotconn_is_identified ... ok
+test search::tests::cap_stops_before_invalid_tail ... ok
+test search::output_boundary_tests::sink_preserves_output_error_kind ... ok
+test search::tests::emitted_boundary_and_newline ... ok
+test search::tests::sink_failure_stops_parser ... ok
+test tests::cap_does_not_read_tail ... ok
+test tests::borrowed_scalar_callbacks_stop_and_propagate_errors ... ok
+test tests::fragmented_unicode_and_numbers ... ok
+test tests::borrowed_and_fragmented_scalars_preserve_bytes ... ok
+test tests::malformed ... ok
+test tests::refill_retries_interruptions_and_preserves_read_errors ... ok
+test tests::root_completion_is_independent_of_assignment_count ... ok
+test unflatten::output_boundary_tests::line_context_preserves_output_kind_and_stops_reads ... ok
+test unflatten::tests::common_tokens_borrow_and_escaped_parents_own ... ok
+test tests::depth_50000 ... ok
+test unflatten::tests::ordered_and_normalized ... ok
+test unflatten::tests::physical_line_count_is_checked_u64 ... ok
+test unflatten::tests::rejects_and_never_panics ... ok
+test unflatten::tests::vertical_tab_is_gron_whitespace_only ... ok
+test boundary_tests::independent::depth_boundaries ... ok
+test cli::tests::only_structured_output_disconnects_cancel ... ok
+test tests::word_scan_unicode_escapes_and_closing_quotes ... ok
+test unflatten::tests::slice_strings_match_stream_scanner ... ok
+test tests::word_scan_all_bytes_and_lanes ... ok
+test boundary_tests::extra_independent::array_path_reservation ... ok
+test unflatten::tests::limits_and_io ... ok
+test boundary_tests::independent::path_boundaries ... ok
+test boundary_tests::independent::token_boundaries ... ok
+
+test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
