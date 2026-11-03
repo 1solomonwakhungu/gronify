@@ -218,7 +218,7 @@ export class GronOutput {
     this.countOnly = options.countOnly ?? false;
     this.format = options.format ?? null;
     this.limit = options.limit ?? Infinity;
-    this.buf = Buffer.allocUnsafe(this.blockSize);
+    this.buf = Buffer.allocUnsafe(Math.min(this.blockSize, 4096));
   }
 
   /** Ensures `n` more bytes fit at `pos`. May flush earlier, completed lines, so call it before starting a line. */
@@ -349,6 +349,14 @@ export class GronOutput {
   }
 
   private makeRoom(n: number): void {
+    if (this.buf.length < this.blockSize) {
+      // Counting rewinds every line, so it only needs room for the largest line.
+      // Writers grow to the normal block size to retain the same flush boundaries.
+      const next = Buffer.allocUnsafe(this.countOnly ? Math.max(n, this.buf.length * 2) : this.blockSize);
+      this.buf.copy(next, 0, 0, this.pos);
+      this.buf = next;
+      if (this.pos + n <= this.buf.length) return;
+    }
     this.flush();
     if (n > this.buf.length) this.buf = Buffer.allocUnsafe(Math.max(n, this.buf.length * 2));
   }
