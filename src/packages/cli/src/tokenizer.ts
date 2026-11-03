@@ -455,13 +455,10 @@ export class JsonTokenizer {
       this.sink.number(token, start, stop);
       return;
     }
-    const length = stop - start;
-    const valid = length === 4
-      ? (token[start] === 0x74 && token[start + 1] === 0x72 && token[start + 2] === 0x75 && token[start + 3] === 0x65)
-        || (token[start] === 0x6e && token[start + 1] === 0x75 && token[start + 2] === 0x6c && token[start + 3] === 0x6c)
-      : length === 5 && token[start] === 0x66 && token[start + 1] === 0x61 && token[start + 2] === 0x6c
-        && token[start + 3] === 0x73 && token[start + 4] === 0x65;
-    if (!valid) {
+    // Keep this bounded (at most five bytes) conversion. Comparing bytes directly reduced GC frequency on
+    // Node 22, retaining more input buffers and raising record-stream RSS despite saving these tiny strings.
+    const text = token.toString("latin1", start, stop);
+    if (text !== "true" && text !== "false" && text !== "null") {
       this.failAt(`Unexpected token '${this.preview(token, start, stop)}', expected true, false or null`, this.tokenOffset);
     }
     this.sink.literal(token, start, stop);
