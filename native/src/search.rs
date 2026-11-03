@@ -84,7 +84,7 @@ impl<W: Write> Sink<W> {
             self.out
                 .write_all(&self.line)
                 .and_then(|_| self.out.write_all(b"\n"))
-                .map_err(|e| e.to_string())?;
+                .map_err(crate::cli::Error::Output)?;
         }
         Ok(self.matched == self.cap)
     }
@@ -105,6 +105,8 @@ pub(super) fn run(args: Vec<String>) -> Result<i32> {
             continue;
         }
         match arg.as_str() {
+            "-h" | "--help" => return crate::cli::info("search", false).map(|()| 0),
+            "--version" => return crate::cli::info("search", true).map(|()| 0),
             "--" => options = false,
             "-c" | "--case-sensitive" => sensitive = true,
             "--count" => count = true,
@@ -133,7 +135,7 @@ pub(super) fn run(args: Vec<String>) -> Result<i32> {
                 }
             }
             s if s.starts_with('-') && s != "-" => {
-                return Err(format!("unsupported search option: {s}"));
+                return Err(format!("unsupported search option: {s}").into());
             }
             _ => positional.push(arg),
         }
@@ -158,11 +160,11 @@ pub(super) fn run(args: Vec<String>) -> Result<i32> {
         count,
     };
     let stopped = flatten_lines(&mut input, |path, token| sink.emit(path, token))
-        .map_err(|e| format!("{e} at byte offset {}", input.offset))?;
+        .map_err(|e| e.context(|e| format!("{e} at byte offset {}", input.offset)))?;
     if count {
-        writeln!(sink.out, "{}", sink.matched).map_err(|e| e.to_string())?;
+        writeln!(sink.out, "{}", sink.matched).map_err(crate::cli::Error::Output)?;
     }
-    sink.out.flush().map_err(|e| e.to_string())?;
+    sink.out.flush().map_err(crate::cli::Error::Output)?;
     if stopped {
         eprintln!(
             "Stopped at {} matches (--max-count); there may be more",
@@ -212,6 +214,7 @@ mod tests {
         assert!(
             flatten_lines(&mut input, |p, t| sink.emit(p, t))
                 .unwrap_err()
+                .to_string()
                 .contains("destination failed")
         );
         assert_eq!(input.offset, 1);
@@ -230,5 +233,40 @@ mod tests {
         assert!(flatten_lines(&mut input, |p, t| sink.emit(p, t)).unwrap());
         assert_eq!(sink.matched, 1);
         assert!(sink.out.is_empty());
+    }
+}
+
+#[cfg(test)]
+mod output_boundary_tests {
+    use super::*;
+    #[test]
+    fn sink_preserves_output_error_kind() {
+        for kind in [
+            io::ErrorKind::BrokenPipe,
+            io::ErrorKind::NotConnected,
+            io::ErrorKind::Other,
+        ] {
+            struct Fail(io::ErrorKind);
+            impl Write for Fail {
+                fn write(&mut self, _: &[u8]) -> io::Result<usize> {
+                    Err(self.0.into())
+                }
+                fn flush(&mut self) -> io::Result<()> {
+                    Ok(())
+                }
+            }
+            let mut sink = Sink {
+                out: Fail(kind),
+                matcher: Matcher::new("", true).unwrap(),
+                line: Vec::new(),
+                matched: 0,
+                cap: u64::MAX,
+                count: false,
+            };
+            let mut input = Input::new(&b"[invalid tail"[..], 1);
+            let err = flatten_lines(&mut input, |p, t| sink.emit(p, t)).unwrap_err();
+            assert!(matches!(err, crate::cli::Error::Output(e) if e.kind() == kind));
+            assert_eq!(input.offset, 1);
+        }
     }
 }
