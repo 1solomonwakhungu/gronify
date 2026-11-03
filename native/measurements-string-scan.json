@@ -1,0 +1,760 @@
+{
+  "base_commit": "8cc14eca3216a2283f45c2e0623e4faf80339591",
+  "checkout_commit": "8cc14eca3216a2283f45c2e0623e4faf80339591",
+  "dirty_state": "M native/src/main.rs\n?? native/measurements-string-scan.json\n?? native/scripts/bench-step.py\n?? native/scripts/profile.py\n?? native/scripts/profile.rs",
+  "started_at_utc": "2026-11-03T21:50:25.103261+00:00",
+  "platform": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: aarch64-apple-darwin\nrelease: 1.97.0\nLLVM version: 22.1.6",
+  "load_average_start": [
+    6.12255859375,
+    5.29296875,
+    4.38330078125
+  ],
+  "method": "Shared host; concurrent integrated benchmark reported by parent. Serial rotated tool order; warm file cache; stdout /dev/null; wall includes process startup and time wrapper. Five samples by default. No isolated-host claim. Full output SHA256 checked before timing each fixture. In-process diagnostics are variants, not additive phase timings.",
+  "harness_sha256": {
+    "bench-step.py": "b29a39b217186a7cf2da18b1a92f6595d2cb7b3da826aa46be9a2171c8d19747",
+    "profile.py": "0cde3928c1831d80c57c8cc8f726f54c1857a1c25b7e89ec38221a90b3ecef7b",
+    "profile.rs": "bc3c034fb811280367ff62e983d451d44cca51bb2aa5c0c7fe20cb7fe2fe034e"
+  },
+  "artifacts": {
+    "before": {
+      "sha256": "437ca1cdc190ce4203f3fe9477f6ae59e7b42f1791dadd77cc29f75858696111",
+      "bytes": 335936,
+      "source_sha256": "83cb90106d53737906fb4e62b48311159c05815ec38303e0d54d2be96a3a1a94"
+    },
+    "after": {
+      "sha256": "7edddff3634f001a3fad8e06e2fb7546e7167169c250f05500f8580212655178",
+      "bytes": 335936,
+      "source_sha256": "3e99ed04c00cf8aa6da6e22d83ae1181d49063ea2e236f6857229e270e701f2d"
+    },
+    "fastgron": {
+      "sha256": "16fbcb9be3251cb5534030c00d60054e41462ac6d1a38edd061c0087177debb9",
+      "version": "fastgron version 0.7.7"
+    }
+  },
+  "build_commands": [
+    [
+      "cargo",
+      "build",
+      "--release",
+      "--locked",
+      "--manifest-path",
+      "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/baseline/Cargo.toml",
+      "--target-dir",
+      "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/target-before"
+    ],
+    [
+      "cargo",
+      "build",
+      "--release",
+      "--locked",
+      "--manifest-path",
+      "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-c2755e92/native/Cargo.toml",
+      "--target-dir",
+      "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/target-after"
+    ]
+  ],
+  "diagnostics": {
+    "records-4MiB": {
+      "before": {
+        "provenance": {
+          "source_sha256": "83cb90106d53737906fb4e62b48311159c05815ec38303e0d54d2be96a3a1a94",
+          "driver_sha256": "bc3c034fb811280367ff62e983d451d44cca51bb2aa5c0c7fe20cb7fe2fe034e",
+          "artifact_sha256": "84b9c3bd59be7e54dc1969d729ca82c638de753f6270981d1f81f708d42fff41",
+          "fixture_sha256": "b005b122d1348dc4fe6328a2f0c7aa8666ba2555b4184b6a7ab71efd0649e5a2",
+          "rounds": 15,
+          "build": [
+            "rustc",
+            "--edition=2024",
+            "-O",
+            "-C",
+            "lto=true",
+            "-C",
+            "codegen-units=1",
+            "-C",
+            "panic=abort",
+            "-A",
+            "dead_code",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-gl2nj8dd/profile.rs",
+            "-o",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-gl2nj8dd/profile"
+          ],
+          "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: aarch64-apple-darwin\nrelease: 1.97.0\nLLVM version: 22.1.6\n"
+        },
+        "timings": [
+          "parse 0.142262708 0",
+          "buffered-emission 0.168752375 145309470",
+          "strings 0.095746334 47582100",
+          "normalize 0.13089025 47582100"
+        ]
+      },
+      "after": {
+        "provenance": {
+          "source_sha256": "3e99ed04c00cf8aa6da6e22d83ae1181d49063ea2e236f6857229e270e701f2d",
+          "driver_sha256": "bc3c034fb811280367ff62e983d451d44cca51bb2aa5c0c7fe20cb7fe2fe034e",
+          "artifact_sha256": "8ced08110f20f5be3296daa2d1f63a3eacb62707d4ff57790e64ae60e6324c7b",
+          "fixture_sha256": "b005b122d1348dc4fe6328a2f0c7aa8666ba2555b4184b6a7ab71efd0649e5a2",
+          "rounds": 15,
+          "build": [
+            "rustc",
+            "--edition=2024",
+            "-O",
+            "-C",
+            "lto=true",
+            "-C",
+            "codegen-units=1",
+            "-C",
+            "panic=abort",
+            "-A",
+            "dead_code",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-acqon98v/profile.rs",
+            "-o",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-acqon98v/profile"
+          ],
+          "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: aarch64-apple-darwin\nrelease: 1.97.0\nLLVM version: 22.1.6\n"
+        },
+        "timings": [
+          "parse 0.10789625 0",
+          "buffered-emission 0.134357542 145309470",
+          "strings 0.059666458 47582100",
+          "normalize 0.093303042 47582100"
+        ]
+      }
+    },
+    "long-string-8MiB": {
+      "before": {
+        "provenance": {
+          "source_sha256": "83cb90106d53737906fb4e62b48311159c05815ec38303e0d54d2be96a3a1a94",
+          "driver_sha256": "bc3c034fb811280367ff62e983d451d44cca51bb2aa5c0c7fe20cb7fe2fe034e",
+          "artifact_sha256": "1d3b1dd5b9a288ed3dca6cd88362338a0536458afc72214bffce97072ab3c24f",
+          "fixture_sha256": "0919311f117ff72ad9893e0d7b60ee5989dd3826c4659a2bd03e49f0f1ce472a",
+          "rounds": 15,
+          "build": [
+            "rustc",
+            "--edition=2024",
+            "-O",
+            "-C",
+            "lto=true",
+            "-C",
+            "codegen-units=1",
+            "-C",
+            "panic=abort",
+            "-A",
+            "dead_code",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-bmbuccir/profile.rs",
+            "-o",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-bmbuccir/profile"
+          ],
+          "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: aarch64-apple-darwin\nrelease: 1.97.0\nLLVM version: 22.1.6\n"
+        },
+        "timings": [
+          "parse 0.089609709 0",
+          "buffered-emission 0.080496833 125829450",
+          "strings 0.080466458 125829195",
+          "normalize 0.085493083 125829195"
+        ]
+      },
+      "after": {
+        "provenance": {
+          "source_sha256": "3e99ed04c00cf8aa6da6e22d83ae1181d49063ea2e236f6857229e270e701f2d",
+          "driver_sha256": "bc3c034fb811280367ff62e983d451d44cca51bb2aa5c0c7fe20cb7fe2fe034e",
+          "artifact_sha256": "efc1322e870837c261848ab9c79128bfd0200aeca3dea0596e9b055d82679e69",
+          "fixture_sha256": "0919311f117ff72ad9893e0d7b60ee5989dd3826c4659a2bd03e49f0f1ce472a",
+          "rounds": 15,
+          "build": [
+            "rustc",
+            "--edition=2024",
+            "-O",
+            "-C",
+            "lto=true",
+            "-C",
+            "codegen-units=1",
+            "-C",
+            "panic=abort",
+            "-A",
+            "dead_code",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-kt942y27/profile.rs",
+            "-o",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-kt942y27/profile"
+          ],
+          "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: aarch64-apple-darwin\nrelease: 1.97.0\nLLVM version: 22.1.6\n"
+        },
+        "timings": [
+          "parse 0.017350584 0",
+          "buffered-emission 0.017403167 125829450",
+          "strings 0.01749025 125829195",
+          "normalize 0.023299542 125829195"
+        ]
+      }
+    },
+    "unicode": {
+      "before": {
+        "provenance": {
+          "source_sha256": "83cb90106d53737906fb4e62b48311159c05815ec38303e0d54d2be96a3a1a94",
+          "driver_sha256": "bc3c034fb811280367ff62e983d451d44cca51bb2aa5c0c7fe20cb7fe2fe034e",
+          "artifact_sha256": "9969ad68923b69afea4bb13949932125899a028c79aa172baf66c8c4ab900e48",
+          "fixture_sha256": "a2fab999306ee07f7d6a1551b9f103bcbadc541dba128c942a1b41d192cc376d",
+          "rounds": 15,
+          "build": [
+            "rustc",
+            "--edition=2024",
+            "-O",
+            "-C",
+            "lto=true",
+            "-C",
+            "codegen-units=1",
+            "-C",
+            "panic=abort",
+            "-A",
+            "dead_code",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-mexw5rjj/profile.rs",
+            "-o",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-mexw5rjj/profile"
+          ],
+          "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: aarch64-apple-darwin\nrelease: 1.97.0\nLLVM version: 22.1.6\n"
+        },
+        "timings": [
+          "parse 0.012538084 0",
+          "buffered-emission 0.012777334 13500345",
+          "strings 0.012665958 13500030",
+          "normalize 0.016819167 13500030"
+        ]
+      },
+      "after": {
+        "provenance": {
+          "source_sha256": "3e99ed04c00cf8aa6da6e22d83ae1181d49063ea2e236f6857229e270e701f2d",
+          "driver_sha256": "bc3c034fb811280367ff62e983d451d44cca51bb2aa5c0c7fe20cb7fe2fe034e",
+          "artifact_sha256": "58a5ca9911ace254a4798734ffc70e9dbeb1afb0f680121d5d52d6f39ca2be50",
+          "fixture_sha256": "a2fab999306ee07f7d6a1551b9f103bcbadc541dba128c942a1b41d192cc376d",
+          "rounds": 15,
+          "build": [
+            "rustc",
+            "--edition=2024",
+            "-O",
+            "-C",
+            "lto=true",
+            "-C",
+            "codegen-units=1",
+            "-C",
+            "panic=abort",
+            "-A",
+            "dead_code",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-g1t1b7vk/profile.rs",
+            "-o",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-g1t1b7vk/profile"
+          ],
+          "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: aarch64-apple-darwin\nrelease: 1.97.0\nLLVM version: 22.1.6\n"
+        },
+        "timings": [
+          "parse 0.011495709 0",
+          "buffered-emission 0.010960791 13500345",
+          "strings 0.011118416 13500030",
+          "normalize 0.015632084 13500030"
+        ]
+      }
+    },
+    "escaped": {
+      "before": {
+        "provenance": {
+          "source_sha256": "83cb90106d53737906fb4e62b48311159c05815ec38303e0d54d2be96a3a1a94",
+          "driver_sha256": "bc3c034fb811280367ff62e983d451d44cca51bb2aa5c0c7fe20cb7fe2fe034e",
+          "artifact_sha256": "d56085a7acfbbe2e833c356f2f8eb94f74a82071bc8879d0dfff14d2228ddc48",
+          "fixture_sha256": "4ff8d5354a88f3f00f810f00bb473142d7b61b21a6d9c1ac9a737f4168c1cf93",
+          "rounds": 15,
+          "build": [
+            "rustc",
+            "--edition=2024",
+            "-O",
+            "-C",
+            "lto=true",
+            "-C",
+            "codegen-units=1",
+            "-C",
+            "panic=abort",
+            "-A",
+            "dead_code",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-er1abd5q/profile.rs",
+            "-o",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-er1abd5q/profile"
+          ],
+          "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: aarch64-apple-darwin\nrelease: 1.97.0\nLLVM version: 22.1.6\n"
+        },
+        "timings": [
+          "parse 0.052400084 0",
+          "buffered-emission 0.052192375 11700345",
+          "strings 0.051407667 11700030",
+          "normalize 0.092631042 11700030"
+        ]
+      },
+      "after": {
+        "provenance": {
+          "source_sha256": "3e99ed04c00cf8aa6da6e22d83ae1181d49063ea2e236f6857229e270e701f2d",
+          "driver_sha256": "bc3c034fb811280367ff62e983d451d44cca51bb2aa5c0c7fe20cb7fe2fe034e",
+          "artifact_sha256": "86ddad8047da2e1a19c6c94a06f24896ff049f35e0618fcef4fa112ee5128ead",
+          "fixture_sha256": "4ff8d5354a88f3f00f810f00bb473142d7b61b21a6d9c1ac9a737f4168c1cf93",
+          "rounds": 15,
+          "build": [
+            "rustc",
+            "--edition=2024",
+            "-O",
+            "-C",
+            "lto=true",
+            "-C",
+            "codegen-units=1",
+            "-C",
+            "panic=abort",
+            "-A",
+            "dead_code",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-qcz1xguf/profile.rs",
+            "-o",
+            "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-profile-qcz1xguf/profile"
+          ],
+          "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: aarch64-apple-darwin\nrelease: 1.97.0\nLLVM version: 22.1.6\n"
+        },
+        "timings": [
+          "parse 0.05529975 0",
+          "buffered-emission 0.050331167 11700345",
+          "strings 0.050192292 11700030",
+          "normalize 0.089068042 11700030"
+        ]
+      }
+    }
+  },
+  "results": [
+    {
+      "workload": "records-4MiB",
+      "input_bytes": 4194275,
+      "input_sha256": "b005b122d1348dc4fe6328a2f0c7aa8666ba2555b4184b6a7ab71efd0649e5a2",
+      "output_sha256": {
+        "before": "ed792ff1e65cd8c5040f3f55022bc5b1b81686af86d09f9aa8412e885ca96ea0",
+        "after": "ed792ff1e65cd8c5040f3f55022bc5b1b81686af86d09f9aa8412e885ca96ea0",
+        "fastgron": "ed792ff1e65cd8c5040f3f55022bc5b1b81686af86d09f9aa8412e885ca96ea0"
+      },
+      "commands": {
+        "before": [
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/target-before/release/gronify-native",
+          "flatten",
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/records-4MiB.json"
+        ],
+        "after": [
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/target-after/release/gronify-native",
+          "flatten",
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/records-4MiB.json"
+        ],
+        "fastgron": [
+          "/opt/homebrew/bin/fastgron",
+          "--no-color",
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/records-4MiB.json"
+        ]
+      },
+      "tools": {
+        "before": {
+          "median_seconds": 0.02033179090358317,
+          "median_rss_bytes": 1769472,
+          "samples": [
+            {
+              "seconds": 0.02056587510742247,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.019670458044856787,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.02033179090358317,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.020303624914959073,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.02036341605708003,
+              "rss_bytes": 1769472
+            }
+          ]
+        },
+        "after": {
+          "median_seconds": 0.01662329095415771,
+          "median_rss_bytes": 1769472,
+          "samples": [
+            {
+              "seconds": 0.01699345908127725,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.01697991695255041,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.01653599995188415,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.01632762490771711,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.01662329095415771,
+              "rss_bytes": 1769472
+            }
+          ]
+        },
+        "fastgron": {
+          "median_seconds": 0.013512207893654704,
+          "median_rss_bytes": 17235968,
+          "samples": [
+            {
+              "seconds": 0.01349837495945394,
+              "rss_bytes": 17235968
+            },
+            {
+              "seconds": 0.013367291074246168,
+              "rss_bytes": 17203200
+            },
+            {
+              "seconds": 0.013512207893654704,
+              "rss_bytes": 17235968
+            },
+            {
+              "seconds": 0.01409533410333097,
+              "rss_bytes": 17235968
+            },
+            {
+              "seconds": 0.014371250057592988,
+              "rss_bytes": 17219584
+            }
+          ]
+        }
+      }
+    },
+    {
+      "workload": "records-32MiB",
+      "input_bytes": 33554431,
+      "input_sha256": "e0e65490fd85ab26935a1219a9d5c728bf819a3f6315b9f25a668ad61bcdf6e2",
+      "output_sha256": {
+        "before": "df5c804a1f6eb94f2031394e1b4f88f6c0b8ac60a53f80d0a3790cbb259bea9f",
+        "after": "df5c804a1f6eb94f2031394e1b4f88f6c0b8ac60a53f80d0a3790cbb259bea9f",
+        "fastgron": "df5c804a1f6eb94f2031394e1b4f88f6c0b8ac60a53f80d0a3790cbb259bea9f"
+      },
+      "commands": {
+        "before": [
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/target-before/release/gronify-native",
+          "flatten",
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/records-32MiB.json"
+        ],
+        "after": [
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/target-after/release/gronify-native",
+          "flatten",
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/records-32MiB.json"
+        ],
+        "fastgron": [
+          "/opt/homebrew/bin/fastgron",
+          "--no-color",
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/records-32MiB.json"
+        ]
+      },
+      "tools": {
+        "before": {
+          "median_seconds": 0.13070666696876287,
+          "median_rss_bytes": 1769472,
+          "samples": [
+            {
+              "seconds": 0.13017316604964435,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.13073179102502763,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.13230533292517066,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.13070666696876287,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.130428500007838,
+              "rss_bytes": 1769472
+            }
+          ]
+        },
+        "after": {
+          "median_seconds": 0.10384708410128951,
+          "median_rss_bytes": 1769472,
+          "samples": [
+            {
+              "seconds": 0.10407000011764467,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.10258479183539748,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.10298858303576708,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.10384708410128951,
+              "rss_bytes": 1769472
+            },
+            {
+              "seconds": 0.10454025003127754,
+              "rss_bytes": 1769472
+            }
+          ]
+        },
+        "fastgron": {
+          "median_seconds": 0.07144079101271927,
+          "median_rss_bytes": 80134144,
+          "samples": [
+            {
+              "seconds": 0.06956308288499713,
+              "rss_bytes": 80134144
+            },
+            {
+              "seconds": 0.07144079101271927,
+              "rss_bytes": 80134144
+            },
+            {
+              "seconds": 0.07119004195556045,
+              "rss_bytes": 80150528
+            },
+            {
+              "seconds": 0.07238516700454056,
+              "rss_bytes": 80134144
+            },
+            {
+              "seconds": 0.07161370781250298,
+              "rss_bytes": 80134144
+            }
+          ]
+        }
+      }
+    },
+    {
+      "workload": "long-string-8MiB",
+      "input_bytes": 8388616,
+      "input_sha256": "0919311f117ff72ad9893e0d7b60ee5989dd3826c4659a2bd03e49f0f1ce472a",
+      "output_sha256": {
+        "before": "75b303a3b2273c4a2b27c12a803f3a3a1139dc65f683e1c918988d26a627f14e",
+        "after": "75b303a3b2273c4a2b27c12a803f3a3a1139dc65f683e1c918988d26a627f14e",
+        "fastgron": "75b303a3b2273c4a2b27c12a803f3a3a1139dc65f683e1c918988d26a627f14e"
+      },
+      "commands": {
+        "before": [
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/target-before/release/gronify-native",
+          "flatten",
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/long-string-8MiB.json"
+        ],
+        "after": [
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/target-after/release/gronify-native",
+          "flatten",
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/long-string-8MiB.json"
+        ],
+        "fastgron": [
+          "/opt/homebrew/bin/fastgron",
+          "--no-color",
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/long-string-8MiB.json"
+        ]
+      },
+      "tools": {
+        "before": {
+          "median_seconds": 0.010418124962598085,
+          "median_rss_bytes": 12255232,
+          "samples": [
+            {
+              "seconds": 0.011312416987493634,
+              "rss_bytes": 12255232
+            },
+            {
+              "seconds": 0.009768249932676554,
+              "rss_bytes": 12255232
+            },
+            {
+              "seconds": 0.010512791108340025,
+              "rss_bytes": 12255232
+            },
+            {
+              "seconds": 0.009898875141516328,
+              "rss_bytes": 12255232
+            },
+            {
+              "seconds": 0.010418124962598085,
+              "rss_bytes": 12255232
+            }
+          ]
+        },
+        "after": {
+          "median_seconds": 0.006050041178241372,
+          "median_rss_bytes": 12255232,
+          "samples": [
+            {
+              "seconds": 0.005921125179156661,
+              "rss_bytes": 12255232
+            },
+            {
+              "seconds": 0.006050041178241372,
+              "rss_bytes": 12255232
+            },
+            {
+              "seconds": 0.00616049999371171,
+              "rss_bytes": 12255232
+            },
+            {
+              "seconds": 0.006017207866534591,
+              "rss_bytes": 12255232
+            },
+            {
+              "seconds": 0.0061851670034229755,
+              "rss_bytes": 12255232
+            }
+          ]
+        },
+        "fastgron": {
+          "median_seconds": 0.007630291860550642,
+          "median_rss_bytes": 22953984,
+          "samples": [
+            {
+              "seconds": 0.007783458102494478,
+              "rss_bytes": 22953984
+            },
+            {
+              "seconds": 0.007630291860550642,
+              "rss_bytes": 22953984
+            },
+            {
+              "seconds": 0.007462792098522186,
+              "rss_bytes": 22953984
+            },
+            {
+              "seconds": 0.007443124894052744,
+              "rss_bytes": 22953984
+            },
+            {
+              "seconds": 0.007828415837138891,
+              "rss_bytes": 22953984
+            }
+          ]
+        }
+      }
+    },
+    {
+      "workload": "tiny",
+      "input_bytes": 120,
+      "input_sha256": "9fe03f149ca869e14c338107d9f3de274f797be693d805eea45407fd89f9aa68",
+      "output_sha256": {
+        "before": "2f57fb086ef8eace81ffa324dd936f167ad692d19e41093c18b622046f710f67",
+        "after": "2f57fb086ef8eace81ffa324dd936f167ad692d19e41093c18b622046f710f67",
+        "fastgron": "2f57fb086ef8eace81ffa324dd936f167ad692d19e41093c18b622046f710f67"
+      },
+      "commands": {
+        "before": [
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/target-before/release/gronify-native",
+          "flatten",
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/tiny.json"
+        ],
+        "after": [
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/target-after/release/gronify-native",
+          "flatten",
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/tiny.json"
+        ],
+        "fastgron": [
+          "/opt/homebrew/bin/fastgron",
+          "--no-color",
+          "/var/folders/zz/r1hpg4td5js_19hwjd6k0sf00000gn/T/native-step-0gnpisvw/tiny.json"
+        ]
+      },
+      "tools": {
+        "before": {
+          "median_seconds": 0.003771374933421612,
+          "median_rss_bytes": 1671168,
+          "samples": [
+            {
+              "seconds": 0.0051151670049875975,
+              "rss_bytes": 1671168
+            },
+            {
+              "seconds": 0.0036521670408546925,
+              "rss_bytes": 1671168
+            },
+            {
+              "seconds": 0.003771374933421612,
+              "rss_bytes": 1671168
+            },
+            {
+              "seconds": 0.004079374950379133,
+              "rss_bytes": 1671168
+            },
+            {
+              "seconds": 0.0037554590962827206,
+              "rss_bytes": 1671168
+            }
+          ]
+        },
+        "after": {
+          "median_seconds": 0.0039956660475581884,
+          "median_rss_bytes": 1671168,
+          "samples": [
+            {
+              "seconds": 0.006705750012770295,
+              "rss_bytes": 1671168
+            },
+            {
+              "seconds": 0.004530249862000346,
+              "rss_bytes": 1671168
+            },
+            {
+              "seconds": 0.003784207860007882,
+              "rss_bytes": 1671168
+            },
+            {
+              "seconds": 0.0039956660475581884,
+              "rss_bytes": 1671168
+            },
+            {
+              "seconds": 0.0037955830339342356,
+              "rss_bytes": 1671168
+            }
+          ]
+        },
+        "fastgron": {
+          "median_seconds": 0.004969374975189567,
+          "median_rss_bytes": 6045696,
+          "samples": [
+            {
+              "seconds": 0.006718083051964641,
+              "rss_bytes": 6045696
+            },
+            {
+              "seconds": 0.004969374975189567,
+              "rss_bytes": 6045696
+            },
+            {
+              "seconds": 0.004481083946302533,
+              "rss_bytes": 6045696
+            },
+            {
+              "seconds": 0.005050458945333958,
+              "rss_bytes": 6045696
+            },
+            {
+              "seconds": 0.004778750007972121,
+              "rss_bytes": 6045696
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "load_average_end": [
+    5.873046875,
+    5.2880859375,
+    4.40625
+  ],
+  "finished_at_utc": "2026-11-03T21:50:49.319600+00:00"
+}
