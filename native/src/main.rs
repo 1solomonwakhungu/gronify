@@ -1,4 +1,5 @@
 //! Experimental, document-order flattener. No tree and no recursive parsing.
+mod unflatten;
 use std::io::{self, BufWriter, Read, Write};
 
 mod search;
@@ -444,6 +445,13 @@ fn run() -> Result<()> {
     Ok(())
 }
 fn main() {
+    if std::env::args().nth(1).as_deref() == Some("unflatten") {
+        if let Err(e) = unflatten::run(std::env::args().skip(2).collect()) {
+            eprintln!("gronify-native: {e}");
+            std::process::exit(1);
+        }
+        return;
+    }
     if std::env::args().nth(1).as_deref() == Some("search") {
         let args: Vec<String> = std::env::args().skip(2).collect();
         let errors = if args
