@@ -1,0 +1,69 @@
+--- a/native/src/main.rs
++++ b/native/src/main.rs
+@@ -58,6 +58,23 @@
+     }
+     // Borrow only when a delimiter is already buffered; validate the exact bytes.
+     fn bare_token<'a>(&'a mut self, token: &'a mut Vec<u8>) -> Result<&'a [u8]> {
++        let buffered = &self.buf[self.pos..self.end];
++        // A complete grammar prefix is usable only with a buffered delimiter.
++        // Otherwise the original scanner must reject suffixes or refill.
++        if let Some(len) = number_prefix(buffered) {
++            if buffered
++                .get(len)
++                .is_some_and(|c| !(c.is_ascii_alphanumeric() || matches!(c, b'+' | b'-' | b'.')))
++            {
++                if len > TOKEN_MAX {
++                    return Err("token exceeds 64 MiB resource limit".into());
++                }
++                let start = self.pos;
++                self.pos += len;
++                self.offset += len;
++                return Ok(&self.buf[start..self.pos]);
++            }
++        }
+         let start = self.pos;
+         let mut end = start;
+         while end < self.end {
+@@ -267,6 +284,9 @@
+     }
+ }
+ fn number(s: &[u8]) -> bool {
++    number_prefix(s) == Some(s.len())
++}
++fn number_prefix(s: &[u8]) -> Option<usize> {
+     let mut i = usize::from(s.first() == Some(&b'-'));
+     if s.get(i) == Some(&b'0') {
+         i += 1;
+@@ -276,7 +296,7 @@
+             i += 1;
+         }
+         if i == start {
+-            return false;
++            return None;
+         }
+     }
+     if s.get(i) == Some(&b'.') {
+@@ -286,7 +306,7 @@
+             i += 1;
+         }
+         if i == start {
+-            return false;
++            return None;
+         }
+     }
+     if matches!(s.get(i), Some(b'e' | b'E')) {
+@@ -299,10 +319,10 @@
+             i += 1;
+         }
+         if i == start {
+-            return false;
+-        }
+-    }
+-    i == s.len()
++            return None;
++        }
++    }
++    Some(i)
+ }
+ fn identifier(s: &[u8]) -> bool {
+     let start = |b: u8| b.is_ascii_alphabetic() || b == b'_' || b == b'$';
