@@ -1,0 +1,491 @@
+{
+  "commit": "2017be1b4c4f20e070473c1be22b0f27c983f2a8",
+  "dirty": "",
+  "platform": "macOS-26.6.1-arm64-arm-64bit",
+  "start_utc": "Tue Nov  3 22:34:03 UTC 2026",
+  "versions": {
+    "node": "v22.23.1",
+    "fastgron": "fastgron version 0.7.7",
+    "jq": "jq-1.7.1-apple",
+    "rust": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: aarch64-apple-darwin\nrelease: 1.97.0\nLLVM version: 22.1.6"
+  },
+  "fixtures": [],
+  "results": [
+    {
+      "size_mib": 1,
+      "operation": "event-semantic-validation",
+      "expected": {
+        "command": [
+          "/Library/Developer/CommandLineTools/usr/bin/python3",
+          "/tmp/gronify-integrated-2017be1-20261103/semantic.py",
+          "/tmp/gronify-integrated-2017be1-20261103/events-1.json"
+        ],
+        "sample": 0,
+        "status": "ok",
+        "exit_code": 0,
+        "wall_s": 0.035144375000000005,
+        "rss_bytes": 13107200,
+        "peak_tree_rss_bytes": 0,
+        "guard_reason": null,
+        "output_sha256": "9a04cb66e82746c0734365f4e9f8a1fecb9f606934c9db7175a9ce884b7336b7",
+        "output_bytes": 113,
+        "output_lines": 1,
+        "tail": "000, \"canonical_record_sha256\": \"51ade2474f45a6936ff041f2adbe12b9ca8475ecc7d175995f1152fdea338da7\"}\n",
+        "prefix": "{\"records\": 2000, \"canonical_record_sha256\": \"51ade2474f45a6936ff041f2adbe12b9ca8475ecc7d175995f1152fdea338da7\"}\n",
+        "metrics": "/tmp/gronify-integrated-2017be1-20261103/semantic-000-1-source-0.time",
+        "stderr": "/tmp/gronify-integrated-2017be1-20261103/semantic-000-1-source-0.stderr",
+        "load": [
+          3.029296875,
+          3.89208984375,
+          4.2177734375
+        ]
+      },
+      "actual": {
+        "command": [
+          "/bin/bash",
+          "-o",
+          "pipefail",
+          "-c",
+          "/opt/homebrew/bin/fastgron -u --no-indent --no-newline /tmp/gronify-integrated-2017be1-20261103/semantic.gron | /Library/Developer/CommandLineTools/usr/bin/python3 /tmp/gronify-integrated-2017be1-20261103/semantic.py"
+        ],
+        "sample": 0,
+        "status": "ok",
+        "exit_code": 0,
+        "wall_s": 0.03708908300000002,
+        "rss_bytes": 16482304,
+        "peak_tree_rss_bytes": 0,
+        "guard_reason": null,
+        "output_sha256": "9a04cb66e82746c0734365f4e9f8a1fecb9f606934c9db7175a9ce884b7336b7",
+        "output_bytes": 113,
+        "output_lines": 1,
+        "tail": "000, \"canonical_record_sha256\": \"51ade2474f45a6936ff041f2adbe12b9ca8475ecc7d175995f1152fdea338da7\"}\n",
+        "prefix": "{\"records\": 2000, \"canonical_record_sha256\": \"51ade2474f45a6936ff041f2adbe12b9ca8475ecc7d175995f1152fdea338da7\"}\n",
+        "metrics": "/tmp/gronify-integrated-2017be1-20261103/semantic-000-1-fastgron-0.time",
+        "stderr": "/tmp/gronify-integrated-2017be1-20261103/semantic-000-1-fastgron-0.stderr",
+        "load": [
+          3.029296875,
+          3.89208984375,
+          4.2177734375
+        ]
+      },
+      "prepare": {
+        "command": [
+          "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/native/target/release/gronify-native",
+          "flatten",
+          "/tmp/gronify-integrated-2017be1-20261103/events-1.json"
+        ],
+        "sample": 0,
+        "status": "ok",
+        "exit_code": 0,
+        "wall_s": 0.00806670900000006,
+        "rss_bytes": 1769472,
+        "peak_tree_rss_bytes": 0,
+        "guard_reason": null,
+        "output_sha256": "5ca165fa7a1db895f823336fa0c300e8cf3a005f65579f2b9be53eb947af74c3",
+        "output_bytes": 2308026,
+        "output_lines": 67287,
+        "tail": "ags[0] = \"beta\"\njson[1999].tags[1] = \"mobile\"\njson[1999].tags[2] = \"mobile\"\njson[1999].error = null\n",
+        "prefix": "json = []\njson[0] = {}\njson[0].id = 0\njson[0].uuid = \"e1ce9b93bee8a8354e97a6b4327f3a3f\"\njson[0].timestamp = \"2026-01-01T00:00:00.000Z\"\njson[0].level = \"info\"\njson[0].service = \"inventory\"\njson[0].message = \"retrying idempotent request\"\njson[0].user = {}\njson[0].user.name = \"Carlos Nguyen\"\njson[0].user.email = \"carlos.nguyen0@example.com\"\njson[0].user.age = 18\njson[0].user.active = true\njson[0].user.roles = []\njson[0].user.roles[0] = \"viewer\"\njson[0].user.roles[1] = \"editor\"\njson[0].user.address ",
+        "metrics": "/tmp/gronify-integrated-2017be1-20261103/semantic-000-1-prepare-0.time",
+        "stderr": "/tmp/gronify-integrated-2017be1-20261103/semantic-000-1-prepare-0.stderr",
+        "load": [
+          3.029296875,
+          3.89208984375,
+          4.2177734375
+        ]
+      },
+      "matches": true
+    },
+    {
+      "size_mib": 10,
+      "operation": "event-semantic-validation",
+      "expected": {
+        "command": [
+          "/Library/Developer/CommandLineTools/usr/bin/python3",
+          "/tmp/gronify-integrated-2017be1-20261103/semantic.py",
+          "/tmp/gronify-integrated-2017be1-20261103/events-10.json"
+        ],
+        "sample": 0,
+        "status": "ok",
+        "exit_code": 0,
+        "wall_s": 0.18303737500000006,
+        "rss_bytes": 20922368,
+        "peak_tree_rss_bytes": 21790720,
+        "guard_reason": null,
+        "output_sha256": "1ca034b675372d01967b19cc6ee208b97b0524eb10658d82c59f03eedcf5752e",
+        "output_bytes": 114,
+        "output_lines": 1,
+        "tail": "000, \"canonical_record_sha256\": \"6fc0d10bdc5b3fb78b10dcdf865a52c610393b3d4691c58a7c86469015cdc01b\"}\n",
+        "prefix": "{\"records\": 20000, \"canonical_record_sha256\": \"6fc0d10bdc5b3fb78b10dcdf865a52c610393b3d4691c58a7c86469015cdc01b\"}\n",
+        "metrics": "/tmp/gronify-integrated-2017be1-20261103/semantic-001-10-source-0.time",
+        "stderr": "/tmp/gronify-integrated-2017be1-20261103/semantic-001-10-source-0.stderr",
+        "load": [
+          3.029296875,
+          3.89208984375,
+          4.2177734375
+        ]
+      },
+      "actual": {
+        "command": [
+          "/bin/bash",
+          "-o",
+          "pipefail",
+          "-c",
+          "/opt/homebrew/bin/fastgron -u --no-indent --no-newline /tmp/gronify-integrated-2017be1-20261103/semantic.gron | /Library/Developer/CommandLineTools/usr/bin/python3 /tmp/gronify-integrated-2017be1-20261103/semantic.py"
+        ],
+        "sample": 0,
+        "status": "ok",
+        "exit_code": 0,
+        "wall_s": 0.23606225000000003,
+        "rss_bytes": 92438528,
+        "peak_tree_rss_bytes": 110198784,
+        "guard_reason": null,
+        "output_sha256": "1ca034b675372d01967b19cc6ee208b97b0524eb10658d82c59f03eedcf5752e",
+        "output_bytes": 114,
+        "output_lines": 1,
+        "tail": "000, \"canonical_record_sha256\": \"6fc0d10bdc5b3fb78b10dcdf865a52c610393b3d4691c58a7c86469015cdc01b\"}\n",
+        "prefix": "{\"records\": 20000, \"canonical_record_sha256\": \"6fc0d10bdc5b3fb78b10dcdf865a52c610393b3d4691c58a7c86469015cdc01b\"}\n",
+        "metrics": "/tmp/gronify-integrated-2017be1-20261103/semantic-001-10-fastgron-0.time",
+        "stderr": "/tmp/gronify-integrated-2017be1-20261103/semantic-001-10-fastgron-0.stderr",
+        "load": [
+          3.029296875,
+          3.89208984375,
+          4.2177734375
+        ]
+      },
+      "prepare": {
+        "command": [
+          "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/native/target/release/gronify-native",
+          "flatten",
+          "/tmp/gronify-integrated-2017be1-20261103/events-10.json"
+        ],
+        "sample": 0,
+        "status": "ok",
+        "exit_code": 0,
+        "wall_s": 0.04513195799999992,
+        "rss_bytes": 1769472,
+        "peak_tree_rss_bytes": 0,
+        "guard_reason": null,
+        "output_sha256": "497897bcef14320ef3459e18c345205eea975a1a85532b7a2ebed4ec591cb24c",
+        "output_bytes": 23757289,
+        "output_lines": 672052,
+        "tail": "9999].tags = []\njson[19999].tags[0] = \"web\"\njson[19999].tags[1] = \"mobile\"\njson[19999].error = null\n",
+        "prefix": "json = []\njson[0] = {}\njson[0].id = 0\njson[0].uuid = \"e1ce9b93bee8a8354e97a6b4327f3a3f\"\njson[0].timestamp = \"2026-01-01T00:00:00.000Z\"\njson[0].level = \"info\"\njson[0].service = \"inventory\"\njson[0].message = \"retrying idempotent request\"\njson[0].user = {}\njson[0].user.name = \"Carlos Nguyen\"\njson[0].user.email = \"carlos.nguyen0@example.com\"\njson[0].user.age = 18\njson[0].user.active = true\njson[0].user.roles = []\njson[0].user.roles[0] = \"viewer\"\njson[0].user.roles[1] = \"editor\"\njson[0].user.address ",
+        "metrics": "/tmp/gronify-integrated-2017be1-20261103/semantic-001-10-prepare-0.time",
+        "stderr": "/tmp/gronify-integrated-2017be1-20261103/semantic-001-10-prepare-0.stderr",
+        "load": [
+          3.029296875,
+          3.89208984375,
+          4.2177734375
+        ]
+      },
+      "matches": true
+    },
+    {
+      "size_mib": 100,
+      "operation": "event-semantic-validation",
+      "expected": {
+        "command": [
+          "/Library/Developer/CommandLineTools/usr/bin/python3",
+          "/tmp/gronify-integrated-2017be1-20261103/semantic.py",
+          "/tmp/gronify-integrated-2017be1-20261103/events-100.json"
+        ],
+        "sample": 0,
+        "status": "ok",
+        "exit_code": 0,
+        "wall_s": 1.6214844999999998,
+        "rss_bytes": 21528576,
+        "peak_tree_rss_bytes": 22773760,
+        "guard_reason": null,
+        "output_sha256": "e54e17c188cae2752e4b054e3fe8c6753cb222cc6fbfecda4678ce67109a9794",
+        "output_bytes": 115,
+        "output_lines": 1,
+        "tail": "000, \"canonical_record_sha256\": \"e3a42aa2ef48a30b8fe91ea96c0bb6466dcffdac6a5355598554931cdc8822f1\"}\n",
+        "prefix": "{\"records\": 188000, \"canonical_record_sha256\": \"e3a42aa2ef48a30b8fe91ea96c0bb6466dcffdac6a5355598554931cdc8822f1\"}\n",
+        "metrics": "/tmp/gronify-integrated-2017be1-20261103/semantic-002-100-source-0.time",
+        "stderr": "/tmp/gronify-integrated-2017be1-20261103/semantic-002-100-source-0.stderr",
+        "load": [
+          3.029296875,
+          3.89208984375,
+          4.2177734375
+        ]
+      },
+      "actual": {
+        "command": [
+          "/bin/bash",
+          "-o",
+          "pipefail",
+          "-c",
+          "/opt/homebrew/bin/fastgron -u --no-indent --no-newline /tmp/gronify-integrated-2017be1-20261103/semantic.gron | /Library/Developer/CommandLineTools/usr/bin/python3 /tmp/gronify-integrated-2017be1-20261103/semantic.py"
+        ],
+        "sample": 0,
+        "status": "ok",
+        "exit_code": 0,
+        "wall_s": 2.1514963750000002,
+        "rss_bytes": 802799616,
+        "peak_tree_rss_bytes": 825245696,
+        "guard_reason": null,
+        "output_sha256": "e54e17c188cae2752e4b054e3fe8c6753cb222cc6fbfecda4678ce67109a9794",
+        "output_bytes": 115,
+        "output_lines": 1,
+        "tail": "000, \"canonical_record_sha256\": \"e3a42aa2ef48a30b8fe91ea96c0bb6466dcffdac6a5355598554931cdc8822f1\"}\n",
+        "prefix": "{\"records\": 188000, \"canonical_record_sha256\": \"e3a42aa2ef48a30b8fe91ea96c0bb6466dcffdac6a5355598554931cdc8822f1\"}\n",
+        "metrics": "/tmp/gronify-integrated-2017be1-20261103/semantic-002-100-fastgron-0.time",
+        "stderr": "/tmp/gronify-integrated-2017be1-20261103/semantic-002-100-fastgron-0.stderr",
+        "load": [
+          3.029296875,
+          3.89208984375,
+          4.2177734375
+        ]
+      },
+      "prepare": {
+        "command": [
+          "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/native/target/release/gronify-native",
+          "flatten",
+          "/tmp/gronify-integrated-2017be1-20261103/events-100.json"
+        ],
+        "sample": 0,
+        "status": "ok",
+        "exit_code": 0,
+        "wall_s": 0.3973328330000001,
+        "rss_bytes": 1769472,
+        "peak_tree_rss_bytes": 3031040,
+        "guard_reason": null,
+        "output_sha256": "ff7f3a4e6b52474ff0f00775c39c5b82844632bd11b0d4333d1720b366b518d7",
+        "output_bytes": 229780075,
+        "output_lines": 6317117,
+        "tail": "equest-id\"] = \"5o14z6\"\njson[187999].tags = []\njson[187999].tags[0] = \"eu\"\njson[187999].error = null\n",
+        "prefix": "json = []\njson[0] = {}\njson[0].id = 0\njson[0].uuid = \"e1ce9b93bee8a8354e97a6b4327f3a3f\"\njson[0].timestamp = \"2026-01-01T00:00:00.000Z\"\njson[0].level = \"info\"\njson[0].service = \"inventory\"\njson[0].message = \"retrying idempotent request\"\njson[0].user = {}\njson[0].user.name = \"Carlos Nguyen\"\njson[0].user.email = \"carlos.nguyen0@example.com\"\njson[0].user.age = 18\njson[0].user.active = true\njson[0].user.roles = []\njson[0].user.roles[0] = \"viewer\"\njson[0].user.roles[1] = \"editor\"\njson[0].user.address ",
+        "metrics": "/tmp/gronify-integrated-2017be1-20261103/semantic-002-100-prepare-0.time",
+        "stderr": "/tmp/gronify-integrated-2017be1-20261103/semantic-002-100-prepare-0.stderr",
+        "load": [
+          3.029296875,
+          3.89208984375,
+          4.2177734375
+        ]
+      },
+      "matches": true
+    },
+    {
+      "size_mib": 1000,
+      "operation": "event-semantic-validation",
+      "expected": {
+        "command": [
+          "/Library/Developer/CommandLineTools/usr/bin/python3",
+          "/tmp/gronify-integrated-2017be1-20261103/semantic.py",
+          "/tmp/gronify-integrated-2017be1-20261103/events-1000.json"
+        ],
+        "sample": 0,
+        "status": "ok",
+        "exit_code": 0,
+        "wall_s": 15.788376249999999,
+        "rss_bytes": 30588928,
+        "peak_tree_rss_bytes": 31391744,
+        "guard_reason": null,
+        "output_sha256": "2428b50b421eea5f06c08014c071afab12a0ca5af70c2faa704e246cf8a51df1",
+        "output_bytes": 116,
+        "output_lines": 1,
+        "tail": "000, \"canonical_record_sha256\": \"28ffd14e040b5972484ed3ac89a0ab3075b775900ee2550d493332984077afa9\"}\n",
+        "prefix": "{\"records\": 1862000, \"canonical_record_sha256\": \"28ffd14e040b5972484ed3ac89a0ab3075b775900ee2550d493332984077afa9\"}\n",
+        "metrics": "/tmp/gronify-integrated-2017be1-20261103/semantic-003-1000-source-0.time",
+        "stderr": "/tmp/gronify-integrated-2017be1-20261103/semantic-003-1000-source-0.stderr",
+        "load": [
+          3.34033203125,
+          3.89990234375,
+          4.2119140625
+        ]
+      },
+      "actual": {
+        "command": [
+          "/bin/bash",
+          "-o",
+          "pipefail",
+          "-c",
+          "/opt/homebrew/bin/fastgron -u --no-indent --no-newline /tmp/gronify-integrated-2017be1-20261103/semantic.gron | /Library/Developer/CommandLineTools/usr/bin/python3 /tmp/gronify-integrated-2017be1-20261103/semantic.py"
+        ],
+        "sample": 0,
+        "status": "ok",
+        "exit_code": 0,
+        "wall_s": 22.654702834,
+        "rss_bytes": 7910457344,
+        "peak_tree_rss_bytes": 7930413056,
+        "guard_reason": null,
+        "output_sha256": "2428b50b421eea5f06c08014c071afab12a0ca5af70c2faa704e246cf8a51df1",
+        "output_bytes": 116,
+        "output_lines": 1,
+        "tail": "000, \"canonical_record_sha256\": \"28ffd14e040b5972484ed3ac89a0ab3075b775900ee2550d493332984077afa9\"}\n",
+        "prefix": "{\"records\": 1862000, \"canonical_record_sha256\": \"28ffd14e040b5972484ed3ac89a0ab3075b775900ee2550d493332984077afa9\"}\n",
+        "metrics": "/tmp/gronify-integrated-2017be1-20261103/semantic-003-1000-fastgron-0.time",
+        "stderr": "/tmp/gronify-integrated-2017be1-20261103/semantic-003-1000-fastgron-0.stderr",
+        "load": [
+          3.34765625,
+          3.85791015625,
+          4.18701171875
+        ]
+      },
+      "prepare": {
+        "command": [
+          "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/native/target/release/gronify-native",
+          "flatten",
+          "/tmp/gronify-integrated-2017be1-20261103/events-1000.json"
+        ],
+        "sample": 0,
+        "status": "ok",
+        "exit_code": 0,
+        "wall_s": 3.9390471669999982,
+        "rss_bytes": 1769472,
+        "peak_tree_rss_bytes": 3031040,
+        "guard_reason": null,
+        "output_sha256": "b65c4a31fa05f94bc522f16970c6a2c230ea0f0e11e815cc0f183962813728a8",
+        "output_bytes": 2341630268,
+        "output_lines": 62564170,
+        "tail": "ags = []\njson[1861999].tags[0] = \"beta\"\njson[1861999].tags[1] = \"mobile\"\njson[1861999].error = null\n",
+        "prefix": "json = []\njson[0] = {}\njson[0].id = 0\njson[0].uuid = \"e1ce9b93bee8a8354e97a6b4327f3a3f\"\njson[0].timestamp = \"2026-01-01T00:00:00.000Z\"\njson[0].level = \"info\"\njson[0].service = \"inventory\"\njson[0].message = \"retrying idempotent request\"\njson[0].user = {}\njson[0].user.name = \"Carlos Nguyen\"\njson[0].user.email = \"carlos.nguyen0@example.com\"\njson[0].user.age = 18\njson[0].user.active = true\njson[0].user.roles = []\njson[0].user.roles[0] = \"viewer\"\njson[0].user.roles[1] = \"editor\"\njson[0].user.address ",
+        "metrics": "/tmp/gronify-integrated-2017be1-20261103/semantic-003-1000-prepare-0.time",
+        "stderr": "/tmp/gronify-integrated-2017be1-20261103/semantic-003-1000-prepare-0.stderr",
+        "load": [
+          3.34033203125,
+          3.89990234375,
+          4.2119140625
+        ]
+      },
+      "matches": true
+    }
+  ],
+  "method": {
+    "samples": 3,
+    "timeout_seconds": 120,
+    "guard_bytes": 8589934592,
+    "cache": "warm each input before each sample",
+    "order": "rotate tool order each round",
+    "sink": "streamed SHA256 in harness parent; no output retained except one common gron file per size",
+    "rss": "/usr/bin/time -l maximum child RSS; tree sum sampled separately every 0.10s",
+    "host": "shared, builders may contend; load and top process snapshots retained"
+  },
+  "artifacts": {
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/native/target/release/gronify-native": {
+      "sha256": "ec5fde401099999fa37fae259fc62a6a1eddf41500ee2b949e14e05ca80d3db9",
+      "bytes": 369024
+    },
+    "/Users/solomonwakhungu/.hermes/node/bin/node": {
+      "sha256": "2e3f1286a7eb3736346ed1803e458a0ff909e2b2d5bc746144dcb76970e9b99d",
+      "bytes": 112928848
+    },
+    "/opt/homebrew/Cellar/fastgron/0.7.7/bin/fastgron": {
+      "sha256": "16fbcb9be3251cb5534030c00d60054e41462ac6d1a38edd061c0087177debb9",
+      "bytes": 248808
+    },
+    "/usr/bin/jq": {
+      "sha256": "e52747c4a03c38fe5929bea959f206743f0bcf0b9ce941acd1bcfa8851f7ecae",
+      "bytes": 1488016
+    },
+    "/usr/bin/time": {
+      "sha256": "e3671328199c5cfc1554f51b6eb887ab568c543c88f44e94e00448ccf002ea4a",
+      "bytes": 134960
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/native/src/unflatten.rs": {
+      "sha256": "aa57911d25efaad78d187f07869967cdd4f4d4432408d3f26678331cc3f7f26d",
+      "bytes": 17799
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/native/src/main.rs": {
+      "sha256": "96f34e47cda93c2819f17684d83435d4ea3ceb5c241c55e77483557c1627b06c",
+      "bytes": 29605
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/native/src/search.rs": {
+      "sha256": "43d45799c42e5db0022ea2b561cde62f70faa582e2c67be360961468aaed591d",
+      "bytes": 7550
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/native/src/boundary_tests.rs": {
+      "sha256": "a37be8348aee71e5f91729c02a23f90925c8444f5df266a7ae289f8940bd5b70",
+      "bytes": 5390
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/sort.js": {
+      "sha256": "c3af0db8884e59a89cad76f1c668c7d8b22a899d5256cb87575ca9458980d3e9",
+      "bytes": 22803
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/gron.js": {
+      "sha256": "1f60955dcf39230a5fb5dab721c1256f963280ac9bb63369bf766d10ec2ca69a",
+      "bytes": 6258
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/formatter.js": {
+      "sha256": "7dc8c1f22448ce277b043235459e3b0d904c313ab794a3da491daac6ef13dfc1",
+      "bytes": 8024
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/index.js": {
+      "sha256": "ffdae29fe413dae95fa57a330f31412a35988f6b11ad80dbd2002fdd47f2a83e",
+      "bytes": 12033
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/matcher.js": {
+      "sha256": "903f37606e8cacebe1fc3b7d93ff2888bd5d64739f58cc9a3287070d691d4df7",
+      "bytes": 3839
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/unflatten-stream.js": {
+      "sha256": "6a90adb2eb0505b893f5bb9f1b9cf82f294632ae1ce160499116728efb6ddfe6",
+      "bytes": 6311
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/flatten-stream.js": {
+      "sha256": "52579f355c6141fb240e638e769ad66e2a35dc4ada2b74186ddaefb8c95c90b4",
+      "bytes": 9321
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/output.js": {
+      "sha256": "553821fbf95769558ac8597ff8926290a8592fb2831e9b7f1c2325f9c4bddc23",
+      "bytes": 14963
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/tokenizer.js": {
+      "sha256": "c6cb4674cb7b16f2417ed7c6f5cfdce6d17606aa59689cc1b79554bdd18c3aad",
+      "bytes": 17103
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/unflatten/tree.js": {
+      "sha256": "a1300b8373df53026978229054787364bce8febb935cada748316ce45813f4d1",
+      "bytes": 5430
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/unflatten/emitter.js": {
+      "sha256": "7def1c5039aae45e2994161849d543c07c679a57864b8df385ca7fc6ceddadc5",
+      "bytes": 8061
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/unflatten/node.js": {
+      "sha256": "578ad33506d9ce30cf32305038e0f89a596e25f69280eb3d5e1a39a07c2ec545",
+      "bytes": 222
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/unflatten/parse.js": {
+      "sha256": "6817b25fa08cd6560190912e559da4b86468759b3b7eae18369ee8faacda6a6f",
+      "bytes": 19861
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/unflatten/output.js": {
+      "sha256": "eb01ddf5b014e60ca8d4dbf907540bb3df3ad2900f98faf1c2563b3d2933a0fd",
+      "bytes": 4879
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/unflatten/compound.js": {
+      "sha256": "f88add1a58035e621cedd0f1eb542d109c08b0d1e3110834970652de37bfc47d",
+      "bytes": 4800
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/unflatten/lines.js": {
+      "sha256": "830782b0afb4a62e7524425b080885c3e67fd6c5f7d3149e9f98d99552bf6926",
+      "bytes": 2132
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/dist/unflatten/writer.js": {
+      "sha256": "ac5ffb0c1450c65c204a6fe6ed661eac973f63f868cd544d2dd61ab6eef4fa7b",
+      "bytes": 4979
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/scripts/bench-compare.mjs": {
+      "sha256": "804649789157b9e50daa7f4ffc3929aa241d409bf56e6304064f04ca63df354d",
+      "bytes": 64031
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/native/Cargo.lock": {
+      "sha256": "0845237d96472df176de2877828f6829f49229da99612bf09ea49761d2dce8d3",
+      "bytes": 158
+    },
+    "/Users/solomonwakhungu/.t3/worktrees/gronify/t3-1fbc07a6/src/packages/cli/package-lock.json": {
+      "sha256": "e190a8469f56f60d047dd73b7a0a1390bb58ec5d9719a043668b6e91e16ffa54",
+      "bytes": 197009
+    },
+    "/tmp/gronify-integrated-2017be1-20261103/semantic-check.py": {
+      "sha256": "00ad3ae3806284a38e3d48319299c8bc6f2fdea425451d6008a030195b3b6b88",
+      "bytes": 923
+    },
+    "/tmp/gronify-integrated-2017be1-20261103/generate.mjs": {
+      "sha256": "a9fbd2c9a68226f0c8b6e5abbb8eb55240bb6f734e91c2c4b554acb9a346f327",
+      "bytes": 4869
+    }
+  }
+}
