@@ -1,0 +1,151 @@
+Analysis of sampling profile (pid 84495) every 1 millisecond
+Process:         profile [84495]
+Path:            /private/tmp/*/profile
+Load Address:    0x104c04000
+Identifier:      profile
+Version:         ???
+Code Type:       ARM64
+Parent Process:  Python [84491]
+Target Type:     live task
+
+Date/Time:       2026-11-03 16:24:44.108 -0600
+Launch Time:     2026-11-03 16:24:44.075 -0600
+OS Version:      macOS 26.6.1 (25G76)
+Report Version:  7
+Analysis Tool:   /usr/bin/sample
+
+Physical footprint:         33.2M
+Physical footprint (peak):  33.2M
+Idle exit:                  untracked
+----
+
+Call graph:
+    85 Thread_110768672: Main Thread
+    + 82 _dyld_start  (in dyld) + 0  [0x104ee09c0]
+    + 2 start  (in dyld) + 6904  [0x18c69448c]
+    + ! 2 dyld4::start(dyld4::KernelArgs*, void*, void*, unsigned long long)::$_1::operator()() const  (in dyld) + 320  [0x18c694b30]
+    + !   2 dyld4::prepare(dyld4::APIs&, mach_o::UnsafeHeader const*)  (in dyld) + 3996  [0x18c695ae8]
+    + !     2 dyld4::RuntimeState::notifyDebuggerLoad(std::span<dyld4::Loader const*, 18446744073709551615ul> const&)  (in dyld) + 528  [0x18c6a4c8c]
+    + !       2 dyld4::ExternallyViewableState::addImages(lsl::Allocator&, lsl::Allocator&, std::span<dyld4::ExternallyViewableState::ImageInfo, 18446744073709551615ul> const&)  (in dyld) + 1084  [0x18c6afc80]
+    + !         2 dyld4::ExternallyViewableState::triggerNotifications(dyld_image_mode, unsigned int, dyld_image_info const*)  (in dyld) + 296  [0x18c6af524]
+    + !           2 dyld4::RemoteNotificationResponder::blockOnSynchronousEvent(unsigned int)  (in dyld) + 48  [0x18c6f5c90]
+    + !             2 dyld4::RemoteNotificationResponder::sendMessage(int, unsigned int, mach_msg_header_t*)  (in dyld) + 244  [0x18c6f5904]
+    + !               2 mach_msg_overwrite  (in dyld) + 244  [0x18c70f18c]
+    + !                 2 mach_msg2_internal  (in dyld) + 76  [0x18c70efe4]
+    + !                   2 mach_msg2_trap  (in dyld) + 8  [0x18c67572c]
+    + 1 start  (in dyld) + 6008  [0x104efc10c]
+    +   1 dyld4::ExternallyViewableState::createMinimalInfo(lsl::Allocator&, unsigned long long, char const*, unsigned long long, char const*, DyldSharedCache const*)  (in dyld) + 2116  [0x104f16c54]
+    +     1 dyld4::ExternallyViewableState::triggerNotifications(dyld_image_mode, unsigned int, dyld_image_info const*)  (in dyld) + 296  [0x104f17524]
+    +       1 dyld4::RemoteNotificationResponder::blockOnSynchronousEvent(unsigned int)  (in dyld) + 48  [0x104f5dc90]
+    +         1 dyld4::RemoteNotificationResponder::sendMessage(int, unsigned int, mach_msg_header_t*)  (in dyld) + 244  [0x104f5d904]
+    +           1 mach_msg_overwrite  (in dyld) + 244  [0x104f7718c]
+    +             1 mach_msg2_internal  (in dyld) + 76  [0x104f76fe4]
+    +               1 mach_msg2_trap  (in dyld) + 8  [0x104edd72c]
+    3730 Thread_110768672   DispatchQueue_1: com.apple.main-thread  (serial)
+      3730 start  (in dyld) + 6992  [0x18c6944e4]
+        3730 main  (in profile) + 52  [0x104c0a700]
+          3730 _RNvNtCsfiKLhsWjRsE_3std2rt19lang_start_internal  (in profile) + 952  [0x104c24670]  rt.rs:171
+            3730 _RNCINvNtCsfiKLhsWjRsE_3std2rt10lang_startuE0Cs5y46Eezllls_4main  (in profile) + 16  [0x104c04df8]  rt.rs:206
+              3730 _RINvNtNtCsfiKLhsWjRsE_3std3sys9backtrace28___rust_begin_short_backtraceFEuuECs5y46Eezllls_4main  (in profile) + 12  [0x104c04b80]  backtrace.rs:166
+                1390 _RNvCs5y46Eezllls_4main12profile_main  (in profile) + 1564,2432,...  [0x104c0543c,0x104c057a0,...]  main.rs:850
+                785 _RNvCs5y46Eezllls_4main12profile_main  (in profile) + 5120  [0x104c06220]  main.rs:850
+                ! 246 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10bare_tokenB2_  (in profile) + 112,104,...  [0x104c095a8,0x104c095a0,...]  main.rs:64
+                ! 223 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10bare_tokenB2_  (in profile) + 1220  [0x104c099fc]  main.rs:72
+                ! : 57 _RNvCs5y46Eezllls_4main6number  (in profile) + 72,84  [0x104c08840,0x104c0884c]  main.rs:275
+                ! : 22 _RNvCs5y46Eezllls_4main6number  (in profile) + 0  [0x104c087f8]  main.rs:269
+                ! : 22 _RNvCs5y46Eezllls_4main6number  (in profile) + 88  [0x104c08850]  main.rs:276
+                ! : 16 _RNvCs5y46Eezllls_4main6number  (in profile) + 148  [0x104c0888c]  main.rs:285
+                ! : 15 _RNvCs5y46Eezllls_4main6number  (in profile) + 12  [0x104c08804]  main.rs:270
+                ! : 15 _RNvCs5y46Eezllls_4main6number  (in profile) + 316  [0x104c08934]  main.rs:306
+                ! : 11 _RNvCs5y46Eezllls_4main6number  (in profile) + 112,120  [0x104c08868,0x104c08870]  main.rs:282
+                ! : 8 _RNvCs5y46Eezllls_4main6number  (in profile) + 188,196  [0x104c088b4,0x104c088bc]  main.rs:292
+                ! : 7 _RNvCs5y46Eezllls_4main6number  (in profile) + 48,24  [0x104c08828,0x104c08810]  main.rs:271
+                ! : 7 _RNvCs5y46Eezllls_4main6number  (in profile) + 104  [0x104c08860]  main.rs:278
+                ! : 7 _RNvCs5y46Eezllls_4main6number  (in profile) + 164  [0x104c0889c]  main.rs:286
+                ! : 7 _RNvCs5y46Eezllls_4main6number  (in profile) + 180  [0x104c088ac]  main.rs:288
+                ! : 7 _RNvCs5y46Eezllls_4main6number  (in profile) + 276  [0x104c0890c]  main.rs:299
+                ! : 6 _RNvCs5y46Eezllls_4main6number  (in profile) + 212  [0x104c088cc]  main.rs:293
+                ! : 5 _RNvCs5y46Eezllls_4main6number  (in profile) + 236,224  [0x104c088e4,0x104c088d8]  main.rs:294
+                ! : 4 _RNvCs5y46Eezllls_4main6number  (in profile) + 260  [0x104c088fc]  main.rs:298
+                ! : 3 _RNvCs5y46Eezllls_4main6number  (in profile) + 100  [0x104c0885c]  index.rs:0
+                ! : 3 _RNvCs5y46Eezllls_4main6number  (in profile) + 132  [0x104c0887c]  main.rs:283
+                ! : 1 _RNvCs5y46Eezllls_4main6number  (in profile) + 244  [0x104c088ec]  main.rs:295
+                ! 133 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10bare_tokenB2_  (in profile) + 88,44,...  [0x104c09590,0x104c09564,...]  main.rs:0
+                ! 58 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10bare_tokenB2_  (in profile) + 140,132,...  [0x104c095c4,0x104c095bc,...]  main.rs:65
+                ! 55 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10bare_tokenB2_  (in profile) + 1220,980,...  [0x104c099fc,0x104c0990c,...]  main.rs:72
+                ! 18 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10bare_tokenB2_  (in profile) + 24,20,...  [0x104c09550,0x104c0954c,...]  main.rs:60
+                ! 16 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10bare_tokenB2_  (in profile) + 968  [0x104c09900]  main.rs:71
+                ! 15 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10bare_tokenB2_  (in profile) + 544  [0x104c09758]  main.rs:82
+                ! : 15 _platform_memmove  (in libsystem_platform.dylib) + 88,96,...  [0x18ca693b8,0x18ca693c0,...]
+                ! 12 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10bare_tokenB2_  (in profile) + 40  [0x104c09560]  main.rs:61
+                ! 7 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10bare_tokenB2_  (in profile) + 64  [0x104c09578]  main.rs:63
+                ! 2 _RNvCs5y46Eezllls_4main6number  (in profile) + 320  [0x104c08938]  main.rs:306
+                320 _RNvCs5y46Eezllls_4main12profile_main  (in profile) + 2340  [0x104c05744]  main.rs:850
+                ! 130 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 64,72,...  [0x104c09ca8,0x104c09cb0,...]  main.rs:102
+                ! 50 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 124,136  [0x104c09ce4,0x104c09cf0]  main.rs:106
+                ! 33 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 144  [0x104c09cf8]  main.rs:112
+                ! 30 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 184,176  [0x104c09d20,0x104c09d18]  main.rs:118
+                ! 24 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 388  [0x104c09dec]  main.rs:125
+                ! 16 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 280  [0x104c09d80]  main.rs:121
+                ! 16 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 236  [0x104c09d54]  main.rs:133
+                ! : 16 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE6stringB2_  (in profile) + 656  [0x104c0a0f0]  main.rs:145
+                ! :   16 _platform_memmove  (in libsystem_platform.dylib) + 88,96  [0x18ca693b8,0x18ca693c0]
+                ! 9 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 192  [0x104c09d28]  main.rs:119
+                ! 4 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 32  [0x104c09c88]  main.rs:99
+                ! 3 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 152  [0x104c09d00]  main.rs:0
+                ! 2 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 44,56  [0x104c09c94,0x104c09ca0]  main.rs:101
+                ! 2 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 88  [0x104c09cc0]  main.rs:103
+                ! 1 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 416  [0x104c09e08]  main.rs:135
+                273 _RNvCs5y46Eezllls_4main12profile_main  (in profile) + 2732  [0x104c058cc]  main.rs:850
+                ! 220 _platform_memmove  (in libsystem_platform.dylib) + 452,428,...  [0x18ca69524,0x18ca6950c,...]
+                ! 53 DYLD-STUB$$memcpy  (in profile) + 4  [0x104c4365c]
+                185 _RNvCs5y46Eezllls_4main12profile_main  (in profile) + 2752  [0x104c058e0]  main.rs:850
+                ! 120 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10whitespaceB2_  (in profile) + 68,156,...  [0x104c09ac4,0x104c09b1c,...]  main.rs:54
+                ! 58 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10whitespaceB2_  (in profile) + 20,24,...  [0x104c09a94,0x104c09a98,...]  main.rs:53
+                ! 7 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10whitespaceB2_  (in profile) + 272  [0x104c09b90]  main.rs:54
+                !   7 _platform_memmove  (in libsystem_platform.dylib) + 88,96  [0x18ca693b8,0x18ca693c0]
+                183 _RNvCs5y46Eezllls_4main12profile_main  (in profile) + 1232,1208,...  [0x104c052f0,0x104c052d8,...]  spec_from_iter_nested.rs:0
+                154 _RNvCs5y46Eezllls_4main12profile_main  (in profile) + 2936  [0x104c05998]  main.rs:850
+                ! 104 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10whitespaceB2_  (in profile) + 68,144,...  [0x104c09ac4,0x104c09b10,...]  main.rs:54
+                ! 48 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10whitespaceB2_  (in profile) + 8,40,...  [0x104c09a88,0x104c09aa8,...]  main.rs:53
+                ! 2 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10whitespaceB2_  (in profile) + 272  [0x104c09b90]  main.rs:54
+                !   2 _platform_memmove  (in libsystem_platform.dylib) + 88  [0x18ca693b8]
+                146 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10whitespaceB2_  (in profile) + 464  [0x104c09c50]  main.rs:58
+                94 _RNvCs5y46Eezllls_4main12profile_main  (in profile) + 1612,1568,...  [0x104c0546c,0x104c05440,...]  main.rs:840
+                58 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10bare_tokenB2_  (in profile) + 744,736,...  [0x104c09820,0x104c09818,...]  main.rs:95
+                50 _RNvCs5y46Eezllls_4main12profile_main  (in profile) + 5188  [0x104c06264]  main.rs:850
+                ! 16 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 64,72  [0x104c09ca8,0x104c09cb0]  main.rs:102
+                ! 7 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 144  [0x104c09cf8]  main.rs:112
+                ! 7 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 172,168  [0x104c09d14,0x104c09d10]  main.rs:117
+                ! 6 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 280  [0x104c09d80]  main.rs:121
+                ! 6 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 32  [0x104c09c88]  main.rs:99
+                ! 5 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 124,136  [0x104c09ce4,0x104c09cf0]  main.rs:106
+                ! 1 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 88  [0x104c09cc0]  main.rs:103
+                ! 1 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 192  [0x104c09d28]  main.rs:119
+                ! 1 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 0  [0x104c09c68]  main.rs:98
+                44 _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile) + 420  [0x104c09e0c]  main.rs:135
+                41 _RNvCs5y46Eezllls_4main12profile_main  (in profile) + 4688  [0x104c06070]  main.rs:850
+                ! 38 _platform_memmove  (in libsystem_platform.dylib) + 452,436,...  [0x18ca69524,0x18ca69514,...]
+                ! 3 DYLD-STUB$$memcpy  (in profile) + 4  [0x104c4365c]
+                6 _RNvCs5y46Eezllls_4main12profile_main  (in profile) + 1312  [0x104c05340]  main.rs:850
+                ! 6 _platform_memmove  (in libsystem_platform.dylib) + 88,104  [0x18ca693b8,0x18ca693c8]
+                1 _RNvCs5y46Eezllls_4main12profile_main  (in profile) + 512  [0x104c05020]  main.rs:841
+                  1 _RNvNvNtCsfiKLhsWjRsE_3std2fs4read5inner  (in profile) + 344  [0x104c2a118]  fs.rs:346
+                    1 _RINvNtCsfiKLhsWjRsE_3std2io19default_read_to_endNtNtB4_2fs4FileEB4_  (in profile) + 236  [0x104c0c328]  mod.rs:478
+                      1 read  (in libsystem_kernel.dylib) + 8  [0x18ca1c91c]
+
+Total number in stack (recursive counted multiple, when >=5):
+        7       _platform_memmove  (in libsystem_platform.dylib) + 0  [0x18ca69360]
+
+Sort by top of stack, same collapsed (when >= 5):
+        _RNvCs5y46Eezllls_4main12profile_main  (in profile)        1667
+        _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10bare_tokenB2_  (in profile)        603
+        _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE10whitespaceB2_  (in profile)        476
+        _RNvMCs5y46Eezllls_4mainINtB2_5InputRShE12string_tokenB2_  (in profile)        398
+        _platform_memmove  (in libsystem_platform.dylib)        304
+        _RNvCs5y46Eezllls_4main6number  (in profile)        225
+        _dyld_start  (in dyld)        82
+        DYLD-STUB$$memcpy  (in profile)        56
+
+Binary images description not available
+

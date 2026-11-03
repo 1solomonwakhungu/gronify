@@ -1,0 +1,28 @@
+    Checking gronify-native v0.0.1 (/Users/solomonwakhungu/.t3/worktrees/gronify/t3-52b3888a/native)
+error: this `if` statement can be collapsed
+  --> src/main.rs:77:9
+   |
+77 | /         if let Some(len) = length {
+78 | |             if buffered
+79 | |                 .get(len)
+80 | |                 .is_some_and(|c| !(c.is_ascii_alphanumeric() || matches!(c, b'+' | b'-' | b'.')))
+...  |
+90 | |         }
+   | |_________^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#collapsible_if
+   = note: `-D clippy::collapsible-if` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::collapsible_if)]`
+help: collapse nested if block
+   |
+77 ~         if let Some(len) = length
+78 ~             && buffered
+79 |                 .get(len)
+...
+88 |                 return Ok(&self.buf[start..self.pos]);
+89 ~             }
+   |
+
+error: could not compile `gronify-native` (bin "gronify-native") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `gronify-native` (bin "gronify-native" test) due to 1 previous error
