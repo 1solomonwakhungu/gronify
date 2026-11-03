@@ -1,0 +1,23 @@
+Native (ubuntu-latest)	Lint Rust	﻿2026-11-03T22:35:38.8615702Z ##[group]Run cargo +1.97.0 clippy --locked --manifest-path native/Cargo.toml --all-targets -- -D warnings
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:38.8616538Z ^[[36;1mcargo +1.97.0 clippy --locked --manifest-path native/Cargo.toml --all-targets -- -D warnings^[[0m
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:38.8647936Z shell: /usr/bin/bash -e {0}
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:38.8648221Z ##[endgroup]
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:38.9554796Z     Checking gronify-native v0.0.1 (/home/runner/work/gronify/gronify/native)
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1312799Z error[E0369]: binary operation `==` cannot be applied to type `cli::Error`
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1314222Z    --> src/main.rs:635:17
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1315114Z     |
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1316194Z 635 |                 assert_eq!(result.unwrap_err(), "injected read error");
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1317420Z     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1318104Z     |                 |
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1318646Z     |                 cli::Error
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1319113Z     |                 &str
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1319683Z     |
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1320549Z note: an implementation of `std::cmp::PartialEq<&str>` might be missing for `cli::Error`
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1321344Z    --> src/cli.rs:6:1
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1321764Z     |
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1322159Z   6 | pub(crate) enum Error {
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1322800Z     | ^^^^^^^^^^^^^^^^^^^^^ must implement `std::cmp::PartialEq<&str>`
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.1323256Z 
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.2519467Z For more information about this error, try `rustc --explain E0369`.
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.2561802Z error: could not compile `gronify-native` (bin "gronify-native" test) due to 1 previous error
+Native (ubuntu-latest)	Lint Rust	2026-11-03T22:35:39.2599510Z ##[error]Process completed with exit code 101.

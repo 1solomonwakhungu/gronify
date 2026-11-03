@@ -632,7 +632,7 @@ mod tests {
             let mut output = Vec::new();
             let result = flatten(&mut input, &mut output, u64::MAX);
             if fail_at_end {
-                assert_eq!(result.unwrap_err(), "injected read error");
+                assert_eq!(result.unwrap_err().to_string(), "injected read error");
             } else {
                 assert!(!result.unwrap());
             }
