@@ -1,6 +1,8 @@
 //! Experimental, document-order flattener. No tree and no recursive parsing.
 use std::io::{self, BufWriter, Read, Write};
 
+mod search;
+
 const TOKEN_MAX: usize = 64 * 1024 * 1024;
 const PATH_MAX: usize = 16 * 1024 * 1024;
 const DEPTH_MAX: usize = 100_000;
@@ -211,6 +213,23 @@ struct Frame {
 }
 
 fn flatten<R: Read, W: Write>(input: &mut Input<R>, out: &mut W, limit: u64) -> Result<bool> {
+    let mut lines = 0;
+    flatten_lines(input, |path, token| {
+        out.write_all(path)
+            .and_then(|_| out.write_all(b" = "))
+            .and_then(|_| out.write_all(token))
+            .and_then(|_| out.write_all(b"\n"))
+            .map_err(|e| e.to_string())?;
+        lines += 1;
+        Ok(lines == limit)
+    })
+}
+
+// The sink sees validated, normalized assignment parts and can stop before the next read.
+fn flatten_lines<R: Read>(
+    input: &mut Input<R>,
+    mut emit: impl FnMut(&[u8], &[u8]) -> Result<bool>,
+) -> Result<bool> {
     let mut stack = Vec::<Frame>::new();
     let mut path = b"json".to_vec();
     let mut token = Vec::new();
@@ -351,13 +370,8 @@ fn flatten<R: Read, W: Write>(input: &mut Input<R>, out: &mut W, limit: u64) -> 
             }
             _ => return Err("expected a value".into()),
         };
-        out.write_all(&path)
-            .and_then(|_| out.write_all(b" = "))
-            .and_then(|_| out.write_all(&token))
-            .and_then(|_| out.write_all(b"\n"))
-            .map_err(|e| e.to_string())?;
         lines += 1;
-        if lines == limit {
+        if emit(&path, &token)? {
             return Ok(true);
         }
         if let Some(state) = container {
@@ -430,6 +444,25 @@ fn run() -> Result<()> {
     Ok(())
 }
 fn main() {
+    if std::env::args().nth(1).as_deref() == Some("search") {
+        let args: Vec<String> = std::env::args().skip(2).collect();
+        let errors = if args
+            .iter()
+            .take_while(|s| s.as_str() != "--")
+            .any(|s| s == "--exit-status")
+        {
+            2
+        } else {
+            1
+        };
+        match search::run(args) {
+            Ok(code) => std::process::exit(code),
+            Err(e) => {
+                eprintln!("gronify-native: {e}");
+                std::process::exit(errors);
+            }
+        }
+    }
     if let Err(e) = run() {
         eprintln!("gronify-native: {e}");
         std::process::exit(1);
