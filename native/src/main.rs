@@ -262,10 +262,16 @@ fn flatten<R: Read, W: Write>(input: &mut Input<R>, out: &mut W, limit: u64) -> 
                     }
                     input.string(&mut token)?;
                     let key = &token[1..token.len() - 1];
-                    if path.len() + token.len() + 2 > PATH_MAX {
+                    let dotted = identifier(key);
+                    let added = if dotted {
+                        key.len() + 1
+                    } else {
+                        token.len() + 2
+                    };
+                    if path.len() + added > PATH_MAX {
                         return Err("path exceeds 16 MiB resource limit".into());
                     }
-                    if identifier(key) {
+                    if dotted {
                         path.push(b'.');
                         path.extend_from_slice(key);
                     } else {
@@ -510,3 +516,7 @@ mod tests {
         assert!(flatten(&mut Input::new(FailAfterOpen(false), 1), &mut io::sink(), 1).unwrap());
     }
 }
+
+#[cfg(test)]
+#[path = "boundary_tests.rs"]
+mod boundary_tests;

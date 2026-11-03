@@ -30,7 +30,7 @@ Explicit resource limits reject input rather than changing semantics: 64 MiB per
 - `--chunk-size` (1 through 1,048,576) is an experimental test control. It changes input buffering only.
 - Diagnostics and partial output on malformed input are not byte-compatible with Node. Errors include a byte offset but not line/column. Offsets describe parser progress, not necessarily the first bad byte. Output already written, including buffered prefixes flushed on error, cannot be retracted. Consumers must check exit status.
 - Broken pipe is currently an error (exit 1). No atomic output destination is offered; shell redirection has ordinary shell truncation behavior.
-- No cross-platform release, fuzzing campaign, security review, or independent review has been completed. macOS arm64 is the only measured target. Harnesses require Python 3 and Unix; the deep comparison uses POSIX alarms.
+- Independent review found no blocking parser safety defect in its tested surface. No cross-platform release, broad fuzzing campaign, or security certification has been completed. macOS arm64 is the only measured target. Harnesses require Python 3 and Unix; the deep comparison uses POSIX alarms.
 
 ## Reproduce validation
 
@@ -46,11 +46,11 @@ python3 native/scripts/bench.py --output native/results-local.json
 
 `compat.py` compares stdout bytes against the locally built current TypeScript CLI: 48 valid fixtures at four input chunk sizes (192 comparisons), 27 malformed fixtures rejected at three chunk sizes, four capped comparisons, and unsupported-option checks. Fixtures cover number lexemes, Unicode, surrogate combinations, repeated/special keys, a 1 MiB string, a 70 KiB key and number, deterministic random inputs, and UTF-8/escape splits around 64 KiB. Malformed tests compare failure status, not diagnostic wording or partially emitted prefixes.
 
-One additional comparison streams the full 50,000-depth outputs side by side and compares every byte. Its 100,001-byte input expands to 3,750,575,009 output bytes; nothing is retained on disk, and only two 1 MiB comparison buffers are retained. It has a 60-second deadline. This is the only large-output check; the performance suite does not run a 1 GB input sweep. Rust unit tests also verify that a cap makes no subsequent read call. Recorded validation is in `compatibility.json`.
+One additional comparison streams the full 50,000-depth outputs side by side and compares every byte. Its 100,001-byte input expands to 3,750,575,009 output bytes; nothing is retained on disk, and only two 1 MiB comparison buffers are retained. It has a 60-second deadline. This is the only large-output check; the performance suite does not run a 1 GB input sweep. Rust tests also verify token/path/depth limits, interrupted and failed reads, short/failed writes, buffer reuse, and that a cap makes no subsequent read call. Native CI runs formatting, lint, release tests and compatibility on Linux and macOS. Recorded validation is in `compatibility.json`.
 
 ## Measured result
 
-`measurements.json` retains all five samples per case, commands, versions, source hash, and the baseline CLI tree. Runs were serial with rotating tool order, a warm file cache, and stdout redirected to `/dev/null`, on Apple M5 Pro / macOS 26.6.1 arm64. Node v22.23.1 used the CLI at `90a9734e97abad9bac51cf81bacffe99b9f5d54f`; fastgron was 0.7.7 and jq 1.8.2. Wall time includes launch and the `/usr/bin/time` wrapper. These are local experimental results on a shared machine, not isolated lab results or general product claims.
+`measurements.json` retains the original five samples per case, commands, versions, source hash, and the baseline CLI tree. This historical receipt did not hash executables, so it cannot establish their build provenance. Future `bench.py` runs rebuild both CLIs and record build commands, dirty state, the native executable hash and all emitted JavaScript hashes. Runs were serial with rotating tool order, a warm file cache, and stdout redirected to `/dev/null`, on Apple M5 Pro / macOS 26.6.1 arm64. Node v22.23.1 used the CLI at `90a9734e97abad9bac51cf81bacffe99b9f5d54f`; fastgron was 0.7.7 and jq 1.8.2. Wall time includes launch and the `/usr/bin/time` wrapper. These are local experimental results on a shared machine, not isolated lab results or general product claims.
 
 Median wall milliseconds / peak RSS MiB (median of per-run maxima):
 
