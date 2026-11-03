@@ -1,6 +1,6 @@
-# Experimental native flatten and literal-search CLI
+# Experimental native CLI
 
-This dependency-free Rust prototype implements document-order `flatten` and a bounded literal `search` subset in a standalone executable. It is ready for independent review and further measurement, not release or replacement of the npm CLI. Everything in this experiment lives under `native/`.
+This dependency-free Rust prototype implements document-order `flatten`, an [ordered `unflatten` subset](UNFLATTEN.md), and a bounded literal `search` subset in a standalone executable. It is ready for independent review and further measurement, not release or replacement of the npm CLI. Everything in this experiment lives under `native/`.
 
 Build and run from the repository root:
 
@@ -25,7 +25,7 @@ Explicit resource limits reject input rather than changing semantics: 64 MiB per
 
 ## Deliberate differences and unsupported features
 
-- `flatten [--limit N] [--chunk-size N] [file|-]` and the [experimental search subset](SEARCH.md) are supported. Unflatten, sorting, colors, pretty output, atomic file output, URL inputs, and npm-compatible help/version flags are absent. Unsupported options and commands fail with exit 1. There is no silent fallback.
+- `flatten [--limit N] [--chunk-size N] [file|-]` and the [experimental search subset](SEARCH.md) are supported. The [ordered unflatten subset](UNFLATTEN.md) is also supported. Sorting, colors, pretty output, atomic file output, URL inputs, and npm-compatible help/version flags are absent. Unsupported options and commands fail with exit 1. There is no silent fallback.
 - `--limit` is a positive `u64`. It stops parsing and further reads immediately after the requested assignment; the input buffer may already contain up to one chunk of read-ahead. The unread tail is not validated. Unlike Node's same-chunk completion heuristic, this prototype always prints the cap notice when it reaches the cap.
 - `--chunk-size` (1 through 1,048,576) is an experimental test control. It changes input buffering only.
 - Diagnostics and partial output on malformed input are not byte-compatible with Node. Errors include a byte offset but not line/column. Offsets describe parser progress, not necessarily the first bad byte. Output already written, including buffered prefixes flushed on error, cannot be retracted. Consumers must check exit status.
@@ -42,6 +42,7 @@ cargo test --manifest-path native/Cargo.toml
 cargo build --release --manifest-path native/Cargo.toml
 python3 native/scripts/compat.py
 python3 native/scripts/search_compat.py
+python3 native/scripts/unflatten_compat.py
 python3 native/scripts/bench.py --output native/results-local.json
 ```
 
