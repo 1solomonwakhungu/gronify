@@ -779,32 +779,75 @@ describe("Gronify CLI", () => {
       expect(exitCode).toBe(1);
     });
 
+    test.each([
+      ["stdout", "EPIPE", "write", 0],
+      ["stdout", "ENOTCONN", "write", 0],
+      ["stdout", "EIO", "write", 1],
+      ["stdout", "ENOSPC", "write", 1],
+      ["input", "ENOTCONN", "read", 1],
+      ["file", "ENOTCONN", "write", 1],
+    ] as const)("handles %s %s (%s) with exit %i", (destination, code, syscall, exitCode) => {
+      const input = join(dir, "injected.json");
+      const target = join(dir, "injected.gron");
+      const preload = join(dir, "inject-error.cjs");
+      writeFileSync(input, bigRecords(25_000));
+      writeFileSync(target, "previous output\n");
+      // Fail at the stream boundary, without relying on the OS scheduling a particular errno.
+      writeFileSync(preload, `
+        const fs = require("node:fs");
+        const error = Object.assign(new Error(${JSON.stringify(`${syscall} ${code}`)}),
+          ${JSON.stringify({ code, syscall })});
+        const destination = ${JSON.stringify(destination)};
+        if (destination === "input") {
+          fs.ReadStream.prototype._read = function () { this.destroy(error); };
+        } else {
+          const stream = destination === "stdout" ? process.stdout : fs.WriteStream.prototype;
+          stream._write = function (chunk, encoding, callback) {
+            setImmediate(() => callback(error));
+          };
+        }
+      `);
+      for (const command of [["flatten", input], ["search", input, "json", "--exit-status"]]) {
+        const args = destination === "file" ? ["-o", target, ...command] : command;
+        const result = spawnSync(process.execPath, ["--require", preload, "dist/index.js", ...args], {
+          encoding: "utf8",
+          timeout: 15_000,
+        });
+        const status = exitCode === 1 && command[0] === "search" ? 2 : exitCode;
+        expect({ status: result.status, signal: result.signal, error: result.error, stderr: result.stderr }).toEqual({
+          status, signal: null, error: undefined,
+          stderr: status === 0 ? "" : expect.stringContaining(`${syscall} ${code}`),
+        });
+        expect(readFileSync(target, "utf8")).toBe("previous output\n");
+        expect(readdirSync(dir).filter((name) => name.endsWith(".tmp"))).toEqual([]);
+      }
+    });
+
     test("should stop quietly when the reader closes the pipe early", async () => {
       const file = join(dir, "pipe.json");
       writeFileSync(file, bigRecords(60_000));
 
-      const result = await new Promise<{ exitCode: number | null; stderr: string; seen: number }>((resolve, reject) => {
+      const result = await new Promise<{ exitCode: number | null; signal: NodeJS.Signals | null; stderr: string; seen: number }>((resolve, reject) => {
         const child = spawn("node", ["dist/index.js", "flatten", file]);
         let stderr = "";
         let seen = 0;
         const timer = setTimeout(() => {
           child.kill("SIGKILL");
-          reject(new Error("CLI did not exit after the pipe closed"));
+          reject(new Error(`CLI did not exit after the pipe closed: ${JSON.stringify({ seen, stderr })}`));
         }, 15_000);
         child.stderr.on("data", (data) => (stderr += data.toString()));
         child.stdout.once("data", (data: Buffer) => {
           seen = data.length;
           child.stdout.destroy();
         });
-        child.on("close", (code) => {
+        child.on("close", (code, signal) => {
           clearTimeout(timer);
-          resolve({ exitCode: code, stderr, seen });
+          resolve({ exitCode: code, signal, stderr, seen });
         });
       });
 
+      expect(result).toEqual({ exitCode: 0, signal: null, stderr: "", seen: expect.any(Number) });
       expect(result.seen).toBeGreaterThan(0);
-      expect(result.exitCode).toBe(0);
-      expect(result.stderr).toBe("");
     });
 
     test("should flatten nesting deeper than the old recursion limit", async () => {
