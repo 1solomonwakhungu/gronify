@@ -48,7 +48,14 @@ function copyBytes(src: Uint8Array, start: number, end: number, dst: Buffer, at:
   if (length > 48) {
     dst.set(src.subarray(start, end), at);
   } else {
-    for (let i = 0; i < length; i += 1) dst[at + i] = src[start + i]!;
+    let i = 0;
+    for (; i + 4 <= length; i += 4) {
+      dst[at + i] = src[start + i]!;
+      dst[at + i + 1] = src[start + i + 1]!;
+      dst[at + i + 2] = src[start + i + 2]!;
+      dst[at + i + 3] = src[start + i + 3]!;
+    }
+    for (; i < length; i += 1) dst[at + i] = src[start + i]!;
   }
   return at + length;
 }
@@ -203,7 +210,10 @@ export class GronFlattener implements JsonSink {
     const lineStart = out.pos;
     const buf = out.buf;
     const at = copyBytes(this.path, 0, pathLength, buf, lineStart);
-    out.pos = copyBytes(value, start, end, buf, copyBytes(EQUALS, 0, EQUALS.length, buf, at));
+    buf[at] = 0x20;
+    buf[at + 1] = 0x3d;
+    buf[at + 2] = 0x20;
+    out.pos = copyBytes(value, start, end, buf, at + 3);
     out.lineDone(lineStart);
   }
 }

@@ -162,6 +162,56 @@ describe("JsonTokenizer", () => {
     });
   });
 
+  describe("long string scanning", () => {
+    test.each([63, 64, 65, 129])("preserves escapes and byte boundaries after %i plain bytes", (length) => {
+      const prefix = "a".repeat(length);
+      const document = Buffer.from(`{"${prefix}\\u0062":["${prefix}日本😀","${prefix}\\\"end",true,false,null,1.10]}`);
+      const expected = tokenize([document]);
+      expect(expected).toContain(`str "${prefix}日本😀"`);
+      expect(expected).toContain("num 1.10");
+      for (let index = 0; index <= document.length; index += 1) {
+        expect(tokenize(splitAt(document, index))).toEqual(expected);
+      }
+      expect(tokenize(Array.from(document, (_, i) => document.subarray(i, i + 1)))).toEqual(expected);
+    });
+
+    test("validates controls and UTF-8 after the native scan begins", () => {
+      const prefix = Buffer.from('"' + "a".repeat(129));
+      const invalid = [
+        ...Array.from({ length: 32 }, (_, c) => Buffer.from([c])),
+        Buffer.from([0x80]), Buffer.from([0xc0, 0xaf]), Buffer.from([0xed, 0xa0, 0x80]),
+        Buffer.from([0xf4, 0x90, 0x80, 0x80]), Buffer.from([0xc3]),
+        Buffer.from('\\q'), Buffer.from('\\u12G4'),
+      ];
+      for (const tail of invalid) {
+        const document = Buffer.concat([prefix, tail, Buffer.from('"')]);
+        const expected = failure([document]);
+        for (let index = 0; index <= document.length; index += 1) {
+          expect(failure(splitAt(document, index)).message).toBe(expected.message);
+        }
+      }
+    });
+
+    test("resumes a long-string chunk after each token blocks the gate", () => {
+      const sink = new RecordingSink();
+      const gate = { blocked: false };
+      const record = sink.string.bind(sink);
+      sink.string = (buf, start, end, escaped) => {
+        record(buf, start, end, escaped);
+        gate.blocked = true;
+      };
+      const document = Buffer.from(JSON.stringify(["x".repeat(200), "é".repeat(200), "z"]));
+      const tokenizer = new JsonTokenizer(sink, gate);
+      let pos = 0;
+      while (pos < document.length) {
+        pos = tokenizer.write(document, pos);
+        gate.blocked = false;
+      }
+      tokenizer.end();
+      expect(sink.events).toEqual(tokenize([document]));
+    });
+  });
+
   describe("pausing", () => {
     test("stops between tokens while the gate is blocked and resumes from the returned index", () => {
       const sink = new RecordingSink();

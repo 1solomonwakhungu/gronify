@@ -66,6 +66,7 @@ const MAX_LITERAL_LENGTH = 5;
 const MAX_TOKEN_PREVIEW = 40;
 
 const EMPTY = Buffer.alloc(0);
+const STRING_SPECIAL = /["\\\x00-\x1f]/g;
 
 /** 1 for bytes that may appear in a number token. */
 const NUMBER_BYTE = new Uint8Array(256);
@@ -131,6 +132,7 @@ export class JsonTokenizer {
 
   // Token in progress.
   private tokenOffset = 0;
+  // Completion empties these before notifying the sink; beginning a token needs no reset.
   private pending: Buffer[] = [];
   private pendingLength = 0;
   private escapeState = ESC_NONE;
@@ -138,6 +140,7 @@ export class JsonTokenizer {
   private escaped = false;
   private highBits = 0;
   private bareKind = NUMBER;
+  private scanText: string | null = null;
 
   constructor(
     private readonly sink: JsonSink,
@@ -150,6 +153,7 @@ export class JsonTokenizer {
    */
   write(buf: Buffer, start = 0): number {
     const len = buf.length;
+    this.scanText = null;
     if (start === 0) {
       this.chunkBase = this.consumed;
       this.consumed += len;
@@ -223,6 +227,7 @@ export class JsonTokenizer {
           pos = this.startValue(buf, pos, len, c, state);
       }
     }
+    this.scanText = null;
     return pos;
   }
 
@@ -312,8 +317,6 @@ export class JsonTokenizer {
   private beginString(buf: Buffer, pos: number, len: number, state: number): number {
     this.state = state;
     this.tokenOffset = this.chunkBase + pos;
-    this.pending.length = 0;
-    this.pendingLength = 0;
     this.escapeState = ESC_NONE;
     this.escaped = false;
     this.highBits = 0;
@@ -328,11 +331,21 @@ export class JsonTokenizer {
     while (i < len) {
       if (escapeState === ESC_NONE) {
         // Tight loop for the common case: plain bytes up to the next quote, backslash or control character.
+        const plainEnd = Math.min(i + 64, len);
         let c = buf[i]!;
         while (c !== 0x22 && c !== 0x5c && c >= 0x20) {
           high |= c;
           i += 1;
-          if (i >= len) break;
+          if (i >= plainEnd) break;
+          c = buf[i]!;
+        }
+        if (i === plainEnd && i < len) {
+          // Long runs use V8's native regexp scanner. Latin-1 preserves byte offsets;
+          // the complete token still goes through UTF-8 validation below.
+          this.scanText ??= buf.toString("latin1");
+          STRING_SPECIAL.lastIndex = i;
+          i = STRING_SPECIAL.test(this.scanText) ? STRING_SPECIAL.lastIndex - 1 : len;
+          high |= 0x80;
           c = buf[i]!;
         }
         if (i >= len) break;
@@ -400,8 +413,6 @@ export class JsonTokenizer {
     this.state = IN_BARE;
     this.bareKind = kind;
     this.tokenOffset = this.chunkBase + pos;
-    this.pending.length = 0;
-    this.pendingLength = 0;
     return this.scanBare(buf, pos, pos + 1, len);
   }
 
@@ -444,8 +455,13 @@ export class JsonTokenizer {
       this.sink.number(token, start, stop);
       return;
     }
-    const text = token.toString("latin1", start, stop);
-    if (text !== "true" && text !== "false" && text !== "null") {
+    const length = stop - start;
+    const valid = length === 4
+      ? (token[start] === 0x74 && token[start + 1] === 0x72 && token[start + 2] === 0x75 && token[start + 3] === 0x65)
+        || (token[start] === 0x6e && token[start + 1] === 0x75 && token[start + 2] === 0x6c && token[start + 3] === 0x6c)
+      : length === 5 && token[start] === 0x66 && token[start + 1] === 0x61 && token[start + 2] === 0x6c
+        && token[start + 3] === 0x73 && token[start + 4] === 0x65;
+    if (!valid) {
       this.failAt(`Unexpected token '${this.preview(token, start, stop)}', expected true, false or null`, this.tokenOffset);
     }
     this.sink.literal(token, start, stop);
