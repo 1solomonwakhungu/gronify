@@ -47,7 +47,7 @@ export class JsonWriter {
     this.depth -= 1;
     const depth = this.depth;
     const out = this.out;
-    out.reserve(2 * depth + 3);
+    out.reserve(this.pretty ? 2 * depth + 3 : 1);
     if (this.pretty && (this.counts[depth] as number) > 0) this.newline(depth);
     out.buf[out.pos++] = this.isArray[depth] ? CLOSE_BRACKET : CLOSE_BRACE;
   }
@@ -57,7 +57,7 @@ export class JsonWriter {
     const top = this.depth - 1;
     const count = this.counts[top] as number;
     const out = this.out;
-    out.reserve(2 * this.depth + 3);
+    out.reserve(this.pretty ? 2 * this.depth + 3 : 1);
     if (count > 0) out.buf[out.pos++] = COMMA;
     if (this.pretty) this.newline(this.depth);
     this.counts[top] = count + 1;

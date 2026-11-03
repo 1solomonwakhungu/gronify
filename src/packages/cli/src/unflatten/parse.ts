@@ -198,6 +198,23 @@ export class LineParser {
   inline: TreeNode = "";
 
   private arenaLength = 0;
+  private prefixBuf = new Uint8Array(512);
+  private prefixLength = 0;
+  private prefixSegments = 0;
+  private prefixArenaLength = 0;
+
+  /** Reuse only complete, byte-identical parent segments from the previous assignment. */
+  private matchesPrefix(buf: Buffer, start: number, end: number): boolean {
+    const length = this.prefixLength;
+    if (length === 0 || start + length >= end) return false;
+    const next = buf[start + length];
+    if (next !== 0x2e && next !== 0x5b) return false;
+    const previous = this.prefixBuf;
+    for (let index = 4; index < length; index += 1) {
+      if (buf[start + index] !== previous[index]) return false;
+    }
+    return true;
+  }
 
   /**
    * Returns false for blank lines. Throws `line N: ...` errors for invalid ones.
@@ -215,8 +232,24 @@ export class LineParser {
     this.segCount = 0;
     this.arenaLength = 0;
     let cursor = index + 4;
+    if (this.matchesPrefix(buf, index, last)) {
+      cursor = index + this.prefixLength;
+      this.segCount = this.prefixSegments;
+      this.arenaLength = this.prefixArenaLength;
+    }
+    const reusedLength = cursor - index;
+    // A failed parse must not leave reusable segments that it may have overwritten.
+    this.prefixLength = 0;
+    let parentEnd = cursor;
+    let parentSegments = this.segCount;
+    let parentArenaLength = this.arenaLength;
     while (cursor < last) {
       const code = buf[cursor] as number;
+      if (code === 0x2e || code === 0x5b) {
+        parentEnd = cursor;
+        parentSegments = this.segCount;
+        parentArenaLength = this.arenaLength;
+      }
       if (code === 0x2e) {
         cursor = this.parseIdentifier(buf, cursor + 1, last, index, lineNumber);
       } else if (code === 0x5b) {
@@ -236,6 +269,15 @@ export class LineParser {
     const valueStart = trimStart(buf, cursor + 1, last);
     if (valueStart >= last) throw lineError(lineNumber, "expected a gron assignment");
     this.parseValue(buf, valueStart, last, lineNumber);
+    const prefixLength = parentSegments > 0 ? parentEnd - index : 0;
+    if (prefixLength > 0 && prefixLength !== reusedLength) {
+      if (prefixLength > this.prefixBuf.length) this.prefixBuf = new Uint8Array(Math.max(this.prefixBuf.length * 2, prefixLength));
+      // Input buffers may be reused by the caller after consume() returns.
+      for (let offset = 4; offset < prefixLength; offset += 1) this.prefixBuf[offset] = buf[index + offset] as number;
+    }
+    this.prefixLength = prefixLength;
+    this.prefixSegments = parentSegments;
+    this.prefixArenaLength = parentArenaLength;
     return true;
   }
 
@@ -256,6 +298,26 @@ export class LineParser {
   }
 
   private parseBracket(buf: Buffer, open: number, last: number, lineStart: number, lineNumber: number): number {
+    // Most paths use plain decimal indexes. Scan them once; unusual bracket
+    // syntax still takes the general parser so its validation and errors agree.
+    const startIndex = open + 1;
+    const first = buf[startIndex] as number;
+    if (first >= 0x30 && first <= 0x39) {
+      let cursor = startIndex + 1;
+      let value = first - 0x30;
+      while (cursor < last) {
+        const digit = (buf[cursor] as number) - 0x30;
+        if (digit < 0 || digit > 9) break;
+        value = value * 10 + digit;
+        cursor += 1;
+      }
+      if (cursor < last && buf[cursor] === 0x5d && (first !== 0x30 || cursor === startIndex + 1)) {
+        if (value > MAX_ARRAY_INDEX) throw lineError(lineNumber, "array index is too large");
+        this.recordIndex(value);
+        return cursor + 1;
+      }
+    }
+
     let close = -1;
     let inString = false;
     let escaped = false;
@@ -312,12 +374,16 @@ export class LineParser {
       value = value * 10 + digit;
     }
     if (value > MAX_ARRAY_INDEX) throw lineError(lineNumber, "array index is too large");
+    this.recordIndex(value);
+    return true;
+  }
+
+  private recordIndex(value: number): void {
     const segment = this.nextSegment();
     this.segIsIndex[segment] = 1;
     this.segIndex[segment] = value;
     this.segLength[segment] = 0;
     this.segOffset[segment] = this.arenaLength;
-    return true;
   }
 
   private pushKey(source: Uint8Array, start: number, end: number): void {
