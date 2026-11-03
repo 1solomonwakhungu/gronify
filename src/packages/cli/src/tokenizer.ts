@@ -455,8 +455,8 @@ export class JsonTokenizer {
       this.sink.number(token, start, stop);
       return;
     }
-    // Keep this bounded (at most five bytes) conversion. Comparing bytes directly reduced GC frequency on
-    // Node 22, retaining more input buffers and raising record-stream RSS despite saving these tiny strings.
+    // Keep this bounded (at most five bytes) conversion. In measured Node 22 record streams, byte-only
+    // validation correlated with fewer collections and higher external-buffer memory; this restored lower RSS.
     const text = token.toString("latin1", start, stop);
     if (text !== "true" && text !== "false" && text !== "null") {
       this.failAt(`Unexpected token '${this.preview(token, start, stop)}', expected true, false or null`, this.tokenOffset);
