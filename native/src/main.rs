@@ -56,20 +56,44 @@ impl<R: Read> Input<R> {
         token.clear();
         token.push(self.take()?);
         let mut escape = false;
+        let mut byte_flags = 0u8;
+        let mut has_escape = false;
         loop {
             self.peek()?.ok_or("unexpected end of input")?;
             let start = self.pos;
             let mut closed = false;
+            // Skip ordinary ASCII in safe, unaligned eight-byte copies.
+            // A possible quote, backslash, control or non-ASCII byte falls
+            // back to the unchanged scalar validator for this chunk.
+            while !escape && self.end - self.pos >= 8 {
+                let word = u64::from_le_bytes(self.buf[self.pos..self.pos + 8].try_into().unwrap());
+                let quote = word ^ 0x2222_2222_2222_2222;
+                let slash = word ^ 0x5c5c_5c5c_5c5c_5c5c;
+                let special = word
+                    | word.wrapping_sub(0x2020_2020_2020_2020)
+                    | (quote.wrapping_sub(0x0101_0101_0101_0101) & !quote)
+                    | (slash.wrapping_sub(0x0101_0101_0101_0101) & !slash);
+                // Subtraction may mark later lanes through borrow, but the
+                // first marked little-endian lane is always a real stop.
+                let marked = special & 0x8080_8080_8080_8080;
+                if marked != 0 {
+                    self.pos += (marked.trailing_zeros() / 8) as usize;
+                    break;
+                }
+                self.pos += 8;
+            }
             while self.pos < self.end {
                 let b = self.buf[self.pos];
                 self.pos += 1;
                 if b < 0x20 {
                     return Err("unescaped control in string".into());
                 }
+                byte_flags |= b;
                 if escape {
                     escape = false;
                 } else if b == b'\\' {
                     escape = true;
+                    has_escape = true;
                 } else if b == b'"' {
                     closed = true;
                     break;
@@ -85,7 +109,13 @@ impl<R: Read> Input<R> {
                 break;
             }
         }
-        normalize(token)
+        // Skipped words contain only plain ASCII. Scalar bytes contribute
+        // their high bit, and every escape forces full normalization.
+        if byte_flags < 0x80 && !has_escape {
+            Ok(())
+        } else {
+            normalize(token)
+        }
     }
 }
 
@@ -487,6 +517,64 @@ mod tests {
             )
             .is_err()
         );
+    }
+    #[test]
+    fn word_scan_all_bytes_and_lanes() {
+        // Every possible byte at and around each eight-byte lane. A quote
+        // closes early (leaving invalid trailing text); a slash escapes 'a'.
+        for prefix in 0..17 {
+            for byte in 0..=255u8 {
+                let mut source = vec![b'"'];
+                source.extend(vec![b'a'; prefix]);
+                source.push(byte);
+                source.extend_from_slice(b"aaaaaaaaaaaaaaaa\"");
+                let valid = (0x20..0x80).contains(&byte) && !matches!(byte, b'"' | b'\\');
+                for chunk in [1, 7, 8, 9, 15, 16, 17, 64] {
+                    let mut out = Vec::new();
+                    let result = flatten(&mut Input::new(&source[..], chunk), &mut out, u64::MAX);
+                    assert_eq!(
+                        result.is_ok(),
+                        valid,
+                        "byte {byte}, prefix {prefix}, chunk {chunk}"
+                    );
+                    if valid {
+                        let mut expected = b"json = ".to_vec();
+                        expected.extend_from_slice(&source);
+                        expected.push(b'\n');
+                        assert_eq!(out, expected);
+                    }
+                }
+            }
+        }
+    }
+    #[test]
+    fn word_scan_unicode_escapes_and_closing_quotes() {
+        for prefix in 0..17 {
+            for (raw, normalized) in [
+                ("é漢😀", "é漢😀"),
+                (r"\u0061", "a"),
+                (r"\ud83d\ude00", "😀"),
+                (r"\ud800", r"\ud800"),
+                (r"\/", "/"),
+                (r#"\"\\\n"#, r#"\"\\\n"#),
+            ] {
+                let pad = "a".repeat(prefix);
+                let source = format!(r#"["{pad}{raw}aaaaaaaa","{pad}",1.10,-0,1e+999]"#);
+                let expected = format!(
+                    "json = []\njson[0] = \"{pad}{normalized}aaaaaaaa\"\njson[1] = \"{pad}\"\njson[2] = 1.10\njson[3] = -0\njson[4] = 1e+999\n"
+                );
+                for chunk in 1..=source.len() {
+                    let mut out = Vec::new();
+                    flatten(
+                        &mut Input::new(source.as_bytes(), chunk),
+                        &mut out,
+                        u64::MAX,
+                    )
+                    .unwrap();
+                    assert_eq!(out, expected.as_bytes(), "prefix {prefix}, chunk {chunk}");
+                }
+            }
+        }
     }
     #[test]
     fn depth_50000() {
