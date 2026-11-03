@@ -1,5 +1,6 @@
 //! Ordered gron streaming; values never pass through floating point or a JSON tree.
-use crate::{Input, Result, identifier, number};
+use crate::{Result, identifier, normalize, number};
+use std::borrow::Cow;
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
 
 const LINE_MAX: usize = 64 * 1024 * 1024;
@@ -10,12 +11,12 @@ const ORDER: &str =
     "unsupported out-of-order/replacement input; use Node gronify unflatten for tree fallback";
 
 #[derive(Debug, PartialEq, Eq)]
-enum Segment {
-    Key(Vec<u8>), // canonical quoted JSON, including lone surrogate escapes
+enum Segment<'a> {
+    Key(Cow<'a, [u8]>), // canonical JSON string body, including lone surrogate escapes
     Index(u64),
 }
 struct Frame {
-    entry: Option<Segment>,
+    entry: Option<Segment<'static>>,
     array: bool,
     count: u64,
 }
@@ -34,13 +35,35 @@ fn next_line(current: u64) -> Result<u64> {
         .checked_add(1)
         .ok_or_else(|| "physical line count exceeds u64 limit".into())
 }
-fn string(s: &[u8]) -> Result<(Vec<u8>, usize)> {
-    let mut input = Input::new(s, 4096);
-    let mut token = Vec::new();
-    input.string(&mut token)?;
-    Ok((token, input.offset))
+fn string(s: &[u8]) -> Result<(Cow<'_, [u8]>, usize)> {
+    let mut escaped = false;
+    let mut escape = false;
+    for (i, &byte) in s.iter().enumerate().skip(1) {
+        if byte < 0x20 {
+            return Err("unescaped control in string".into());
+        }
+        if escape {
+            escape = false;
+        } else if byte == b'\\' {
+            escape = true;
+            escaped = true;
+        } else if byte == b'"' {
+            let raw = &s[..=i];
+            let token = if escaped {
+                let mut token = raw.to_vec();
+                normalize(&mut token)?;
+                Cow::Owned(token)
+            } else {
+                std::str::from_utf8(raw).map_err(|_| "invalid UTF-8 in string")?;
+                Cow::Borrowed(raw)
+            };
+            return Ok((token, i + 1));
+        }
+    }
+    Err("unexpected end of input".into())
 }
-fn parse(line: &[u8]) -> Result<Option<(Vec<Segment>, Vec<u8>)>> {
+type Assignment<'a> = (Vec<Segment<'a>>, Cow<'a, [u8]>);
+fn parse(line: &[u8]) -> Result<Option<Assignment<'_>>> {
     let mut s = trim(line);
     if let Some(rest) = s.strip_suffix(b";") {
         s = trim(rest);
@@ -62,10 +85,7 @@ fn parse(line: &[u8]) -> Result<Option<(Vec<Segment>, Vec<u8>)>> {
                 if !identifier(key) {
                     return Err("invalid dotted identifier".into());
                 }
-                let mut quoted = vec![b'"'];
-                quoted.extend_from_slice(key);
-                quoted.push(b'"');
-                path.push(Segment::Key(quoted));
+                path.push(Segment::Key(Cow::Borrowed(key)));
                 s = &s[end..];
             }
             Some(b'[') => {
@@ -73,7 +93,14 @@ fn parse(line: &[u8]) -> Result<Option<(Vec<Segment>, Vec<u8>)>> {
                 let segment = if s.first() == Some(&b'"') {
                     let (key, end) = string(s)?;
                     s = &s[end..];
-                    Segment::Key(key)
+                    Segment::Key(match key {
+                        Cow::Borrowed(raw) => Cow::Borrowed(&raw[1..raw.len() - 1]),
+                        Cow::Owned(mut raw) => {
+                            raw.pop();
+                            raw.remove(0);
+                            Cow::Owned(raw)
+                        }
+                    })
                 } else {
                     let end = s
                         .iter()
@@ -122,12 +149,12 @@ fn parse(line: &[u8]) -> Result<Option<(Vec<Segment>, Vec<u8>)>> {
                     .into(),
             );
         }
-        vec![s[0], close]
+        Cow::Borrowed(if s[0] == b'{' { &b"{}"[..] } else { &b"[]"[..] })
     } else {
         if s.is_empty() || !(matches!(s, b"true" | b"false" | b"null") || number(s)) {
             return Err("invalid JSON scalar".into());
         }
-        s.to_vec()
+        Cow::Borrowed(s)
     };
     Ok(Some((path, value)))
 }
@@ -194,20 +221,24 @@ fn assignment(
                 if parent.count > 0 {
                     write(out, b",")?;
                 }
+                write(out, b"\"")?;
                 write(out, key)?;
-                write(out, b":")?;
+                write(out, b"\":")?;
             }
             _ => return Err("numeric/string segment does not match parent container".into()),
         }
         parent.count += 1;
     }
-    if matches!(value.as_slice(), b"{}" | b"[]") {
+    if matches!(value.as_ref(), b"{}" | b"[]") {
         if stack.len() >= DEPTH_MAX {
             return Err("container depth exceeds 100000 resource limit".into());
         }
         write(out, &value[..1])?;
         stack.push(Frame {
-            entry: path.pop(),
+            entry: path.pop().map(|segment| match segment {
+                Segment::Key(key) => Segment::Key(Cow::Owned(key.into_owned())),
+                Segment::Index(index) => Segment::Index(index),
+            }),
             array: value[0] == b'[',
             count: 0,
         });
@@ -288,6 +319,74 @@ mod tests {
         let mut out = Vec::new();
         convert(BufReader::with_capacity(chunk, s), &mut out)?;
         Ok(out)
+    }
+    #[test]
+    fn slice_strings_match_stream_scanner() {
+        fn check(source: &[u8]) {
+            let mut input = crate::Input::new(source, 7);
+            let mut expected = Vec::new();
+            let reference = input.string(&mut expected);
+            let actual = string(source);
+            assert_eq!(actual.is_ok(), reference.is_ok(), "{source:?}");
+            if let Ok((token, end)) = actual {
+                assert_eq!(token.as_ref(), expected, "{source:?}");
+                assert_eq!(end, input.offset, "{source:?}");
+            }
+        }
+        for body in [
+            "",
+            "plain",
+            "é😀",
+            r"\u0061",
+            r"\ud800",
+            r"\udc00",
+            r"\ud83d\ude00",
+            r"\ud800\u0061",
+            r"\u0000\/\b\f\n\r\t",
+            r#"\"\\"#,
+            r"\x",
+            r"\u12zz",
+            r"\u12",
+            "\u{b}",
+        ] {
+            check(format!("\"{body}\" trailing").as_bytes());
+        }
+        let mut seed = 844_002u64;
+        for length in 0..128 {
+            for _ in 0..100 {
+                let mut source = vec![b'"'];
+                for _ in 0..length {
+                    seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
+                    source.push((seed >> 32) as u8);
+                }
+                source.push(b'"');
+                check(&source);
+            }
+        }
+    }
+    #[test]
+    fn common_tokens_borrow_and_escaped_parents_own() {
+        let (path, value) = parse("json.a[3][\"é\"] = 1.230e+999".as_bytes())
+            .unwrap()
+            .unwrap();
+        assert!(matches!(path[0], Segment::Key(Cow::Borrowed(b"a"))));
+        assert!(matches!(path[2], Segment::Key(Cow::Borrowed(_))));
+        assert!(matches!(value, Cow::Borrowed(b"1.230e+999")));
+        assert!(matches!(string(b"\"plain\"").unwrap().0, Cow::Borrowed(_)));
+        assert!(matches!(string(b"\"\\u0061\"").unwrap().0, Cow::Owned(_)));
+        let source = br#"json = {}
+json["\u0061"] = {}
+json.a["\ud800"] = []
+json["a"]["\uD800"][0] = -0
+json.a = {}
+json["\u0061"].new = 123456789012345678901234567890
+"#;
+        for chunk in [1, 7, 65536] {
+            assert_eq!(
+                convert_text(source, chunk).unwrap(),
+                b"{\"a\":{\"\\ud800\":[-0]},\"a\":{\"new\":123456789012345678901234567890}}\n"
+            );
+        }
     }
     #[test]
     fn physical_line_count_is_checked_u64() {
