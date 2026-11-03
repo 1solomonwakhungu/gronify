@@ -159,7 +159,7 @@ fn parse(line: &[u8]) -> Result<Option<Assignment<'_>>> {
     Ok(Some((path, value)))
 }
 fn write(out: &mut impl Write, bytes: &[u8]) -> Result<()> {
-    out.write_all(bytes).map_err(|e| e.to_string())
+    out.write_all(bytes).map_err(crate::cli::Error::Output)
 }
 fn close(stack: &mut Vec<Frame>, out: &mut impl Write) -> Result<()> {
     write(
@@ -265,9 +265,10 @@ fn convert(mut input: impl BufRead, out: &mut impl Write) -> Result<()> {
         }
         number = next_line(number)?;
         if line.len() > LINE_MAX {
-            return Err(format!("line {number}: exceeds 64 MiB resource limit"));
+            return Err(format!("line {number}: exceeds 64 MiB resource limit").into());
         }
-        assignment(&mut stack, &mut seen, &line, out).map_err(|e| format!("line {number}: {e}"))?;
+        assignment(&mut stack, &mut seen, &line, out)
+            .map_err(|e| e.context(|e| format!("line {number}: {e}")))?;
     }
     if !seen {
         return Err("input contains no gron assignments".into());
@@ -283,6 +284,8 @@ pub fn run(args: Vec<String>) -> Result<()> {
     let mut args = args.into_iter();
     while let Some(arg) = args.next() {
         match arg.as_str() {
+            "-h" | "--help" => return crate::cli::info("unflatten", false),
+            "--version" => return crate::cli::info("unflatten", true),
             "--chunk-size" => {
                 chunk = args
                     .next()
@@ -294,7 +297,7 @@ pub fn run(args: Vec<String>) -> Result<()> {
                 }
             }
             s if s.starts_with('-') && s != "-" => {
-                return Err(format!("unsupported unflatten option: {s}"));
+                return Err(format!("unsupported unflatten option: {s}").into());
             }
             _ => {
                 if file.replace(arg).is_some() {
@@ -309,7 +312,7 @@ pub fn run(args: Vec<String>) -> Result<()> {
     };
     let mut out = BufWriter::with_capacity(65536, io::stdout().lock());
     convert(BufReader::with_capacity(chunk, source), &mut out)?;
-    out.flush().map_err(|e| e.to_string())
+    out.flush().map_err(crate::cli::Error::Output)
 }
 
 #[cfg(test)]
@@ -476,17 +479,24 @@ json.empty = false
     #[test]
     fn limits_and_io() {
         let long = vec![b'x'; LINE_MAX + 1];
-        assert!(convert_text(&long, 65536).unwrap_err().contains("64 MiB"));
+        assert!(
+            convert_text(&long, 65536)
+                .unwrap_err()
+                .to_string()
+                .contains("64 MiB")
+        );
         let path = format!("json{} = 1", ".a".repeat(DEPTH_MAX + 1));
         assert!(
             convert_text(path.as_bytes(), 65536)
                 .unwrap_err()
+                .to_string()
                 .contains("path resource")
         );
         let path = format!("json.{} = 1", "a".repeat(PATH_MAX));
         assert!(
             convert_text(path.as_bytes(), 65536)
                 .unwrap_err()
+                .to_string()
                 .contains("path resource")
         );
         let mut sink = io::sink();
@@ -499,6 +509,7 @@ json.empty = false
         assert!(
             convert(BufReader::new(Broken), &mut sink)
                 .unwrap_err()
+                .to_string()
                 .contains("read failure")
         );
         struct FailWrite;
@@ -513,7 +524,52 @@ json.empty = false
         assert!(
             convert(&b"json = 1"[..], &mut FailWrite)
                 .unwrap_err()
+                .to_string()
                 .contains("write failure")
         );
+    }
+}
+
+#[cfg(test)]
+mod output_boundary_tests {
+    use super::*;
+    #[test]
+    fn line_context_preserves_output_kind_and_stops_reads() {
+        for kind in [
+            io::ErrorKind::BrokenPipe,
+            io::ErrorKind::NotConnected,
+            io::ErrorKind::Other,
+        ] {
+            struct Fail(io::ErrorKind);
+            impl Write for Fail {
+                fn write(&mut self, _: &[u8]) -> io::Result<usize> {
+                    Err(self.0.into())
+                }
+                fn flush(&mut self) -> io::Result<()> {
+                    Ok(())
+                }
+            }
+            struct Open(bool);
+            impl Read for Open {
+                fn read(&mut self, bytes: &mut [u8]) -> io::Result<usize> {
+                    assert!(!self.0, "read after failed output");
+                    self.0 = true;
+                    bytes[..10].copy_from_slice(b"json = []\n");
+                    Ok(10)
+                }
+            }
+            let err = convert(BufReader::new(Open(false)), &mut Fail(kind)).unwrap_err();
+            assert!(matches!(err, crate::cli::Error::Output(e) if e.kind() == kind));
+            struct BadRead(io::ErrorKind);
+            impl Read for BadRead {
+                fn read(&mut self, _: &mut [u8]) -> io::Result<usize> {
+                    Err(self.0.into())
+                }
+            }
+            assert!(matches!(
+                convert(BufReader::new(BadRead(kind)), &mut io::sink()),
+                Err(crate::cli::Error::Message(_))
+            ));
+        }
     }
 }

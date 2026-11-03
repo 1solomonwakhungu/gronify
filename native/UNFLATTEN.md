@@ -6,7 +6,7 @@ native/target/release/gronify-native unflatten [--chunk-size N] [file|-]
 native/target/release/gronify-native flatten input.json | native/target/release/gronify-native unflatten
 ```
 
-This standalone experiment is separate from npm and the default CLI. It emits compact JSON followed by LF. It does not implement pretty output, URL input, atomic output files, sorting, or a tree fallback. Unsupported flags fail. Exit 0 means the entire input was accepted; errors exit 1 and normally identify the gron line.
+This standalone experiment is separate from npm and the default CLI. It emits compact JSON followed by LF. It does not implement pretty output, URL input, atomic output files, sorting, or a tree fallback. Unsupported flags fail. Exit 0 means the input was accepted or stdout disconnected; errors exit 1 and normally identify the gron line.
 
 ## Accepted input
 
@@ -24,7 +24,7 @@ Repeated object keys are emitted as duplicate JSON members, matching Node's stre
 
 Non-empty inline compounds are rejected; first expand them with `flatten`. Root reassignment, descending/repeated array indexes, missing parents, scalar parents, and returning to a closed parent fail with an unsupported ordering/replacement diagnostic pointing to Node's tree fallback. The native process never retries through Node. Node itself can only fall back while its retained-input/output budget permits it.
 
-Output may already have been written when a later line fails, and buffered output can flush during cleanup. Consumers must check exit status and discard partial output. Redirecting stdout is not an atomic file update. Broken pipes and other I/O failures exit 1.
+Output may already have been written when a later line fails, and buffered output can flush during cleanup. Consumers must check exit status and discard partial output. Redirecting stdout is not an atomic file update. Stdout broken-pipe or not-connected writes/flushes cancel quietly with exit 0; the unread tail is not validated. Cancellation is detected only when writing or flushing output. Input and other output failures exit 1. `--help` / `-h` and `--version` print experimental CLI information without reading stdin.
 
 ## Memory and limits
 
