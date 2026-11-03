@@ -1,6 +1,6 @@
-# Experimental native flatten CLI
+# Experimental native flatten and literal-search CLI
 
-This dependency-free Rust prototype implements document-order `flatten` in a standalone executable. It is ready for independent review and further measurement, not release or replacement of the npm CLI. Everything in this experiment lives under `native/`.
+This dependency-free Rust prototype implements document-order `flatten` and a bounded literal `search` subset in a standalone executable. It is ready for independent review and further measurement, not release or replacement of the npm CLI. Everything in this experiment lives under `native/`.
 
 Build and run from the repository root:
 
@@ -11,7 +11,7 @@ native/target/release/gronify-native flatten --limit 10 input.json
 printf '{"a":1.10}' | native/target/release/gronify-native flatten
 ```
 
-The executable has no Node dependency. The measured macOS arm64 release binary is 335,936 bytes. Rust 1.97.0 was used; no older compiler or other target has been verified.
+The executable has no Node dependency. The original flatten-only measured macOS arm64 release binary was 335,936 bytes. Rust 1.97.0 was used; no older compiler or other target has been verified.
 
 ## Contract and memory
 
@@ -25,7 +25,7 @@ Explicit resource limits reject input rather than changing semantics: 64 MiB per
 
 ## Deliberate differences and unsupported features
 
-- Only `flatten [--limit N] [--chunk-size N] [file|-]` is supported. Search, unflatten, sorting, colors, pretty output, atomic file output, URL inputs, and npm-compatible help/version flags are absent. Unsupported options and commands fail with exit 1. There is no silent fallback.
+- `flatten [--limit N] [--chunk-size N] [file|-]` and the [experimental search subset](SEARCH.md) are supported. Unflatten, sorting, colors, pretty output, atomic file output, URL inputs, and npm-compatible help/version flags are absent. Unsupported options and commands fail with exit 1. There is no silent fallback.
 - `--limit` is a positive `u64`. It stops parsing and further reads immediately after the requested assignment; the input buffer may already contain up to one chunk of read-ahead. The unread tail is not validated. Unlike Node's same-chunk completion heuristic, this prototype always prints the cap notice when it reaches the cap.
 - `--chunk-size` (1 through 1,048,576) is an experimental test control. It changes input buffering only.
 - Diagnostics and partial output on malformed input are not byte-compatible with Node. Errors include a byte offset but not line/column. Offsets describe parser progress, not necessarily the first bad byte. Output already written, including buffered prefixes flushed on error, cannot be retracted. Consumers must check exit status.
@@ -41,6 +41,7 @@ cargo clippy --manifest-path native/Cargo.toml --all-targets -- -D warnings
 cargo test --manifest-path native/Cargo.toml
 cargo build --release --manifest-path native/Cargo.toml
 python3 native/scripts/compat.py
+python3 native/scripts/search_compat.py
 python3 native/scripts/bench.py --output native/results-local.json
 ```
 
@@ -73,4 +74,4 @@ The harness byte-checks the record schema across Node, native, and ordinary fast
 2. Profile record throughput against fastgron. The next concrete optimization target is scanning bare tokens and reducing per-field parser/output overhead; keep the byte-comparison gate. Consider SIMD scanning only after profiling demonstrates the benefit and validation remains strict.
 3. Decide the supported native CLI surface and error/cap contracts. Add atomic `--output`, clean broken-pipe handling, and user-facing help before a usable preview release. Decide whether token/path limits should be configurable.
 4. Ship an explicitly named experimental binary in checksummed GitHub release assets for each verified target. Cross-compile and test macOS arm64/x64 and Linux arm64/x64, including libc compatibility. Document signing and provenance. Keep the npm entry point unchanged.
-5. Only after independent review and broader measurements, consider a separate opt-in npm launcher/platform package. Installation and execution failures must be explicit; never silently select the TS runtime while presenting native performance. Search/unflatten/sort remain separate implementation decisions.
+5. Only after independent review and broader measurements, consider a separate opt-in npm launcher/platform package. Installation and execution failures must be explicit; never silently select the TS runtime while presenting native performance. Unicode-insensitive search, unflatten, and sort remain separate implementation decisions.
