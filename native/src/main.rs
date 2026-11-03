@@ -50,12 +50,92 @@ impl<R: Read> Input<R> {
         self.offset += 1;
         Ok(b)
     }
+    #[inline]
     fn whitespace(&mut self) -> Result<()> {
         while matches!(self.peek()?, Some(b' ' | b'\n' | b'\r' | b'\t')) {
             self.take()?;
         }
         Ok(())
     }
+    // Borrow only when a delimiter is already buffered; validate the exact bytes.
+    fn bare_token<'a>(&'a mut self, token: &'a mut Vec<u8>) -> Result<&'a [u8]> {
+        let start = self.pos;
+        let mut end = start;
+        while end < self.end {
+            let c = self.buf[end];
+            if !(c.is_ascii_alphanumeric() || matches!(c, b'+' | b'-' | b'.')) {
+                let value = &self.buf[start..end];
+                if value.len() > TOKEN_MAX {
+                    return Err("token exceeds 64 MiB resource limit".into());
+                }
+                self.pos = end;
+                self.offset += end - start;
+                if !matches!(value, b"true" | b"false" | b"null") && !number(value) {
+                    return Err("invalid number or literal".into());
+                }
+                return Ok(&self.buf[start..end]);
+            }
+            end += 1;
+        }
+        // A boundary is not a delimiter: keep reading so a split invalid
+        // literal cannot be accepted, even when the callback would cap.
+        token.clear();
+        while let Some(c) = self.peek()? {
+            if !(c.is_ascii_alphanumeric() || matches!(c, b'+' | b'-' | b'.')) {
+                break;
+            }
+            if token.len() >= TOKEN_MAX {
+                return Err("token exceeds 64 MiB resource limit".into());
+            }
+            token.push(self.take()?);
+        }
+        if !matches!(token.as_slice(), b"true" | b"false" | b"null") && !number(token) {
+            return Err("invalid number or literal".into());
+        }
+        Ok(token)
+    }
+    // Borrow a complete plain ASCII string from the current input buffer.
+    // Fragmented, escaped and non-ASCII strings use the normalizing scanner.
+    fn string_token<'a>(&'a mut self, token: &'a mut Vec<u8>) -> Result<&'a [u8]> {
+        let start = self.pos;
+        debug_assert_eq!(self.buf.get(start), Some(&b'"'));
+        let mut at = start + 1;
+        while self.end.saturating_sub(at) >= 8 {
+            let word = u64::from_le_bytes(self.buf[at..at + 8].try_into().unwrap());
+            let quote = word ^ 0x2222_2222_2222_2222;
+            let slash = word ^ 0x5c5c_5c5c_5c5c_5c5c;
+            let marked = (word
+                | word.wrapping_sub(0x2020_2020_2020_2020)
+                | (quote.wrapping_sub(0x0101_0101_0101_0101) & !quote)
+                | (slash.wrapping_sub(0x0101_0101_0101_0101) & !slash))
+                & 0x8080_8080_8080_8080;
+            if marked != 0 {
+                at += (marked.trailing_zeros() / 8) as usize;
+                break;
+            }
+            at += 8;
+        }
+        while at < self.end {
+            let b = self.buf[at];
+            if b == b'"' {
+                let end = at + 1;
+                if end - start > TOKEN_MAX {
+                    return Err("token exceeds 64 MiB resource limit".into());
+                }
+                self.offset += end - start;
+                self.pos = end;
+                return Ok(&self.buf[start..end]);
+            }
+            if !(0x20..0x80).contains(&b) || b == b'\\' {
+                break;
+            }
+            at += 1;
+        }
+        self.string(token)?;
+        Ok(token)
+    }
+    // Keep the normalizing fallback separate from the borrowed fast path.
+    #[inline(never)]
     fn string(&mut self, token: &mut Vec<u8>) -> Result<()> {
         token.clear();
         token.push(self.take()?);
@@ -311,13 +391,13 @@ fn flatten_lines<R: Read>(
                     if input.peek()? != Some(b'"') {
                         return Err("expected object key".into());
                     }
-                    input.string(&mut token)?;
-                    let key = &token[1..token.len() - 1];
+                    let key_token = input.string_token(&mut token)?;
+                    let key = &key_token[1..key_token.len() - 1];
                     let dotted = identifier(key);
                     let added = if dotted {
                         key.len() + 1
                     } else {
-                        token.len() + 2
+                        key_token.len() + 2
                     };
                     if path.len() + added > PATH_MAX {
                         return Err("path exceeds 16 MiB resource limit".into());
@@ -327,7 +407,7 @@ fn flatten_lines<R: Read>(
                         path.extend_from_slice(key);
                     } else {
                         path.push(b'[');
-                        path.extend_from_slice(&token);
+                        path.extend_from_slice(key_token);
                         path.push(b']');
                     }
                     input.whitespace()?;
@@ -382,23 +462,20 @@ fn flatten_lines<R: Read>(
                 })
             }
             b'"' => {
-                input.string(&mut token)?;
-                None
+                let value = input.string_token(&mut token)?;
+                root_started = true;
+                if emit(&path, value)? {
+                    return Ok(true);
+                }
+                continue;
             }
             b'-' | b'0'..=b'9' | b't' | b'f' | b'n' => {
-                while let Some(c) = input.peek()? {
-                    if !(c.is_ascii_alphanumeric() || matches!(c, b'+' | b'-' | b'.')) {
-                        break;
-                    }
-                    if token.len() >= TOKEN_MAX {
-                        return Err("token exceeds 64 MiB resource limit".into());
-                    }
-                    token.push(input.take()?);
+                let value = input.bare_token(&mut token)?;
+                root_started = true;
+                if emit(&path, value)? {
+                    return Ok(true);
                 }
-                if !matches!(token.as_slice(), b"true" | b"false" | b"null") && !number(&token) {
-                    return Err("invalid number or literal".into());
-                }
-                None
+                continue;
             }
             _ => return Err("expected a value".into()),
         };
@@ -484,6 +561,79 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn borrowed_and_fragmented_scalars_preserve_bytes() {
+        let source = br#"{"plain":"gateway","a b":"x","esc":"\u0061","values":[-0,1.100E+999,123456789012345678901234567890,true,false,null,"tail"]}"#;
+        let expected = b"json = {}\njson.plain = \"gateway\"\njson[\"a b\"] = \"x\"\njson.esc = \"a\"\njson.values = []\njson.values[0] = -0\njson.values[1] = 1.100E+999\njson.values[2] = 123456789012345678901234567890\njson.values[3] = true\njson.values[4] = false\njson.values[5] = null\njson.values[6] = \"tail\"\n";
+        for chunk in 1..=source.len() + 1 {
+            let mut output = Vec::new();
+            flatten(&mut Input::new(&source[..], chunk), &mut output, u64::MAX).unwrap();
+            assert_eq!(output, expected, "chunk {chunk}");
+        }
+        // A refill is required before deciding whether a bare root is valid.
+        // Neither a token prefix nor --limit may hide a malformed suffix.
+        for source in ["truex ", "false0 ", "nullx ", "01 ", "1e+ ", "1.2.3 ", "- "] {
+            for chunk in 1..=source.len() + 1 {
+                let mut output = Vec::new();
+                assert!(
+                    flatten(&mut Input::new(source.as_bytes(), chunk), &mut output, 1).is_err()
+                );
+                assert!(output.is_empty());
+            }
+        }
+    }
+
+    #[test]
+    fn borrowed_scalar_callbacks_stop_and_propagate_errors() {
+        struct Once(&'static [u8]);
+        impl Read for Once {
+            fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+                assert!(!self.0.is_empty(), "read after callback stopped");
+                let n = self.0.len();
+                buffer[..n].copy_from_slice(self.0);
+                self.0 = &[];
+                Ok(n)
+            }
+        }
+        for source in [&b"\"gateway\""[..], &b"1.100E+999 "[..], &b"true "[..]] {
+            let mut input = Input::new(Once(source), 64);
+            assert!(
+                flatten_lines(&mut input, |path, value| {
+                    assert_eq!(path, b"json");
+                    assert_eq!(value, source.strip_suffix(b" ").unwrap_or(source));
+                    Ok(true)
+                })
+                .unwrap()
+            );
+            let mut calls = 0;
+            let error = flatten_lines(&mut Input::new(Once(source), 64), |_, _| {
+                calls += 1;
+                Err("callback injected".into())
+            })
+            .unwrap_err();
+            assert_eq!(error, "callback injected");
+            assert_eq!(calls, 1);
+        }
+        struct BadTail(bool);
+        impl Read for BadTail {
+            fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+                if self.0 {
+                    return Err(io::Error::other("tail read injected"));
+                }
+                self.0 = true;
+                buffer[..4].copy_from_slice(b"true");
+                Ok(4)
+            }
+        }
+        assert_eq!(
+            flatten_lines(&mut Input::new(BadTail(false), 4), |_, _| {
+                panic!("must validate the boundary before emitting")
+            })
+            .unwrap_err(),
+            "tail read injected"
+        );
+    }
+
     #[test]
     fn root_completion_is_independent_of_assignment_count() {
         for document in ["0", "[]", "{}", "[0,1,2]", "{\"a\":[0,1]}"] {
