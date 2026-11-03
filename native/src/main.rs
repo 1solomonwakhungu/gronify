@@ -611,7 +611,7 @@ mod tests {
                 Err("callback injected".into())
             })
             .unwrap_err();
-            assert_eq!(error, "callback injected");
+            assert_eq!(error.to_string(), "callback injected");
             assert_eq!(calls, 1);
         }
         struct BadTail(bool);
@@ -629,7 +629,8 @@ mod tests {
             flatten_lines(&mut Input::new(BadTail(false), 4), |_, _| {
                 panic!("must validate the boundary before emitting")
             })
-            .unwrap_err(),
+            .unwrap_err()
+            .to_string(),
             "tail read injected"
         );
     }
