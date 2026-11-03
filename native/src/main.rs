@@ -2,12 +2,13 @@
 mod unflatten;
 use std::io::{self, BufWriter, Read, Write};
 
+mod cli;
 mod search;
 
 const TOKEN_MAX: usize = 64 * 1024 * 1024;
 const PATH_MAX: usize = 16 * 1024 * 1024;
 const DEPTH_MAX: usize = 100_000;
-type Result<T> = std::result::Result<T, String>;
+type Result<T> = std::result::Result<T, cli::Error>;
 
 struct Input<R> {
     source: R,
@@ -250,7 +251,7 @@ fn flatten<R: Read, W: Write>(input: &mut Input<R>, out: &mut W, limit: u64) -> 
             .and_then(|_| out.write_all(b" = "))
             .and_then(|_| out.write_all(token))
             .and_then(|_| out.write_all(b"\n"))
-            .map_err(|e| e.to_string())?;
+            .map_err(cli::Error::Output)?;
         lines += 1;
         Ok(lines == limit)
     })
@@ -425,6 +426,8 @@ fn run() -> Result<()> {
     let mut file = None;
     while let Some(arg) = args.next() {
         match arg.as_str() {
+            "-h" | "--help" => return cli::info("flatten", false),
+            "--version" => return cli::info("flatten", true),
             "--limit" => {
                 let value = args.next().ok_or("missing limit")?;
                 if !value.bytes().all(|b| b.is_ascii_digit()) {
@@ -452,7 +455,7 @@ fn run() -> Result<()> {
                     return Err("only one input allowed".into());
                 }
             }
-            s if s.starts_with('-') => return Err(format!("unsupported option: {s}")),
+            s if s.starts_with('-') => return Err(format!("unsupported option: {s}").into()),
             _ => {
                 if file.replace(arg).is_some() {
                     return Err("only one input allowed".into());
@@ -467,44 +470,15 @@ fn run() -> Result<()> {
     let mut input = Input::new(source, chunk);
     let mut out = BufWriter::with_capacity(64 * 1024, io::stdout().lock());
     let capped = flatten(&mut input, &mut out, limit)
-        .map_err(|e| format!("{e} at byte offset {}", input.offset))?;
-    out.flush().map_err(|e| e.to_string())?;
+        .map_err(|e| e.context(|e| format!("{e} at byte offset {}", input.offset)))?;
+    out.flush().map_err(cli::Error::Output)?;
     if capped {
         eprintln!("Stopped after {limit} lines (--limit); there may be more");
     }
     Ok(())
 }
 fn main() {
-    if std::env::args().nth(1).as_deref() == Some("unflatten") {
-        if let Err(e) = unflatten::run(std::env::args().skip(2).collect()) {
-            eprintln!("gronify-native: {e}");
-            std::process::exit(1);
-        }
-        return;
-    }
-    if std::env::args().nth(1).as_deref() == Some("search") {
-        let args: Vec<String> = std::env::args().skip(2).collect();
-        let errors = if args
-            .iter()
-            .take_while(|s| s.as_str() != "--")
-            .any(|s| s == "--exit-status")
-        {
-            2
-        } else {
-            1
-        };
-        match search::run(args) {
-            Ok(code) => std::process::exit(code),
-            Err(e) => {
-                eprintln!("gronify-native: {e}");
-                std::process::exit(errors);
-            }
-        }
-    }
-    if let Err(e) = run() {
-        eprintln!("gronify-native: {e}");
-        std::process::exit(1);
-    }
+    cli::main();
 }
 
 #[cfg(test)]
@@ -529,6 +503,7 @@ mod tests {
                         false
                     ))
                     .unwrap_err()
+                    .to_string()
                     .contains("trailing input")
                 );
             }

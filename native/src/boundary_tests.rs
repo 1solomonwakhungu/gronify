@@ -102,6 +102,7 @@ mod independent {
                     u64::MAX
                 )
                 .unwrap_err()
+                .to_string()
                 .contains("injected")
             );
         }
@@ -145,6 +146,7 @@ mod extra_independent {
         assert!(
             flatten(&mut Input::new(BadRead, 1), &mut io::sink(), 1)
                 .unwrap_err()
+                .to_string()
                 .contains("read injected")
         );
         struct ZeroWrite;
