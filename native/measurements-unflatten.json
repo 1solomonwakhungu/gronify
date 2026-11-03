@@ -1,0 +1,228 @@
+{
+  "utc": "2026-11-03T22:02:55.261283+00:00",
+  "commit": "483c21196336bbb92c1162f8180908899d61a3ad",
+  "dirty": "M .github/workflows/native.yaml\n M native/README.md\n M native/src/main.rs\n?? native/UNFLATTEN.md\n?? native/measurements-unflatten.json\n?? native/scripts/unflatten_bench.py\n?? native/scripts/unflatten_compat.py\n?? native/src/unflatten.rs",
+  "platform": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "versions": {
+    "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+    "node": "v22.23.1",
+    "fastgron": "fastgron version 0.7.7"
+  },
+  "source_sha256": {
+    "native/src/boundary_tests.rs": "a37be8348aee71e5f91729c02a23f90925c8444f5df266a7ae289f8940bd5b70",
+    "native/src/main.rs": "084423782465f561c45e8ab4fd48b2fd449d7bfd9c581b7ccf50b4a1e8f705fc",
+    "native/src/search.rs": "43d45799c42e5db0022ea2b561cde62f70faa582e2c67be360961468aaed591d",
+    "native/src/unflatten.rs": "b093e3a06ce1e7db65810e46616ac058842ce09372882169738ed74e74589219"
+  },
+  "artifact_sha256": {
+    "<repo>/native/target/release/gronify-native": "0bd8a03627a4f5fafbb84f3b5d5202ebdcf9fb65adc20ba41c0ef774ee95f364",
+    "/opt/homebrew/bin/fastgron": "16fbcb9be3251cb5534030c00d60054e41462ac6d1a38edd061c0087177debb9",
+    "<repo>/src/packages/cli/dist/flatten-stream.js": "52579f355c6141fb240e638e769ad66e2a35dc4ada2b74186ddaefb8c95c90b4",
+    "<repo>/src/packages/cli/dist/formatter.js": "7dc8c1f22448ce277b043235459e3b0d904c313ab794a3da491daac6ef13dfc1",
+    "<repo>/src/packages/cli/dist/gron.js": "1f60955dcf39230a5fb5dab721c1256f963280ac9bb63369bf766d10ec2ca69a",
+    "<repo>/src/packages/cli/dist/index.js": "ffdae29fe413dae95fa57a330f31412a35988f6b11ad80dbd2002fdd47f2a83e",
+    "<repo>/src/packages/cli/dist/matcher.js": "903f37606e8cacebe1fc3b7d93ff2888bd5d64739f58cc9a3287070d691d4df7",
+    "<repo>/src/packages/cli/dist/output.js": "553821fbf95769558ac8597ff8926290a8592fb2831e9b7f1c2325f9c4bddc23",
+    "<repo>/src/packages/cli/dist/sort.js": "c3af0db8884e59a89cad76f1c668c7d8b22a899d5256cb87575ca9458980d3e9",
+    "<repo>/src/packages/cli/dist/tokenizer.js": "03857424127c9573f57600f1813ded5152ba82c4faa999787043f90a924f4a1a",
+    "<repo>/src/packages/cli/dist/unflatten/compound.js": "f88add1a58035e621cedd0f1eb542d109c08b0d1e3110834970652de37bfc47d",
+    "<repo>/src/packages/cli/dist/unflatten/emitter.js": "7def1c5039aae45e2994161849d543c07c679a57864b8df385ca7fc6ceddadc5",
+    "<repo>/src/packages/cli/dist/unflatten/lines.js": "830782b0afb4a62e7524425b080885c3e67fd6c5f7d3149e9f98d99552bf6926",
+    "<repo>/src/packages/cli/dist/unflatten/node.js": "578ad33506d9ce30cf32305038e0f89a596e25f69280eb3d5e1a39a07c2ec545",
+    "<repo>/src/packages/cli/dist/unflatten/output.js": "eb01ddf5b014e60ca8d4dbf907540bb3df3ad2900f98faf1c2563b3d2933a0fd",
+    "<repo>/src/packages/cli/dist/unflatten/parse.js": "6817b25fa08cd6560190912e559da4b86468759b3b7eae18369ee8faacda6a6f",
+    "<repo>/src/packages/cli/dist/unflatten/tree.js": "a1300b8373df53026978229054787364bce8febb935cada748316ce45813f4d1",
+    "<repo>/src/packages/cli/dist/unflatten/writer.js": "ac5ffb0c1450c65c204a6fe6ed661eac973f63f868cd544d2dd61ab6eef4fa7b",
+    "<repo>/src/packages/cli/dist/unflatten-stream.js": "6a90adb2eb0505b893f5bb9f1b9cf82f294632ae1ce160499116728efb6ddfe6"
+  },
+  "commands": {
+    "native": [
+      "<repo>/native/target/release/gronify-native",
+      "unflatten"
+    ],
+    "node": [
+      "node",
+      "<repo>/src/packages/cli/dist/index.js",
+      "--no-color",
+      "unflatten"
+    ],
+    "fastgron": [
+      "/opt/homebrew/bin/fastgron",
+      "-u",
+      "--no-color",
+      "--no-indent",
+      "--no-newline"
+    ]
+  },
+  "method": "Three serial samples, rotated tool order, warm file cache, stdout /dev/null; wall includes process startup and time wrapper; macOS RSS bytes or Linux KiB converted to bytes. All tools consume the same native-flatten gron file. Native and Node outputs match source plus newline byte-for-byte; fastgron sorts keys and changes whitespace, so its parsed output is checked for equality and canonical SHA256 on this integer-only fixture. Raw output hashes are retained.",
+  "fixtures": [
+    {
+      "mib": 1,
+      "json_bytes": 1048510,
+      "gron_bytes": 2350258,
+      "records": 8811,
+      "json_sha256": "5cc57f984711e758c8bb04941976678e6eeb74072f79c9ac89ffa5cd55d44b0c",
+      "gron_sha256": "65743543b051eddde050fbe0b0ee2ac86a87465ebd731c10a23b9e98ec4816ef",
+      "expected_output_sha256": "ea702d99af2347450e086cfe5b192f172c8cb945a616d7900f49940123c533ce",
+      "output_sha256": {
+        "native": "ea702d99af2347450e086cfe5b192f172c8cb945a616d7900f49940123c533ce",
+        "node": "ea702d99af2347450e086cfe5b192f172c8cb945a616d7900f49940123c533ce",
+        "fastgron": "7450b266efedc0727faa876d5d2ff362b28625c7deeee47c84699d385bc64d6d"
+      },
+      "canonical_sha256": {
+        "native": "46831bac6a94c66a7a32fd7271f7190f81f8c03e52b0a5ecb3de0d5d4b983c99",
+        "node": "46831bac6a94c66a7a32fd7271f7190f81f8c03e52b0a5ecb3de0d5d4b983c99",
+        "fastgron": "46831bac6a94c66a7a32fd7271f7190f81f8c03e52b0a5ecb3de0d5d4b983c99"
+      }
+    },
+    {
+      "mib": 10,
+      "json_bytes": 10485686,
+      "gron_bytes": 24384880,
+      "records": 88115,
+      "json_sha256": "2c374143bf4259bd3bf209d89295f40116638338d49dceac974498a1f632d24b",
+      "gron_sha256": "01fce7e368c7ff65b7526309dcfafaf1fda89a05c9f6cc745cfc17b1ca24604a",
+      "expected_output_sha256": "8760776bab4b0e01d3ad3303c91264bbeebbc99fa865bc53d5f4638110a6dbbc",
+      "output_sha256": {
+        "native": "8760776bab4b0e01d3ad3303c91264bbeebbc99fa865bc53d5f4638110a6dbbc",
+        "node": "8760776bab4b0e01d3ad3303c91264bbeebbc99fa865bc53d5f4638110a6dbbc",
+        "fastgron": "31cfa838d84eb1ec6c5bbd2ac66d8abe93e4efb7121f49433db42acc19f99138"
+      },
+      "canonical_sha256": {
+        "native": "60f8cfa85db429d0df9c224c61a41439e59dc3567f1eed63483f3ce591362f0f",
+        "node": "60f8cfa85db429d0df9c224c61a41439e59dc3567f1eed63483f3ce591362f0f",
+        "fastgron": "60f8cfa85db429d0df9c224c61a41439e59dc3567f1eed63483f3ce591362f0f"
+      }
+    }
+  ],
+  "results": [
+    {
+      "mib": 1,
+      "tool": "native",
+      "median_seconds": 0.01761154201813042,
+      "median_rss_bytes": 1884160,
+      "samples": [
+        {
+          "seconds": 0.018017875030636787,
+          "rss_bytes": 1884160
+        },
+        {
+          "seconds": 0.01761154201813042,
+          "rss_bytes": 1884160
+        },
+        {
+          "seconds": 0.01749620889313519,
+          "rss_bytes": 1884160
+        }
+      ]
+    },
+    {
+      "mib": 1,
+      "tool": "node",
+      "median_seconds": 0.05167020810768008,
+      "median_rss_bytes": 63324160,
+      "samples": [
+        {
+          "seconds": 0.0527467499487102,
+          "rss_bytes": 63700992
+        },
+        {
+          "seconds": 0.05167020810768008,
+          "rss_bytes": 63324160
+        },
+        {
+          "seconds": 0.051634375005960464,
+          "rss_bytes": 63324160
+        }
+      ]
+    },
+    {
+      "mib": 1,
+      "tool": "fastgron",
+      "median_seconds": 0.012913916958495975,
+      "median_rss_bytes": 17858560,
+      "samples": [
+        {
+          "seconds": 0.012913916958495975,
+          "rss_bytes": 17858560
+        },
+        {
+          "seconds": 0.0130559999961406,
+          "rss_bytes": 17858560
+        },
+        {
+          "seconds": 0.01256399997510016,
+          "rss_bytes": 17842176
+        }
+      ]
+    },
+    {
+      "mib": 10,
+      "tool": "native",
+      "median_seconds": 0.13692712504416704,
+      "median_rss_bytes": 1884160,
+      "samples": [
+        {
+          "seconds": 0.13760062493383884,
+          "rss_bytes": 1884160
+        },
+        {
+          "seconds": 0.1351122499909252,
+          "rss_bytes": 1884160
+        },
+        {
+          "seconds": 0.13692712504416704,
+          "rss_bytes": 1867776
+        }
+      ]
+    },
+    {
+      "mib": 10,
+      "tool": "node",
+      "median_seconds": 0.1047546248883009,
+      "median_rss_bytes": 91815936,
+      "samples": [
+        {
+          "seconds": 0.1047546248883009,
+          "rss_bytes": 88276992
+        },
+        {
+          "seconds": 0.1058641669806093,
+          "rss_bytes": 91815936
+        },
+        {
+          "seconds": 0.10424229199998081,
+          "rss_bytes": 92585984
+        }
+      ]
+    },
+    {
+      "mib": 10,
+      "tool": "fastgron",
+      "median_seconds": 0.07617474999278784,
+      "median_rss_bytes": 102940672,
+      "samples": [
+        {
+          "seconds": 0.07610708405263722,
+          "rss_bytes": 102940672
+        },
+        {
+          "seconds": 0.07687645894475281,
+          "rss_bytes": 102957056
+        },
+        {
+          "seconds": 0.07617474999278784,
+          "rss_bytes": 102940672
+        }
+      ]
+    }
+  ],
+  "fixture_recipe": {
+    "record_utf8": "{\"id\":123,\"service\":\"gateway\",\"ok\":true,\"tags\":[\"alpha\",\"beta\"],\"detail\":{\"latency\":12,\"message\":\"request completed\"}}",
+    "count": "(MiB*1024*1024-2)//(len(record)+1)",
+    "construction": "b\"[\" + b\",\".join([record]*count) + b\"]\"",
+    "generator": "native flatten from artifact recorded above",
+    "size_labels": "JSON source size; gron bytes recorded separately"
+  }
+}
