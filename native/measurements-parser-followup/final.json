@@ -1,0 +1,3111 @@
+{
+  "base": "2017be1b4c4f20e070473c1be22b0f27c983f2a8",
+  "checkout": "2017be1b4c4f20e070473c1be22b0f27c983f2a8",
+  "dirty": "M native/src/main.rs",
+  "started_utc": "2026-11-03T22:31:29.454322+00:00",
+  "platform": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+  "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: aarch64-apple-darwin\nrelease: 1.97.0\nLLVM version: 22.1.6",
+  "load_start": [
+    3.9423828125,
+    4.18115234375,
+    4.3515625
+  ],
+  "harness_sha256": "7880db5762bceeb5ecc85a5142a94a5c1abca0dc79a2eda3ed3420a0bffd6802",
+  "method": "Serial rotating order, warm file cache, stdout discarded; process startup and time wrapper included. Shared host, other benchmark reported active; no isolated-host confidence claim. Hashes gate equality. RSS is per-process peak, not allocations.",
+  "artifacts": {
+    "before": {
+      "binary_sha256": "db4a339e91d43652043b19ef80837f596a1f1a9cc806a783a6d325e6e112a7cb",
+      "binary_bytes": 369024,
+      "source_sha256": {
+        "src/boundary_tests.rs": "a37be8348aee71e5f91729c02a23f90925c8444f5df266a7ae289f8940bd5b70",
+        "src/main.rs": "96f34e47cda93c2819f17684d83435d4ea3ceb5c241c55e77483557c1627b06c",
+        "src/search.rs": "43d45799c42e5db0022ea2b561cde62f70faa582e2c67be360961468aaed591d",
+        "src/unflatten.rs": "aa57911d25efaad78d187f07869967cdd4f4d4432408d3f26678331cc3f7f26d"
+      },
+      "build": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--manifest-path",
+        "/private/tmp/gronify-parser-followup-validated-final/before/Cargo.toml"
+      ]
+    },
+    "after": {
+      "binary_sha256": "f9042da6fe43f1c1eaf60b6e573fc106b6778661c6259bd0ad0c93bf638461bb",
+      "binary_bytes": 369024,
+      "source_sha256": {
+        "src/boundary_tests.rs": "a37be8348aee71e5f91729c02a23f90925c8444f5df266a7ae289f8940bd5b70",
+        "src/main.rs": "8c8e2abd2a35edfe3a57c9bb355e93ddf26ef27ec1752f99f527f8acc3e94b9c",
+        "src/search.rs": "43d45799c42e5db0022ea2b561cde62f70faa582e2c67be360961468aaed591d",
+        "src/unflatten.rs": "aa57911d25efaad78d187f07869967cdd4f4d4432408d3f26678331cc3f7f26d"
+      },
+      "build": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--manifest-path",
+        "/private/tmp/gronify-parser-followup-validated-final/after/Cargo.toml"
+      ]
+    },
+    "fastgron": {
+      "binary_sha256": "16fbcb9be3251cb5534030c00d60054e41462ac6d1a38edd061c0087177debb9",
+      "version": ""
+    }
+  },
+  "results": [
+    {
+      "shape": "records",
+      "mode": "flatten",
+      "input_bytes": 33554431,
+      "input_sha256": "e0e65490fd85ab26935a1219a9d5c728bf819a3f6315b9f25a668ad61bcdf6e2",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "flatten",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "flatten",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json"
+        ],
+        "fastgron": [
+          "/opt/homebrew/bin/fastgron",
+          "--no-color",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "df5c804a1f6eb94f2031394e1b4f88f6c0b8ac60a53f80d0a3790cbb259bea9f",
+          "bytes": 80096270
+        },
+        "after": {
+          "sha256": "df5c804a1f6eb94f2031394e1b4f88f6c0b8ac60a53f80d0a3790cbb259bea9f",
+          "bytes": 80096270
+        },
+        "fastgron": {
+          "sha256": "df5c804a1f6eb94f2031394e1b4f88f6c0b8ac60a53f80d0a3790cbb259bea9f",
+          "bytes": 80096270
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 79.32537491433322,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 79.70637502148747,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 79.18495894409716,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 78.82020785473287,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 78.93941691145301,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 77.76062516495585,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 78.93308298662305,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 78.91612499952316,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 79.64870799332857,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 79.18045809492469,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 78.94679205492139,
+            "rss_bytes": 1769472
+          }
+        ],
+        "after": [
+          {
+            "ms": 63.504207879304886,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 65.20416704006493,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 63.2830411195755,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 63.49324993789196,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 63.11445799656212,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 64.74758381955326,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 65.66545786336064,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 63.62295802682638,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 65.90233300812542,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 63.278333051130176,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 63.553292071446776,
+            "rss_bytes": 1785856
+          }
+        ],
+        "fastgron": [
+          {
+            "ms": 72.09604210220277,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 73.49108415655792,
+            "rss_bytes": 80134144
+          },
+          {
+            "ms": 75.84812492132187,
+            "rss_bytes": 80183296
+          },
+          {
+            "ms": 72.67916691489518,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 72.52720813266933,
+            "rss_bytes": 80134144
+          },
+          {
+            "ms": 72.41791603155434,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 71.03045820258558,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 71.29062502644956,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 70.92300010845065,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 76.225999975577,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 74.8320841230452,
+            "rss_bytes": 80117760
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 78.94679205492139,
+        "after": 63.553292071446776,
+        "fastgron": 72.52720813266933
+      }
+    },
+    {
+      "shape": "records",
+      "mode": "sensitive",
+      "input_bytes": 33554431,
+      "input_sha256": "e0e65490fd85ab26935a1219a9d5c728bf819a3f6315b9f25a668ad61bcdf6e2",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "-c",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "-c",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json",
+          "gateway"
+        ],
+        "fastgron": [
+          "/opt/homebrew/bin/fastgron",
+          "--no-color",
+          "-F",
+          "gateway",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "f117aafb7aaac05a8b6461a5687e113676ade74fe9e760dfdeb5300b9a99b383",
+          "bytes": 9193900
+        },
+        "after": {
+          "sha256": "f117aafb7aaac05a8b6461a5687e113676ade74fe9e760dfdeb5300b9a99b383",
+          "bytes": 9193900
+        },
+        "fastgron": {
+          "sha256": "f117aafb7aaac05a8b6461a5687e113676ade74fe9e760dfdeb5300b9a99b383",
+          "bytes": 9193900
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 84.79937491938472,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 83.86879181489348,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 84.63354199193418,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 86.08262497000396,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 84.00354208424687,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 85.03199997358024,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 84.55508411861956,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 85.57679201476276,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 83.89550005085766,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 97.36437513493001,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 84.80333304032683,
+            "rss_bytes": 1769472
+          }
+        ],
+        "after": [
+          {
+            "ms": 67.81091704033315,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 67.4678748473525,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 67.97925010323524,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 67.65791587531567,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 68.08083388023078,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 67.98491720110178,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 70.82420797087252,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 74.93087486363947,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 68.57283296994865,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 101.14079201593995,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 67.90537480264902,
+            "rss_bytes": 1802240
+          }
+        ],
+        "fastgron": [
+          {
+            "ms": 84.78629193268716,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 87.76295790448785,
+            "rss_bytes": 80134144
+          },
+          {
+            "ms": 86.35254204273224,
+            "rss_bytes": 80134144
+          },
+          {
+            "ms": 84.85995884984732,
+            "rss_bytes": 80134144
+          },
+          {
+            "ms": 85.31912509351969,
+            "rss_bytes": 80134144
+          },
+          {
+            "ms": 86.46216709166765,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 93.3159168343991,
+            "rss_bytes": 80134144
+          },
+          {
+            "ms": 86.63933398202062,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 83.1555831246078,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 102.57124993950129,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 87.27591694332659,
+            "rss_bytes": 80134144
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 84.79937491938472,
+        "after": 67.98491720110178,
+        "fastgron": 86.46216709166765
+      }
+    },
+    {
+      "shape": "records",
+      "mode": "insensitive",
+      "input_bytes": 33554431,
+      "input_sha256": "e0e65490fd85ab26935a1219a9d5c728bf819a3f6315b9f25a668ad61bcdf6e2",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json",
+          "gateway"
+        ],
+        "fastgron": [
+          "/opt/homebrew/bin/fastgron",
+          "--no-color",
+          "-i",
+          "-F",
+          "gateway",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "f117aafb7aaac05a8b6461a5687e113676ade74fe9e760dfdeb5300b9a99b383",
+          "bytes": 9193900
+        },
+        "after": {
+          "sha256": "f117aafb7aaac05a8b6461a5687e113676ade74fe9e760dfdeb5300b9a99b383",
+          "bytes": 9193900
+        },
+        "fastgron": {
+          "sha256": "f117aafb7aaac05a8b6461a5687e113676ade74fe9e760dfdeb5300b9a99b383",
+          "bytes": 9193900
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 85.49337508156896,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 85.5768749024719,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 85.47229203395545,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 86.11912513151765,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 87.11879211477935,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 85.18391591496766,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 86.15558291785419,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 88.31291599199176,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 85.29662503860891,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 85.6973750051111,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 86.25933318398893,
+            "rss_bytes": 1769472
+          }
+        ],
+        "after": [
+          {
+            "ms": 67.44812498800457,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 68.46879096701741,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 70.25412493385375,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 67.67783313989639,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 68.29141709022224,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 67.9341668728739,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 70.21100004203618,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 69.23050014302135,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 69.1035829950124,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 68.37745802477002,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 69.00595803745091,
+            "rss_bytes": 1802240
+          }
+        ],
+        "fastgron": [
+          {
+            "ms": 105.60570796951652,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 107.39991604350507,
+            "rss_bytes": 80134144
+          },
+          {
+            "ms": 107.8561251051724,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 108.10129204764962,
+            "rss_bytes": 80134144
+          },
+          {
+            "ms": 107.69891692325473,
+            "rss_bytes": 80134144
+          },
+          {
+            "ms": 107.03991702757776,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 106.62645916454494,
+            "rss_bytes": 80134144
+          },
+          {
+            "ms": 105.6141669396311,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 107.37179219722748,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 106.29858309403062,
+            "rss_bytes": 80150528
+          },
+          {
+            "ms": 109.14524993859231,
+            "rss_bytes": 80216064
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 85.6973750051111,
+        "after": 68.46879096701741,
+        "fastgron": 107.37179219722748
+      }
+    },
+    {
+      "shape": "records",
+      "mode": "count",
+      "input_bytes": 33554431,
+      "input_sha256": "e0e65490fd85ab26935a1219a9d5c728bf819a3f6315b9f25a668ad61bcdf6e2",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "-c",
+          "--count",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "-c",
+          "--count",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json",
+          "gateway"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "ef440b332ed79055f207e4ec86b71454957a97ff28ac2f46989836e4c7bc3caa",
+          "bytes": 7
+        },
+        "after": {
+          "sha256": "ef440b332ed79055f207e4ec86b71454957a97ff28ac2f46989836e4c7bc3caa",
+          "bytes": 7
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 82.64949987642467,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 83.59895786270499,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 84.19412490911782,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 84.11616692319512,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 85.07583406753838,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 84.1219590511173,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 83.45254184678197,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 83.00083386711776,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 83.79683294333518,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 82.86716602742672,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 83.66883313283324,
+            "rss_bytes": 1753088
+          }
+        ],
+        "after": [
+          {
+            "ms": 67.82354204915464,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 68.15304118208587,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 66.25333288684487,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 67.65216682106256,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 66.06612494215369,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 67.54466705024242,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 67.9109999909997,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 68.26758407987654,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 67.39566591568291,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 66.86195894144475,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 68.15183302387595,
+            "rss_bytes": 1769472
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 83.66883313283324,
+        "after": 67.65216682106256
+      }
+    },
+    {
+      "shape": "records",
+      "mode": "cap-flatten",
+      "input_bytes": 33554431,
+      "input_sha256": "e0e65490fd85ab26935a1219a9d5c728bf819a3f6315b9f25a668ad61bcdf6e2",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "flatten",
+          "--limit",
+          "10",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "flatten",
+          "--limit",
+          "10",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "be279c8b440459d71eb06642db9a73428757a74fb4868623a8b52b37d42235f1",
+          "bytes": 203
+        },
+        "after": {
+          "sha256": "be279c8b440459d71eb06642db9a73428757a74fb4868623a8b52b37d42235f1",
+          "bytes": 203
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 4.044707864522934,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.2820831295102835,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.381125094369054,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.11595799960196,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.069916903972626,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.870167002081871,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.187874961644411,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 3.91445797868073,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.019957967102528,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.086500033736229,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.060707986354828,
+            "rss_bytes": 1753088
+          }
+        ],
+        "after": [
+          {
+            "ms": 4.413125105202198,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.597665974870324,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.420582903549075,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.410833818838,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.3203330133110285,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.240875132381916,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.414000082761049,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.279291024431586,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.55908291041851,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.040583036839962,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.224750213325024,
+            "rss_bytes": 1769472
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 4.086500033736229,
+        "after": 4.410833818838
+      }
+    },
+    {
+      "shape": "records",
+      "mode": "cap-search",
+      "input_bytes": 33554431,
+      "input_sha256": "e0e65490fd85ab26935a1219a9d5c728bf819a3f6315b9f25a668ad61bcdf6e2",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "-c",
+          "--max-count",
+          "10",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "-c",
+          "--max-count",
+          "10",
+          "/private/tmp/gronify-parser-followup-validated-final/records.json",
+          "gateway"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "eaea7b230b316726d177320fff16026a45d2443e7bcdb197fa820c22d394b38e",
+          "bytes": 280
+        },
+        "after": {
+          "sha256": "eaea7b230b316726d177320fff16026a45d2443e7bcdb197fa820c22d394b38e",
+          "bytes": 280
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 4.436250077560544,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.171708831563592,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 3.976999782025814,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.045667126774788,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.967459011822939,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.012250108644366,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.087291890755296,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.184083081781864,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.038957878947258,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.195665940642357,
+            "rss_bytes": 1753088
+          },
+          {
+            "ms": 4.152167122811079,
+            "rss_bytes": 1753088
+          }
+        ],
+        "after": [
+          {
+            "ms": 4.412999842315912,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.25729202106595,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.182999953627586,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.050042014569044,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.30633407086134,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.207582911476493,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 3.997833002358675,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.204500000923872,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.03004209510982,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 3.802875056862831,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 4.467750201001763,
+            "rss_bytes": 1769472
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 4.152167122811079,
+        "after": 4.204500000923872
+      }
+    },
+    {
+      "shape": "numeric",
+      "mode": "flatten",
+      "input_bytes": 33554422,
+      "input_sha256": "d95135a23caee4660d4cab80b0d2ad12701b6dec6091d6cb29231f4dbcd9d2ba",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "flatten",
+          "/private/tmp/gronify-parser-followup-validated-final/numeric.json"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "flatten",
+          "/private/tmp/gronify-parser-followup-validated-final/numeric.json"
+        ],
+        "fastgron": [
+          "/opt/homebrew/bin/fastgron",
+          "--no-color",
+          "/private/tmp/gronify-parser-followup-validated-final/numeric.json"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "ee00103047a24d4ec81db70518ab29fdb2d9abdad852d0455586baf8b8bfb0b3",
+          "bytes": 79718877
+        },
+        "after": {
+          "sha256": "ee00103047a24d4ec81db70518ab29fdb2d9abdad852d0455586baf8b8bfb0b3",
+          "bytes": 79718877
+        },
+        "fastgron": {
+          "sha256": "ee00103047a24d4ec81db70518ab29fdb2d9abdad852d0455586baf8b8bfb0b3",
+          "bytes": 79718877
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 92.1806669794023,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 91.63737506605685,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 91.38837503269315,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 92.24770800210536,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 92.94762485660613,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 94.00920802727342,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 93.43124995939434,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 90.74279107153416,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 132.90616706945002,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 720.8997919224203,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 94.53133400529623,
+            "rss_bytes": 1769472
+          }
+        ],
+        "after": [
+          {
+            "ms": 70.61808393336833,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 69.4538748357445,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 70.3052079770714,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 70.17379091121256,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 69.57366690039635,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 70.1679999474436,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 71.03845779784024,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 70.36391599103808,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 137.56495784036815,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 81.25699986703694,
+            "rss_bytes": 1802240
+          },
+          {
+            "ms": 79.54245805740356,
+            "rss_bytes": 1802240
+          }
+        ],
+        "fastgron": [
+          {
+            "ms": 71.72308303415775,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 74.81795898638666,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 73.1411250308156,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 74.09145799465477,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 73.01112497225404,
+            "rss_bytes": 88047616
+          },
+          {
+            "ms": 75.10575000196695,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 70.40945906192064,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 74.88720794208348,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 73.03645787760615,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 78.99445900693536,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 78.95083306357265,
+            "rss_bytes": 88064000
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 92.94762485660613,
+        "after": 70.36391599103808,
+        "fastgron": 74.09145799465477
+      }
+    },
+    {
+      "shape": "numeric",
+      "mode": "sensitive",
+      "input_bytes": 33554422,
+      "input_sha256": "d95135a23caee4660d4cab80b0d2ad12701b6dec6091d6cb29231f4dbcd9d2ba",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "-c",
+          "/private/tmp/gronify-parser-followup-validated-final/numeric.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "-c",
+          "/private/tmp/gronify-parser-followup-validated-final/numeric.json",
+          "gateway"
+        ],
+        "fastgron": [
+          "/opt/homebrew/bin/fastgron",
+          "--no-color",
+          "-F",
+          "gateway",
+          "/private/tmp/gronify-parser-followup-validated-final/numeric.json"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "fcc7435dace02ece98e2f6bc0395627e1c9cf1a562c2c6dcd58ff02f32067204",
+          "bytes": 15316210
+        },
+        "after": {
+          "sha256": "fcc7435dace02ece98e2f6bc0395627e1c9cf1a562c2c6dcd58ff02f32067204",
+          "bytes": 15316210
+        },
+        "fastgron": {
+          "sha256": "fcc7435dace02ece98e2f6bc0395627e1c9cf1a562c2c6dcd58ff02f32067204",
+          "bytes": 15316210
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 101.1534589342773,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 99.137166980654,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 97.001250134781,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 97.09066688083112,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 96.83537483215332,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 97.29599999263883,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 98.87225017882884,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 96.56312502920628,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 96.29629109986126,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 96.5730408206582,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 97.05808316357434,
+            "rss_bytes": 1769472
+          }
+        ],
+        "after": [
+          {
+            "ms": 76.84266706928611,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 75.1615830231458,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 75.667958939448,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 75.03395900130272,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 75.33254101872444,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 76.3543751090765,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 75.85783302783966,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 74.97791713103652,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 76.87608315609396,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 75.05008298903704,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 75.892916880548,
+            "rss_bytes": 1785856
+          }
+        ],
+        "fastgron": [
+          {
+            "ms": 88.86062493547797,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 86.34470892138779,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 82.71691692061722,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 82.02104200609028,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 84.79404193349183,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 80.95358312129974,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 82.69412512890995,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 82.63791701756418,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 84.27204098552465,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 81.69879205524921,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 84.02504096738994,
+            "rss_bytes": 88080384
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 97.05808316357434,
+        "after": 75.667958939448,
+        "fastgron": 82.71691692061722
+      }
+    },
+    {
+      "shape": "numeric",
+      "mode": "insensitive",
+      "input_bytes": 33554422,
+      "input_sha256": "d95135a23caee4660d4cab80b0d2ad12701b6dec6091d6cb29231f4dbcd9d2ba",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "/private/tmp/gronify-parser-followup-validated-final/numeric.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "/private/tmp/gronify-parser-followup-validated-final/numeric.json",
+          "gateway"
+        ],
+        "fastgron": [
+          "/opt/homebrew/bin/fastgron",
+          "--no-color",
+          "-i",
+          "-F",
+          "gateway",
+          "/private/tmp/gronify-parser-followup-validated-final/numeric.json"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "fcc7435dace02ece98e2f6bc0395627e1c9cf1a562c2c6dcd58ff02f32067204",
+          "bytes": 15316210
+        },
+        "after": {
+          "sha256": "fcc7435dace02ece98e2f6bc0395627e1c9cf1a562c2c6dcd58ff02f32067204",
+          "bytes": 15316210
+        },
+        "fastgron": {
+          "sha256": "fcc7435dace02ece98e2f6bc0395627e1c9cf1a562c2c6dcd58ff02f32067204",
+          "bytes": 15316210
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 99.91370793431997,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 100.84937512874603,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 97.72895812056959,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 102.0392079371959,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 98.63908309489489,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 97.91804198175669,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 96.9066668767482,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 98.74545782804489,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 98.86916680261493,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 97.46870817616582,
+            "rss_bytes": 1769472
+          },
+          {
+            "ms": 97.97141584567726,
+            "rss_bytes": 1769472
+          }
+        ],
+        "after": [
+          {
+            "ms": 85.37500002421439,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 75.60829212889075,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 84.1762910131365,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 75.59358305297792,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 76.55954197980464,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 74.96537500992417,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 76.13412500359118,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 74.93179198354483,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 76.7912499140948,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 74.92683408781886,
+            "rss_bytes": 1785856
+          },
+          {
+            "ms": 75.70854108780622,
+            "rss_bytes": 1785856
+          }
+        ],
+        "fastgron": [
+          {
+            "ms": 118.64033294841647,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 122.99658288247883,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 118.31620801240206,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 119.35820779763162,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 110.1673748344183,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 109.32370810769498,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 111.33900005370378,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 106.57287505455315,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 110.00849981792271,
+            "rss_bytes": 88080384
+          },
+          {
+            "ms": 107.83474985510111,
+            "rss_bytes": 88064000
+          },
+          {
+            "ms": 107.26858302950859,
+            "rss_bytes": 88064000
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 98.63908309489489,
+        "after": 75.70854108780622,
+        "fastgron": 110.1673748344183
+      }
+    },
+    {
+      "shape": "long-ascii",
+      "mode": "flatten",
+      "input_bytes": 8388612,
+      "input_sha256": "7c337e48bccd9a20b2354ead9d1142c5391441fe4edb9035430e05857510a890",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "flatten",
+          "/private/tmp/gronify-parser-followup-validated-final/long-ascii.json"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "flatten",
+          "/private/tmp/gronify-parser-followup-validated-final/long-ascii.json"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "441d2eaf966ff87530201a198d92c8b0fe27d63bd8570c2d3d19bfdf0ca9105b",
+          "bytes": 8388631
+        },
+        "after": {
+          "sha256": "441d2eaf966ff87530201a198d92c8b0fe27d63bd8570c2d3d19bfdf0ca9105b",
+          "bytes": 8388631
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 6.195290945470333,
+            "rss_bytes": 12238848
+          },
+          {
+            "ms": 6.205207901075482,
+            "rss_bytes": 12255232
+          },
+          {
+            "ms": 6.305833114311099,
+            "rss_bytes": 12255232
+          },
+          {
+            "ms": 6.189499981701374,
+            "rss_bytes": 12255232
+          },
+          {
+            "ms": 6.0211659874767065,
+            "rss_bytes": 12255232
+          },
+          {
+            "ms": 5.978750064969063,
+            "rss_bytes": 12255232
+          },
+          {
+            "ms": 5.850375164300203,
+            "rss_bytes": 12255232
+          },
+          {
+            "ms": 5.9280002024024725,
+            "rss_bytes": 12238848
+          },
+          {
+            "ms": 6.418541073799133,
+            "rss_bytes": 12255232
+          },
+          {
+            "ms": 5.846333922818303,
+            "rss_bytes": 12255232
+          },
+          {
+            "ms": 5.845417035743594,
+            "rss_bytes": 12255232
+          }
+        ],
+        "after": [
+          {
+            "ms": 6.22099987231195,
+            "rss_bytes": 12271616
+          },
+          {
+            "ms": 6.144957849755883,
+            "rss_bytes": 12255232
+          },
+          {
+            "ms": 6.51658303104341,
+            "rss_bytes": 12271616
+          },
+          {
+            "ms": 6.260375026613474,
+            "rss_bytes": 12271616
+          },
+          {
+            "ms": 6.058291997760534,
+            "rss_bytes": 12255232
+          },
+          {
+            "ms": 6.051375064998865,
+            "rss_bytes": 12271616
+          },
+          {
+            "ms": 5.725624971091747,
+            "rss_bytes": 12271616
+          },
+          {
+            "ms": 6.032374920323491,
+            "rss_bytes": 12271616
+          },
+          {
+            "ms": 6.12891698256135,
+            "rss_bytes": 12271616
+          },
+          {
+            "ms": 5.842207930982113,
+            "rss_bytes": 12271616
+          },
+          {
+            "ms": 6.18883385322988,
+            "rss_bytes": 12271616
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 6.0211659874767065,
+        "after": 6.12891698256135
+      }
+    },
+    {
+      "shape": "long-ascii",
+      "mode": "sensitive",
+      "input_bytes": 8388612,
+      "input_sha256": "7c337e48bccd9a20b2354ead9d1142c5391441fe4edb9035430e05857510a890",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "-c",
+          "/private/tmp/gronify-parser-followup-validated-final/long-ascii.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "-c",
+          "/private/tmp/gronify-parser-followup-validated-final/long-ascii.json",
+          "gateway"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "after": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 10.138374986127019,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 10.707667097449303,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 10.314583079889417,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 10.069417068734765,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 10.20312518812716,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 9.863249957561493,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 10.979124810546637,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 10.39287494495511,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 9.327665902674198,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 11.034874944016337,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 10.094790952280164,
+            "rss_bytes": 20660224
+          }
+        ],
+        "after": [
+          {
+            "ms": 11.058042058721185,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 10.719624813646078,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 10.818124981597066,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 10.109459049999714,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 10.25395910255611,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 10.092375101521611,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 10.36341697908938,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 11.17195887491107,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 10.316834086552262,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 10.198459029197693,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 10.796959046274424,
+            "rss_bytes": 20676608
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 10.20312518812716,
+        "after": 10.36341697908938
+      }
+    },
+    {
+      "shape": "long-ascii",
+      "mode": "insensitive",
+      "input_bytes": 8388612,
+      "input_sha256": "7c337e48bccd9a20b2354ead9d1142c5391441fe4edb9035430e05857510a890",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "/private/tmp/gronify-parser-followup-validated-final/long-ascii.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "/private/tmp/gronify-parser-followup-validated-final/long-ascii.json",
+          "gateway"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "after": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 9.476125007495284,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 9.245916036888957,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 9.485332993790507,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 9.71829192712903,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 9.320582961663604,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 9.562167106196284,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 9.132917039096355,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 9.402916068211198,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 9.251875104382634,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 9.546583984047174,
+            "rss_bytes": 20660224
+          },
+          {
+            "ms": 10.646125068888068,
+            "rss_bytes": 20660224
+          }
+        ],
+        "after": [
+          {
+            "ms": 12.36574980430305,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 9.390250081196427,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 9.449624922126532,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 10.765374870970845,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 9.881458012387156,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 9.616750059649348,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 9.227582952007651,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 12.297541834414005,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 9.80629213154316,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 9.572541108354926,
+            "rss_bytes": 20676608
+          },
+          {
+            "ms": 9.824832901358604,
+            "rss_bytes": 20676608
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 9.476125007495284,
+        "after": 9.80629213154316
+      }
+    },
+    {
+      "shape": "unicode",
+      "mode": "flatten",
+      "input_bytes": 900004,
+      "input_sha256": "a2fab999306ee07f7d6a1551b9f103bcbadc541dba128c942a1b41d192cc376d",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "flatten",
+          "/private/tmp/gronify-parser-followup-validated-final/unicode.json"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "flatten",
+          "/private/tmp/gronify-parser-followup-validated-final/unicode.json"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "dec366582f12f5de47444ccac8b49911c08ab6b777380a7905c881d3d538ea4c",
+          "bytes": 900023
+        },
+        "after": {
+          "sha256": "dec366582f12f5de47444ccac8b49911c08ab6b777380a7905c881d3d538ea4c",
+          "bytes": 900023
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 4.889708012342453,
+            "rss_bytes": 2621440
+          },
+          {
+            "ms": 4.724749829620123,
+            "rss_bytes": 2621440
+          },
+          {
+            "ms": 4.7217910178005695,
+            "rss_bytes": 2621440
+          },
+          {
+            "ms": 4.9201250076293945,
+            "rss_bytes": 2621440
+          },
+          {
+            "ms": 4.69083315692842,
+            "rss_bytes": 2621440
+          },
+          {
+            "ms": 4.895833786576986,
+            "rss_bytes": 2621440
+          },
+          {
+            "ms": 9.741957997903228,
+            "rss_bytes": 2621440
+          },
+          {
+            "ms": 4.750791005790234,
+            "rss_bytes": 2621440
+          },
+          {
+            "ms": 4.560749977827072,
+            "rss_bytes": 2621440
+          },
+          {
+            "ms": 4.459790885448456,
+            "rss_bytes": 2621440
+          },
+          {
+            "ms": 5.184207810088992,
+            "rss_bytes": 2621440
+          }
+        ],
+        "after": [
+          {
+            "ms": 4.505791002884507,
+            "rss_bytes": 2637824
+          },
+          {
+            "ms": 4.9078750889748335,
+            "rss_bytes": 2637824
+          },
+          {
+            "ms": 4.40725008957088,
+            "rss_bytes": 2637824
+          },
+          {
+            "ms": 4.687834065407515,
+            "rss_bytes": 2637824
+          },
+          {
+            "ms": 5.0630830228328705,
+            "rss_bytes": 2637824
+          },
+          {
+            "ms": 4.863915964961052,
+            "rss_bytes": 2637824
+          },
+          {
+            "ms": 4.640332888811827,
+            "rss_bytes": 2637824
+          },
+          {
+            "ms": 4.512166837230325,
+            "rss_bytes": 2637824
+          },
+          {
+            "ms": 4.564583068713546,
+            "rss_bytes": 2637824
+          },
+          {
+            "ms": 4.569333046674728,
+            "rss_bytes": 2637824
+          },
+          {
+            "ms": 8.730417117476463,
+            "rss_bytes": 2637824
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 4.750791005790234,
+        "after": 4.640332888811827
+      }
+    },
+    {
+      "shape": "unicode",
+      "mode": "sensitive",
+      "input_bytes": 900004,
+      "input_sha256": "a2fab999306ee07f7d6a1551b9f103bcbadc541dba128c942a1b41d192cc376d",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "-c",
+          "/private/tmp/gronify-parser-followup-validated-final/unicode.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "-c",
+          "/private/tmp/gronify-parser-followup-validated-final/unicode.json",
+          "gateway"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "after": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 4.741583950817585,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 5.0039999186992645,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 5.071124993264675,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 4.638083977624774,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 4.7703341115266085,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 4.730208078399301,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 4.765374818816781,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 4.9842908047139645,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 5.092916078865528,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 4.831833997741342,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 10.20133402198553,
+            "rss_bytes": 3506176
+          }
+        ],
+        "after": [
+          {
+            "ms": 4.9143340438604355,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.9172500148415565,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.865291062742472,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 9.273000061511993,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.780791932716966,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.741207929328084,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 8.28258297406137,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 5.0464170053601265,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.669625079259276,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.517749883234501,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 5.034249974414706,
+            "rss_bytes": 3522560
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 4.831833997741342,
+        "after": 4.9143340438604355
+      }
+    },
+    {
+      "shape": "unicode",
+      "mode": "insensitive",
+      "input_bytes": 900004,
+      "input_sha256": "a2fab999306ee07f7d6a1551b9f103bcbadc541dba128c942a1b41d192cc376d",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "/private/tmp/gronify-parser-followup-validated-final/unicode.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "/private/tmp/gronify-parser-followup-validated-final/unicode.json",
+          "gateway"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "after": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 4.708250053226948,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 7.147291908040643,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 4.993041045963764,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 4.709250060841441,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 4.686125088483095,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 5.17545803450048,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 4.765833029523492,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 5.202790955081582,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 4.806291777640581,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 4.916541976854205,
+            "rss_bytes": 3506176
+          },
+          {
+            "ms": 6.727374857291579,
+            "rss_bytes": 3506176
+          }
+        ],
+        "after": [
+          {
+            "ms": 4.632124910131097,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.732124973088503,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.726125160232186,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.791999934241176,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.613500088453293,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.887416958808899,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.800250055268407,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 9.911875007674098,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.894082900136709,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 4.736125003546476,
+            "rss_bytes": 3522560
+          },
+          {
+            "ms": 5.10116689838469,
+            "rss_bytes": 3522560
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 4.916541976854205,
+        "after": 4.791999934241176
+      }
+    },
+    {
+      "shape": "escaped",
+      "mode": "flatten",
+      "input_bytes": 1080004,
+      "input_sha256": "4ff8d5354a88f3f00f810f00bb473142d7b61b21a6d9c1ac9a737f4168c1cf93",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "flatten",
+          "/private/tmp/gronify-parser-followup-validated-final/escaped.json"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "flatten",
+          "/private/tmp/gronify-parser-followup-validated-final/escaped.json"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "62b2a546703b25228fd032613b14ad4e15f48cfa1a40a47304b7e16fc8d12a78",
+          "bytes": 780023
+        },
+        "after": {
+          "sha256": "62b2a546703b25228fd032613b14ad4e15f48cfa1a40a47304b7e16fc8d12a78",
+          "bytes": 780023
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 7.838707882910967,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.229334140196443,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 7.668792037293315,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 7.794541073963046,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 7.726750103756785,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 8.186833932995796,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 13.715417124330997,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 11.171540943905711,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.22508311830461,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 8.091165916994214,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 8.116999873891473,
+            "rss_bytes": 5373952
+          }
+        ],
+        "after": [
+          {
+            "ms": 9.5059999730438,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 7.913958048447967,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 7.700083078816533,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 7.792833028361201,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 7.518457947298884,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 7.825665874406695,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 8.52191704325378,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 8.579666959121823,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 8.519333088770509,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 8.301625028252602,
+            "rss_bytes": 5390336
+          },
+          {
+            "ms": 8.416624972596765,
+            "rss_bytes": 5390336
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 8.116999873891473,
+        "after": 8.301625028252602
+      }
+    },
+    {
+      "shape": "escaped",
+      "mode": "sensitive",
+      "input_bytes": 1080004,
+      "input_sha256": "4ff8d5354a88f3f00f810f00bb473142d7b61b21a6d9c1ac9a737f4168c1cf93",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "-c",
+          "/private/tmp/gronify-parser-followup-validated-final/escaped.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "-c",
+          "/private/tmp/gronify-parser-followup-validated-final/escaped.json",
+          "gateway"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "after": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 8.412207942456007,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 9.735292056575418,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.192084031179547,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.496374823153019,
+            "rss_bytes": 5357568
+          },
+          {
+            "ms": 11.194166960194707,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 9.604834020137787,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.477750001475215,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.429249981418252,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 9.928459068760276,
+            "rss_bytes": 5357568
+          },
+          {
+            "ms": 8.810999803245068,
+            "rss_bytes": 5357568
+          },
+          {
+            "ms": 8.648167131468654,
+            "rss_bytes": 5357568
+          }
+        ],
+        "after": [
+          {
+            "ms": 8.466749917715788,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.484334219247103,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 9.184417081996799,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.726292056962848,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.956125006079674,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.203624980524182,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.451249916106462,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.431750116869807,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.430917048826814,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.72633303515613,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.553334046155214,
+            "rss_bytes": 5373952
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 8.648167131468654,
+        "after": 8.484334219247103
+      }
+    },
+    {
+      "shape": "escaped",
+      "mode": "insensitive",
+      "input_bytes": 1080004,
+      "input_sha256": "4ff8d5354a88f3f00f810f00bb473142d7b61b21a6d9c1ac9a737f4168c1cf93",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "/private/tmp/gronify-parser-followup-validated-final/escaped.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "/private/tmp/gronify-parser-followup-validated-final/escaped.json",
+          "gateway"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "after": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 8.8962079025805,
+            "rss_bytes": 5357568
+          },
+          {
+            "ms": 11.704166885465384,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 10.31883293762803,
+            "rss_bytes": 5357568
+          },
+          {
+            "ms": 8.728499989956617,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 10.090499883517623,
+            "rss_bytes": 5357568
+          },
+          {
+            "ms": 8.577417116612196,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.574750041589141,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.243000134825706,
+            "rss_bytes": 5357568
+          },
+          {
+            "ms": 8.17970815114677,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.258666144683957,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.375999983400106,
+            "rss_bytes": 5357568
+          }
+        ],
+        "after": [
+          {
+            "ms": 8.38658306747675,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.049750002101064,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.572000078856945,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.391459006816149,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.34587519057095,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.697915822267532,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 10.751999914646149,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.713582996279001,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 11.571499984711409,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.816832909360528,
+            "rss_bytes": 5373952
+          },
+          {
+            "ms": 8.706750115379691,
+            "rss_bytes": 5373952
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 8.577417116612196,
+        "after": 8.697915822267532
+      }
+    },
+    {
+      "shape": "tiny",
+      "mode": "flatten",
+      "input_bytes": 120,
+      "input_sha256": "9fe03f149ca869e14c338107d9f3de274f797be693d805eea45407fd89f9aa68",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "flatten",
+          "/private/tmp/gronify-parser-followup-validated-final/tiny.json"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "flatten",
+          "/private/tmp/gronify-parser-followup-validated-final/tiny.json"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "2f57fb086ef8eace81ffa324dd936f167ad692d19e41093c18b622046f710f67",
+          "bytes": 248
+        },
+        "after": {
+          "sha256": "2f57fb086ef8eace81ffa324dd936f167ad692d19e41093c18b622046f710f67",
+          "bytes": 248
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 3.6704170051962137,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 5.488082999363542,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.9254578296095133,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.9118339773267508,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 4.141791025176644,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.801124868914485,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 4.256166983395815,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.8644170854240656,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.857417032122612,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 4.0731660556048155,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.8574158679693937,
+            "rss_bytes": 1671168
+          }
+        ],
+        "after": [
+          {
+            "ms": 3.6945000756531954,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 5.521666957065463,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.9545001927763224,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 4.068000009283423,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.706833114847541,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.5888750571757555,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.8072920870035887,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 4.096458898857236,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 4.216125002130866,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.6897920072078705,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.925417084246874,
+            "rss_bytes": 1687552
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 3.9118339773267508,
+        "after": 3.925417084246874
+      }
+    },
+    {
+      "shape": "tiny",
+      "mode": "sensitive",
+      "input_bytes": 120,
+      "input_sha256": "9fe03f149ca869e14c338107d9f3de274f797be693d805eea45407fd89f9aa68",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "-c",
+          "/private/tmp/gronify-parser-followup-validated-final/tiny.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "-c",
+          "/private/tmp/gronify-parser-followup-validated-final/tiny.json",
+          "gateway"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "15f217cccf3e55888291b9519c7a769be848d26d7e38250113445f098ab5f876",
+          "bytes": 28
+        },
+        "after": {
+          "sha256": "15f217cccf3e55888291b9519c7a769be848d26d7e38250113445f098ab5f876",
+          "bytes": 28
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 4.008917137980461,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.704875009134412,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.6441669799387455,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.6388749722391367,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.8931251037865877,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.987791948020458,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 4.2214160785079,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 4.281040979549289,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 4.29862504824996,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.642166033387184,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.7444159388542175,
+            "rss_bytes": 1671168
+          }
+        ],
+        "after": [
+          {
+            "ms": 3.6948751658201218,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.9270829875022173,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.9809169247746468,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.927208948880434,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.5765839274972677,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.8344578351825476,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.712833859026432,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 4.314749967306852,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 4.160708049312234,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.866415936499834,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.9217080920934677,
+            "rss_bytes": 1687552
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 3.8931251037865877,
+        "after": 3.9217080920934677
+      }
+    },
+    {
+      "shape": "tiny",
+      "mode": "insensitive",
+      "input_bytes": 120,
+      "input_sha256": "9fe03f149ca869e14c338107d9f3de274f797be693d805eea45407fd89f9aa68",
+      "commands": {
+        "before": [
+          "/private/tmp/gronify-parser-followup-validated-final/before/target/release/gronify-native",
+          "search",
+          "/private/tmp/gronify-parser-followup-validated-final/tiny.json",
+          "gateway"
+        ],
+        "after": [
+          "/private/tmp/gronify-parser-followup-validated-final/after/target/release/gronify-native",
+          "search",
+          "/private/tmp/gronify-parser-followup-validated-final/tiny.json",
+          "gateway"
+        ]
+      },
+      "outputs": {
+        "before": {
+          "sha256": "15f217cccf3e55888291b9519c7a769be848d26d7e38250113445f098ab5f876",
+          "bytes": 28
+        },
+        "after": {
+          "sha256": "15f217cccf3e55888291b9519c7a769be848d26d7e38250113445f098ab5f876",
+          "bytes": 28
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "ms": 3.478290978819132,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.4279590472579002,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 4.030000185593963,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.6445409059524536,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.953500185161829,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.694624872878194,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.778416896238923,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.551499918103218,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.564584068953991,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.6845419090241194,
+            "rss_bytes": 1671168
+          },
+          {
+            "ms": 3.644166048616171,
+            "rss_bytes": 1671168
+          }
+        ],
+        "after": [
+          {
+            "ms": 3.8052499294281006,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.8509159348905087,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.6181670147925615,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.6939168348908424,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.5602080170065165,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.7233750335872173,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.429542062804103,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.5506668500602245,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.657666966319084,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 3.6659170873463154,
+            "rss_bytes": 1687552
+          },
+          {
+            "ms": 4.275042098015547,
+            "rss_bytes": 1687552
+          }
+        ]
+      },
+      "medians_ms": {
+        "before": 3.6445409059524536,
+        "after": 3.6659170873463154
+      }
+    }
+  ],
+  "load_end": [
+    4.5146484375,
+    4.29443359375,
+    4.38623046875
+  ],
+  "finished_utc": "2026-11-03T22:31:57.685254+00:00"
+}

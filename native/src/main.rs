@@ -29,18 +29,24 @@ impl<R: Read> Input<R> {
     #[inline]
     fn peek(&mut self) -> Result<Option<u8>> {
         if self.pos == self.end {
-            self.end = loop {
-                match self.source.read(&mut self.buf) {
-                    Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
-                    result => break result.map_err(|e| e.to_string())?,
-                }
-            };
-            self.pos = 0;
+            self.refill()?;
             if self.end == 0 {
                 return Ok(None);
             }
         }
         Ok(Some(self.buf[self.pos]))
+    }
+    // Keep read/refill handling out of the per-byte buffered lookup.
+    #[inline(never)]
+    fn refill(&mut self) -> Result<()> {
+        self.end = loop {
+            match self.source.read(&mut self.buf) {
+                Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
+                result => break result.map_err(|e| e.to_string())?,
+            }
+        };
+        self.pos = 0;
+        Ok(())
     }
     #[inline]
     fn take(&mut self) -> Result<u8> {
@@ -58,6 +64,29 @@ impl<R: Read> Input<R> {
     }
     // Borrow only when a delimiter is already buffered; validate the exact bytes.
     fn bare_token<'a>(&'a mut self, token: &'a mut Vec<u8>) -> Result<&'a [u8]> {
+        let buffered = &self.buf[self.pos..self.end];
+        // A complete grammar prefix is usable only with a buffered delimiter.
+        // Otherwise the original scanner must reject suffixes or refill.
+        let length = match buffered.first() {
+            Some(b't') if buffered.starts_with(b"true") => Some(4),
+            Some(b'f') if buffered.starts_with(b"false") => Some(5),
+            Some(b'n') if buffered.starts_with(b"null") => Some(4),
+            Some(b'-' | b'0'..=b'9') => number_prefix(buffered),
+            _ => None,
+        };
+        if let Some(len) = length
+            && buffered
+                .get(len)
+                .is_some_and(|c| !(c.is_ascii_alphanumeric() || matches!(c, b'+' | b'-' | b'.')))
+        {
+            if len > TOKEN_MAX {
+                return Err("token exceeds 64 MiB resource limit".into());
+            }
+            let start = self.pos;
+            self.pos += len;
+            self.offset += len;
+            return Ok(&self.buf[start..self.pos]);
+        }
         let start = self.pos;
         let mut end = start;
         while end < self.end {
@@ -267,6 +296,10 @@ fn unicode_escape(out: &mut Vec<u8>, n: u16) {
     }
 }
 fn number(s: &[u8]) -> bool {
+    number_prefix(s) == Some(s.len())
+}
+#[inline]
+fn number_prefix(s: &[u8]) -> Option<usize> {
     let mut i = usize::from(s.first() == Some(&b'-'));
     if s.get(i) == Some(&b'0') {
         i += 1;
@@ -276,7 +309,7 @@ fn number(s: &[u8]) -> bool {
             i += 1;
         }
         if i == start {
-            return false;
+            return None;
         }
     }
     if s.get(i) == Some(&b'.') {
@@ -286,7 +319,7 @@ fn number(s: &[u8]) -> bool {
             i += 1;
         }
         if i == start {
-            return false;
+            return None;
         }
     }
     if matches!(s.get(i), Some(b'e' | b'E')) {
@@ -299,10 +332,10 @@ fn number(s: &[u8]) -> bool {
             i += 1;
         }
         if i == start {
-            return false;
+            return None;
         }
     }
-    i == s.len()
+    Some(i)
 }
 fn identifier(s: &[u8]) -> bool {
     let start = |b: u8| b.is_ascii_alphabetic() || b == b'_' || b == b'$';
@@ -587,6 +620,53 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn refill_retries_interruptions_and_preserves_read_errors() {
+        struct InterruptedReader<'a> {
+            bytes: &'a [u8],
+            interrupt: bool,
+            fail_at_end: bool,
+        }
+        impl Read for InterruptedReader<'_> {
+            fn read(&mut self, out: &mut [u8]) -> io::Result<usize> {
+                self.interrupt = !self.interrupt;
+                if self.interrupt {
+                    return Err(io::ErrorKind::Interrupted.into());
+                }
+                if self.bytes.is_empty() {
+                    return if self.fail_at_end {
+                        Err(io::Error::other("injected read error"))
+                    } else {
+                        Ok(0)
+                    };
+                }
+                out[0] = self.bytes[0];
+                self.bytes = &self.bytes[1..];
+                Ok(1)
+            }
+        }
+        let source = br#" {"x":[-0,1.20e+99,true,"\u0061"]} "#;
+        let mut expected = Vec::new();
+        flatten(&mut Input::new(&source[..], 64), &mut expected, u64::MAX).unwrap();
+        for fail_at_end in [false, true] {
+            let reader = InterruptedReader {
+                bytes: source,
+                interrupt: false,
+                fail_at_end,
+            };
+            let mut input = Input::new(reader, 7);
+            let mut output = Vec::new();
+            let result = flatten(&mut input, &mut output, u64::MAX);
+            if fail_at_end {
+                assert_eq!(result.unwrap_err(), "injected read error");
+            } else {
+                assert!(!result.unwrap());
+            }
+            assert_eq!(output, expected);
+            assert_eq!(input.offset, source.len());
+        }
+    }
+
     #[test]
     fn borrowed_and_fragmented_scalars_preserve_bytes() {
         let source = br#"{"plain":"gateway","a b":"x","esc":"\u0061","values":[-0,1.100E+999,123456789012345678901234567890,true,false,null,"tail"]}"#;

@@ -1,0 +1,8 @@
+{
+  "final_source_sha256": "8c8e2abd2a35edfe3a57c9bb355e93ddf26ef27ec1752f99f527f8acc3e94b9c",
+  "binary_sha256": "1cef168072143a91c9bbbedf9d442ad6f4ac166199437a0fab2132fa48c74182",
+  "profile_build": "rustc --edition=2024 -O -g -C lto=true -C codegen-units=1 -C panic=abort -C force-frame-pointers=yes -A dead_code production.rs -o production",
+  "local_artifact_prefix": "/tmp/gronify-parser-followup-",
+  "method": "Each benchmark runs tools serially. External integrated 1GB agent was reported active on this shared host. Diagnostic initial profile may overlap early exploratory number-trial preparation; retained final measurements and production profiles were run separately.",
+  "profile_binary_sha256": "b2e6c96c919df90277d562f7bf7f6df2b2d3ca300e5efcdbf75ee1cc4f98f684"
+}
