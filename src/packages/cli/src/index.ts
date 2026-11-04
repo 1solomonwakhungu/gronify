@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command, InvalidArgumentError } from "commander";
-import { accessSync, constants, createReadStream, existsSync } from "node:fs";
+import { accessSync, closeSync, constants, createReadStream, existsSync, fstatSync, openSync, readSync, statSync } from "node:fs";
 import { extname } from "node:path";
 import { Socket } from "node:net";
 import { flattenStream } from "./flatten-stream.js";
@@ -9,6 +9,8 @@ import { createLineMatcher } from "./matcher.js";
 import { createOutputSink, GronOutput, type OutputOptions } from "./output.js";
 
 const INPUT_BLOCK_SIZE = 1 << 20;
+/** Flatten and search read regular files through one reused block of this size (see `readRegularFile`). */
+const REUSED_BLOCK_SIZE = 1 << 18;
 
 const program = new Command();
 
@@ -76,10 +78,34 @@ function validateFile(filePath: string): void {
   }
 }
 
-/** Streams a file or stdin as raw bytes. Returns undefined (after printing usage) when there is nothing to read. */
-function openInput(file: string | undefined, formatter: OutputFormatter, usage: string): AsyncIterable<Buffer> | undefined {
+/**
+ * Reads a regular file through one reused block. Every consumer copies what it keeps before asking for the next
+ * chunk, so reusing the block is safe, and it saves allocating (and later collecting) a fresh block per read.
+ * Regular files never block for long, so a synchronous read costs the event loop nothing that matters.
+ */
+async function* readRegularFile(open: () => number, close: boolean): AsyncGenerator<Buffer> {
+  const fd = open();
+  try {
+    const block = Buffer.allocUnsafe(REUSED_BLOCK_SIZE);
+    for (;;) {
+      const length = readSync(fd, block, 0, block.length, null);
+      if (length === 0) return;
+      yield length === block.length ? block : block.subarray(0, length);
+    }
+  } finally {
+    if (close) closeSync(fd);
+  }
+}
+
+/**
+ * Streams a file or stdin as raw bytes. Returns undefined (after printing usage) when there is nothing to read.
+ * `reuse` allows one reused block for regular files; only pass it for consumers that never keep a chunk.
+ */
+function openInput(file: string | undefined, formatter: OutputFormatter, usage: string, reuse = false): AsyncIterable<Buffer> | undefined {
   if (file) {
     validateFile(file);
+    // Pipes, devices and FIFOs keep the asynchronous stream, which never blocks while waiting for a writer.
+    if (reuse && statSync(file, { throwIfNoEntry: false })?.isFile()) return readRegularFile(() => openSync(file, "r"), true);
     return createReadStream(file, { highWaterMark: INPUT_BLOCK_SIZE });
   }
   if (!hasStdinData()) {
@@ -88,6 +114,8 @@ function openInput(file: string | undefined, formatter: OutputFormatter, usage: 
     process.exitCode = 1;
     return undefined;
   }
+  // `< file.json` redirects a regular file, which reads faster directly than through process.stdin.
+  if (reuse && fstatSync(0).isFile()) return readRegularFile(() => 0, false);
   return process.stdin;
 }
 
@@ -142,7 +170,7 @@ program
       if (file && ![".json", ".jsonl"].includes(extname(file).toLowerCase())) {
         console.warn(formatter.formatWarning(`File '${file}' doesn't have a .json extension`));
       }
-      const input = openInput(file, formatter, "Usage: gronify flatten <file> OR cat file.json | gronify flatten");
+      const input = openInput(file, formatter, "Usage: gronify flatten <file> OR cat file.json | gronify flatten", true);
       if (!input) return;
       const output = createOutput(globalOptions.output, { format: formatter.createGronLineFormatter(), limit: options.limit });
       await flattenStream(input, output, { sort: options.sort });
@@ -223,7 +251,7 @@ program
         regex: Boolean(options.regex),
         caseSensitive: Boolean(options.caseSensitive)
       });
-      const input = openInput(file, formatter, "Usage: gronify search <file> <term> OR cat file.json | gronify search <term>");
+      const input = openInput(file, formatter, "Usage: gronify search <file> <term> OR cat file.json | gronify search <term>", true);
       if (!input) {
         if (options.exitStatus) process.exitCode = 2;
         return;
