@@ -800,6 +800,18 @@ describe("Gronify CLI", () => {
         const destination = ${JSON.stringify(destination)};
         if (destination === "input") {
           fs.ReadStream.prototype._read = function () { this.destroy(error); };
+          // Flatten and search read regular files synchronously, so fail reads of the input's descriptor too.
+          const { openSync, readSync } = fs;
+          let inputFd = -1;
+          fs.openSync = function (path, ...rest) {
+            const fd = openSync.call(this, path, ...rest);
+            if (path === ${JSON.stringify(input)}) inputFd = fd;
+            return fd;
+          };
+          fs.readSync = function (fd, ...rest) {
+            if (fd === inputFd) throw error;
+            return readSync.call(this, fd, ...rest);
+          };
         } else {
           const stream = destination === "stdout" ? process.stdout : fs.WriteStream.prototype;
           stream._write = function (chunk, encoding, callback) {
