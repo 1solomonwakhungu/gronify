@@ -126,7 +126,7 @@ const buildComparisons = (facts: ComparisonFacts) => [
   {
     kicker: "vs. gron & fastgron",
     title: "Cross-platform npm install, built-in search, and streaming ungron",
-    description: `A cross-platform gron and fastgron alternative for macOS, Linux, and Windows: install via npm with built-in regex search and zero external grep or native binary setup. Unlike gron, Gronify preserves document order by default and streams single-document flatten and unflatten in one pass: ${facts.unflatten} (${facts.measuredOn}, from the benchmark below).`,
+    description: `A cross-platform gron and fastgron alternative for macOS, Linux, and Windows: install via npm with built-in regex search and no separate grep or platform-specific binary to set up. Unlike gron, Gronify preserves document order by default and streams single-document flatten and unflatten in one pass: ${facts.unflatten} (${facts.measuredOn}, from the benchmark below).`,
     label: "Streaming unflatten from gron paths to an atomic output file",
     lines: [
       {
@@ -761,7 +761,7 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
               Install on macOS, Linux, or Windows via npm, use Homebrew where
               supported, download a GitHub release archive, or build the
               TypeScript CLI from source. Result caps, --sort, and --exit-status
-              require v{cliVersion} or newer.
+              require v1.2.0 or newer.
             </SectionIntro.Description>
           </SectionIntro>
         </Section>

@@ -169,79 +169,17 @@ export function Benchmarks({
         paddingBlockEnd="none"
       >
         <SectionIntro align="center" fullWidth>
-          <SectionIntro.Label>Source-build benchmarks</SectionIntro.Label>
+          <SectionIntro.Label>Benchmarks</SectionIntro.Label>
           <SectionIntro.Heading size="3">
             Time, memory, and the work each tool does.
           </SectionIntro.Heading>
           <SectionIntro.Description>
-            {view.headlineDescription} Both implementations are built from
-            source. npm 1.2.0 was the latest release when checked on November 4,
-            2026. The native binary is experimental. For tool selection, see the{" "}
+            {view.headlineDescription} Compare tools within each chart. For tool
+            selection, see the{" "}
             <a className={styles.inlineLink} href="#compare">
               ecosystem comparison
             </a>
             .
-          </SectionIntro.Description>
-        </SectionIntro>
-      </Section>
-
-      <Section paddingBlockStart="normal" paddingBlockEnd="none">
-        <SectionIntro align="start" fullWidth className={styles.benchmarkIntro}>
-          <SectionIntro.Heading size="4">
-            The experimental Rust binary
-          </SectionIntro.Heading>
-          <SectionIntro.Description>
-            {view.native.summary} The separate Rust executable supports
-            document-order flatten, literal search, and ordered unflatten. It is
-            not installed by npm. Regex, sorting, colors, pretty output, atomic
-            file output, and URL input are outside this subset.
-          </SectionIntro.Description>
-        </SectionIntro>
-        <Grid>
-          <Grid.Column span={12}>
-            <div className={styles.gridFrame}>
-              {view.native.blocks.map((block) => (
-                <BenchmarkChart key={block.id} block={block} />
-              ))}
-            </div>
-            <div className={styles.gridFrame}>
-              <PointList
-                title="More native workloads"
-                points={view.native.points}
-              />
-            </div>
-            <Text
-              as="p"
-              size="100"
-              variant="muted"
-              className={styles.benchCaption}
-            >
-              Measured {view.native.date} at source{" "}
-              <a className={styles.inlineLink} href={view.native.sourceUrl}>
-                <code>{view.native.sourceCommit.slice(0, 12)}</code>
-              </a>
-              . {view.native.method} {view.native.coverageNote}{" "}
-              <a className={styles.inlineLink} href={view.native.evidenceUrl}>
-                Native raw trials and validation
-              </a>
-              {" · "}
-              <a className={styles.inlineLink} href={view.native.docsUrl}>
-                Build instructions and subset limits
-              </a>
-            </Text>
-          </Grid.Column>
-        </Grid>
-      </Section>
-
-      <Section paddingBlockStart="normal" paddingBlockEnd="none">
-        <SectionIntro align="start" fullWidth className={styles.benchmarkIntro}>
-          <SectionIntro.Heading size="4">
-            The Node.js CLI across tools
-          </SectionIntro.Heading>
-          <SectionIntro.Description>
-            The full command surface, measured on the separate cross-tool
-            records fixtures. Compare tools within each chart; these inputs
-            differ from the native sweep above.
           </SectionIntro.Description>
         </SectionIntro>
       </Section>
@@ -273,7 +211,7 @@ export function Benchmarks({
         <Grid>
           <Grid.Column span={12}>
             <div className={`${styles.gridFrame} ${styles.gridFrameTwoUp}`}>
-              <PointList title="What the Node.js CLI delivers" points={wins} />
+              <PointList title="What Gronify delivers" points={wins} />
               <PointList
                 title="Tradeoffs and comparison limits"
                 points={losses}
@@ -364,8 +302,8 @@ export function Benchmarks({
                     <a className={styles.inlineLink} href={view.sourceUrl}>
                       <code>{environment.sourceCommit.slice(0, 12)}</code>
                     </a>
-                    . Runtime files and built artifacts are hashed in the
-                    receipts.
+                    . Runtime files and built artifacts are hashed in the raw
+                    results.
                   </Text>
                 ) : null}
                 <Text as="p" size="200" font="monospace">
@@ -375,7 +313,7 @@ export function Benchmarks({
                 </Text>
                 <Text as="p" size="200" variant="muted">
                   Times are wall clock with process start-up included. Gronify
-                  runs as a Node.js source build. Reported times use the{" "}
+                  was built from the source commit above. Reported times use the{" "}
                   {environment.statistic} of the recorded trials. Runs still
                   going after {timeoutSeconds} s were killed.{" "}
                   <Link href={benchmarkUrl} size="small" arrowDirection="end">
@@ -393,13 +331,10 @@ export function Benchmarks({
                 </Heading>
                 <Text as="p" size="200" variant="muted">
                   The script generates its own inputs, runs each tool, and
-                  rewrites BENCHMARKS.md and the data behind this page. Build
-                  the pinned runtime revision and use the campaign harness
-                  retained with the receipts, then run it from src/packages/cli.
-                  The original revision predates the updated measurement
-                  harness. See the raw provenance command for this sweep’s exact
-                  flags. Any comparison tool you have not installed is recorded
-                  as skipped.
+                  rewrites BENCHMARKS.md and the data behind this page. Run it
+                  from src/packages/cli. The raw provenance records the source
+                  commit, harness hash, and exact flags for this sweep. Any
+                  comparison tool you have not installed is recorded as skipped.
                 </Text>
                 {reproduce}
               </div>

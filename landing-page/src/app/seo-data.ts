@@ -37,7 +37,7 @@ export const faqs: FaqItem[] = [
   {
     question: "How large a JSON file can Gronify parse and search?",
     answer:
-      "Flatten, search, and document-order unflatten stream files or stdin. Memory depends on document shape, nesting, token size, flags, and output. --sort spills buffered object lines past 64 MiB to a temp file, while out-of-order unflatten can rebuild in memory only when detected within the first 16 MiB. Use --no-color or -o for large unflatten output. The benchmark section reports measured source-build time and memory with the exact revision and test conditions.",
+      "Flatten, search, and document-order unflatten stream files or stdin. Memory depends on document shape, nesting, token size, flags, and output. --sort spills buffered object lines past 64 MiB to a temp file, while out-of-order unflatten can rebuild in memory only when detected within the first 16 MiB. Use --no-color or -o for large unflatten output. The benchmark section reports measured time and memory with the exact source commit and test conditions.",
   },
   {
     question: "Does --sort produce the same key order as gron?",
@@ -57,7 +57,7 @@ export const faqs: FaqItem[] = [
   },
   {
     question: "How does Gronify compare to jq, gron, and fastgron?",
-    answer: `Use jq when you already know the exact schema and need data transformations. Compared to gron and fastgron, Gronify is a zero-native-binary TypeScript alternative that installs via npm on macOS, Linux, and Windows with built-in regex search—no separate grep required. It prints numbers exactly as written, keeps document order by default, and streams single-document flatten, search, and unflatten (ungron) with streaming input on the default path. Measured results: ${benchmarkFaqAnswer}`,
+    answer: `Use jq when you already know the exact schema and need data transformations. Compared to gron and fastgron, Gronify is a TypeScript alternative that installs via npm on macOS, Linux, and Windows with built-in regex search—no separate grep required. It prints numbers exactly as written, keeps document order by default, and streams single-document flatten, search, and unflatten (ungron) with streaming input on the default path. Measured results: ${benchmarkFaqAnswer}`,
   },
   {
     question: "How do I compare two JSON files using Gronify and system diff?",
