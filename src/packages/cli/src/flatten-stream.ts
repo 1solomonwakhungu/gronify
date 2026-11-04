@@ -15,11 +15,18 @@ const OBJECT = 0;
 const ARRAY = 1;
 
 const DOT = 0x2e;
+const QUOTE = 0x22;
+const SLASH = 0x2f;
+const BACKSLASH = 0x5c;
+const LETTER_U = 0x75;
 const OPEN_BRACKET = 0x5b;
 const CLOSE_BRACKET = 0x5d;
 const ZERO = 0x30;
 const ONE = 0x31;
 const NINE = 0x39;
+
+/** Escaped strings up to this size are normalized in a reused buffer; longer ones get their own. */
+const SCRATCH_LIMIT = 64 << 10;
 
 const ROOT = Buffer.from("json");
 const EQUALS = Buffer.from(" = ");
@@ -34,7 +41,115 @@ for (let byte = 0; byte < 256; byte += 1) {
   IDENTIFIER_BYTE[byte] = (letter ? 1 : 0) | (letter || digit ? 2 : 0);
 }
 
-const identifierPattern = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+function isIdentifier(buf: Buffer, start: number, end: number): boolean {
+  if (end <= start || (IDENTIFIER_BYTE[buf[start]!]! & 1) === 0) return false;
+  for (let i = start + 1; i < end; i += 1) {
+    if ((IDENTIFIER_BYTE[buf[i]!]! & 2) === 0) return false;
+  }
+  return true;
+}
+
+const HEX_VALUE = new Int8Array(256).fill(-1);
+for (let digit = 0; digit < 16; digit += 1) {
+  HEX_VALUE["0123456789abcdef".charCodeAt(digit)] = digit;
+  HEX_VALUE["0123456789ABCDEF".charCodeAt(digit)] = digit;
+}
+const LOWER_HEX = Buffer.from("0123456789abcdef");
+
+/** For a code unit below 0x20, the letter of the short escape JSON.stringify uses (`\n`, ...), or 0 for `\u00XX`. */
+const SHORT_ESCAPE = new Uint8Array(0x20);
+SHORT_ESCAPE[0x08] = 0x62; // b
+SHORT_ESCAPE[0x09] = 0x74; // t
+SHORT_ESCAPE[0x0a] = 0x6e; // n
+SHORT_ESCAPE[0x0c] = 0x66; // f
+SHORT_ESCAPE[0x0d] = 0x72; // r
+
+function hex4(buf: Uint8Array, at: number): number {
+  return (HEX_VALUE[buf[at]!]! << 12) | (HEX_VALUE[buf[at + 1]!]! << 8) | (HEX_VALUE[buf[at + 2]!]! << 4) | HEX_VALUE[buf[at + 3]!]!;
+}
+
+function writeUnicodeEscape(dst: Buffer, at: number, unit: number): number {
+  dst[at] = BACKSLASH;
+  dst[at + 1] = LETTER_U;
+  dst[at + 2] = LOWER_HEX[unit >> 12]!;
+  dst[at + 3] = LOWER_HEX[(unit >> 8) & 15]!;
+  dst[at + 4] = LOWER_HEX[(unit >> 4) & 15]!;
+  dst[at + 5] = LOWER_HEX[unit & 15]!;
+  return at + 6;
+}
+
+/**
+ * Writes the string token `src[start, end)` (quotes included, already validated by the tokenizer) to `dst` at `at`
+ * exactly as `JSON.stringify(JSON.parse(token))` spells it, and returns where it ends. `\/` becomes `/`, `\uXXXX`
+ * becomes UTF-8 (an escaped surrogate pair becomes one character), a lone surrogate keeps a lowercase `\uXXXX`, a
+ * control character takes its short escape or `\u00XX`, and everything else, raw bytes included, is unchanged. The
+ * result is never longer than the token.
+ */
+function normalizeString(src: Uint8Array, start: number, end: number, dst: Buffer, at: number): number {
+  const last = end - 1;
+  dst[at++] = QUOTE;
+  let i = start + 1;
+  while (i < last) {
+    const c = src[i]!;
+    if (c !== BACKSLASH) {
+      dst[at++] = c;
+      i += 1;
+      continue;
+    }
+    const escape = src[i + 1]!;
+    i += 2;
+    if (escape !== LETTER_U) {
+      // \" \\ \b \f \n \r \t are already in JSON.stringify's form; only the slash loses its backslash.
+      if (escape !== SLASH) dst[at++] = BACKSLASH;
+      dst[at++] = escape;
+      continue;
+    }
+    const unit = hex4(src, i);
+    i += 4;
+    if (unit >= 0xd800 && unit <= 0xdfff) {
+      if (unit <= 0xdbff && i + 6 <= last && src[i] === BACKSLASH && src[i + 1] === LETTER_U) {
+        const low = hex4(src, i + 2);
+        if (low >= 0xdc00 && low <= 0xdfff) {
+          const point = 0x10000 + ((unit - 0xd800) << 10) + (low - 0xdc00);
+          dst[at] = 0xf0 | (point >> 18);
+          dst[at + 1] = 0x80 | ((point >> 12) & 0x3f);
+          dst[at + 2] = 0x80 | ((point >> 6) & 0x3f);
+          dst[at + 3] = 0x80 | (point & 0x3f);
+          at += 4;
+          i += 6;
+          continue;
+        }
+      }
+      at = writeUnicodeEscape(dst, at, unit);
+    } else if (unit < 0x20) {
+      const short = SHORT_ESCAPE[unit]!;
+      if (short === 0) {
+        at = writeUnicodeEscape(dst, at, unit);
+      } else {
+        dst[at] = BACKSLASH;
+        dst[at + 1] = short;
+        at += 2;
+      }
+    } else if (unit === QUOTE || unit === BACKSLASH) {
+      dst[at] = BACKSLASH;
+      dst[at + 1] = unit;
+      at += 2;
+    } else if (unit < 0x80) {
+      dst[at++] = unit;
+    } else if (unit < 0x800) {
+      dst[at] = 0xc0 | (unit >> 6);
+      dst[at + 1] = 0x80 | (unit & 0x3f);
+      at += 2;
+    } else {
+      dst[at] = 0xe0 | (unit >> 12);
+      dst[at + 1] = 0x80 | ((unit >> 6) & 0x3f);
+      dst[at + 2] = 0x80 | (unit & 0x3f);
+      at += 3;
+    }
+  }
+  dst[at++] = QUOTE;
+  return at;
+}
 
 /** Copies `src[start, end)` to `dst` at `at`. Short copies skip the native call. */
 function copyBytes(src: Uint8Array, start: number, end: number, dst: Buffer, at: number): number {
@@ -68,6 +183,8 @@ export class GronFlattener implements JsonSink {
   private ends = new Uint32Array(256);
   /** Index of the innermost open container, or -1 at the root. */
   private top = -1;
+
+  private scratch = Buffer.allocUnsafe(256);
 
   constructor(private readonly out: LineSink) {
     ROOT.copy(this.path);
@@ -120,10 +237,20 @@ export class GronFlattener implements JsonSink {
       }
       return;
     }
-    const decoded = JSON.parse(buf.toString("utf8", start, end)) as string;
-    const segment = identifierPattern.test(decoded) ? `.${decoded}` : `[${JSON.stringify(decoded)}]`;
-    this.ensurePath(base + Buffer.byteLength(segment));
-    this.pathLength = base + this.path.write(segment, base, "utf8");
+    // The normalized key is what JSON.stringify gives for the decoded key, and it is an identifier exactly when the
+    // decoded key is one (identifier characters are never escaped).
+    this.ensurePath(base + end - start + 2);
+    const path = this.path;
+    const stop = normalizeString(buf, start, end, path, base + 1);
+    if (isIdentifier(path, base + 2, stop - 1)) {
+      path[base] = DOT;
+      path.copyWithin(base + 1, base + 2, stop - 1);
+      this.pathLength = stop - 2;
+    } else {
+      path[base] = OPEN_BRACKET;
+      path[stop] = CLOSE_BRACKET;
+      this.pathLength = stop + 1;
+    }
   }
 
   string(buf: Buffer, start: number, end: number, escaped: boolean): void {
@@ -131,8 +258,11 @@ export class GronFlattener implements JsonSink {
     if (!escaped) {
       this.writeLine(buf, start, end);
     } else {
-      const normalized = Buffer.from(JSON.stringify(JSON.parse(buf.toString("utf8", start, end))), "utf8");
-      this.writeLine(normalized, 0, normalized.length);
+      // Normalize before writing: the room a line reserves has to be its real length, which decides where blocks flush.
+      const size = end - start;
+      if (size > this.scratch.length && size <= SCRATCH_LIMIT) this.scratch = Buffer.allocUnsafe(SCRATCH_LIMIT);
+      const scratch = size <= this.scratch.length ? this.scratch : Buffer.allocUnsafe(size);
+      this.writeLine(scratch, 0, normalizeString(buf, start, end, scratch, 0));
     }
     this.endValue();
   }
