@@ -209,6 +209,14 @@ describe("flattenStream", () => {
         ["json = {}", "json.__proto__ = 1", "json.constructor = {}", "json.constructor.prototype = 2", ""].join("\n"),
       );
     });
+
+    test("chooses dot or bracket form exactly as the identifier pattern does", async () => {
+      const keys = ["a", "a1", "A_9$", "_", "$", "_1", "$$", "1", "1a", "a-b", "a b", "a.b", "", "é", "aé", "a\u007f", "Z", "z0"];
+      const text = JSON.stringify(Object.fromEntries(keys.map((key, i) => [key, i])));
+      expect(await flatten(text)).toBe(oldFlatten(text));
+      expect(await flatten(text)).toContain("json.a1 = 1\n");
+      expect(await flatten(text)).toContain('json["1a"] = 8\n');
+    });
   });
 
   describe("deep and large structures", () => {
@@ -263,6 +271,24 @@ describe("flattenStream", () => {
       expect(result).toContain("json[1234] = 0\n");
       expect(result).toContain("json[999] = 0\n");
       expect(result).toContain("json[10] = 0\n");
+    });
+
+    test("counts indexes up past each extra digit while elements nest deeper paths", async () => {
+      // Each element writes nested segments after its own `[index]`, which the next index counts up from.
+      const element = (i: number) => (i % 3 === 0 ? `{"k${i}":[${i},{"x":"${"y".repeat(i % 7)}"}]}` : i % 3 === 1 ? `[[${i}]]` : `${i}`);
+      const text = `[${Array.from({ length: 1001 }, (_, i) => element(i)).join(",")}]`;
+      expect(await flatten(text)).toBe(oldFlatten(text));
+      expect(await flatten(text)).toContain("json[999].k999[0] = 999\n");
+      expect(await flatten(text)).toContain("json[1000][0][0] = 1000\n");
+      expect(await flatten(text)).toContain("json[101] = 101\n");
+    });
+
+    test("keeps the index digits when the path buffer grows on a carry", async () => {
+      // A long key fills most of the initial path buffer, so a carry from 9 to 10 has to grow it.
+      for (const length of [1010, 1014, 1015, 1016, 1017, 1018, 1020]) {
+        const text = JSON.stringify({ ["k".repeat(length)]: Array.from({ length: 12 }, (_, i) => (i === 9 ? { a: [1] } : i)) });
+        expect(await flatten(text)).toBe(oldFlatten(text));
+      }
     });
   });
 
