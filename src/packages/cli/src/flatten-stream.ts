@@ -18,6 +18,8 @@ const DOT = 0x2e;
 const OPEN_BRACKET = 0x5b;
 const CLOSE_BRACKET = 0x5d;
 const ZERO = 0x30;
+const ONE = 0x31;
+const NINE = 0x39;
 
 const ROOT = Buffer.from("json");
 const EQUALS = Buffer.from(" = ");
@@ -33,14 +35,6 @@ for (let byte = 0; byte < 256; byte += 1) {
 }
 
 const identifierPattern = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
-
-function isIdentifier(buf: Buffer, start: number, end: number): boolean {
-  if (end <= start || (IDENTIFIER_BYTE[buf[start]!]! & 1) === 0) return false;
-  for (let i = start + 1; i < end; i += 1) {
-    if ((IDENTIFIER_BYTE[buf[i]!]! & 2) === 0) return false;
-  }
-  return true;
-}
 
 /** Copies `src[start, end)` to `dst` at `at`. Short copies skip the native call. */
 function copyBytes(src: Uint8Array, start: number, end: number, dst: Buffer, at: number): number {
@@ -70,7 +64,8 @@ export class GronFlattener implements JsonSink {
 
   private kinds = new Uint8Array(256);
   private bases = new Uint32Array(256);
-  private indexes = new Float64Array(256);
+  /** For an array, where the current element's `[index]` segment ends in `path`; 0 before its first element. */
+  private ends = new Uint32Array(256);
   /** Index of the innermost open container, or -1 at the root. */
   private top = -1;
 
@@ -101,16 +96,26 @@ export class GronFlattener implements JsonSink {
   key(buf: Buffer, start: number, end: number, escaped: boolean): void {
     const base = this.bases[this.top]!;
     if (!escaped) {
-      if (isIdentifier(buf, start + 1, end - 1)) {
-        this.ensurePath(base + end - start);
-        this.path[base] = DOT;
-        this.pathLength = copyBytes(buf, start + 1, end - 1, this.path, base + 1);
+      // Room for the bracketed form, which is the longer one.
+      this.ensurePath(base + end - start + 2);
+      const path = this.path;
+      // Write `.key` while checking that it matches /^[A-Za-z_$][A-Za-z0-9_$]*$/ (see IDENTIFIER_BYTE).
+      const first = start + 1;
+      const last = end - 1;
+      let identifier = first < last && (IDENTIFIER_BYTE[buf[first]!]! & 1) !== 0 ? 2 : 0;
+      path[base] = DOT;
+      for (let i = first, at = base + 1; i < last; i += 1, at += 1) {
+        const c = buf[i]!;
+        path[at] = c;
+        identifier &= IDENTIFIER_BYTE[c]!;
+      }
+      if (identifier !== 0) {
+        this.pathLength = base + 1 + (last - first);
       } else {
         // Without escapes the raw bytes are exactly what JSON.stringify would produce for the decoded key.
-        this.ensurePath(base + end - start + 2);
-        this.path[base] = OPEN_BRACKET;
-        const next = copyBytes(buf, start, end, this.path, base + 1);
-        this.path[next] = CLOSE_BRACKET;
+        path[base] = OPEN_BRACKET;
+        const next = copyBytes(buf, start, end, path, base + 1);
+        path[next] = CLOSE_BRACKET;
         this.pathLength = next + 1;
       }
       return;
@@ -142,26 +147,42 @@ export class GronFlattener implements JsonSink {
     this.number(buf, start, end);
   }
 
-  /** Extends the path for array elements. Object members were already extended by `key`. */
+  /**
+   * Extends the path for array elements. Object members were already extended by `key`.
+   *
+   * The previous element's `[index]` is still in place, since anything nested in it was written after it, so the next
+   * index is that one plus one, counted up in its decimal digits.
+   */
   private beginValue(): void {
     const top = this.top;
     if (top < 0 || this.kinds[top] !== ARRAY) return;
-    const index = this.indexes[top]!;
-    this.indexes[top] = index + 1;
     const base = this.bases[top]!;
-    this.ensurePath(base + 24);
-    const path = this.path;
-    path[base] = OPEN_BRACKET;
-    let digits = 1;
-    for (let rest = Math.floor(index / 10); rest > 0; rest = Math.floor(rest / 10)) digits += 1;
-    let remaining = index;
-    for (let at = base + digits; at > base; at -= 1) {
-      const quotient = Math.floor(remaining / 10);
-      path[at] = ZERO + (remaining - quotient * 10);
-      remaining = quotient;
+    const end = this.ends[top]!;
+    if (end === 0) {
+      this.ensurePath(base + 3);
+      this.path[base] = OPEN_BRACKET;
+      this.path[base + 1] = ZERO;
+      this.path[base + 2] = CLOSE_BRACKET;
+      this.ends[top] = this.pathLength = base + 3;
+      return;
     }
-    path[base + digits + 1] = CLOSE_BRACKET;
-    this.pathLength = base + digits + 2;
+    const path = this.path;
+    let at = end - 2;
+    while (at > base && path[at] === NINE) {
+      path[at] = ZERO;
+      at -= 1;
+    }
+    if (at > base) {
+      path[at] = path[at]! + 1;
+      this.pathLength = end;
+      return;
+    }
+    // Every digit was a 9 and is now a 0: the index gains a leading 1.
+    this.ensurePath(end + 1);
+    this.path[base + 1] = ONE;
+    this.path[end - 1] = ZERO;
+    this.path[end] = CLOSE_BRACKET;
+    this.ends[top] = this.pathLength = end + 1;
   }
 
   private endValue(): void {
@@ -173,7 +194,7 @@ export class GronFlattener implements JsonSink {
     if (depth === this.kinds.length) this.grow();
     this.kinds[depth] = kind;
     this.bases[depth] = this.pathLength;
-    this.indexes[depth] = 0;
+    this.ends[depth] = 0;
     this.top = depth;
   }
 
@@ -188,17 +209,18 @@ export class GronFlattener implements JsonSink {
     kinds.set(this.kinds);
     const bases = new Uint32Array(size);
     bases.set(this.bases);
-    const indexes = new Float64Array(size);
-    indexes.set(this.indexes);
+    const ends = new Uint32Array(size);
+    ends.set(this.ends);
     this.kinds = kinds;
     this.bases = bases;
-    this.indexes = indexes;
+    this.ends = ends;
   }
 
   private ensurePath(needed: number): void {
     if (needed <= this.path.length) return;
     const grown = Buffer.allocUnsafe(Math.max(needed, this.path.length * 2));
-    this.path.copy(grown, 0, 0, this.pathLength);
+    // Everything, not just `pathLength`: array elements count up from the `[index]` bytes left after it.
+    this.path.copy(grown);
     this.path = grown;
   }
 
