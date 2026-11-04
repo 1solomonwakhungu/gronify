@@ -109,6 +109,19 @@ function isValidNumber(buf: Buffer, start: number, end: number): boolean {
   return i === end;
 }
 
+/** Whether `buf[start, end)` is exactly `true`, `false` or `null`. */
+function isLiteral(buf: Buffer, start: number, end: number): boolean {
+  const length = end - start;
+  const first = buf[start];
+  if (length === 4) {
+    if (first === 0x74) return buf[start + 1] === 0x72 && buf[start + 2] === 0x75 && buf[start + 3] === 0x65;
+    if (first === 0x6e) return buf[start + 1] === 0x75 && buf[start + 2] === 0x6c && buf[start + 3] === 0x6c;
+    return false;
+  }
+  return length === 5 && first === 0x66 && buf[start + 1] === 0x61 && buf[start + 2] === 0x6c &&
+    buf[start + 3] === 0x73 && buf[start + 4] === 0x65;
+}
+
 function describeByte(c: number): string {
   if (c >= 0x20 && c < 0x7f) return `'${String.fromCharCode(c)}'`;
   return `byte 0x${c.toString(16).padStart(2, "0")}`;
@@ -169,23 +182,32 @@ export class JsonTokenizer {
       }
 
       const c = buf[pos]!;
-      if (c === 0x20 || c === 0x0d || c === 0x09) {
-        pos += 1;
-        continue;
-      }
-      if (c === 0x0a) {
-        pos += 1;
-        this.line += 1;
-        this.lineStart = this.chunkBase + pos;
-        continue;
+      // Every whitespace byte is at most 0x20, so one comparison clears every structural byte and token start.
+      if (c <= 0x20) {
+        if (c === 0x20 || c === 0x0d || c === 0x09) {
+          pos += 1;
+          continue;
+        }
+        if (c === 0x0a) {
+          pos += 1;
+          this.line += 1;
+          this.lineStart = this.chunkBase + pos;
+          continue;
+        }
       }
       if (gate.blocked) break;
 
+      // A comma emits nothing, so the gate cannot change before the token right after it: when that token starts
+      // at once it is begun here, saving a trip around the loop. Anything else takes the loop as usual.
       switch (state) {
         case ARRAY_NEXT:
           if (c === 0x2c) {
             this.state = ARRAY_VALUE;
-          } else if (c === 0x5d) {
+            pos += 1;
+            if (pos < len && buf[pos]! > 0x20) pos = this.startValue(buf, pos, len, buf[pos]!, ARRAY_VALUE);
+            break;
+          }
+          if (c === 0x5d) {
             this.closeContainer(ARRAY);
           } else {
             this.fail(`Unexpected ${describeByte(c)}, expected ',' or ']'`, pos);
@@ -195,7 +217,11 @@ export class JsonTokenizer {
         case OBJECT_NEXT:
           if (c === 0x2c) {
             this.state = OBJECT_KEY;
-          } else if (c === 0x7d) {
+            pos += 1;
+            if (pos < len && buf[pos] === 0x22) pos = this.beginString(buf, pos, len, IN_KEY);
+            break;
+          }
+          if (c === 0x7d) {
             this.closeContainer(OBJECT);
           } else {
             this.fail(`Unexpected ${describeByte(c)}, expected ',' or '}'`, pos);
@@ -402,10 +428,18 @@ export class JsonTokenizer {
       this.failAt("Invalid UTF-8 in string", this.tokenOffset);
     }
 
-    const isKey = this.state === IN_KEY;
-    this.state = isKey ? OBJECT_COLON : this.nextState();
-    if (isKey) this.sink.key(token, start, stop, this.escaped);
-    else this.sink.string(token, start, stop, this.escaped);
+    if (this.state === IN_KEY) {
+      this.sink.key(token, start, stop, this.escaped);
+      // The usual colon right after the key needs no trip around the loop.
+      if (end < buf.length && buf[end] === 0x3a) {
+        this.state = OBJECT_VALUE;
+        return end + 1;
+      }
+      this.state = OBJECT_COLON;
+      return end;
+    }
+    this.state = this.nextState();
+    this.sink.string(token, start, stop, this.escaped);
     return end;
   }
 
@@ -455,10 +489,7 @@ export class JsonTokenizer {
       this.sink.number(token, start, stop);
       return;
     }
-    // Keep this bounded (at most five bytes) conversion. In measured Node 22 record streams, byte-only
-    // validation correlated with fewer collections and higher external-buffer memory; this restored lower RSS.
-    const text = token.toString("latin1", start, stop);
-    if (text !== "true" && text !== "false" && text !== "null") {
+    if (!isLiteral(token, start, stop)) {
       this.failAt(`Unexpected token '${this.preview(token, start, stop)}', expected true, false or null`, this.tokenOffset);
     }
     this.sink.literal(token, start, stop);
