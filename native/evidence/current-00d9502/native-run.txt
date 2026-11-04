@@ -1,0 +1,13 @@
+tiny-startup flatten
+records-1MiB flatten
+records-32MiB flatten
+records-100MiB flatten
+records-1GiB flatten
+deep-5000 flatten
+records-32MiB search-sensitive
+records-32MiB search-insensitive
+records-32MiB search-count
+records-32MiB search-cap10
+records-100MiB flatten-cap10
+records-1MiB unflatten
+records-32MiB unflatten

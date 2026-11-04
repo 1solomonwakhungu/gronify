@@ -12,10 +12,10 @@ The project is open source under the MIT license. The current release is 1.2.0 (
 
 ## Features
 
-- Flatten JSON files or stdin into gron-style path assignments, streaming multi-gigabyte inputs in about 100 MB of memory on the default path (`--sort` spills buffered object lines above 64 MiB to a temp file, and out-of-order `unflatten` input rebuilds in memory only within the first 16 MiB).
+- Flatten JSON files or stdin into gron-style path assignments, streaming large inputs with memory depending on document shape, nesting, token size, and options (`--sort` spills buffered object lines above 64 MiB to a temp file, and out-of-order `unflatten` input rebuilds in memory only within the first 16 MiB).
 - Unflatten (`ungron`) gron files or stdin back into JSON, streaming document-order input in one pass.
 - Search flattened paths with plain text, extended regex, case-sensitive matching, inverted matching, and match counts.
-- Cap the output with `search -m/--max-count` and `flatten --limit`. Gronify stops reading the input at the cap, so a large file returns in milliseconds when the cap is hit early. (1.2.0)
+- Cap the output with `search -m/--max-count` and `flatten --limit`. Gronify stops reading the input at the cap, so early matches avoid scanning the rest of a large file. (1.2.0)
 - Sort object keys at every level with `--sort` for stable, diffable output with system `diff`. The default is document order. (1.2.0)
 - Opt in to grep-style exit codes with `search --exit-status`. (1.2.0)
 - Keep numbers verbatim as written: `12345678901234567890` and `1.10` come out unchanged without IEEE-754 float rounding.
@@ -122,7 +122,7 @@ cat data.gron | gronify unflatten
 gronify --output data.json unflatten data.gron
 ```
 
-`unflatten` streams. Gron in document order (each container before its children, siblings together, array indexes ascending), which is what `flatten` and `flatten --sort` write, converts in one pass at any size. Out-of-order input is rebuilt in memory only while under 16 MiB of input has been read and under 16 MiB of output produced; after that it fails with `line N: ...`. The rebuild holds the whole document in memory. Do not run plain `sort` on gron you plan to unflatten: it puts `[10]` before `[2]`.
+`unflatten` streams. Gron in document order (each container before its children, siblings together, array indexes ascending), which is what `flatten` and `flatten --sort` write, converts in one streaming pass. Out-of-order input is rebuilt in memory only while under 16 MiB of input has been read and under 16 MiB of output produced; after that it fails with `line N: ...`. The rebuild holds the whole document in memory. Do not run plain `sort` on gron you plan to unflatten: it puts `[10]` before `[2]`.
 
 ### `search <file_or_term> [term]`
 
@@ -158,7 +158,7 @@ gronify search --exit-status config.json -m 1 "debug = true"
 
 ### Result Caps
 
-`search -m/--max-count <n>` and `flatten --limit <n>` stop after `n` lines, following `grep -m`. Gronify stops reading the input at the cap, so the rest of the file is never read or validated; a 5 GB file whose first match is near the start returns in milliseconds, and `cat huge.json | gronify search -m 5 term` ends instead of waiting. The exit status is 0. When a cap ended the run, one line goes to stderr and stdout holds only gron lines:
+`search -m/--max-count <n>` and `flatten --limit <n>` stop after `n` lines, following `grep -m`. Gronify stops reading the input at the cap, so the rest of the file is never read or validated; early matches avoid reading the rest of a large file, and `cat huge.json | gronify search -m 5 term` ends instead of waiting. The exit status is 0. When a cap ended the run, one line goes to stderr and stdout holds only gron lines:
 
 ```text
 Stopped after 20 matches (--max-count); there may be more
@@ -201,21 +201,9 @@ json.b = 1
 
 ### Streaming and Large Inputs
 
-`flatten`, `search`, and `unflatten` read their input in 1 MB byte chunks and write output as they go. On the default path, peak memory stays around 100 MB whether the input is 20 MB or multiple gigabytes. `--sort` spills buffered object lines above 64 MiB to a temp file, and out-of-order `unflatten` input rebuilds in memory only within the first 16 MiB (failing past that). Measured in separate large-file runs on an Apple M5 Pro with Node 22. The cross-tool benchmarks in the Benchmarks section use different inputs, so compare numbers within one table:
+`flatten`, `search`, and document-order `unflatten` stream files or stdin and write output as they go. Peak memory depends on document shape, nesting, token size, flags, and output handling. `--sort` spills buffered object lines above 64 MiB to a temp file; out-of-order `unflatten` rebuilds in memory only when detected within the first 16 MiB and fails past that boundary.
 
-| Input                    | Command          | Time   | Peak RSS |
-| ------------------------ | ---------------- | ------ | -------- |
-| 3.50 GB JSON             | `flatten`        | 22.1 s | 98 MB    |
-| 3.50 GB JSON             | `search --count` | 24.5 s | 96 MB    |
-| 3 GB gron                | `unflatten`      | 7.31 s | 100 MB   |
-| 100,000 nesting levels   | `flatten`        | 0.17 s | 63 MB    |
-| 1.2 GiB array of records | `search -m 5`    | 0.03 s | 57 MB    |
-
-- Input is strict JSON. Errors report the byte offset, line, and column.
-- Numbers are printed verbatim as written: `12345678901234567890`, `1.10`, `1e2`, and `-0` come out unchanged through `flatten`, `search`, and `unflatten`.
-- Output starts before the input has been read in full, so when input turns out to be invalid, stdout may already hold some lines. The error message and non-zero exit code are always produced; check the exit status or use `set -o pipefail`.
-- With `-o`, output goes to a temporary file that replaces the target only after the run succeeds. A failed run leaves an existing target untouched, and `-o` may name the input file.
-- Colored `unflatten` output is built in memory; use `--no-color` for very large inputs.
+Use `--no-color` or `-o` for large unflatten output. The benchmark section links measured time and peak RSS with the exact source revision, machine, commands, and raw trials. These measurements do not establish a fixed memory ceiling for arbitrary JSON.
 
 ## When to Use Gronify vs. jq, gron, fastgron, and grep
 
@@ -422,15 +410,18 @@ gronify search data.json "user" | head -20
 
 ## Benchmarks
 
-Gronify is compared with gron, fastgron, jq (`jq --stream`), and jaq on generated JSON from 1 MB to 1 GB, plus deeply nested and big-integer inputs. The page section is at https://gronify.vercel.app/#benchmarks and the full tables, methodology, and exact commands are in https://github.com/1solomonwakhungu/gronify/blob/main/src/packages/cli/BENCHMARKS.md.
+The benchmark page compares the Node.js source build with gron, fastgron, jq (`jq --stream`), and jaq on generated records, deep nesting, exact-number fixtures, search, unflatten, and early-exit caps.
 
-- Memory: Gronify's peak memory stays flat as input grows and is the lowest of the gron-format tools on large files. gron timed out at 1 GB and fastgron used gigabytes.
-- Unflatten: Gronify ties fastgron on time at large sizes and uses a small fraction of its memory.
-- Early exit: `--limit` and `--max-count` return in about the same short time at every input size.
-- Deep nesting: Gronify flattens a 50,000-level document, which gron and fastgron do not.
-- Where Gronify loses: fastgron flattens several times faster, `fastgron -F` is the fastest search, and `jq --stream` uses less memory.
+- [Charts and interpretation](https://gronify.vercel.app/#benchmarks)
+- [Methodology and all workload results](https://github.com/1solomonwakhungu/gronify/blob/main/src/packages/cli/BENCHMARKS.md)
+- [Raw trials and source provenance](https://github.com/1solomonwakhungu/gronify/blob/main/landing-page/src/app/benchmark-results.json)
+- [Experimental Rust binary and supported subset](https://github.com/1solomonwakhungu/gronify/tree/main/native)
 
-Reproduce with `npm run bench:compare` in `src/packages/cli`. Results depend on the machine and tool versions, so compare tools within one run.
+Use the recorded date, source SHA, versions, run count, commands, and limits when quoting results. The refreshed sweep reports median elapsed times with process startup included, retains raw attempts and failed/skipped outcomes, and uses a shared host. A 5% tie band is not a significance test. Output ordering and formatting differ across gron tools; jq emits parser events rather than gron assignments.
+
+The npm release is the Node.js CLI. Source-checkout results can include unreleased changes. The experimental Rust binary is source-only and does not support the full Node.js option surface; it must not be presented as the npm CLI or a complete replacement.
+
+Reproduce from `src/packages/cli` after building the recorded source revision with `npm run bench:compare`; use the exact flags stored in the receipt for the published sweep.
 
 ## Use Cases
 
@@ -557,7 +548,7 @@ No. Streaming JSON parsing, path flattening, regex search, and unflattening gron
 Yes. Install globally with `npm install -g gronify` (or run `npx gronify`) on Windows, macOS, or Linux, install via Homebrew where supported, download a GitHub release archive, or build the TypeScript CLI from source with Node.js 20 or newer. Because `gronify search` is built in, Windows PowerShell and CMD users get consistent text and regex filtering without installing `grep` or rewriting pipelines around `Select-String`.
 
 **How large a JSON file can Gronify parse and search?**
-All three commands (`flatten`, `search`, and `unflatten`) stream their input in 1 MB byte chunks, keeping peak memory around 100 MB on the default path whether the file is 20 MB or multiple gigabytes. `--sort` on a large open object spills buffered lines past 64 MiB to a temp file, and out-of-order `unflatten` input rebuilds in memory only when detected within the first 16 MiB (failing past that). Pass `--no-color` or `-o` when unflattening multi-gigabyte files in an interactive terminal.
+Flatten, search, and document-order unflatten stream their input. Peak memory depends on the document, options, and output; see the dated source-build receipts for measured results. `--sort` on a large open object spills buffered lines past 64 MiB to a temp file, and out-of-order `unflatten` input rebuilds in memory only when detected within the first 16 MiB (failing past that). Pass `--no-color` or `-o` when unflattening multi-gigabyte files in an interactive terminal.
 
 **Does `--sort` produce the same key order as gron?**
 No. `--sort` compares object keys by UTF-16 code unit at each level, keeps each subtree together, and leaves array index order unchanged (`[2]` before `[10]`). Upstream `gron` puts bare keys before bracketed ones and compares UTF-8 bytes.
@@ -569,7 +560,7 @@ Yes. Gronify validates JSON numbers without converting them to 64-bit IEEE-754 f
 Gronify enforces strict JSON parsing—rejecting trailing commas, comments, single quotes, invalid UTF-8, and truncated inputs—and exits non-zero while reporting the exact byte offset, line, and column of the syntax error.
 
 **How does Gronify compare to jq, gron, and fastgron?**
-Use `jq` when you already know the exact schema and need data transformations. Compared to `gron` and `fastgron`, Gronify is a zero-native-binary TypeScript alternative that installs via `npm` on macOS, Linux, and Windows with built-in regex search—no separate `grep` required. It preserves exact 64-bit integers and trailing decimals, keeps document order by default, and streams single-document `flatten`, `search`, and `unflatten` (`ungron`) in ~100 MB of memory on the default path.
+Use `jq` when you already know the exact schema and need data transformations. Compared to `gron` and `fastgron`, Gronify is a zero-native-binary TypeScript alternative that installs via `npm` on macOS, Linux, and Windows with built-in regex search—no separate `grep` required. It preserves exact 64-bit integers and trailing decimals, keeps document order by default, and streams single-document `flatten`, `search`, and `unflatten` (`ungron`) with streaming input on the default path.
 
 **How do I compare two JSON files using Gronify and system diff?**
 Run `diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten --sort new.json)` in bash or zsh, or write two sorted files with `-o` on Windows and compare them with `diff`. Gronify has no `diff` subcommand; instead, `--sort` normalizes object key order at every nesting level while keeping each object's subtree intact and array elements in numeric index order.
