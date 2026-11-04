@@ -1,9 +1,0 @@
-{
-  "comparisons": 884,
-  "seed": 2017,
-  "binary_sha256": [
-    "db4a339e91d43652043b19ef80837f596a1f1a9cc806a783a6d325e6e112a7cb",
-    "f9042da6fe43f1c1eaf60b6e573fc106b6778661c6259bd0ad0c93bf638461bb"
-  ],
-  "checked": "status, exact stdout, exact stderr including offsets; malformed scalars, caps, UTF8, every short chunk and each 64KiB token split"
-}

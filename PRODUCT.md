@@ -37,7 +37,7 @@ The product name is Gronify. The existing logo is in `branding/logo.svg`. Produc
 
 ## Evidence on Hand
 
-The repository README, CLI implementation, integration tests, example commands, logo, and MIT license are available. No customer logos, testimonials, or adoption metrics are available and must not be fabricated. Measured cross-tool benchmarks are in `src/packages/cli/BENCHMARKS.md` and its linked raw receipts. Quote figures with their tested revision, environment, and workload. The experimental Rust CLI under `native/` is separate from the published npm CLI; label its results and unsupported features explicitly.
+The repository README, CLI implementation, integration tests, example commands, logo, and MIT license are available. No customer logos, testimonials, or adoption metrics are available and must not be fabricated. Measured cross-tool benchmarks are in `src/packages/cli/BENCHMARKS.md` and its linked raw receipts. Quote figures with their tested revision, environment, and workload.
 
 ## Product Principles
 

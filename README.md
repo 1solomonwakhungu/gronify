@@ -377,8 +377,6 @@ node scripts/bench-unflatten.mjs --huge 3        # one 3 GB input; needs about 3
 
 `npm run bench:compare` benchmarks gronify against gron, fastgron, jq, and jaq on the same generated inputs (flatten, search, unflatten, early-exit caps, and correctness checks) and rewrites [`src/packages/cli/BENCHMARKS.md`](src/packages/cli/BENCHMARKS.md) and `landing-page/src/app/benchmark-results.json`. Allow tens of minutes for the full sweep; slow tools, timeouts, and the selected sizes determine its duration. Raw receipts retain the source revision, build hashes, trial timings, memory measurements, and skipped or failed runs. Results describe the tested source checkout, which may be newer than the published npm version.
 
-The separate [experimental Rust CLI](native/README.md) implements a subset of the Node CLI. Its measurements must be labeled separately: npm installs the Node implementation, and native does not yet support sorting, atomic file output, or the full search interface.
-
 ## Releasing
 
 Releases are automated with [release-please](https://github.com/googleapis/release-please) from [Conventional Commits](https://www.conventionalcommits.org/) that touch `src/packages/cli`:
