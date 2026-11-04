@@ -33,7 +33,10 @@ import { Terminal, type TerminalLine } from "./terminal";
 
 const heroTranscript: TerminalLine[] = [
   { kind: "command", text: "npm install -g gronify" },
-  { kind: "command", text: 'gronify search payload.json --regex "status|version"' },
+  {
+    kind: "command",
+    text: 'gronify search payload.json --regex "status|version"',
+  },
   { kind: "output", text: 'json.service.status = "degraded"' },
   { kind: "output", text: 'json.deployments[0].version = "2026.05.22"' },
   { kind: "output", text: 'json.deployments[1].version = "2026.05.21"' },
@@ -62,7 +65,10 @@ const rivers = [
       "Filter flattened JSON paths in one pass with plain text or extended regex, case-sensitive matching, inverted matches, match counts, or grep-style exit codes—no external grep required.",
     label: "Regex search across a JSON payload",
     lines: [
-      { kind: "command", text: 'gronify search data.json --regex "users\\[[0-9]+\\]\\.email"' },
+      {
+        kind: "command",
+        text: 'gronify search data.json --regex "users\\[[0-9]+\\]\\.email"',
+      },
       { kind: "output", text: 'json.users[0].email = "ada@example.com"' },
       { kind: "output", text: 'json.users[1].email = "grace@example.com"' },
     ] satisfies TerminalLine[],
@@ -73,20 +79,30 @@ const rivers = [
       "Stream document-order gron assignments through the built-in unflatten (ungron) command to reconstruct valid JSON with source numbers preserved verbatim.",
     label: "Round-tripping gron assignments back to JSON",
     lines: [
-      { kind: "command", text: "gronify flatten data.json | gronify unflatten" },
+      {
+        kind: "command",
+        text: "gronify flatten data.json | gronify unflatten",
+      },
       { kind: "output", text: '{"service":{"name":"checkout"}}' },
     ] satisfies TerminalLine[],
   },
   {
-    heading: "Stream multi-gigabyte JSON in ~100 MB memory",
+    heading: "Stream large files and stop when you have enough",
     description:
-      "All three commands stream files or stdin pipes, keeping peak memory around 100 MB on the default path at any file size; --sort spills buffered object lines past 64 MiB to a temp file, and out-of-order unflatten input rebuilds in memory only within the first 16 MiB (failing past that). With -m or --limit, Gronify stops reading at the cap, writes a notice to stderr (the final line in the transcript), and exits 0.",
-    label: "Streaming a compressed JSON export into gronify search with a two-match cap",
+      "All three commands stream files or stdin pipes. Memory depends on the document and options; --sort spills buffered object lines past 64 MiB to a temp file, and out-of-order unflatten input rebuilds in memory only within the first 16 MiB (failing past that). With -m or --limit, Gronify stops reading at the cap, writes a notice to stderr (the final line in the transcript), and exits 0.",
+    label:
+      "Streaming a compressed JSON export into gronify search with a two-match cap",
     lines: [
-      { kind: "command", text: 'gzip -dc events.json.gz | gronify search -m 2 "error"' },
+      {
+        kind: "command",
+        text: 'gzip -dc events.json.gz | gronify search -m 2 "error"',
+      },
       { kind: "output", text: 'json[0].error = "timeout"' },
       { kind: "output", text: 'json[7].error = "connection reset"' },
-      { kind: "output", text: "Stopped after 2 matches (--max-count); there may be more" },
+      {
+        kind: "output",
+        text: "Stopped after 2 matches (--max-count); there may be more",
+      },
     ] satisfies TerminalLine[],
   },
 ];
@@ -95,10 +111,14 @@ const buildComparisons = (facts: ComparisonFacts) => [
   {
     kicker: "vs. jq & JSON.parse()",
     title: "Explore unknown schemas and preserve exact numbers",
-    description: `jq excels when you already know the exact path and want data transformations, while Node's JSON.parse() hits V8 string limits (~512 MB, ERR_STRING_TOO_LONG) on multi-gigabyte dumps. Gronify streams raw bytes with zero upfront query DSL and prints numbers as written. jq ${facts.jqVersion} also keeps big integers such as 12345678901234567890 intact in our checks, but it normalises spellings such as ${facts.numberSpellings}, which Gronify leaves alone. JSON.parse() rounds integers above 2^53, and some jq versions or arithmetic filters can too.`,
-    label: "Printing 64-bit integers and trailing decimals as written during search",
+    description: `jq excels when you already know the exact path and want data transformations, while Node's JSON.parse() hits V8 string limits (~512 MB, ERR_STRING_TOO_LONG) on multi-gigabyte dumps. Gronify streams raw bytes with zero upfront query DSL and prints numbers as written. ${facts.numericCheck} JSON.parse() rounds integers above 2^53, and some jq versions or arithmetic filters can too.`,
+    label:
+      "Printing 64-bit integers and trailing decimals as written during search",
     lines: [
-      { kind: "command", text: 'gronify search ledger.json --regex "id|amount"' },
+      {
+        kind: "command",
+        text: 'gronify search ledger.json --regex "id|amount"',
+      },
       { kind: "output", text: "json.entries[0].id = 12345678901234567890" },
       { kind: "output", text: "json.entries[0].amount = 1.10" },
     ] satisfies TerminalLine[],
@@ -109,18 +129,27 @@ const buildComparisons = (facts: ComparisonFacts) => [
     description: `A cross-platform gron and fastgron alternative for macOS, Linux, and Windows: install via npm with built-in regex search and zero external grep or native binary setup. Unlike gron, Gronify preserves document order by default and streams single-document flatten and unflatten in one pass: ${facts.unflatten} (${facts.measuredOn}, from the benchmark below).`,
     label: "Streaming unflatten from gron paths to an atomic output file",
     lines: [
-      { kind: "command", text: "gronify -o restored.json unflatten archive.gron" },
+      {
+        kind: "command",
+        text: "gronify -o restored.json unflatten archive.gron",
+      },
       { kind: "output", text: "Output written to restored.json" },
     ] satisfies TerminalLine[],
   },
   {
     kicker: "vs. raw grep on JSON",
     title: "Full path context on minified or deeply nested payloads",
-    description: `Running grep on minified JSON dumps an entire multi-megabyte line; on formatted JSON it prints an isolated key or value without parent array indexes. Gronify emits the complete root-to-leaf path on every line and ${facts.deep} without call-stack overflow (${facts.measuredOn}).`,
+    description: `Running grep on minified JSON dumps an entire multi-megabyte line; on formatted JSON it prints an isolated key or value without parent array indexes. Gronify emits the complete root-to-leaf path on every line and ${facts.deep} (${facts.measuredOn}).`,
     label: "Finding the exact parent path inside minified nested JSON",
     lines: [
-      { kind: "command", text: 'gronify search cluster-state.min.json "unhealthy"' },
-      { kind: "output", text: 'json.clusters[2].nodes[14].status = "unhealthy"' },
+      {
+        kind: "command",
+        text: 'gronify search cluster-state.min.json "unhealthy"',
+      },
+      {
+        kind: "output",
+        text: 'json.clusters[2].nodes[14].status = "unhealthy"',
+      },
     ] satisfies TerminalLine[],
   },
   {
@@ -149,13 +178,22 @@ const buildAgentRivers = (facts: ComparisonFacts) => [
     description: `Large JSON exports quickly exhaust an LLM context window if read whole. Pass --no-color, check match cardinality with --count first, then sample matches with -m or inspect schema shape with flatten --limit. Because Gronify stops reading the input stream at the cap, in our benchmark ${facts.capped} (${facts.measuredOn}).`,
     label: "Progressive JSON narrowing for AI coding agents",
     lines: [
-      { kind: "command", text: "gronify --no-color search payload.json error --count" },
+      {
+        kind: "command",
+        text: "gronify --no-color search payload.json error --count",
+      },
       { kind: "output", text: "482" },
-      { kind: "command", text: "gronify --no-color search payload.json error -m 3" },
+      {
+        kind: "command",
+        text: "gronify --no-color search payload.json error -m 3",
+      },
       { kind: "output", text: 'json.events[0].error = "upstream timeout"' },
       { kind: "output", text: 'json.events[14].error = "rate limit exceeded"' },
       { kind: "output", text: 'json.events[29].error = "connection reset"' },
-      { kind: "output", text: "Stopped after 3 matches (--max-count); there may be more" },
+      {
+        kind: "output",
+        text: "Stopped after 3 matches (--max-count); there may be more",
+      },
     ] satisfies TerminalLine[],
     linkText: "Explore result-cap flags",
     linkHref: "#commands",
@@ -273,7 +311,10 @@ const optionGroups = [
       ["-c, --case-sensitive", "Respect exact letter case"],
       ["--count", "Print only the number of matches"],
       ["-v, --invert-match", "Show lines that do not match"],
-      ["-m, --max-count <n>", "Stop after n matches and stop reading the input"],
+      [
+        "-m, --max-count <n>",
+        "Stop after n matches and stop reading the input",
+      ],
       ["--sort", "Sort matching lines by object key, as flatten --sort does"],
       ["--exit-status", "Exit 1 when nothing matches; errors then exit 2"],
     ],
@@ -402,7 +443,12 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
       <main id="top">
         <Box paddingBlockStart={64} />
 
-        <Section as="div" paddingBlockStart="none" paddingBlockEnd="none" fullWidth>
+        <Section
+          as="div"
+          paddingBlockStart="none"
+          paddingBlockEnd="none"
+          fullWidth
+        >
           <div className={styles.heroReveal}>
             <Hero align="start" variant="gridline-expressive">
               <Hero.Label>
@@ -440,9 +486,15 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
           </div>
         </div>
 
-        <Section id="workflow" paddingBlockStart="spacious" paddingBlockEnd="none">
+        <Section
+          id="workflow"
+          paddingBlockStart="spacious"
+          paddingBlockEnd="none"
+        >
           <SectionIntro align="center" fullWidth>
-            <SectionIntro.Label>Streaming JSON parsing workflow</SectionIntro.Label>
+            <SectionIntro.Label>
+              Streaming JSON parsing workflow
+            </SectionIntro.Label>
             <SectionIntro.Heading size="3">
               Flatten, search, and unflatten JSON in one standalone CLI.
             </SectionIntro.Heading>
@@ -450,7 +502,7 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
               Traditional JSON parsing loads an entire document with
               JSON.parse() or demands an upfront query DSL. Gronify tokenizes
               raw byte streams in 1 MB chunks so you can flatten paths, filter
-              matches, and round-trip valid JSON at any file size.
+              matches, and round-trip large JSON documents.
             </SectionIntro.Description>
           </SectionIntro>
         </Section>
@@ -473,7 +525,11 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
           </Stack>
         </Section>
 
-        <Section id="compare" paddingBlockStart="spacious" paddingBlockEnd="none">
+        <Section
+          id="compare"
+          paddingBlockStart="spacious"
+          paddingBlockEnd="none"
+        >
           <SectionIntro align="center" fullWidth>
             <SectionIntro.Label>Ecosystem comparison</SectionIntro.Label>
             <SectionIntro.Heading size="3">
@@ -481,9 +537,10 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
             </SectionIntro.Heading>
             <SectionIntro.Description>
               Pick the right command-line tool for the payload in front of you:
-              schema-free path discovery, numbers printed as written, single-document
-              streaming unflatten, and deterministic key order for system diff. Measured
-              speed and memory for the same tools are in the{" "}
+              schema-free path discovery, numbers printed as written,
+              single-document streaming unflatten, and deterministic key order
+              for system diff. Measured speed and memory for the same tools are
+              in the{" "}
               <a className={styles.inlineLink} href="#benchmarks">
                 benchmarks below
               </a>
@@ -519,9 +576,15 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
 
         {benchmarks}
 
-        <Section id="agents" paddingBlockStart="spacious" paddingBlockEnd="none">
+        <Section
+          id="agents"
+          paddingBlockStart="spacious"
+          paddingBlockEnd="none"
+        >
           <SectionIntro align="center" fullWidth>
-            <SectionIntro.Label>AI coding agents & automation</SectionIntro.Label>
+            <SectionIntro.Label>
+              AI coding agents & automation
+            </SectionIntro.Label>
             <SectionIntro.Heading size="3">
               Explore large JSON files without flooding LLM context.
             </SectionIntro.Heading>
@@ -600,7 +663,11 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
           </Grid>
         </Section>
 
-        <Section id="commands" paddingBlockStart="spacious" paddingBlockEnd="none">
+        <Section
+          id="commands"
+          paddingBlockStart="spacious"
+          paddingBlockEnd="none"
+        >
           <SectionIntro align="center" fullWidth>
             <SectionIntro.Label>CLI command reference</SectionIntro.Label>
             <SectionIntro.Heading size="3">
@@ -658,7 +725,11 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
                       {group.title}
                     </Heading>
                     <Box paddingBlockStart={8}>
-                      <Stack direction="vertical" gap="condensed" padding="none">
+                      <Stack
+                        direction="vertical"
+                        gap="condensed"
+                        padding="none"
+                      >
                         {group.options.map(([flag, description]) => (
                           <Text key={flag} as="p" size="200">
                             <code className={styles.wrapAnywhere}>{flag}</code>{" "}
@@ -676,7 +747,11 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
           </Grid>
         </Section>
 
-        <Section id="install" paddingBlockStart="spacious" paddingBlockEnd="none">
+        <Section
+          id="install"
+          paddingBlockStart="spacious"
+          paddingBlockEnd="none"
+        >
           <SectionIntro align="center" fullWidth>
             <SectionIntro.Label>Cross-platform installation</SectionIntro.Label>
             <SectionIntro.Heading size="3">
@@ -748,11 +823,7 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
               Frequently asked questions
             </FAQ.Heading>
             {faqs.map((faq, index) => (
-              <FAQ.Item
-                key={faq.question}
-                open={index === 0}
-                disableAnimation
-              >
+              <FAQ.Item key={faq.question} open={index === 0} disableAnimation>
                 <FAQ.Question as="h3">{faq.question}</FAQ.Question>
                 <FAQ.Answer>
                   <Text as="p" variant="muted">

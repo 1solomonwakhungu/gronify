@@ -13,9 +13,10 @@
 // Methodology and exact commands are written to BENCHMARKS.md together with the numbers. Before every single run the
 // input is read once to warm the page cache, and the tool order rotates from round to round, so no tool always runs first.
 import { execFile, spawn, spawnSync } from "node:child_process";
-import { createWriteStream, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { createWriteStream, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync, readdirSync, openSync, readSync, closeSync } from "node:fs";
 import { once } from "node:events";
 import os, { tmpdir } from "node:os";
+import { createHash } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
@@ -26,7 +27,7 @@ const usage = `Usage: node scripts/bench-compare.mjs [options]
   --keyed <mb,mb,...>   Sizes of the same records stored as one object keyed by id, for unflatten only (default: 10,100)
   --deep <levels,...>   Nesting depths of the deeply nested documents (default: 5000,50000)
   --bigint <mb>         Size of the big-integer document in MB, 0 to skip (default: 10)
-  --runs <n>            Runs per measurement, best kept. Default: 5 for inputs up to 16 MB (3 if the first run takes over
+  --runs <n>            Runs per measurement, median reported. Default: 5 for inputs up to 16 MB (3 if the first run takes over
                         10 s), otherwise 3. The size is that of the JSON input, also for unflatten
   --timeout <seconds>   Kill a run after this long (default: 120)
   --max-rss-gb <gb>     Kill a run whose process tree exceeds this much memory (default: 24)
@@ -431,13 +432,23 @@ function warmCache(path) {
   spawnSync("/bin/cat", [path], { stdio: ["ignore", "ignore", "ignore"] });
 }
 
+const inputHashes = new Map();
+function inputHash(path) {
+  if (inputHashes.has(path)) return inputHashes.get(path);
+  const digest = createHash("sha256");
+  const fd = openSync(path, "r");
+  const buffer = Buffer.alloc(1024 * 1024);
+  try { let count; while ((count = readSync(fd, buffer, 0, buffer.length, null)) > 0) digest.update(buffer.subarray(0, count)); }
+  finally { closeSync(fd); }
+  const value = digest.digest("hex"); inputHashes.set(path, value); return value;
+}
 const countLines = (text) => (text === "" ? 0 : text.split("\n").length);
 
 /**
  * Runs one command once. Resolves with { kind: "ok" | "failed" | "timeout", reasonCode, seconds, rssBytes, output, note,
  * osKill }. A watchdog samples the process tree twice a second and kills it above `maxRssBytes`, which protects the
  * machine from tools that read the whole document into memory. A SIGKILL that this script did not send (exit 137) is
- * reported as `osKill`: the OS killed the process, almost always because the machine ran out of memory.
+ * reported as `osKill`: the cause is unverified; memory pressure is one possibility.
  */
 function runOnce(command, { timeoutMs, maxRssBytes, capture = null, pipefail = true, cap = 0 }) {
   return new Promise((resolvePromise) => {
@@ -503,12 +514,13 @@ function runOnce(command, { timeoutMs, maxRssBytes, capture = null, pipefail = t
       }
       if (reason === "memory") return failure("memory-guard", `killed by the memory guard at ${formatBytes(peakObserved)} (limit ${formatBytes(maxRssBytes)})`);
       if (signal === "SIGKILL" || code === 137) {
-        return failure("os-oom-kill", `killed by the OS (SIGKILL, exit 137), most likely out of memory (peak observed ${formatBytes(peakObserved)})`, { osKill: true });
+        return failure("os-oom-kill", `terminated by SIGKILL or exit 137; cause unverified (possibly out of memory) (peak observed ${formatBytes(peakObserved)})`, { osKill: true });
       }
       if (code !== 0) {
         const how = signal ? `signal ${signal}` : `exit ${code}`;
         return failure("exit-nonzero", `${how}${toolStderr ? `: ${toolStderr}` : ""}`, { rssBytes });
       }
+      if (rssBytes > maxRssBytes) return failure("memory-guard", `completed but measured peak ${formatBytes(rssBytes)} exceeded ${formatBytes(maxRssBytes)} limit between watchdog samples`, { rssBytes });
       if (capture === "lines" && countLines(output) !== cap) {
         return failure("wrong-output", `produced ${countLines(output)} lines, expected ${cap}${toolStderr ? `: ${toolStderr}` : ""}`, { rssBytes });
       }
@@ -519,8 +531,8 @@ function runOnce(command, { timeoutMs, maxRssBytes, capture = null, pipefail = t
 
 function formatBytes(bytes) {
   if (bytes === null || bytes === undefined) return "n/a";
-  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
-  return `${(bytes / 1048576).toFixed(0)} MB`;
+  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(2)} GiB`;
+  return `${(bytes / 1048576).toFixed(0)} MiB`;
 }
 
 const formatSeconds = (seconds) => `${seconds < 10 ? seconds.toFixed(2) : seconds.toFixed(1)} s`;
@@ -721,6 +733,7 @@ function markFastest(results) {
 async function runWorkload({ family, inputId, inputLabel, operation, file, gronFile, options, missing, expectedMatches }) {
   const inputPath = operation.input === "gron" ? gronFile : file;
   const bytes = statSync(inputPath).size;
+  const inputSha256 = inputHash(inputPath);
   const jsonBytes = statSync(file).size;
   const runs = runsFor(jsonBytes, options);
   const toolIds = [...Object.keys(operation.tools), ...Object.keys(operation.unsupported ?? {})];
@@ -752,9 +765,10 @@ async function runWorkload({ family, inputId, inputLabel, operation, file, gronF
     entries.set(tool, entry);
   }
 
-  console.error(`\n== ${operation.key} / ${inputId} (${(bytes / 1048576).toFixed(0)} MB fed to the tool, ${(jsonBytes / 1048576).toFixed(0)} MB JSON, best of ${runs})`);
+  console.error(`\n== ${operation.key} / ${inputId} (${(bytes / 1048576).toFixed(0)} MB fed to the tool, ${(jsonBytes / 1048576).toFixed(0)} MB JSON, median of ${runs})`);
   const samples = new Map(plan.map((tool) => [tool, []]));
   const failures = new Map();
+  const attempts = new Map(plan.map((tool) => [tool, []]));
   const retried = new Map();
   const runOptions = {
     timeoutMs: options.timeout * 1000,
@@ -765,7 +779,7 @@ async function runWorkload({ family, inputId, inputLabel, operation, file, gronF
   };
   const wanted = (tool) => {
     const first = samples.get(tool)[0];
-    // Slow tools do not need five runs: three are enough to take the best of.
+    // Bound expensive default measurements to three samples.
     return first && first.seconds > 10 ? Math.min(runs, 3) : runs;
   };
   for (let round = 0; round < runs; round += 1) {
@@ -774,11 +788,13 @@ async function runWorkload({ family, inputId, inputLabel, operation, file, gronF
       const command = expand(operation.tools[tool], { input: file, gron: gronFile, term: options.term });
       warmCache(inputPath);
       let outcome = await runOnce(command, runOptions);
+      attempts.get(tool).push({ ...outcome, output: undefined });
       if (outcome.osKill) {
         // One OS kill may be a one-off (other processes were using the memory); try once more before calling it a failure.
         console.error(`   ${tool}: killed by the OS, retrying once`);
         warmCache(inputPath);
         const retry = await runOnce(command, runOptions);
+        attempts.get(tool).push({ ...retry, output: undefined });
         retried.set(tool, (retried.get(tool) ?? 0) + 1);
         outcome = retry.kind === "ok" ? retry : { ...retry, note: `${retry.note} (retried once after an OS kill)` };
       }
@@ -789,6 +805,7 @@ async function runWorkload({ family, inputId, inputLabel, operation, file, gronF
 
   for (const tool of plan) {
     const entry = entries.get(tool);
+    entry.trials = attempts.get(tool);
     const failure = failures.get(tool);
     if (failure) {
       entry.status = failure.kind;
@@ -798,10 +815,12 @@ async function runWorkload({ family, inputId, inputLabel, operation, file, gronF
       continue;
     }
     const taken = samples.get(tool);
-    const best = taken.reduce((a, b) => (b.seconds < a.seconds ? b : a));
+    const ordered = [...taken].sort((a, b) => a.seconds - b.seconds);
+    const best = ordered[Math.floor(ordered.length / 2)];
+    const median = (values) => { const v = [...values].sort((a,b) => a-b); return (v[Math.floor((v.length-1)/2)] + v[Math.floor(v.length/2)]) / 2; };
     entry.status = "ok";
-    entry.seconds = Number(best.seconds.toFixed(4));
-    entry.peakRssBytes = best.rssBytes;
+    entry.seconds = Number(median(taken.map(s => s.seconds)).toFixed(4));
+    entry.peakRssBytes = median(taken.map(s => s.rssBytes));
     entry.samples = taken.map((s) => Number(s.seconds.toFixed(4)));
     if (operation.capture === "count") {
       const seen = new Set(taken.map((s) => Number(s.output)));
@@ -821,7 +840,7 @@ async function runWorkload({ family, inputId, inputLabel, operation, file, gronF
         continue;
       }
     }
-    if (retried.has(tool)) entry.note = `${retried.get(tool)} of ${taken.length + retried.get(tool)} attempts killed by the OS (likely out of memory), each retried once`;
+    if (retried.has(tool)) entry.note = `${retried.get(tool)} of ${taken.length + retried.get(tool)} attempts terminated by SIGKILL/exit 137 (cause unverified), each retried once`;
   }
 
   // Search: a tool that reports the wrong number of matches did not do the job, whatever its speed.
@@ -854,7 +873,7 @@ async function runWorkload({ family, inputId, inputLabel, operation, file, gronF
     const mark = r.isFastest ? "fastest" : r.isTie ? "tie" : "";
     console.error(`   ${r.tool.padEnd(15)} ${r.status.padEnd(8)} ${r.seconds === null ? "" : formatSeconds(r.seconds)} ${r.peakRssBytes ? formatBytes(r.peakRssBytes) : ""} ${mark} ${r.note ?? ""}`);
   }
-  return { id: `${operation.key}-${inputId}`, operation: operation.key, label: `${operation.label}: ${inputLabel}`, inputBytes: bytes, jsonBytes, runs, results };
+  return { inputSha256, id: `${operation.key}-${inputId}`, operation: operation.key, label: `${operation.label}: ${inputLabel}`, inputBytes: bytes, jsonBytes, runs, results };
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -895,6 +914,7 @@ function renderMarkdown(report, fullCommands) {
   const { options } = report;
   const tiePercent = (options.tieThreshold ?? TIE_THRESHOLD) * 100;
   const pipedMaxMB = options.pipedMaxMB ?? PIPED_MAX_MB;
+  const statistic = options.statistic === "median" ? "median" : "best";
   const lines = [];
   const push = (text = "") => lines.push(text);
   push("# Gronify benchmarks");
@@ -904,13 +924,14 @@ function renderMarkdown(report, fullCommands) {
   push("## Environment");
   push();
   push(`- Generated: ${report.generatedAt}`);
-  push(`- CPU: ${report.machine.cpu}, ${report.machine.memGB} GB RAM`);
+  if (report.provenance) { push(`- Source commit: \`${report.provenance.sourceCommit}\``); push(`- Host: ${report.provenance.hostIsolation}`); }
+  push(`- CPU: ${report.machine.cpu}, ${report.machine.memGB} GiB RAM`);
   push(`- OS: ${report.machine.os}`);
   push(`- Node: ${report.machine.node} (runs \`node dist/index.js\`)`);
   push("- Tools:");
   for (const [name, version] of Object.entries(report.tools)) push(`  - ${name} ${version}${report.binaries?.[name] && name !== "gronify" ? ` (${report.binaries[name]})` : ""}`);
   for (const [name, why] of Object.entries(report.toolsMissing ?? {})) push(`  - ${name}: ${why}`);
-  push(`- Options: timeout ${options.timeoutSeconds} s, memory guard ${options.maxRssGB} GB, search term \`${options.term}\`, time budget ${options.budgetMinutes} min, total run time ${options.elapsedMinutes} min`);
+  push(`- Options: timeout ${options.timeoutSeconds} s, memory guard ${options.maxRssGB} GiB, search term \`${options.term}\`, time budget ${options.budgetMinutes} min, total run time ${options.elapsedMinutes} min`);
   push();
   push("## Methodology");
   push();
@@ -922,14 +943,16 @@ function renderMarkdown(report, fullCommands) {
   push("- **Timing**: wall time of `bash -c '<command>'` under `/usr/bin/time -l`, which includes process start-up (for gronify, Node start-up). Output goes to `/dev/null`. The search workloads print one number and the capped workloads ten lines; those few bytes are captured to validate the run.");
   push(
     options.runsOverride
-      ? `- **Runs**: the reported time is the best of ${options.runsOverride} runs (set with \`--runs\`) for every workload. All run times are in the JSON (\`samples\`). A run that fails ends that tool's measurement for the workload.`
-      : "- **Runs**: the reported time is the best of N runs, where N depends on the size of the JSON input (also for unflatten, whose actual input is the larger gron form): 5 runs up to 16 MB (3 if the first run takes over 10 s), 3 runs above, at every size including 1 GB. All run times are in the JSON (`samples`). A run that fails ends that tool's measurement for the workload.",
+      ? `- **Runs**: the reported time is the ${statistic} of ${options.runsOverride} runs (set with \`--runs\`) for every workload. All run times and per-attempt RSS/status are in the JSON (\`trials\`; successful times also in \`samples\`). A run that fails ends that tool's measurement for the workload.`
+      : `- **Runs**: the reported time is the ${statistic} of N runs, where N depends on the size of the JSON input (also for unflatten, whose actual input is the larger gron form): 5 runs up to 16 MB (3 if the first run takes over 10 s), 3 runs above, at every size including 1 GB. All run times are in the JSON. A run that fails ends that tool's measurement for the workload.`,
   );
+  if (statistic === "median") push("- **Raw evidence**: `trials` retains every attempt, including failures and OS-kill retries; `samples` retains successful times. Peak RSS is the median of per-attempt process peaks, independently aggregated from time. The source commit, runtime source hashes, built JS hashes, executable hashes and harness hash are in `provenance`. This source build is not necessarily the published npm package.");
   push("- **Fairness of order and cache**: the input is read once to warm the page cache immediately before every single run, and the tool order rotates from round to round, so no tool always runs first or benefits from another tool's warm-up.");
   push(`- **Ties**: results within ${tiePercent}% of the fastest time in a column are a tie. They are not bold and carry \`isTie\` in the JSON; only a result that is more than ${tiePercent}% ahead of every other is bold (\`isFastest\`).`);
-  push("- **Peak RSS** is the maximum resident set size reported by `/usr/bin/time -l`, which for a pipeline is the largest single process in it (not the sum), taken from the same run as the reported time.");
-  push(`- **Limits**: each run is killed after ${options.timeoutSeconds} s (status \`timeout\`) or when its process tree exceeds ${options.maxRssGB} GB (status \`failed\`, to protect the machine from tools that load the whole document). A SIGKILL that the script did not send is reported as an OS out-of-memory kill; it is retried once, and skips are not cascaded from a single OS kill. Otherwise a tool that fails or times out at one size is not run at larger sizes. A tool whose previous size, scaled linearly, would take more than ${options.projectSkip}x the timeout is also not run (\`over-budget\`, with the projection in the note), and so is everything once the ${options.budgetMinutes} min total budget is used up; these are time-budget shortcuts, not measurements.`);
+  push(`- **Peak RSS** is the maximum resident set size reported by /usr/bin/time, which for a pipeline is the largest single process in it (not the sum). ${statistic === "median" ? "The displayed RSS is the median of the successful per-run peaks, independently aggregated from elapsed time." : "RSS is taken from the same run as the reported best time."}`);
+  push(`- **Limits**: each run is killed after ${options.timeoutSeconds} s (status \`timeout\`) or when its process tree exceeds ${options.maxRssGB} GiB (status \`failed\`, to protect the machine from tools that load the whole document). A SIGKILL that the script did not send is reported as a possible OS out-of-memory kill (the cause is unverified); it is retried once, and skips are not cascaded from a single OS kill. Otherwise a tool that fails or times out at one size is not run at larger sizes. A tool whose previous size, scaled linearly, would take more than ${options.projectSkip}x the timeout is also not run (\`over-budget\`, with the projection in the note), and so is everything once the ${options.budgetMinutes} min total budget is used up; these are time-budget shortcuts, not measurements.`);
   push("- **Fair equivalents**: each tool is run the way its documentation suggests for the job, in its default mode unless stated. Notes on the choices:");
+  push("  - Correctness checks cover small representative documents. Full timed flatten/unflatten streams are discarded; stable piped byte counts are not proof of full-output equality. Search counts are checked on each timed workload. Legacy MB/GB labels use MiB-sized generated targets: 1000 MB means 1000 MiB (about 0.977 GiB), not 1 GiB. Record boundaries can slightly overshoot the target; exact bytes are recorded in JSON. Raw notes from the preserved invocation also use MB/GB for binary units; current memory cells use MiB/GiB.");
   push("  - gron sorts its output by default and reads the whole document before printing; `gron --no-sort` is listed separately. gronify and fastgron keep document order, so `gron --no-sort` is the closest like-for-like (it does not guarantee document order).");
   push("  - gronify search is case-insensitive by default; `--case-sensitive` is used so that it matches `grep`. Search matches whole gron lines (path and value) for all gron-style tools. A search result whose count differs from the exact number of occurrences counted while generating the input is marked failed.");
   push("  - `fastgron -F` is fastgron's native fixed-string filter; it is listed next to `fastgron | grep` for search.");
@@ -1045,6 +1068,24 @@ if (options.renderOnly) {
 const { versions, binaries, missing } = detectTools();
 if (missing.gronify) throw new Error(missing.gronify);
 
+const repoRoot = resolve(cliRoot, "../../..");
+const hash = (path) => createHash("sha256").update(readFileSync(path)).digest("hex");
+const sourceFiles = (path) => readdirSync(path, { withFileTypes: true }).flatMap(e => e.isDirectory() ? sourceFiles(join(path, e.name)) : [join(path, e.name)]);
+const git = (...args) => spawnSync("git", args, { cwd: repoRoot, encoding: "utf8" }).stdout.trim();
+const provenance = {
+  sourceCommit: git("rev-parse", "HEAD"),
+  requiredBuildCommands: ["npm ci --no-audit --no-fund (cwd src/packages/cli)", "npm run build (cwd src/packages/cli)"],
+  sourceTree: git("rev-parse", "HEAD:src/packages/cli/src"),
+  startedAt: new Date().toISOString(),
+  dirtyState: git("status", "--porcelain"),
+  command: ["node", "scripts/bench-compare.mjs", ...process.argv.slice(2)],
+  harnessSha256: hash(fileURLToPath(import.meta.url)),
+  sourceSha256: Object.fromEntries(sourceFiles(join(cliRoot, "src")).map(p => [p.slice(repoRoot.length + 1), hash(p)])),
+  artifactSha256: Object.fromEntries(sourceFiles(join(cliRoot, "dist")).filter(p => p.endsWith(".js")).map(p => [p.slice(repoRoot.length + 1), hash(p)])),
+  binarySha256: Object.fromEntries(["node", "gron", "fastgron", "jq", "jaq"].map(n => [n, binaryPath(n)]).filter(([,p]) => p).map(([n,p]) => [n, hash(p)])),
+  loadAverageStart: os.loadavg(),
+  hostIsolation: "Shared host; benchmark commands run serially. Other applications and OS activity are not controlled.",
+};
 const dir = mkdtempSync(join(tmpdir(), "gronify-compare-"));
 const cleanup = () => {
   if (options.keep) console.error(`Kept benchmark files in ${dir}`);
@@ -1147,14 +1188,23 @@ try {
     rmSync(gronFile, { force: true });
   }
 
+  const sourceAfter = Object.fromEntries(sourceFiles(join(cliRoot, "src")).map(p => [p.slice(repoRoot.length + 1), hash(p)]));
+  if (JSON.stringify(sourceAfter) !== JSON.stringify(provenance.sourceSha256)) throw new Error("Runtime source changed during benchmark; refusing to publish mixed-source results");
+  const artifactsAfter = Object.fromEntries(sourceFiles(join(cliRoot, "dist")).filter(p => p.endsWith(".js")).map(p => [p.slice(repoRoot.length + 1), hash(p)]));
+  const binariesAfter = Object.fromEntries(Object.keys(provenance.binarySha256).map(n => [n, hash(binaryPath(n))]));
+  if (JSON.stringify(artifactsAfter) !== JSON.stringify(provenance.artifactSha256) || JSON.stringify(binariesAfter) !== JSON.stringify(provenance.binarySha256)) throw new Error("Executed artifacts changed during benchmark; refusing mixed-build results");
+  provenance.runtimeSourceUnchanged = true;
+  provenance.executedArtifactsUnchanged = true;
   const report = {
-    schemaVersion: 2,
+    schemaVersion: 3,
+    provenance,
     generatedAt: new Date().toISOString(),
     machine: machineInfo(),
     tools: versions,
     binaries,
     toolsMissing: missing,
     options: {
+      statistic: "median",
       timeoutSeconds: options.timeout,
       maxRssGB: options.maxRssGb,
       term: options.term,
@@ -1171,6 +1221,7 @@ try {
     },
     workloads,
     correctness,
+    loadAverageEnd: os.loadavg(),
   };
 
   mkdirSync(dirname(options.outJson), { recursive: true });

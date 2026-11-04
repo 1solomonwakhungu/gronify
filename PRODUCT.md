@@ -25,7 +25,7 @@ Users inspect service responses, generated configuration, CI artifacts, support 
 ## Capabilities and Constraints
 
 - Requires Node.js 20+ for the executable or source install; npm 10+ is required when building from source.
-- Supports flattening and unflattening files or stdin, streaming multi-gigabyte input in about 100 MB of memory on the default path (`--sort` and out-of-order `unflatten` input use more).
+- Supports streaming flatten, search, and ordered unflatten on multi-gigabyte inputs. Memory depends on token size, path depth, sorting, and input order; quote measured RSS with its workload and source revision.
 - Supports plain-text search, extended regex, case-sensitive matching, inverted matches, match counts, optional color, and pretty output.
 - Since 1.2.0: result caps (`search -m/--max-count`, `flatten --limit`), `--sort` for stable key order, and `search --exit-status`.
 - Numbers are printed exactly as written in the source.
@@ -37,7 +37,7 @@ The product name is Gronify. The existing logo is in `branding/logo.svg`. Produc
 
 ## Evidence on Hand
 
-The repository README, CLI implementation, integration tests, example commands, logo, and MIT license are available. No customer logos, testimonials, or adoption metrics are available and must not be fabricated. Measured cross-tool benchmarks are in `src/packages/cli/BENCHMARKS.md`; quote only figures from that file.
+The repository README, CLI implementation, integration tests, example commands, logo, and MIT license are available. No customer logos, testimonials, or adoption metrics are available and must not be fabricated. Measured cross-tool benchmarks are in `src/packages/cli/BENCHMARKS.md` and its linked raw receipts. Quote figures with their tested revision, environment, and workload. The experimental Rust CLI under `native/` is separate from the published npm CLI; label its results and unsupported features explicitly.
 
 ## Product Principles
 

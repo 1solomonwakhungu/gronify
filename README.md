@@ -223,7 +223,7 @@ cat data.gron | gronify unflatten
 gronify --output data.json unflatten data.gron
 ```
 
-`unflatten` reads its input as a byte stream and writes JSON as it goes, so memory use does not grow with input size. On an Apple M5 Pro, a 3 GB gron file converts in about 7 seconds with a peak RSS of about 100 MB.
+`unflatten` reads document-order input as a byte stream and writes JSON as it goes. Record count does not require a full in-memory tree; individual tokens, path depth, and out-of-order input still affect memory. A historical Apple M5 Pro run converted a 3 GB gron file in about 7 seconds at about 100 MB peak RSS; see the dated measurement in [STATUS.md](STATUS.md) and [current benchmarks](src/packages/cli/BENCHMARKS.md).
 
 - **Document order.** Gron written by `gronify flatten` streams in a single pass: each container comes before its children, siblings stay together, and array indexes ascend. Input that breaks this, such as lexically sorted gron (`json[10]` before `json[2]`) or a path that re-enters a container that was already closed, is still accepted when the problem shows up within the first 16 MiB of input. Gronify then rebuilds the whole document in memory. Once 16 MiB of input has been read or 16 MiB of output produced (a large array gap counts as output), out-of-order input fails with an error that names the line, because JSON may already have been written to stdout. Regenerate such input with `gronify flatten`. Output of `gronify flatten --sort` is in document order too, so it unflattens in a single pass; plain `sort` on the lines is not (see [Sorting keys](#sorting-keys)).
 - **Values are written as they appear.** Numbers are validated, not parsed, so `12345678901234567890`, `1.10`, `-0`, and `1e-7` come out unchanged. Strings are normalized to what `JSON.stringify` writes (`"A\/"` becomes `"A/"`). Compound values written on one line (`json.a = {"n":12345678901234567890}`) keep their numbers too, with whitespace and strings normalized, keys in source order (integer-like keys are not moved first as `JSON.parse` would), and a repeated key keeping its last value. Only space, tab, LF, and CR separate tokens inside a value, so `[\v]` is rejected; around a line and around `=`, anything `String.prototype.trim` strips (including U+00A0) is ignored.
@@ -327,7 +327,7 @@ Why this order suits diffing:
 
 ### Streaming and large inputs
 
-`flatten` and `search` read the input in 1 MB chunks, tokenize the raw bytes, and write each gron line as it is produced. Peak memory stays around 100 MB whether the input is 20 MB or several gigabytes, and output starts before the input has been read in full. `unflatten` streams too (see above).
+`flatten` and `search` read the input in 1 MB chunks, tokenize the raw bytes, and write each gron line as it is produced. Output starts before the input has been read in full, and record count does not require retaining the whole document. Peak memory depends on token size, path depth, and options; see the measured workloads in [BENCHMARKS.md](src/packages/cli/BENCHMARKS.md). `unflatten` streams too (see above).
 
 - **Strict JSON.** Trailing commas, comments, single quotes, bad escapes, raw control characters in strings, invalid UTF-8, and data after the top-level value are rejected. Errors report the byte offset, plus line and column (columns count bytes), for example `Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 7 (line 1, column 8)`.
 - **Numbers are printed exactly as written.** `12345678901234567890`, `1.10`, `1e2`, and `-0` come out unchanged, where a parse-and-reprint would give `12345678901234567000`, `1.1`, `100`, and `0`.
@@ -375,7 +375,9 @@ node scripts/bench-unflatten.mjs --huge 3        # one 3 GB input; needs about 3
 
 `npm run bench` generates inputs in a temporary directory, times `flatten`, `search --count`, `flatten --sort`, and an early-stopping `search -m 5`, and deletes the files afterwards. Pass options after `--`, for example `npm run bench -- --sizes 23,129 --big 3 --deep 100000 --baseline path/to/older/dist/index.js`.
 
-`npm run bench:compare` benchmarks gronify against gron, fastgron, jq, and jaq on the same generated inputs (flatten, search, unflatten, early-exit caps, and correctness checks) and rewrites [`src/packages/cli/BENCHMARKS.md`](src/packages/cli/BENCHMARKS.md) and `landing-page/src/app/benchmark-results.json`. The default run takes about 20 minutes.
+`npm run bench:compare` benchmarks gronify against gron, fastgron, jq, and jaq on the same generated inputs (flatten, search, unflatten, early-exit caps, and correctness checks) and rewrites [`src/packages/cli/BENCHMARKS.md`](src/packages/cli/BENCHMARKS.md) and `landing-page/src/app/benchmark-results.json`. Allow tens of minutes for the full sweep; slow tools, timeouts, and the selected sizes determine its duration. Raw receipts retain the source revision, build hashes, trial timings, memory measurements, and skipped or failed runs. Results describe the tested source checkout, which may be newer than the published npm version.
+
+The separate [experimental Rust CLI](native/README.md) implements a subset of the Node CLI. Its measurements must be labeled separately: npm installs the Node implementation, and native does not yet support sorting, atomic file output, or the full search interface.
 
 ## Releasing
 
