@@ -1,0 +1,329 @@
+Running correctness checks...
+  big integers and trailing-zero decimals survive flatten (12345678901234567890, 98765432109876543210, 1.10)
+    gronify        pass all literals kept verbatim
+    gron           pass all literals kept verbatim
+    fastgron       pass all literals kept verbatim
+    jq             pass all literals kept verbatim
+    jaq            pass all literals kept verbatim
+  big integers and trailing-zero decimals survive a flatten and unflatten round trip
+    gronify        pass all literals kept verbatim
+    gron           pass all literals kept verbatim
+    fastgron       pass all literals kept verbatim
+    jq             pass all literals kept verbatim
+    jaq            n/a  n/a: jaq has no inverse of a path/value listing: its setpath does not create missing parents
+  round trip equals the input (3.2 MB of generated records)
+    gronify        pass equal, key order preserved
+    gron           pass equal, key order changed
+    fastgron       pass equal, key order changed
+    jq             pass equal, key order preserved
+    jaq            n/a  n/a: jaq has no inverse of a path/value listing: its setpath does not create missing parents
+  round trip equals the input (edge cases: empty containers, unicode, escapes, dotted/quoted/empty keys, -0, -0.0, exponents)
+    gronify        pass equal, key order preserved; number spellings kept verbatim (-0.0, 1E+2, 1e-7, 1.0)
+    gron           pass equal, key order changed; number spellings kept verbatim (-0.0, 1E+2, 1e-7, 1.0)
+    fastgron       pass equal, key order changed; number spellings kept verbatim (-0.0, 1E+2, 1e-7, 1.0)
+    jq             pass equal, key order preserved; number spellings normalised (-0.0, 1E+2, 1e-7, 1.0)
+    jaq            n/a  n/a: jaq has no inverse of a path/value listing: its setpath does not create missing parents
+  unflatten of fastgron output equals the input (the gron statements used by the unflatten workloads)
+    gronify        pass equal, key order preserved
+    gron           pass equal, key order changed
+    fastgron       pass equal, key order changed
+  search count matches the `gron | grep -c timeout` reference (84)
+    gronify        pass count 84
+    gron           pass count 84
+    gron --no-sort pass count 84
+    fastgron       pass count 84
+    fastgron -F    pass count 84
+    jq             pass count 84
+    jaq            pass count 84
+  capped flatten returns exactly 10 lines that match the start of the full output
+    gronify        pass 10 lines, same as the head of the uncapped output
+    gron           pass 10 lines, same as the head of the uncapped output
+    gron --no-sort n/a  n/a (output order not stable)
+    fastgron       pass 10 lines, same as the head of the uncapped output
+    jq             pass 10 lines, same as the head of the uncapped output
+    jaq            pass 10 lines, same as the head of the uncapped output
+  capped search returns exactly 10 lines that match the start of the full result
+    gronify        pass 10 lines, same as the head of the uncapped output
+    gron           pass 10 lines, same as the head of the uncapped output
+    gron --no-sort pass 10 lines, same as the head of the uncapped output
+    fastgron       pass 10 lines, same as the head of the uncapped output
+    fastgron -F    pass 10 lines, same as the head of the uncapped output
+    jq             pass 10 lines, same as the head of the uncapped output
+    jaq            pass 10 lines, same as the head of the uncapped output
+
+Generating records 1 MB...
+
+== flatten / records-1mb (1 MB fed to the tool, 1 MB JSON, median of 3)
+   gronify         ok       0.05 s 60 MB
+   gron            ok       0.09 s 55 MB
+   gron --no-sort  ok       0.07 s 57 MB
+   fastgron        ok       0.01 s 10 MB fastest
+   jq              ok       0.07 s 3 MB
+   jaq             ok       0.14 s 18 MB
+
+== flatten-piped / records-1mb (1 MB fed to the tool, 1 MB JSON, median of 3)
+   gronify         ok       0.05 s 60 MB
+   gron            ok       0.10 s 56 MB
+   gron --no-sort  ok       0.08 s 54 MB
+   fastgron        ok       0.01 s 10 MB fastest
+   jq              ok       0.07 s 3 MB
+   jaq             ok       0.15 s 18 MB
+
+== search / records-1mb (1 MB fed to the tool, 1 MB JSON, median of 3)
+   gronify         ok       0.05 s 58 MB
+   gron            ok       0.10 s 54 MB
+   gron --no-sort  ok       0.08 s 55 MB
+   fastgron        ok       0.02 s 10 MB
+   fastgron -F     ok       0.01 s 8 MB fastest
+   jq              ok       0.07 s 3 MB
+   jaq             ok       0.16 s 18 MB
+
+== unflatten / records-1mb (2 MB fed to the tool, 1 MB JSON, median of 3)
+   gronify         ok       0.05 s 61 MB
+   gron            ok       0.30 s 1.91 GB
+   fastgron        ok       0.01 s 16 MB fastest
+   jq              skipped     jq reads JSON, not gron statements
+   jaq             skipped     jaq reads JSON, not gron statements
+
+== capped-flatten / records-1mb (1 MB fed to the tool, 1 MB JSON, median of 3)
+   gronify         ok       0.03 s 53 MB
+   gron            ok       0.05 s 47 MB
+   gron --no-sort  ok       0.03 s 47 MB
+   fastgron        ok       0.01 s 10 MB
+   jq              ok       0.01 s 3 MB fastest
+   jaq             ok       0.01 s 17 MB
+
+== capped-search / records-1mb (1 MB fed to the tool, 1 MB JSON, median of 3)
+   gronify         ok       0.04 s 57 MB
+   gron            ok       0.06 s 51 MB
+   gron --no-sort  ok       0.04 s 51 MB
+   fastgron        ok       0.01 s 10 MB
+   fastgron -F     ok       0.01 s 8 MB fastest
+   jq              ok       0.02 s 3 MB
+   jaq             ok       0.05 s 17 MB
+
+Generating records 10 MB...
+
+== flatten / records-10mb (11 MB fed to the tool, 11 MB JSON, median of 3)
+   gronify         ok       0.09 s 69 MB
+   gron            ok       0.84 s 458 MB
+   gron --no-sort  ok       0.59 s 462 MB
+   fastgron        ok       0.02 s 28 MB fastest
+   jq              ok       0.60 s 3 MB
+   jaq             ok       1.34 s 141 MB
+
+== flatten-piped / records-10mb (11 MB fed to the tool, 11 MB JSON, median of 3)
+   gronify         ok       0.09 s 80 MB
+   gron            ok       0.94 s 454 MB
+   gron --no-sort  ok       0.72 s 455 MB
+   fastgron        ok       0.03 s 28 MB fastest
+   jq              ok       0.62 s 3 MB
+   jaq             ok       1.52 s 141 MB
+
+== search / records-10mb (11 MB fed to the tool, 11 MB JSON, median of 3)
+   gronify         ok       0.09 s 65 MB
+   gron            ok       0.96 s 458 MB
+   gron --no-sort  ok       0.72 s 461 MB
+   fastgron        ok       0.10 s 28 MB
+   fastgron -F     ok       0.03 s 26 MB fastest
+   jq              ok       0.61 s 3 MB
+   jaq             ok       1.53 s 141 MB
+
+== unflatten / records-10mb (23 MB fed to the tool, 11 MB JSON, median of 3)
+   gronify         ok       0.11 s 93 MB
+   gron            failed      killed by the memory guard at 10.70 GB (limit 8.00 GB)
+   fastgron        ok       0.07 s 89 MB fastest
+   jq              skipped     jq reads JSON, not gron statements
+   jaq             skipped     jaq reads JSON, not gron statements
+
+== capped-flatten / records-10mb (11 MB fed to the tool, 11 MB JSON, median of 3)
+   gronify         ok       0.03 s 54 MB
+   gron            ok       0.46 s 360 MB
+   gron --no-sort  ok       0.23 s 352 MB
+   fastgron        ok       0.01 s 28 MB
+   jq              ok       0.01 s 3 MB fastest
+   jaq             ok       0.06 s 134 MB
+
+== capped-search / records-10mb (11 MB fed to the tool, 11 MB JSON, median of 3)
+   gronify         ok       0.04 s 58 MB
+   gron            ok       0.47 s 357 MB
+   gron --no-sort  ok       0.24 s 357 MB
+   fastgron        ok       0.01 s 28 MB fastest
+   fastgron -F     ok       0.03 s 26 MB
+   jq              ok       0.03 s 3 MB
+   jaq             ok       0.10 s 134 MB
+
+Generating records 100 MB...
+
+== flatten / records-100mb (101 MB fed to the tool, 101 MB JSON, median of 3)
+   gronify         ok       0.43 s 78 MB
+   gron            ok       8.21 s 3.72 GB
+   gron --no-sort  ok       5.51 s 4.03 GB
+   fastgron        ok       0.19 s 198 MB fastest
+   jq              ok       5.56 s 3 MB
+   jaq             ok       12.7 s 1.26 GB
+
+== flatten-piped / records-100mb (101 MB fed to the tool, 101 MB JSON, median of 3)
+   gronify         ok       0.48 s 94 MB
+   gron            ok       9.20 s 3.71 GB
+   gron --no-sort  ok       6.51 s 3.87 GB
+   fastgron        ok       0.21 s 198 MB fastest
+   jq              ok       5.67 s 3 MB
+   jaq             ok       14.3 s 1.26 GB
+
+== search / records-100mb (101 MB fed to the tool, 101 MB JSON, median of 3)
+   gronify         ok       0.49 s 74 MB
+   gron            ok       9.44 s 3.70 GB
+   gron --no-sort  ok       6.59 s 3.77 GB
+   fastgron        ok       0.87 s 198 MB
+   fastgron -F     ok       0.23 s 197 MB fastest
+   jq              ok       5.84 s 3 MB
+   jaq             ok       14.4 s 1.26 GB
+
+== unflatten / records-100mb (225 MB fed to the tool, 101 MB JSON, median of 3)
+   gronify         ok       0.59 s 93 MB tie
+   gron            skipped     not run: failed on the smaller records 10 MB input
+   fastgron        ok       0.61 s 772 MB tie
+   jq              skipped     jq reads JSON, not gron statements
+   jaq             skipped     jaq reads JSON, not gron statements
+
+== capped-flatten / records-100mb (101 MB fed to the tool, 101 MB JSON, median of 3)
+   gronify         ok       0.03 s 54 MB
+   gron            ok       4.70 s 3.07 GB
+   gron --no-sort  ok       1.96 s 3.08 GB
+   fastgron        ok       0.05 s 198 MB
+   jq              ok       0.01 s 3 MB fastest
+   jaq             ok       0.51 s 1.20 GB
+
+== capped-search / records-100mb (101 MB fed to the tool, 101 MB JSON, median of 3)
+   gronify         ok       0.04 s 58 MB
+   gron            ok       4.73 s 3.08 GB
+   gron --no-sort  ok       1.99 s 3.11 GB
+   fastgron        ok       0.05 s 198 MB
+   fastgron -F     ok       0.23 s 197 MB
+   jq              ok       0.03 s 3 MB fastest
+   jaq             ok       0.55 s 1.20 GB
+
+Generating records 1 GB...
+
+== flatten / records-1000mb (1001 MB fed to the tool, 1001 MB JSON, median of 3)
+   gronify         ok       3.83 s 80 MB
+   gron            failed      killed by the memory guard at 8.40 GB (limit 8.00 GB)
+   gron --no-sort  failed      killed by the memory guard at 9.09 GB (limit 8.00 GB)
+   fastgron        ok       1.78 s 1.85 GB fastest
+   jq              ok       56.1 s 3 MB
+   jaq             skipped     not run: 12.7 s on records 100 MB projects to ~125.8 s here, over 2x the 60 s timeout
+
+== search / records-1000mb (1001 MB fed to the tool, 1001 MB JSON, median of 3)
+   gronify         ok       4.47 s 75 MB
+   gron            skipped     not run: gron already failed on this input in flatten (it parses the whole document first)
+   gron --no-sort  skipped     not run: gron --no-sort already failed on this input in flatten (it parses the whole document first)
+   fastgron        ok       8.44 s 1.85 GB
+   fastgron -F     ok       2.16 s 1.85 GB fastest
+   jq              ok       58.2 s 3 MB
+   jaq             skipped     not run: 14.4 s on records 100 MB projects to ~143.0 s here, over 2x the 60 s timeout
+
+== unflatten / records-1000mb (2293 MB fed to the tool, 1001 MB JSON, median of 3)
+   gronify         ok       5.56 s 101 MB fastest
+   gron            skipped     not run: failed on the smaller records 10 MB input
+   fastgron        ok       5.93 s 7.46 GB
+   jq              skipped     jq reads JSON, not gron statements
+   jaq             skipped     jaq reads JSON, not gron statements
+
+== capped-flatten / records-1000mb (1001 MB fed to the tool, 1001 MB JSON, median of 3)
+   gronify         ok       0.03 s 54 MB
+   gron            skipped     not run: gron already failed on this input in flatten (it parses the whole document first)
+   gron --no-sort  skipped     not run: gron --no-sort already failed on this input in flatten (it parses the whole document first)
+   fastgron        ok       0.38 s 1.85 GB
+   jq              ok       0.01 s 3 MB fastest
+   jaq             failed      killed by the memory guard at 8.15 GB (limit 8.00 GB)
+
+== capped-search / records-1000mb (1001 MB fed to the tool, 1001 MB JSON, median of 3)
+   gronify         ok       0.04 s 58 MB
+   gron            skipped     not run: gron already failed on this input in flatten (it parses the whole document first)
+   gron --no-sort  skipped     not run: gron --no-sort already failed on this input in flatten (it parses the whole document first)
+   fastgron        ok       0.38 s 1.85 GB
+   fastgron -F     ok       1.33 s 1.85 GB
+   jq              ok       0.03 s 3 MB fastest
+   jaq             skipped     not run: jaq already failed on this input in capped-flatten (it parses the whole document first)
+
+Generating keyed records 10 MB...
+
+== unflatten / keyed-10mb (23 MB fed to the tool, 11 MB JSON, median of 3)
+   gronify         ok       0.11 s 93 MB
+   gron            ok       1.25 s 1.69 GB
+   fastgron        ok       0.08 s 89 MB fastest
+   jq              skipped     jq reads JSON, not gron statements
+   jaq             skipped     jaq reads JSON, not gron statements
+
+Generating keyed records 100 MB...
+
+== unflatten / keyed-100mb (220 MB fed to the tool, 100 MB JSON, median of 3)
+   gronify         ok       0.61 s 94 MB fastest
+   gron            failed      killed by the memory guard at 9.31 GB (limit 8.00 GB)
+   fastgron        ok       0.67 s 761 MB
+   jq              skipped     jq reads JSON, not gron statements
+   jaq             skipped     jaq reads JSON, not gron statements
+
+Generating deep document, 5000 levels...
+
+== flatten / deep-5000 (0 MB fed to the tool, 0 MB JSON, median of 3)
+   gronify         ok       0.04 s 57 MB
+   gron            ok       0.32 s 1.36 GB
+   gron --no-sort  ok       0.28 s 1.20 GB
+   fastgron        ok       0.01 s 87 MB fastest
+   jq              ok       0.84 s 3 MB
+   jaq             ok       0.20 s 11 MB
+
+== flatten-piped / deep-5000 (0 MB fed to the tool, 0 MB JSON, median of 3)
+   gronify         ok       0.05 s 78 MB
+   gron            ok       0.35 s 1.29 GB
+   gron --no-sort  ok       0.31 s 1.21 GB
+   fastgron        ok       0.02 s 87 MB fastest
+   jq              ok       0.89 s 3 MB
+   jaq             ok       0.20 s 11 MB
+
+== unflatten / deep-5000 (24 MB fed to the tool, 0 MB JSON, median of 3)
+   gronify         ok       0.12 s 81 MB
+   gron            ok       2.43 s 5.11 GB
+   fastgron        ok       0.02 s 31 MB fastest
+   jq              skipped     jq reads JSON, not gron statements
+   jaq             skipped     jaq reads JSON, not gron statements
+
+Generating deep document, 50000 levels...
+
+== flatten / deep-50000 (0 MB fed to the tool, 0 MB JSON, median of 3)
+   gronify         ok       0.07 s 61 MB fastest
+   gron            failed      exit 3: failed to form statements: invalid character '{' exceeded max depth
+   gron --no-sort  failed      exit 3: failed to form statements: invalid character '{' exceeded max depth
+   fastgron        failed      exit 139: Segmentation fault: 11
+   jq              timeout     killed after 60 s timeout (peak observed 10 MB)
+   jaq             failed      exit 134: thread 'main' has overflowed its stack fatal runtime error: stack overflow, aborting Abort trap: 6
+
+== flatten-piped / deep-50000 (0 MB fed to the tool, 0 MB JSON, median of 3)
+   gronify         ok       0.54 s 100 MB fastest
+   gron            skipped     not run: gron already failed on this input in flatten (it parses the whole document first)
+   gron --no-sort  skipped     not run: gron --no-sort already failed on this input in flatten (it parses the whole document first)
+   fastgron        failed      exit 139: Segmentation fault: 11
+   jq              timeout     killed after 60 s timeout (peak observed 12 MB)
+   jaq             skipped     not run: jaq already failed on this input in flatten (it parses the whole document first)
+
+Generating big-integer document, 10 MB...
+
+== flatten / bigint-10mb (10 MB fed to the tool, 10 MB JSON, median of 3)
+   gronify         ok       0.09 s 68 MB
+   gron            ok       0.87 s 455 MB
+   gron --no-sort  ok       0.60 s 456 MB
+   fastgron        ok       0.02 s 27 MB fastest
+   jq              ok       0.52 s 3 MB
+   jaq             ok       1.44 s 121 MB
+
+== unflatten / bigint-10mb (23 MB fed to the tool, 10 MB JSON, median of 3)
+   gronify         ok       0.10 s 91 MB
+   gron            failed      killed by the memory guard at 9.48 GB (limit 8.00 GB)
+   fastgron        ok       0.07 s 85 MB fastest
+   jq              skipped     jq reads JSON, not gron statements
+   jaq             skipped     jaq reads JSON, not gron statements
+
+Wrote /Users/solomonwakhungu/.t3/worktrees/gronify/t3-47e81924/landing-page/src/app/benchmark-results.json
+Wrote /Users/solomonwakhungu/.t3/worktrees/gronify/t3-47e81924/src/packages/cli/BENCHMARKS.md

@@ -10,16 +10,16 @@ import {
 } from "@primer/react-brand";
 import type { ReactNode } from "react";
 
-import type { BarRow, BenchmarkView, MatrixCell, Point } from "./benchmark-data";
+import type {
+  BarBlock,
+  BarRow,
+  BenchmarkView,
+  MatrixCell,
+  Point,
+} from "./benchmark-data";
 import styles from "./page.module.css";
 
-function Bar({
-  percent,
-  highlight,
-}: {
-  percent: number;
-  highlight: boolean;
-}) {
+function Bar({ percent, highlight }: { percent: number; highlight: boolean }) {
   return (
     <span className={styles.barTrack} aria-hidden="true">
       <span
@@ -42,23 +42,12 @@ function BarRowItem({ row }: { row: BarRow }) {
         <>
           <div className={styles.barMetric}>
             <span className={styles.barMetricLabel}>Time</span>
-            <span className={styles.barValue}>
-              {row.timeText}
-              {row.fastest ? (
-                <span className={styles.barTag}>fastest</span>
-              ) : null}
-              {row.tie ? <span className={styles.barTag}>tie</span> : null}
-            </span>
+            <span className={styles.barValue}>{row.timeText}</span>
             <Bar percent={row.timePercent ?? 0} highlight={row.highlight} />
           </div>
           <div className={styles.barMetric}>
             <span className={styles.barMetricLabel}>Peak memory</span>
-            <span className={styles.barValue}>
-              {row.rssText}
-              {row.lowest ? (
-                <span className={styles.barTag}>lowest</span>
-              ) : null}
-            </span>
+            <span className={styles.barValue}>{row.rssText}</span>
             <Bar percent={row.rssPercent ?? 0} highlight={row.highlight} />
           </div>
         </>
@@ -82,13 +71,33 @@ function BarRowItem({ row }: { row: BarRow }) {
   );
 }
 
-function MatrixCellView({
-  cell,
-  label,
-}: {
-  cell: MatrixCell;
-  label: string;
-}) {
+function BenchmarkChart({ block }: { block: BarBlock }) {
+  return (
+    <div className={styles.gridCell}>
+      <Heading as="h3" size="6">
+        {block.title}
+      </Heading>
+      <Text as="p" size="200" variant="muted">
+        {block.subtitle}
+      </Text>
+      <div className={styles.barHeader} aria-hidden="true">
+        <span>Tool</span>
+        <span>Time</span>
+        <span>Peak memory</span>
+      </div>
+      <ul
+        className={styles.barList}
+        aria-label={`${block.title}: time and peak memory by tool`}
+      >
+        {block.rows.map((row) => (
+          <BarRowItem key={row.tool} row={row} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function MatrixCellView({ cell, label }: { cell: MatrixCell; label: string }) {
   const glyph = cell.kind === "pass" ? "✓" : cell.kind === "fail" ? "✕" : "–";
   const tone =
     cell.kind === "pass"
@@ -160,14 +169,14 @@ export function Benchmarks({
         paddingBlockEnd="none"
       >
         <SectionIntro align="center" fullWidth>
-          <SectionIntro.Label>Cross-tool benchmarks</SectionIntro.Label>
+          <SectionIntro.Label>Source-build benchmarks</SectionIntro.Label>
           <SectionIntro.Heading size="3">
-            How Gronify compares with gron, fastgron, jq, and jaq.
+            Time, memory, and the work each tool does.
           </SectionIntro.Heading>
           <SectionIntro.Description>
-            {view.headlineDescription} Every number in this section comes from
-            one run of the benchmark script, published in BENCHMARKS.md. For when to
-            pick which tool, see the{" "}
+            {view.headlineDescription} Both implementations are built from
+            source. npm 1.2.0 was the latest release when checked on November 4,
+            2026. The native binary is experimental. For tool selection, see the{" "}
             <a className={styles.inlineLink} href="#compare">
               ecosystem comparison
             </a>
@@ -177,40 +186,84 @@ export function Benchmarks({
       </Section>
 
       <Section paddingBlockStart="normal" paddingBlockEnd="none">
+        <SectionIntro align="start" fullWidth className={styles.benchmarkIntro}>
+          <SectionIntro.Heading size="4">
+            The experimental Rust binary
+          </SectionIntro.Heading>
+          <SectionIntro.Description>
+            {view.native.summary} The separate Rust executable supports
+            document-order flatten, literal search, and ordered unflatten. It is
+            not installed by npm. Regex, sorting, colors, pretty output, atomic
+            file output, and URL input are outside this subset.
+          </SectionIntro.Description>
+        </SectionIntro>
+        <Grid>
+          <Grid.Column span={12}>
+            <div className={styles.gridFrame}>
+              {view.native.blocks.map((block) => (
+                <BenchmarkChart key={block.id} block={block} />
+              ))}
+            </div>
+            <div className={styles.gridFrame}>
+              <PointList
+                title="More native workloads"
+                points={view.native.points}
+              />
+            </div>
+            <Text
+              as="p"
+              size="100"
+              variant="muted"
+              className={styles.benchCaption}
+            >
+              Measured {view.native.date} at source{" "}
+              <a className={styles.inlineLink} href={view.native.sourceUrl}>
+                <code>{view.native.sourceCommit.slice(0, 12)}</code>
+              </a>
+              . {view.native.method} {view.native.coverageNote}{" "}
+              <a className={styles.inlineLink} href={view.native.evidenceUrl}>
+                Native raw trials and validation
+              </a>
+              {" · "}
+              <a className={styles.inlineLink} href={view.native.docsUrl}>
+                Build instructions and subset limits
+              </a>
+            </Text>
+          </Grid.Column>
+        </Grid>
+      </Section>
+
+      <Section paddingBlockStart="normal" paddingBlockEnd="none">
+        <SectionIntro align="start" fullWidth className={styles.benchmarkIntro}>
+          <SectionIntro.Heading size="4">
+            The Node.js CLI across tools
+          </SectionIntro.Heading>
+          <SectionIntro.Description>
+            The full command surface, measured on the separate cross-tool
+            records fixtures. Compare tools within each chart; these inputs
+            differ from the native sweep above.
+          </SectionIntro.Description>
+        </SectionIntro>
+      </Section>
+
+      <Section paddingBlockStart="normal" paddingBlockEnd="none">
         <Grid>
           <Grid.Column span={12}>
             <div className={styles.gridFrame}>
               {barBlocks.map((block) => (
-                <div key={block.id} className={styles.gridCell}>
-                  <Heading as="h3" size="6">
-                    {block.title}
-                  </Heading>
-                  <Text as="p" size="200" variant="muted">
-                    {block.subtitle}
-                  </Text>
-                  <div className={styles.barHeader} aria-hidden="true">
-                    <span>Tool</span>
-                    <span>Time</span>
-                    <span>Peak memory</span>
-                  </div>
-                  <ul
-                    className={styles.barList}
-                    aria-label={`${block.title}: time and peak memory by tool`}
-                  >
-                    {block.rows.map((row) => (
-                      <BarRowItem key={row.tool} row={row} />
-                    ))}
-                  </ul>
-                </div>
+                <BenchmarkChart key={block.id} block={block} />
               ))}
             </div>
           </Grid.Column>
         </Grid>
         <Text as="p" size="100" variant="muted" className={styles.benchCaption}>
-          Bars in each chart share one linear scale. Lower is better. Output
-          goes to /dev/null in these charts; the piped-output results are in
-          BENCHMARKS.md. Memory is 1024-based and input sizes are nominal. Peak
-          memory for a run that timed out is the largest value seen while
+          Each metric uses its own linear scale within a chart. Lower is better.
+          Full flatten and unflatten output goes to /dev/null; search counts
+          matches and capped workloads stop early. Piped-output results are in
+          BENCHMARKS.md. Time and RSS are independently aggregated; memory is
+          the median of per-run peaks, and pipeline RSS is the largest
+          individual process peak rather than the sum. Memory uses MiB and GiB.
+          Peak memory for a run that timed out is the largest value seen while
           sampling the process tree. A tie means the two times are within{" "}
           {`${tiePercent}%`} of each other.
         </Text>
@@ -220,8 +273,11 @@ export function Benchmarks({
         <Grid>
           <Grid.Column span={12}>
             <div className={`${styles.gridFrame} ${styles.gridFrameTwoUp}`}>
-              <PointList title="Where Gronify wins" points={wins} />
-              <PointList title="Where Gronify loses" points={losses} />
+              <PointList title="What the Node.js CLI delivers" points={wins} />
+              <PointList
+                title="Tradeoffs and comparison limits"
+                points={losses}
+              />
             </div>
           </Grid.Column>
         </Grid>
@@ -262,9 +318,11 @@ export function Benchmarks({
                         <tr key={row.label} role="row">
                           <th scope="row" role="rowheader">
                             {row.label}
-                            <span className={styles.matrixDetail}>
-                              {row.description}
-                            </span>
+                            {row.description ? (
+                              <span className={styles.matrixDetail}>
+                                {row.description}
+                              </span>
+                            ) : null}
                           </th>
                           {row.cells.map((cell, index) => (
                             <MatrixCellView
@@ -297,8 +355,19 @@ export function Benchmarks({
                 </Heading>
                 <Text as="p" size="200" variant="muted">
                   Measured {environment.date} on {environment.machine},{" "}
-                  {environment.os}, Node.js {environment.node}.
+                  {environment.os}, Node.js {environment.node}. The host was
+                  shared; these are workload-specific observations.
                 </Text>
+                {view.sourceUrl ? (
+                  <Text as="p" size="200">
+                    Source:{" "}
+                    <a className={styles.inlineLink} href={view.sourceUrl}>
+                      <code>{environment.sourceCommit.slice(0, 12)}</code>
+                    </a>
+                    . Runtime files and built artifacts are hashed in the
+                    receipts.
+                  </Text>
+                ) : null}
                 <Text as="p" size="200" font="monospace">
                   {environment.tools
                     .map((tool) => `${tool.name} ${tool.version}`)
@@ -306,11 +375,16 @@ export function Benchmarks({
                 </Text>
                 <Text as="p" size="200" variant="muted">
                   Times are wall clock with process start-up included. Gronify
-                  runs as a Node.js program. Runs still going after {timeoutSeconds} s
-                  were killed.{" "}
+                  runs as a Node.js source build. Reported times use the{" "}
+                  {environment.statistic} of the recorded trials. Runs still
+                  going after {timeoutSeconds} s were killed.{" "}
                   <Link href={benchmarkUrl} size="small" arrowDirection="end">
                     Read the methodology and every result
                   </Link>
+                  {" · "}
+                  <a className={styles.inlineLink} href={view.rawResultsUrl}>
+                    Raw trials and provenance
+                  </a>
                 </Text>
               </div>
               <div className={styles.gridCell}>
@@ -319,9 +393,13 @@ export function Benchmarks({
                 </Heading>
                 <Text as="p" size="200" variant="muted">
                   The script generates its own inputs, runs each tool, and
-                  rewrites BENCHMARKS.md and the data behind this page. Run it
-                  from src/packages/cli after a build. Any comparison tool you
-                  have not installed is recorded as skipped.
+                  rewrites BENCHMARKS.md and the data behind this page. Build
+                  the pinned runtime revision and use the campaign harness
+                  retained with the receipts, then run it from src/packages/cli.
+                  The original revision predates the updated measurement
+                  harness. See the raw provenance command for this sweep’s exact
+                  flags. Any comparison tool you have not installed is recorded
+                  as skipped.
                 </Text>
                 {reproduce}
               </div>

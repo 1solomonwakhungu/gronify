@@ -59,6 +59,8 @@ One additional comparison streams the full 50,000-depth outputs side by side and
 
 ## Measured result
 
+The [November 4 current-source campaign](evidence/current-00d9502/README.md) measures runtime source at `00d9502`, including startup, flatten through 1 GiB, literal search, caps, and ordered unflatten. It retains full-output validation, three timing trials per completed comparison, source/build hashes, and an offline receipt verifier. These shared-host source-build results are separate from the npm CLI and from the historical measurements below.
+
 The follow-up [string scanning performance step](performance-string-scan.md) records a measured optimization against PR114, with artifact hashes, focused profiles and before/after samples. The table below remains the original historical measurement.
 
 `measurements.json` retains the original five samples per case, commands, versions, source hash, and the baseline CLI tree. This historical receipt did not hash executables, so it cannot establish their build provenance. Future `bench.py` runs rebuild both CLIs and record build commands, dirty state, the native executable hash and all emitted JavaScript hashes. Runs were serial with rotating tool order, a warm file cache, and stdout redirected to `/dev/null`, on Apple M5 Pro / macOS 26.6.1 arm64. Node v22.23.1 used the CLI at `90a9734e97abad9bac51cf81bacffe99b9f5d54f`; fastgron was 0.7.7 and jq 1.8.2. Wall time includes launch and the `/usr/bin/time` wrapper. These are local experimental results on a shared machine, not isolated lab results or general product claims.
