@@ -1,13 +1,12 @@
 import rawResults from "./benchmark-results.json";
-import { nativeBenchmarkView } from "./native-benchmark-data";
 
 /*
  * Server-only module: it imports the full results JSON (samples, commands,
  * paths), so it must only be imported from server components. Client code gets
  * the slim values it needs as props.
  *
- * Node figures derive from benchmark-results.json, which `npm run bench:compare`
- * writes; native figures come from a separate pinned receipt. Nothing here is a typed-in measurement.
+ * Every figure derives from benchmark-results.json, which `npm run bench:compare`
+ * writes. Nothing here is a typed-in measurement.
  * Copy describes the recorded outcomes rather than requiring a particular winner.
  * Missing or invalid measurements are never turned into performance claims.
  */
@@ -129,7 +128,7 @@ function displayTool(tool: string): string {
   return tool === "jq"
     ? "jq --stream (parser events)"
     : tool === "gronify"
-      ? "Gronify (Node.js source)"
+      ? "Gronify"
       : tool;
 }
 
@@ -259,7 +258,7 @@ function measuredText(id: string, tool = "gronify"): string {
     : statusDisplay(row).label.toLowerCase();
 }
 
-const headlineDescription = `On the ${bigLabel} records flatten fixture, the Node.js source build recorded ${measuredText(flattenBigId)}.`;
+const headlineDescription = `On the ${bigLabel} records flatten fixture, Gronify recorded ${measuredText(flattenBigId)}.`;
 
 const barBlocks: BarBlock[] = [
   buildBlock(
@@ -299,24 +298,24 @@ export type MatrixRow = {
 const records = data.workloads.filter((w) =>
   /^(flatten|search|unflatten)-records-/.test(w.id),
 );
-const nodeMeasurements = records.flatMap((w) =>
+const gronifyMeasurements = records.flatMap((w) =>
   w.results.filter((r) => r.tool === "gronify" && isMeasured(r)),
 ) as Measured[];
-const memoryRange = nodeMeasurements.length
-  ? `${formatBytes(Math.min(...nodeMeasurements.map((r) => r.peakRssBytes)))} to ${formatBytes(Math.max(...nodeMeasurements.map((r) => r.peakRssBytes)))}`
+const memoryRange = gronifyMeasurements.length
+  ? `${formatBytes(Math.min(...gronifyMeasurements.map((r) => r.peakRssBytes)))} to ${formatBytes(Math.max(...gronifyMeasurements.map((r) => r.peakRssBytes)))}`
   : "not measured";
 
-const nodeLargeFlatten = result(flattenBigId, "gronify");
+const gronifyLargeFlatten = result(flattenBigId, "gronify");
 const fastLargeFlatten = result(flattenBigId, "fastgron");
 const memoryComparison =
-  isMeasured(nodeLargeFlatten) && isMeasured(fastLargeFlatten)
-    ? ` On the ${bigLabel} flatten fixture, Node.js Gronify used ${((nodeLargeFlatten.peakRssBytes / fastLargeFlatten.peakRssBytes) * 100).toFixed(1)}% of fastgron's peak RSS; elapsed times are shown above.`
+  isMeasured(gronifyLargeFlatten) && isMeasured(fastLargeFlatten)
+    ? ` On the ${bigLabel} flatten fixture, Gronify used ${((gronifyLargeFlatten.peakRssBytes / fastLargeFlatten.peakRssBytes) * 100).toFixed(1)}% of fastgron's peak RSS; elapsed times are shown above.`
     : "";
 
 const wins: Point[] = [
   {
     title: "Memory across the measured sizes",
-    body: `Completed Node.js flatten, search, and unflatten workloads used ${memoryRange} peak RSS across ${formatBytes(workload("flatten-records-1mb").inputBytes)} to ${bigLabel} records fixtures.${memoryComparison} Memory depends on document shape, depth, token size, flags, and output handling; this is not a fixed memory guarantee.`,
+    body: `Completed Gronify flatten, search, and unflatten workloads used ${memoryRange} peak RSS across ${formatBytes(workload("flatten-records-1mb").inputBytes)} to ${bigLabel} records fixtures.${memoryComparison} Memory depends on document shape, depth, token size, flags, and output handling; this is not a fixed memory guarantee.`,
   },
   {
     title: "Read only as far as the cap",
@@ -324,7 +323,7 @@ const wins: Point[] = [
   },
   {
     title: "Reconstruct JSON in document order",
-    body: `Node.js unflatten recorded ${measuredText(unflattenBigId)} for ${formatBytes(workload(unflattenBigId).inputBytes)} of gron statements. Out-of-order input and sorting use different buffering paths.`,
+    body: `Gronify unflatten recorded ${measuredText(unflattenBigId)} for ${formatBytes(workload(unflattenBigId).inputBytes)} of gron statements. Out-of-order input and sorting use different buffering paths.`,
   },
 ];
 
@@ -339,7 +338,7 @@ const losses: Point[] = [
   },
   {
     title: "Startup and shared-host variation",
-    body: `Process startup is included. Small-input results can be dominated by runtime startup, and shared-host load can move close timings. A ${data.options.tieThreshold * 100}% tie band is a display rule, not a statistical significance test.`,
+    body: `Process startup is included. Small-input results can be dominated by runtime startup, and shared-host load can move close timings. A ${tiePercent}% tie band is a display rule, not a statistical significance test.`,
   },
 ];
 
@@ -364,7 +363,7 @@ const matrix: MatrixRow[] = data.correctness.map((check) => ({
 }));
 
 const deep = data.workloads.find((w) => w.id === "flatten-piped-deep-50000");
-const deepNode = deep?.results.find((r) => r.tool === "gronify");
+const deepGronify = deep?.results.find((r) => r.tool === "gronify");
 if (deep) {
   matrix.push({
     label: "50,000 levels deep, output piped",
@@ -388,34 +387,34 @@ if (deep) {
 const edgeCheck = data.correctness.find((c) =>
   c.check.startsWith("round trip equals the input (edge cases"),
 );
-const nodeNumberCheck = edgeCheck?.results.find((r) => r.tool === "gronify");
+const gronifyNumberCheck = edgeCheck?.results.find((r) => r.tool === "gronify");
 const jqNumberCheck = edgeCheck?.results.find((r) => r.tool === "jq");
 const numberSpellings =
-  /number spellings [^(]*\(([^)]*)\)/.exec(nodeNumberCheck?.note ?? "")?.[1] ??
-  "the tested number spellings";
+  /number spellings [^(]*\(([^)]*)\)/.exec(
+    gronifyNumberCheck?.note ?? "",
+  )?.[1] ?? "the tested number spellings";
 const numericCheck =
-  nodeNumberCheck?.pass &&
-  nodeNumberCheck.note.includes("kept verbatim") &&
+  gronifyNumberCheck?.pass &&
+  gronifyNumberCheck.note.includes("kept verbatim") &&
   jqNumberCheck?.pass &&
   jqNumberCheck.note.includes("normalised")
     ? `In the edge-case round trip, Gronify kept ${numberSpellings} as written; jq ${data.tools.jq} normalised those spellings.`
     : "The correctness table below records the exact-number and round-trip checks for each tool.";
 const comparisonFacts = {
   jqVersion: data.tools.jq,
-  measuredOn: `${data.machine.cpu}, Node.js ${data.machine.node}; source build measured ${environment.date}`,
+  measuredOn: `${data.machine.cpu}, Node.js ${data.machine.node}; measured ${environment.date}`,
   numericCheck,
-  unflatten: `the measured source build's unflatten result was ${measuredText(unflattenBigId)} on ${formatBytes(workload(unflattenBigId).inputBytes)} of gron`,
+  unflatten: `unflatten recorded ${measuredText(unflattenBigId)} on ${formatBytes(workload(unflattenBigId).inputBytes)} of gron`,
   deep:
-    deepNode && isMeasured(deepNode)
-      ? `flattens the 50,000-level fixture with piped output in ${formatSeconds(deepNode.seconds)} at ${formatBytes(deepNode.peakRssBytes)} RSS`
+    deepGronify && isMeasured(deepGronify)
+      ? `flattens the 50,000-level fixture with piped output in ${formatSeconds(deepGronify.seconds)} at ${formatBytes(deepGronify.peakRssBytes)} RSS`
       : "supports iterative parsing for deeply nested documents; see the recorded depth workload outcomes below",
-  capped: `the source build's search -m 10 on the ${bigLabel} fixture recorded ${measuredText("capped-search-records-1000mb")}`,
+  capped: `search -m 10 on the ${bigLabel} fixture recorded ${measuredText("capped-search-records-1000mb")}`,
 };
 
-export const benchmarkFaqAnswer = `${headlineDescription} ${wins.map((p) => p.body).join(" ")} ${losses[0].body} Measured ${environment.date} on ${environment.machine}. These are source-checkout measurements, not a benchmark of the npm release. Methodology and raw results: ${benchmarkUrl}`;
+export const benchmarkFaqAnswer = `${headlineDescription} ${wins.map((p) => p.body).join(" ")} ${losses[0].body} Measured ${environment.date} on ${environment.machine}${environment.sourceCommit ? ` at source commit ${environment.sourceCommit.slice(0, 12)}` : ""}. Methodology and raw results: ${benchmarkUrl}`;
 
 export const benchmarkView = {
-  native: nativeBenchmarkView,
   comparisonFacts,
   headlineDescription,
   benchmarkUrl,
