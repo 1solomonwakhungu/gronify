@@ -105,9 +105,8 @@ export default function OpenGraphImage() {
               maxWidth: "980px",
             }}
           >
-            Stream multi-gigabyte JSON in ~100 MB default RAM, filter greppable
-            paths with text or regex, keep exact source numbers, and unflatten
-            gron.
+            Stream large JSON from files and pipes, filter greppable paths with
+            text or regex, keep exact source numbers, and unflatten gron.
           </div>
         </div>
 
@@ -120,7 +119,6 @@ export default function OpenGraphImage() {
             borderRadius: "12px",
             backgroundColor: "#101119",
             border: "1px solid #232533",
-            borderLeft: "3px solid #5b67e8",
             fontSize: 20,
           }}
         >

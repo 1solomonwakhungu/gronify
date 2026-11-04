@@ -1,0 +1,59 @@
+{
+  "checks": [
+    {
+      "width": 320,
+      "scrollWidth": 320,
+      "overflow": false,
+      "missingTargets": [],
+      "unnamedButtons": 0,
+      "imagesWithoutAlt": 0,
+      "barCount": 6
+    },
+    {
+      "width": 375,
+      "scrollWidth": 375,
+      "overflow": false,
+      "missingTargets": [],
+      "unnamedButtons": 0,
+      "imagesWithoutAlt": 0,
+      "barCount": 6
+    },
+    {
+      "width": 414,
+      "scrollWidth": 414,
+      "overflow": false,
+      "missingTargets": [],
+      "unnamedButtons": 0,
+      "imagesWithoutAlt": 0,
+      "barCount": 6
+    },
+    {
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": false,
+      "missingTargets": [],
+      "unnamedButtons": 0,
+      "imagesWithoutAlt": 0,
+      "barCount": 6
+    },
+    {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": false,
+      "missingTargets": [],
+      "unnamedButtons": 0,
+      "imagesWithoutAlt": 0,
+      "barCount": 6
+    }
+  ],
+  "errors": [],
+  "content": {
+    "40.1% of Node.js elapsed time": true,
+    "2.2% of its peak RSS": true,
+    "1.84 s": true,
+    "1.70 MiB": true,
+    "3.83 s": true,
+    "Source: 00d950204b4d": true,
+    "Exceeded memory limit": true
+  }
+}
