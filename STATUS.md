@@ -32,6 +32,13 @@ Checked on 2026-11-04.
 
 ## History
 
+### 2026-11-04 — Node flatten/search performance pass
+
+- Ports the Rust prototype's cheap wins to the Node CLI. Regular files are read through one reused block (1 MiB for paths, 64 KiB for redirected stdin, matching the stream reads). Predictable tokenizer transitions skip the dispatch loop. Literals are validated on bytes, array indexes count up in place, and escaped strings and keys are normalized on bytes. Common command lines start without loading commander, chalk, crypto, fs/promises, net or the sorter.
+- Output is byte-identical to `fe9631c`. Checks: about 16,000 random differential cases (chunk sizes, reused blocks, search/limit/sort modes, mutations), 640 CLI differential cases including colour through a fake TTY, and full-output hashes equal to the Rust native CLI on its suite.
+- Interleaved medians of 7 runs, main → branch: tiny flatten 32 → 24 ms; 100 MiB records 0.496 → 0.402 s; 100 MiB events 0.417 → 0.387 s; ensure_ascii-escaped 100 MiB 0.821 → 0.382 s. Peak RSS on file inputs drops 10–40 MiB. Rust native in the same session: 3 ms tiny, 0.176 s records.
+- Not done: a fused tokenizer+flattener (a prototype suggested the lead mostly disappears once validation and resumability are added) and a prefix-cached matcher (an estimated 3–5% gain on search). Piped-stdin search RSS is about 8 MiB higher than main, because byte-level literal validation makes GC collect fresh stdin chunks less often.
+
 ### 2026-11-04 — Rust prototype removed
 
 - Deleted `native/` and `.github/workflows/native.yaml`, the native benchmark section and data on the landing page, and the native receipt check in `scripts/validate-metadata.mjs`. README, PRODUCT, docs, and llms files now describe only the Node/npm CLI.
