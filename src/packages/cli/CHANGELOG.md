@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.3.0](https://github.com/1solomonwakhungu/gronify/compare/v1.2.0...v1.3.0) (2026-11-04)
+
+
+### Features
+
+* **cli:** add cross-tool benchmark against gron, fastgron, jq and jaq ([#104](https://github.com/1solomonwakhungu/gronify/issues/104)) ([6719604](https://github.com/1solomonwakhungu/gronify/commit/6719604fbe15512673b2cca692163ded271af4b6))
+
+
+### Bug Fixes
+
+* **cli:** treat disconnected stdout sockets as quiet pipe closes ([#113](https://github.com/1solomonwakhungu/gronify/issues/113)) ([4fb66b0](https://github.com/1solomonwakhungu/gronify/commit/4fb66b065cc04ea6d29527fc8c594baa0324519a))
+
+
+### Performance Improvements
+
+* **cli:** accelerate long literal searches and trim output scratch space ([#110](https://github.com/1solomonwakhungu/gronify/issues/110)) ([90a9734](https://github.com/1solomonwakhungu/gronify/commit/90a9734e97abad9bac51cf81bacffe99b9f5d54f))
+* **cli:** recover record-stream RSS with bounded literal validation ([#119](https://github.com/1solomonwakhungu/gronify/issues/119)) ([dbaba00](https://github.com/1solomonwakhungu/gronify/commit/dbaba0045c19e0065640ebb0d651cfe5386dd625))
+* reduce streaming flatten token and copy overhead ([#111](https://github.com/1solomonwakhungu/gronify/issues/111)) ([f76ec80](https://github.com/1solomonwakhungu/gronify/commit/f76ec803079f2d5b222cd2aae30d2470ffe24cd5))
+* reuse unflatten paths and avoid compact indentation allocations ([#112](https://github.com/1solomonwakhungu/gronify/issues/112)) ([98262d1](https://github.com/1solomonwakhungu/gronify/commit/98262d18451e14cbd0143c34b97adcfd8131e938))
+
 ## [1.2.0](https://github.com/1solomonwakhungu/gronify/compare/v1.1.0...v1.2.0) (2026-10-31)
 
 
