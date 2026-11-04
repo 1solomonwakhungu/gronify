@@ -20,8 +20,12 @@ jest.mock("chalk", () => {
 import {
   OutputFormatter,
   createFormatter,
+  loadColors,
   shouldUseColor,
 } from "../src/formatter";
+
+// Colored formatting needs chalk, which the formatter loads on demand.
+beforeAll(() => loadColors());
 
 // Save and restore environment variables for consistent tests
 const originalEnv = { ...process.env };
