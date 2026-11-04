@@ -4,13 +4,14 @@
 
 Checked on 2026-11-04.
 
-- **Version:** 1.2.0, released 2026-10-31 through release-please PR #97. The GitHub release `v1.2.0` carries `gronify-v1.2.0.tar.gz`, `gronify-v1.2.0.zip`, and `checksums.txt`.
+- **Version:** 1.3.0, released 2026-11-04 through release-please PR #109. The GitHub release `v1.3.0` carries `gronify-v1.3.0.tar.gz`, `gronify-v1.3.0.zip`, and `checksums.txt`.
 - **Distribution:**
-  - npm: `npm view gronify version` returns 1.2.0, published by the Release workflow with provenance.
+  - npm: 1.3.0, published by the Release workflow with provenance.
   - Homebrew: `Formula/gronify.rb` in `1solomonwakhungu/homebrew-tap` points at the v1.2.0 tarball and depends only on `node@22` (no `fastgron`).
   - Release archive and build from source, as described in the README.
-- **Source versus release:** `main` is at `00d950204b4d60e510870c3bf2d86718924d6832`, including the November 3 performance work. npm and the latest GitHub release remain at **1.2.0**; release PR [#109](https://github.com/1solomonwakhungu/gronify/pull/109) is open. Source-checkout benchmarks do not describe the currently published npm package.
-- **CI:** Native experiment and Release workflows passed at `00d9502`. Release workflow success does not mean a new version was published.
+- **One product:** the Node/npm CLI in `src/packages/cli`. The experimental Rust prototype (`native/`, its workflow, and its landing-page benchmarks) was removed on 2026-11-04.
+- **Benchmarks:** the landing page and `BENCHMARKS.md` report the sweep at `00d950204b4d60e510870c3bf2d86718924d6832`, whose runtime source is identical to 1.3.0. A refreshed sweep is planned in a later PR.
+- **CI:** Quality Check and Release workflows. Release workflow success does not mean a new version was published.
 - **Audits:** the CLI allowlist (`src/packages/cli/audit-ci.jsonc`) is empty. The landing allowlist (`landing-page/audit-ci.jsonc`) has one entry; see Open items.
 - **What 1.2.0 adds:**
   - `flatten`, `search`, and ordered `unflatten` stream without retaining a full document tree. Historical record-stream runs used about 100 MB; token size, path depth, sorting, and out-of-order input affect memory. `-o` writes atomically. (#95, #94)
@@ -30,14 +31,18 @@ Checked on 2026-11-04.
 
 ## History
 
+### 2026-11-04 — Rust prototype removed
+
+- Deleted `native/` and `.github/workflows/native.yaml`, the native benchmark section and data on the landing page, and the native receipt check in `scripts/validate-metadata.mjs`. README, PRODUCT, docs, and llms files now describe only the Node/npm CLI.
+- Landing page: the benchmark section reads as benchmarks of the Gronify CLI, without source-build versus npm framing; the displayed release comes from `site-config.ts` (now 1.3.0).
+
 ### 2026-11-04 — Benchmark refresh and release status audit
 
 - The November 3 campaign is merged through PR #124. Node changes cover search/output allocation (#110), tokenizer/flatten throughput (#111), streaming unflatten (#112), closed-pipe cancellation (#113), and bounded literal validation to recover record-stream memory use (#119).
-- The Rust CLI implements an experimental flatten, literal-search, and ordered-unflatten subset, with later parser and allocation improvements through #123. Help/version and quiet output-disconnect cancellation are implemented (#122). It is not the npm runtime and has no native release artifacts. Sorting, atomic file output, full search compatibility, and platform packaging remain unfinished; see [native/README.md](native/README.md).
-- Fresh serial benchmarks at `00d9502` cover 32 default-CLI workloads and 13 native workloads. The landing page now reads the new receipts, reports medians and failure/skip outcomes, and separates source-built Node results from the experimental native subset. See [benchmark evidence](native/evidence/current-00d9502/README.md) and [validation](docs/benchmarks/2026-11-04/validation.md).
+- An experimental Rust prototype (#122, #123) also existed at this point; it was removed later the same day.
+- Fresh serial benchmarks at `00d9502` cover 32 CLI workloads. The landing page reads the new receipt and reports medians and failure/skip outcomes. See [validation](docs/benchmarks/2026-11-04/validation.md).
 - PR #124 preserves and audits the historical integrated measurements at `2017be1`. Those measurements predate the latest parser changes and must not be presented as current-main results.
 - Issues #3, #4, and #18 remain open for the roadmap items listed above. Merged CLI performance fixes do not complete their extension, UI, distribution, or observability scope.
-
 
 ### 2026-11-01 — Landing page and llms.txt for 1.2.0 (#101)
 
