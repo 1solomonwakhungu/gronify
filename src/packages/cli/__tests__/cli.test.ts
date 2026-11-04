@@ -1183,4 +1183,59 @@ describe("Gronify CLI", () => {
       expect(result.stdout).toContain("--count");
     });
   });
+
+  describe("argument parsing", () => {
+    // Common command lines skip loading commander. Each pair below means the same thing, but the second spelling
+    // (`--opt=value`, `-m2`, a `--` separator) is only understood by commander, so both parsers must agree.
+    const dir = mkdtempSync(join(tmpdir(), "gronify-args-"));
+    const json = join(dir, "doc.json");
+    const gron = join(dir, "doc.gron");
+    const out = join(dir, "out.gron");
+    writeFileSync(json, '{"a":[1,"two",{"b":true}],"timeout":"x","c":null}');
+    writeFileSync(gron, "json = {}\njson.a = 1\n");
+    afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+    const pairs: Array<[string[], string[]]> = [
+      [["flatten", json], ["flatten", "--", json]],
+      [["--no-color", "flatten", json], ["--no-color", "flatten", "--", json]],
+      [["flatten", json, "--pretty"], ["--pretty", "flatten", "--", json]],
+      [["flatten", "--limit", "2", json], ["flatten", "--limit=2", json]],
+      [["flatten", "--limit", "2", "--limit", "3", json], ["flatten", "--limit=2", "--limit=3", json]],
+      [["flatten", "--sort", json], ["flatten", "--sort", "--", json]],
+      [["unflatten", gron], ["unflatten", "--", gron]],
+      [["search", json, "TIMEOUT"], ["search", "--", json, "TIMEOUT"]],
+      [["search", "-c", json, "TIMEOUT", "--exit-status"], ["search", "-c", "--exit-status", "--", json, "TIMEOUT"]],
+      [["search", "-m", "2", json, "a"], ["search", "-m2", json, "a"]],
+      [["search", "--max-count", "1", "--count", json, "a"], ["search", "--max-count=1", "--count", json, "a"]],
+      [["search", "-v", "-r", json, "^json\\.a"], ["search", "--invert-match", "--regex", "--", json, "^json\\.a"]],
+      [["search", "--sort", json, "a"], ["search", "--sort", "--", json, "a"]],
+      [["-o", out, "flatten", json], ["--output=" + out, "flatten", json]],
+      [["flatten", "-o", out, json], ["flatten", "--output=" + out, json]],
+      [["search", "--count", "-o", out, json, "a"], ["search", "--count", "--output=" + out, json, "a"]],
+    ];
+
+    test.each(pairs)("%j behaves like %j", async (quick, full) => {
+      const run = async (args: string[]) => {
+        rmSync(out, { force: true });
+        const result = await runCLI(args);
+        return { ...result, file: existsSync(out) ? readFileSync(out, "utf8") : null };
+      };
+      const expected = await run(full);
+      expect(await run(quick)).toEqual(expected);
+      expect(expected.exitCode === 0 || full.includes("--exit-status")).toBe(true);
+    });
+
+    test.each([
+      [["flatten", "--limit", "0", json], "argument '0' is invalid"],
+      [["flatten", "--limit", "abc", json], "argument 'abc' is invalid"],
+      [["flatten", json, json], "too many arguments"],
+      [["search"], "missing required argument"],
+      [["flatten", "--bogus", json], "unknown option '--bogus'"],
+      [["flatten", "-o"], "argument missing"],
+    ])("leaves usage errors such as %j to commander", async (args, message) => {
+      const result = await runCLI(args);
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain(message);
+    });
+  });
 });

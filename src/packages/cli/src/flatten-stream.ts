@@ -1,6 +1,6 @@
 import { Readable } from "node:stream";
 import type { GronOutput } from "./output.js";
-import { SortingSink } from "./sort.js";
+import type { SortingSink } from "./sort.js";
 import { JsonTokenizer, type JsonGate, type JsonSink } from "./tokenizer.js";
 
 /** Where the flattener writes its lines: reserve room, write bytes at `pos`, then call `lineDone`. */
@@ -262,7 +262,11 @@ export async function flattenStream(
 ): Promise<void> {
   let sorter: SortingSink | null = null;
   try {
-    sorter = options.sort ? new SortingSink(out, (lines) => new GronFlattener(lines), { memoryLimit: options.sortMemory }) : null;
+    if (options.sort) {
+      // Loaded only when sorting, so unsorted runs skip its start-up cost.
+      const { SortingSink } = await import("./sort.js");
+      sorter = new SortingSink(out, (lines) => new GronFlattener(lines), { memoryLimit: options.sortMemory });
+    }
     const gate: JsonGate = sorter ?? out;
     const tokenizer = new JsonTokenizer(sorter ?? new GronFlattener(out), gate);
     reading: for await (const piece of input) {
