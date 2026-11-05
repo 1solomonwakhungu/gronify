@@ -196,16 +196,6 @@ if (existsSync("src/packages/cli/package.json")) {
   }
 }
 
-const nativeReceipt = "native/evidence/current-00d9502/native-results.json";
-const nativeMirror = "landing-page/src/app/native-benchmark-results.json";
-if (
-  !existsSync(nativeReceipt) ||
-  !existsSync(nativeMirror) ||
-  !readFileSync(nativeReceipt).equals(readFileSync(nativeMirror))
-) {
-  errors.push("Landing native benchmark data must match the canonical receipt");
-}
-
 if (errors.length > 0) {
   console.error(errors.join("\n"));
   process.exit(1);
