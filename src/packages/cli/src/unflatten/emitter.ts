@@ -43,6 +43,8 @@ export class StreamEmitter implements LineSink {
   private frameOffset = new Int32Array(64);
   private frameLength = new Int32Array(64);
   private keys = new Uint8Array(1024);
+  /** Parent segments of the last line this emitter accepted, all of which matched open containers. */
+  private verifiedParents = 0;
 
   constructor(parser: LineParser, out: OutputBuffer, pretty: boolean) {
     this.parser = parser;
@@ -66,11 +68,17 @@ export class StreamEmitter implements LineSink {
     if (writer.depth < segments) {
       throw new OutOfOrderError(lineNumber, "parent path must be assigned before its children");
     }
-    for (let segment = 0; segment < segments - 1; segment += 1) {
+    // Parent segments the parser copied from the previous line already matched the open containers then, and those
+    // containers are still open: only the rest of the path needs checking.
+    const reused = parser.reusedSegments;
+    const verified = reused < this.verifiedParents ? reused : this.verifiedParents;
+    this.verifiedParents = 0;
+    for (let segment = verified; segment < segments - 1; segment += 1) {
       if (!this.matchesFrame(segment)) {
         throw new OutOfOrderError(lineNumber, "parent path is not the container being written (input is not in document order)");
       }
     }
+    this.verifiedParents = segments - 1;
     writer.closeTo(segments);
 
     const parent = segments - 1;
@@ -112,7 +120,7 @@ export class StreamEmitter implements LineSink {
     const last = segments - 1;
     writer.memberPrefix();
     if (writer.isArray[segments - 1] !== 1) {
-      writer.key(parser.arena, parser.segOffset[last] as number, parser.segLength[last] as number);
+      writer.key(parser.lastKeySource, parser.lastKeyStart, parser.segLength[last] as number);
     }
     this.writeValue(segments);
   }
@@ -158,9 +166,9 @@ export class StreamEmitter implements LineSink {
       this.keys = keys;
     }
     const keys = this.keys;
-    const arena = parser.arena;
-    const from = parser.segOffset[last] as number;
-    for (let index = 0; index < length; index += 1) keys[offset + index] = arena[from + index] as number;
+    const source = parser.lastKeySource;
+    const from = parser.lastKeyStart;
+    for (let index = 0; index < length; index += 1) keys[offset + index] = source[from + index] as number;
     this.frameLength[depth] = length;
   }
 

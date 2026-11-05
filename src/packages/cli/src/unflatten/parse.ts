@@ -187,8 +187,16 @@ export class LineParser {
   segOffset = new Int32Array(32);
   segLength = new Int32Array(32);
   segIndex = new Float64Array(32);
-  /** Canonical key bytes for the current line's key segments. */
+  /** Canonical key bytes for the current line's parent key segments. */
   arena = new Uint8Array(512);
+  /**
+   * The last key segment is not copied into `arena`: its canonical bytes are `lastKeySource[lastKeyStart..)`, a view
+   * of the line (or of its normalized form) that is valid until the next `parse`. `lastKeySegment` is -1 when the
+   * path does not end in a key.
+   */
+  lastKeySegment = -1;
+  lastKeySource: Uint8Array = this.arena;
+  lastKeyStart = 0;
 
   valueKind = VALUE_SCALAR;
   valueBuf: Buffer = Buffer.alloc(0);
@@ -196,6 +204,11 @@ export class LineParser {
   valueEnd = 0;
   /** The parsed value when `valueKind` is `VALUE_INLINE`. */
   inline: TreeNode = "";
+  /**
+   * Leading segments of this line copied from the previous line's parent path because their bytes were identical,
+   * i.e. all of the previous line's parent segments, or 0 when nothing was reused.
+   */
+  reusedSegments = 0;
 
   private arenaLength = 0;
   private prefixBuf = new Uint8Array(512);
@@ -210,6 +223,8 @@ export class LineParser {
     const next = buf[start + length];
     if (next !== 0x2e && next !== 0x5b) return false;
     const previous = this.prefixBuf;
+    // Long prefixes (deep nesting) compare faster natively; short ones avoid the call.
+    if (length > 64) return buf.compare(previous, 4, length, start + 4, start + length) === 0;
     for (let index = 4; index < length; index += 1) {
       if (buf[start + index] !== previous[index]) return false;
     }
@@ -231,8 +246,11 @@ export class LineParser {
 
     this.segCount = 0;
     this.arenaLength = 0;
+    this.reusedSegments = 0;
+    this.lastKeySegment = -1;
     let cursor = index + 4;
     if (this.matchesPrefix(buf, index, last)) {
+      this.reusedSegments = this.prefixSegments;
       cursor = index + this.prefixLength;
       this.segCount = this.prefixSegments;
       this.arenaLength = this.prefixArenaLength;
@@ -246,6 +264,8 @@ export class LineParser {
     while (cursor < last) {
       const code = buf[cursor] as number;
       if (code === 0x2e || code === 0x5b) {
+        // The previous segment is a parent after all, so it has to outlive this line.
+        if (this.lastKeySegment !== -1) this.keepLastKey();
         parentEnd = cursor;
         parentSegments = this.segCount;
         parentArenaLength = this.arenaLength;
@@ -271,9 +291,14 @@ export class LineParser {
     this.parseValue(buf, valueStart, last, lineNumber);
     const prefixLength = parentSegments > 0 ? parentEnd - index : 0;
     if (prefixLength > 0 && prefixLength !== reusedLength) {
-      if (prefixLength > this.prefixBuf.length) this.prefixBuf = new Uint8Array(Math.max(this.prefixBuf.length * 2, prefixLength));
-      // Input buffers may be reused by the caller after consume() returns.
-      for (let offset = 4; offset < prefixLength; offset += 1) this.prefixBuf[offset] = buf[index + offset] as number;
+      if (prefixLength > this.prefixBuf.length) {
+        const grown = new Uint8Array(Math.max(this.prefixBuf.length * 2, prefixLength));
+        grown.set(this.prefixBuf.subarray(0, reusedLength));
+        this.prefixBuf = grown;
+      }
+      // Input buffers may be reused by the caller after consume() returns. The reused bytes are already in place.
+      const prefixBuf = this.prefixBuf;
+      for (let offset = reusedLength; offset < prefixLength; offset += 1) prefixBuf[offset] = buf[index + offset] as number;
     }
     this.prefixLength = prefixLength;
     this.prefixSegments = parentSegments;
@@ -283,8 +308,13 @@ export class LineParser {
 
   /** Decodes the key segment at `segment` to a JS string (canonical JSON content, as bytes in a latin1 string). */
   keyAsLatin1(segment: number): string {
+    const length = this.segLength[segment] as number;
+    if (segment === this.lastKeySegment) {
+      const source = this.lastKeySource;
+      return Buffer.from(source.buffer, source.byteOffset + this.lastKeyStart, length).toString("latin1");
+    }
     const offset = this.segOffset[segment] as number;
-    return Buffer.from(this.arena.buffer, this.arena.byteOffset + offset, this.segLength[segment] as number).toString("latin1");
+    return Buffer.from(this.arena.buffer, this.arena.byteOffset + offset, length).toString("latin1");
   }
 
   private parseIdentifier(buf: Buffer, start: number, last: number, lineStart: number, lineNumber: number): number {
@@ -386,9 +416,24 @@ export class LineParser {
     this.segOffset[segment] = this.arenaLength;
   }
 
+  /** Records a key segment as a view of `source`; `keepLastKey` copies it into the arena if it turns out to be a parent. */
   private pushKey(source: Uint8Array, start: number, end: number): void {
-    const length = end - start;
     const segment = this.nextSegment();
+    this.segIsIndex[segment] = 0;
+    this.segOffset[segment] = this.arenaLength;
+    this.segLength[segment] = end - start;
+    this.lastKeySegment = segment;
+    this.lastKeySource = source;
+    this.lastKeyStart = start;
+  }
+
+  private keepLastKey(): void {
+    const segment = this.lastKeySegment;
+    const length = this.segLength[segment] as number;
+    const source = this.lastKeySource;
+    const start = this.lastKeyStart;
+    const end = start + length;
+    this.lastKeySegment = -1;
     if (this.arenaLength + length > this.arena.length) {
       const arena = new Uint8Array(Math.max(this.arena.length * 2, this.arenaLength + length));
       arena.set(this.arena.subarray(0, this.arenaLength));
@@ -396,9 +441,7 @@ export class LineParser {
     }
     const arena = this.arena;
     let offset = this.arenaLength;
-    this.segIsIndex[segment] = 0;
     this.segOffset[segment] = offset;
-    this.segLength[segment] = length;
     for (let index = start; index < end; index += 1) arena[offset++] = source[index] as number;
     this.arenaLength = offset;
   }
