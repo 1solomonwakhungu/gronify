@@ -501,7 +501,7 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
             <SectionIntro.Description>
               Traditional JSON parsing loads an entire document with
               JSON.parse() or demands an upfront query DSL. Gronify tokenizes
-              raw byte streams in 1 MB chunks so you can flatten paths, filter
+              raw byte streams chunk by chunk so you can flatten paths, filter
               matches, and round-trip large JSON documents.
             </SectionIntro.Description>
           </SectionIntro>
