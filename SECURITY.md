@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Gronify is currently maintained from the `main` branch. There is no separate release support matrix yet because this repository does not publish versioned npm releases.
+Gronify is currently maintained from the `main` branch. Security fixes land on `main` and ship in the next npm release; only the latest published version is supported.
 
 ## Reporting a Vulnerability
 

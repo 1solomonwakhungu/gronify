@@ -9,7 +9,7 @@ PASS: no blocking findings remain in the reviewed scope. Receipt arithmetic, rec
 ## Verified evidence
 
 - The default receipt has 32 workloads and 192 tool outcomes: 149 successful, 30 skipped, 11 failed, and 2 timed out, with 460 retained attempts. Every successful outcome has three successful timing samples; independently recomputed elapsed-time and RSS medians match the published fields. All successful sample RSS values satisfy the recorded 8 GiB budget. Unsuccessful outcomes have null headline metrics, explicit reason codes, and no winner flags.
-- The offline verifier retained with the campaign passed. It checked receipt arithmetic, source/build/external-binary hashes, and the retained executed harness hash. Runtime source hashes also passed an independently written local comparison.
+- The offline verifier retained with the campaign passed. It checked receipt arithmetic, source/build/external-binary hashes, and the retained executed harness hash. The harness and run log now live in `docs/benchmarks/2026-11-04/`. Runtime source hashes also passed an independently written local comparison.
 - Headline values derive from the receipt, including 3.8326 seconds / 84,115,456 bytes for the large flatten fixture and 5.5601 seconds / 105,709,568 bytes for unflatten.
 - Page charts identify jq parser-event output, remove cross-format winner badges, and preserve failed/skipped outcomes. Metadata and supporting prose no longer promise fixed memory consumption for arbitrary JSON.
 
