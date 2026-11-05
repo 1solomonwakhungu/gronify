@@ -196,6 +196,11 @@ export class LineParser {
   valueEnd = 0;
   /** The parsed value when `valueKind` is `VALUE_INLINE`. */
   inline: TreeNode = "";
+  /**
+   * Leading segments of this line copied from the previous line's parent path because their bytes were identical,
+   * i.e. all of the previous line's parent segments, or 0 when nothing was reused.
+   */
+  reusedSegments = 0;
 
   private arenaLength = 0;
   private prefixBuf = new Uint8Array(512);
@@ -210,6 +215,8 @@ export class LineParser {
     const next = buf[start + length];
     if (next !== 0x2e && next !== 0x5b) return false;
     const previous = this.prefixBuf;
+    // Long prefixes (deep nesting) compare faster natively; short ones avoid the call.
+    if (length > 64) return buf.compare(previous, 4, length, start + 4, start + length) === 0;
     for (let index = 4; index < length; index += 1) {
       if (buf[start + index] !== previous[index]) return false;
     }
@@ -231,8 +238,10 @@ export class LineParser {
 
     this.segCount = 0;
     this.arenaLength = 0;
+    this.reusedSegments = 0;
     let cursor = index + 4;
     if (this.matchesPrefix(buf, index, last)) {
+      this.reusedSegments = this.prefixSegments;
       cursor = index + this.prefixLength;
       this.segCount = this.prefixSegments;
       this.arenaLength = this.prefixArenaLength;
@@ -271,9 +280,14 @@ export class LineParser {
     this.parseValue(buf, valueStart, last, lineNumber);
     const prefixLength = parentSegments > 0 ? parentEnd - index : 0;
     if (prefixLength > 0 && prefixLength !== reusedLength) {
-      if (prefixLength > this.prefixBuf.length) this.prefixBuf = new Uint8Array(Math.max(this.prefixBuf.length * 2, prefixLength));
-      // Input buffers may be reused by the caller after consume() returns.
-      for (let offset = 4; offset < prefixLength; offset += 1) this.prefixBuf[offset] = buf[index + offset] as number;
+      if (prefixLength > this.prefixBuf.length) {
+        const grown = new Uint8Array(Math.max(this.prefixBuf.length * 2, prefixLength));
+        grown.set(this.prefixBuf.subarray(0, reusedLength));
+        this.prefixBuf = grown;
+      }
+      // Input buffers may be reused by the caller after consume() returns. The reused bytes are already in place.
+      const prefixBuf = this.prefixBuf;
+      for (let offset = reusedLength; offset < prefixLength; offset += 1) prefixBuf[offset] = buf[index + offset] as number;
     }
     this.prefixLength = prefixLength;
     this.prefixSegments = parentSegments;
