@@ -8,8 +8,11 @@ import { createLineMatcher } from "./matcher.js";
 import { createOutputSink, GronOutput, type OutputOptions } from "./output.js";
 
 const INPUT_BLOCK_SIZE = 1 << 20;
-/** Flatten and search read regular files through one reused block of this size (see `readRegularFile`). */
-const REUSED_BLOCK_SIZE = 1 << 18;
+/**
+ * `process.stdin` reads a redirected file in blocks of this size. Reading `< file` directly uses the same size, so
+ * chunk-dependent behavior (partial output before an error, the cap notice) matches the stream path.
+ */
+const STDIN_BLOCK_SIZE = 1 << 16;
 
 /** The program-level options, as commander sets them. */
 interface GlobalOptions {
@@ -88,10 +91,10 @@ function validateFile(filePath: string): void {
  * chunk, so reusing the block is safe, and it saves allocating (and later collecting) a fresh block per read.
  * Regular files never block for long, so a synchronous read costs the event loop nothing that matters.
  */
-async function* readRegularFile(open: () => number, close: boolean): AsyncGenerator<Buffer> {
+async function* readRegularFile(open: () => number, close: boolean, size: number): AsyncGenerator<Buffer> {
   const fd = open();
   try {
-    const block = Buffer.allocUnsafe(REUSED_BLOCK_SIZE);
+    const block = Buffer.allocUnsafe(size);
     for (;;) {
       const length = readSync(fd, block, 0, block.length, null);
       if (length === 0) return;
@@ -110,7 +113,7 @@ function openInput(file: string | undefined, formatter: OutputFormatter, usage: 
   if (file) {
     validateFile(file);
     // Pipes, devices and FIFOs keep the asynchronous stream, which never blocks while waiting for a writer.
-    if (reuse && statSync(file, { throwIfNoEntry: false })?.isFile()) return readRegularFile(() => openSync(file, "r"), true);
+    if (reuse && statSync(file, { throwIfNoEntry: false })?.isFile()) return readRegularFile(() => openSync(file, "r"), true, INPUT_BLOCK_SIZE);
     return createReadStream(file, { highWaterMark: INPUT_BLOCK_SIZE });
   }
   if (!hasStdinData()) {
@@ -120,7 +123,7 @@ function openInput(file: string | undefined, formatter: OutputFormatter, usage: 
     return undefined;
   }
   // `< file.json` redirects a regular file, which reads faster directly than through process.stdin.
-  if (reuse && fstatSync(0).isFile()) return readRegularFile(() => 0, false);
+  if (reuse && fstatSync(0).isFile()) return readRegularFile(() => 0, false, STDIN_BLOCK_SIZE);
   return process.stdin;
 }
 
