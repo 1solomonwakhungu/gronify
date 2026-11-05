@@ -367,10 +367,6 @@
   border: 0;
 }
 
-.benchmarkIntro {
-  padding-inline: var(--base-size-16);
-}
-
 .benchCaption {
   margin-block-start: var(--base-size-12);
 }
