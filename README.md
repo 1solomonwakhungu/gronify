@@ -327,7 +327,7 @@ Why this order suits diffing:
 
 ### Streaming and large inputs
 
-`flatten` and `search` read the input in 1 MB chunks, tokenize the raw bytes, and write each gron line as it is produced. Output starts before the input has been read in full, and record count does not require retaining the whole document. Peak memory depends on token size, path depth, and options; see the measured workloads in [BENCHMARKS.md](src/packages/cli/BENCHMARKS.md). `unflatten` streams too (see above).
+`flatten` and `search` read the input in chunks (1 MiB from a file path, 64 KiB from stdin), tokenize the raw bytes, and write each gron line as it is produced. Output starts before the input has been read in full, and record count does not require retaining the whole document. Peak memory depends on token size, path depth, and options; see the measured workloads in [BENCHMARKS.md](src/packages/cli/BENCHMARKS.md). `unflatten` streams too (see above).
 
 - **Strict JSON.** Trailing commas, comments, single quotes, bad escapes, raw control characters in strings, invalid UTF-8, and data after the top-level value are rejected. Errors report the byte offset, plus line and column (columns count bytes), for example `Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 7 (line 1, column 8)`.
 - **Numbers are printed exactly as written.** `12345678901234567890`, `1.10`, `1e2`, and `-0` come out unchanged, where a parse-and-reprint would give `12345678901234567000`, `1.1`, `100`, and `0`.
