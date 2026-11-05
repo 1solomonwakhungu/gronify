@@ -1,4 +1,19 @@
-import chalk from "chalk";
+import type { ChalkInstance } from "chalk";
+
+let chalkInstance: ChalkInstance | null = null;
+
+/**
+ * Loads chalk, which colored output needs. Plain output never touches it, so the CLI only loads it (and pays its
+ * start-up cost) for a formatter that colors; call this before such a formatter formats anything.
+ */
+export async function loadColors(): Promise<void> {
+  chalkInstance ??= (await import("chalk")).default;
+}
+
+function chalk(): ChalkInstance {
+  if (chalkInstance === null) throw new Error("loadColors() must finish before colored output is formatted");
+  return chalkInstance;
+}
 
 export interface FormatOptions {
   color?: boolean;
@@ -21,6 +36,11 @@ export class OutputFormatter {
     if (process.env.NO_COLOR || !process.stdout.isTTY) {
       this.options.color = false;
     }
+  }
+
+  /** Whether this formatter writes ANSI colors (after NO_COLOR and TTY detection). Such a formatter needs `loadColors`. */
+  get colored(): boolean {
+    return this.options.color === true;
   }
 
   /**
@@ -93,13 +113,13 @@ export class OutputFormatter {
 
     // Enhanced JSON syntax highlighting
     return formatted
-      .replace(/"([^"]+)":/g, chalk.blue('"$1"') + chalk.gray(':'))
-      .replace(/: "([^"]+)"/g, ': ' + chalk.green('"$1"'))
-      .replace(/: (\d+)/g, ': ' + chalk.yellow('$1'))
-      .replace(/: (true|false)/g, ': ' + chalk.magenta('$1'))
-      .replace(/: (null)/g, ': ' + chalk.gray('$1'))
-      .replace(/({|})/g, chalk.gray('$1'))
-      .replace(/(\[|\])/g, chalk.gray('$1'));
+      .replace(/"([^"]+)":/g, chalk().blue('"$1"') + chalk().gray(':'))
+      .replace(/: "([^"]+)"/g, ': ' + chalk().green('"$1"'))
+      .replace(/: (\d+)/g, ': ' + chalk().yellow('$1'))
+      .replace(/: (true|false)/g, ': ' + chalk().magenta('$1'))
+      .replace(/: (null)/g, ': ' + chalk().gray('$1'))
+      .replace(/({|})/g, chalk().gray('$1'))
+      .replace(/(\[|\])/g, chalk().gray('$1'));
   }
 
   /**
@@ -123,7 +143,7 @@ export class OutputFormatter {
     // Highlight the search term in results
     const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`(${escapedTerm})`, 'gi');
-    const highlight = chalk.bgYellow.black('$1');
+    const highlight = chalk().bgYellow.black('$1');
 
     return (line: string): string => {
       // First colorize the gron syntax
@@ -140,7 +160,7 @@ export class OutputFormatter {
     if (!this.options.color) {
       return `Error: ${message}`;
     }
-    return chalk.red('Error: ') + message;
+    return chalk().red('Error: ') + message;
   }
 
   /**
@@ -150,7 +170,7 @@ export class OutputFormatter {
     if (!this.options.color) {
       return `Warning: ${message}`;
     }
-    return chalk.yellow('Warning: ') + message;
+    return chalk().yellow('Warning: ') + message;
   }
 
   /**
@@ -160,7 +180,7 @@ export class OutputFormatter {
     if (!this.options.color) {
       return message;
     }
-    return chalk.green(message);
+    return chalk().green(message);
   }
 
   /**
@@ -170,7 +190,7 @@ export class OutputFormatter {
     if (!this.options.color) {
       return message;
     }
-    return chalk.cyan(message);
+    return chalk().cyan(message);
   }
 
   /**
@@ -186,7 +206,7 @@ export class OutputFormatter {
       const [, path, value] = gronMatch;
       const coloredPath = this.colorizeGronPath(path);
       const coloredValue = this.colorizeGronValue(value);
-      return `${coloredPath} ${chalk.gray('=')} ${coloredValue}`;
+      return `${coloredPath} ${chalk().gray('=')} ${coloredValue}`;
     }
 
     return line;
@@ -197,10 +217,10 @@ export class OutputFormatter {
    */
   private colorizeGronPath(path: string): string {
     return path
-      .replace(/^json/, chalk.blue('json'))
-      .replace(/\.([a-zA-Z_$][a-zA-Z0-9_$]*)/g, chalk.gray('.') + chalk.cyan('$1'))
-      .replace(/\[(\d+)\]/g, chalk.gray('[') + chalk.yellow('$1') + chalk.gray(']'))
-      .replace(/\["([^"]+)"\]/g, chalk.gray('[') + chalk.green('"$1"') + chalk.gray(']'));
+      .replace(/^json/, chalk().blue('json'))
+      .replace(/\.([a-zA-Z_$][a-zA-Z0-9_$]*)/g, chalk().gray('.') + chalk().cyan('$1'))
+      .replace(/\[(\d+)\]/g, chalk().gray('[') + chalk().yellow('$1') + chalk().gray(']'))
+      .replace(/\["([^"]+)"\]/g, chalk().gray('[') + chalk().green('"$1"') + chalk().gray(']'));
   }
 
   /**
@@ -211,27 +231,27 @@ export class OutputFormatter {
     
     // String values
     if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
-      return chalk.green(trimmed);
+      return chalk().green(trimmed);
     }
     
     // Numbers
     if (/^\d+(\.\d+)?$/.test(trimmed)) {
-      return chalk.yellow(trimmed);
+      return chalk().yellow(trimmed);
     }
     
     // Booleans
     if (trimmed === 'true' || trimmed === 'false') {
-      return chalk.magenta(trimmed);
+      return chalk().magenta(trimmed);
     }
     
     // null
     if (trimmed === 'null') {
-      return chalk.gray(trimmed);
+      return chalk().gray(trimmed);
     }
     
     // Arrays and objects
     if (trimmed === '{}' || trimmed === '[]') {
-      return chalk.gray(trimmed);
+      return chalk().gray(trimmed);
     }
     
     return trimmed;

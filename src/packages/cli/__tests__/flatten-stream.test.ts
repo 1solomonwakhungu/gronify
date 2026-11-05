@@ -209,6 +209,62 @@ describe("flattenStream", () => {
         ["json = {}", "json.__proto__ = 1", "json.constructor = {}", "json.constructor.prototype = 2", ""].join("\n"),
       );
     });
+
+    test("normalizes every \\u escape of a code unit as JSON.stringify does", async () => {
+      const hex = (unit: number) => unit.toString(16).padStart(4, "0");
+      for (const upper of [false, true]) {
+        const units = Array.from({ length: 0x10000 }, (_, unit) => `"\\u${upper ? hex(unit).toUpperCase() : hex(unit)}"`);
+        const text = `[${units.join(",")}]`;
+        expect(await flatten(text)).toBe(oldFlatten(text));
+      }
+    });
+
+    test("pairs escaped surrogates only when a high one is followed by a low one", async () => {
+      const pieces = ["\\ud83d", "\\ude00", "\\uD83D", "\\uDE00", "\\udbff", "\\udfff", "\\ud800", "\\udc00", "a", "é", "\\n", "\\u0041", "😀"];
+      const strings: string[] = [];
+      for (const a of pieces) for (const b of pieces) for (const c of ["", "\\ud83d", "\\ude00", "x"]) strings.push(`"${a}${b}${c}"`);
+      const text = `[${strings.join(",")}]`;
+      expect(await flatten(text)).toBe(oldFlatten(text));
+      expect(await flatten('["\\ud83d\\ude00","\\ude00\\ud83d"]')).toBe('json = []\njson[0] = "😀"\njson[1] = "\\ude00\\ud83d"\n');
+    });
+
+    test("keeps short escapes and drops the backslash of an escaped slash", async () => {
+      const text = String.raw`["\" \\ \/ \b \f \n \r \t","a\/b","/\"\u007f  \u0000\u001f\u0008"]`;
+      expect(await flatten(text)).toBe(oldFlatten(text));
+      expect(await flatten(text)).toContain(String.raw`json[0] = "\" \\ / \b \f \n \r \t"`);
+    });
+
+    test("normalizes escaped keys and picks dot form only for identifiers", async () => {
+      const keys: string[] = [];
+      for (let unit = 0; unit < 0x80; unit += 1) keys.push(`"a\\u${unit.toString(16).padStart(4, "0")}"`, `"\\u${unit.toString(16).padStart(4, "0")}b"`);
+      keys.push('"\\/x"', '"\\ud83d\\ude00"', '"\\ud800"', '"\\u00e9t\\u00e9"', '"\\n"', '"\\u0024\\u005f9"', '""');
+      // One key per object: some decode to the same text, and JSON.parse would keep only the last of those.
+      const text = `[${keys.map((key, i) => `{${key}:${i}}`).join(",")}]`;
+      expect(await flatten(text)).toBe(oldFlatten(text));
+    });
+
+    test("normalizes escaped strings on either side of the reused scratch size and across chunk boundaries", async () => {
+      for (const length of [10, 65_530, 65_536, 70_000]) {
+        const text = JSON.stringify(["é\n/\"".repeat(Math.ceil(length / 4)).slice(0, length)]).replace(/é/g, "\\u00e9").replace(/\//g, "\\/");
+        const expected = oldFlatten(text);
+        expect(await flatten(text)).toBe(expected);
+        const bytes = Buffer.from(text);
+        expect((await run([bytes.subarray(0, 7), bytes.subarray(7, 4099), bytes.subarray(4099)])).text).toBe(expected);
+      }
+      const escapes = String.raw`["aé😀\/\n"]`;
+      const bytes = Buffer.from(escapes);
+      for (let i = 0; i <= bytes.length; i += 1) {
+        expect((await run([bytes.subarray(0, i), bytes.subarray(i)])).text).toBe(oldFlatten(escapes));
+      }
+    });
+
+    test("chooses dot or bracket form exactly as the identifier pattern does", async () => {
+      const keys = ["a", "a1", "A_9$", "_", "$", "_1", "$$", "1", "1a", "a-b", "a b", "a.b", "", "é", "aé", "a\u007f", "Z", "z0"];
+      const text = JSON.stringify(Object.fromEntries(keys.map((key, i) => [key, i])));
+      expect(await flatten(text)).toBe(oldFlatten(text));
+      expect(await flatten(text)).toContain("json.a1 = 1\n");
+      expect(await flatten(text)).toContain('json["1a"] = 8\n');
+    });
   });
 
   describe("deep and large structures", () => {
@@ -263,6 +319,24 @@ describe("flattenStream", () => {
       expect(result).toContain("json[1234] = 0\n");
       expect(result).toContain("json[999] = 0\n");
       expect(result).toContain("json[10] = 0\n");
+    });
+
+    test("counts indexes up past each extra digit while elements nest deeper paths", async () => {
+      // Each element writes nested segments after its own `[index]`, which the next index counts up from.
+      const element = (i: number) => (i % 3 === 0 ? `{"k${i}":[${i},{"x":"${"y".repeat(i % 7)}"}]}` : i % 3 === 1 ? `[[${i}]]` : `${i}`);
+      const text = `[${Array.from({ length: 1001 }, (_, i) => element(i)).join(",")}]`;
+      expect(await flatten(text)).toBe(oldFlatten(text));
+      expect(await flatten(text)).toContain("json[999].k999[0] = 999\n");
+      expect(await flatten(text)).toContain("json[1000][0][0] = 1000\n");
+      expect(await flatten(text)).toContain("json[101] = 101\n");
+    });
+
+    test("keeps the index digits when the path buffer grows on a carry", async () => {
+      // A long key fills most of the initial path buffer, so a carry from 9 to 10 has to grow it.
+      for (const length of [1010, 1014, 1015, 1016, 1017, 1018, 1020]) {
+        const text = JSON.stringify({ ["k".repeat(length)]: Array.from({ length: 12 }, (_, i) => (i === 9 ? { a: [1] } : i)) });
+        expect(await flatten(text)).toBe(oldFlatten(text));
+      }
     });
   });
 

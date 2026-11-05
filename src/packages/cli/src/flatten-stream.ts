@@ -1,6 +1,6 @@
 import { Readable } from "node:stream";
 import type { GronOutput } from "./output.js";
-import { SortingSink } from "./sort.js";
+import type { SortingSink } from "./sort.js";
 import { JsonTokenizer, type JsonGate, type JsonSink } from "./tokenizer.js";
 
 /** Where the flattener writes its lines: reserve room, write bytes at `pos`, then call `lineDone`. */
@@ -15,9 +15,18 @@ const OBJECT = 0;
 const ARRAY = 1;
 
 const DOT = 0x2e;
+const QUOTE = 0x22;
+const SLASH = 0x2f;
+const BACKSLASH = 0x5c;
+const LETTER_U = 0x75;
 const OPEN_BRACKET = 0x5b;
 const CLOSE_BRACKET = 0x5d;
 const ZERO = 0x30;
+const ONE = 0x31;
+const NINE = 0x39;
+
+/** Escaped strings up to this size are normalized in a reused buffer; longer ones get their own. */
+const SCRATCH_LIMIT = 64 << 10;
 
 const ROOT = Buffer.from("json");
 const EQUALS = Buffer.from(" = ");
@@ -32,14 +41,114 @@ for (let byte = 0; byte < 256; byte += 1) {
   IDENTIFIER_BYTE[byte] = (letter ? 1 : 0) | (letter || digit ? 2 : 0);
 }
 
-const identifierPattern = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
-
 function isIdentifier(buf: Buffer, start: number, end: number): boolean {
   if (end <= start || (IDENTIFIER_BYTE[buf[start]!]! & 1) === 0) return false;
   for (let i = start + 1; i < end; i += 1) {
     if ((IDENTIFIER_BYTE[buf[i]!]! & 2) === 0) return false;
   }
   return true;
+}
+
+const HEX_VALUE = new Int8Array(256).fill(-1);
+for (let digit = 0; digit < 16; digit += 1) {
+  HEX_VALUE["0123456789abcdef".charCodeAt(digit)] = digit;
+  HEX_VALUE["0123456789ABCDEF".charCodeAt(digit)] = digit;
+}
+const LOWER_HEX = Buffer.from("0123456789abcdef");
+
+/** For a code unit below 0x20, the letter of the short escape JSON.stringify uses (`\n`, ...), or 0 for `\u00XX`. */
+const SHORT_ESCAPE = new Uint8Array(0x20);
+SHORT_ESCAPE[0x08] = 0x62; // b
+SHORT_ESCAPE[0x09] = 0x74; // t
+SHORT_ESCAPE[0x0a] = 0x6e; // n
+SHORT_ESCAPE[0x0c] = 0x66; // f
+SHORT_ESCAPE[0x0d] = 0x72; // r
+
+function hex4(buf: Uint8Array, at: number): number {
+  return (HEX_VALUE[buf[at]!]! << 12) | (HEX_VALUE[buf[at + 1]!]! << 8) | (HEX_VALUE[buf[at + 2]!]! << 4) | HEX_VALUE[buf[at + 3]!]!;
+}
+
+function writeUnicodeEscape(dst: Buffer, at: number, unit: number): number {
+  dst[at] = BACKSLASH;
+  dst[at + 1] = LETTER_U;
+  dst[at + 2] = LOWER_HEX[unit >> 12]!;
+  dst[at + 3] = LOWER_HEX[(unit >> 8) & 15]!;
+  dst[at + 4] = LOWER_HEX[(unit >> 4) & 15]!;
+  dst[at + 5] = LOWER_HEX[unit & 15]!;
+  return at + 6;
+}
+
+/**
+ * Writes the string token `src[start, end)` (quotes included, already validated by the tokenizer) to `dst` at `at`
+ * exactly as `JSON.stringify(JSON.parse(token))` spells it, and returns where it ends. `\/` becomes `/`, `\uXXXX`
+ * becomes UTF-8 (an escaped surrogate pair becomes one character), a lone surrogate keeps a lowercase `\uXXXX`, a
+ * control character takes its short escape or `\u00XX`, and everything else, raw bytes included, is unchanged. The
+ * result is never longer than the token.
+ */
+function normalizeString(src: Uint8Array, start: number, end: number, dst: Buffer, at: number): number {
+  const last = end - 1;
+  dst[at++] = QUOTE;
+  let i = start + 1;
+  while (i < last) {
+    const c = src[i]!;
+    if (c !== BACKSLASH) {
+      dst[at++] = c;
+      i += 1;
+      continue;
+    }
+    const escape = src[i + 1]!;
+    i += 2;
+    if (escape !== LETTER_U) {
+      // \" \\ \b \f \n \r \t are already in JSON.stringify's form; only the slash loses its backslash.
+      if (escape !== SLASH) dst[at++] = BACKSLASH;
+      dst[at++] = escape;
+      continue;
+    }
+    const unit = hex4(src, i);
+    i += 4;
+    if (unit >= 0xd800 && unit <= 0xdfff) {
+      if (unit <= 0xdbff && i + 6 <= last && src[i] === BACKSLASH && src[i + 1] === LETTER_U) {
+        const low = hex4(src, i + 2);
+        if (low >= 0xdc00 && low <= 0xdfff) {
+          const point = 0x10000 + ((unit - 0xd800) << 10) + (low - 0xdc00);
+          dst[at] = 0xf0 | (point >> 18);
+          dst[at + 1] = 0x80 | ((point >> 12) & 0x3f);
+          dst[at + 2] = 0x80 | ((point >> 6) & 0x3f);
+          dst[at + 3] = 0x80 | (point & 0x3f);
+          at += 4;
+          i += 6;
+          continue;
+        }
+      }
+      at = writeUnicodeEscape(dst, at, unit);
+    } else if (unit < 0x20) {
+      const short = SHORT_ESCAPE[unit]!;
+      if (short === 0) {
+        at = writeUnicodeEscape(dst, at, unit);
+      } else {
+        dst[at] = BACKSLASH;
+        dst[at + 1] = short;
+        at += 2;
+      }
+    } else if (unit === QUOTE || unit === BACKSLASH) {
+      dst[at] = BACKSLASH;
+      dst[at + 1] = unit;
+      at += 2;
+    } else if (unit < 0x80) {
+      dst[at++] = unit;
+    } else if (unit < 0x800) {
+      dst[at] = 0xc0 | (unit >> 6);
+      dst[at + 1] = 0x80 | (unit & 0x3f);
+      at += 2;
+    } else {
+      dst[at] = 0xe0 | (unit >> 12);
+      dst[at + 1] = 0x80 | ((unit >> 6) & 0x3f);
+      dst[at + 2] = 0x80 | (unit & 0x3f);
+      at += 3;
+    }
+  }
+  dst[at++] = QUOTE;
+  return at;
 }
 
 /** Copies `src[start, end)` to `dst` at `at`. Short copies skip the native call. */
@@ -70,9 +179,12 @@ export class GronFlattener implements JsonSink {
 
   private kinds = new Uint8Array(256);
   private bases = new Uint32Array(256);
-  private indexes = new Float64Array(256);
+  /** For an array, where the current element's `[index]` segment ends in `path`; 0 before its first element. */
+  private ends = new Uint32Array(256);
   /** Index of the innermost open container, or -1 at the root. */
   private top = -1;
+
+  private scratch = Buffer.allocUnsafe(256);
 
   constructor(private readonly out: LineSink) {
     ROOT.copy(this.path);
@@ -101,24 +213,44 @@ export class GronFlattener implements JsonSink {
   key(buf: Buffer, start: number, end: number, escaped: boolean): void {
     const base = this.bases[this.top]!;
     if (!escaped) {
-      if (isIdentifier(buf, start + 1, end - 1)) {
-        this.ensurePath(base + end - start);
-        this.path[base] = DOT;
-        this.pathLength = copyBytes(buf, start + 1, end - 1, this.path, base + 1);
+      // Room for the bracketed form, which is the longer one.
+      this.ensurePath(base + end - start + 2);
+      const path = this.path;
+      // Write `.key` while checking that it matches /^[A-Za-z_$][A-Za-z0-9_$]*$/ (see IDENTIFIER_BYTE).
+      const first = start + 1;
+      const last = end - 1;
+      let identifier = first < last && (IDENTIFIER_BYTE[buf[first]!]! & 1) !== 0 ? 2 : 0;
+      path[base] = DOT;
+      for (let i = first, at = base + 1; i < last; i += 1, at += 1) {
+        const c = buf[i]!;
+        path[at] = c;
+        identifier &= IDENTIFIER_BYTE[c]!;
+      }
+      if (identifier !== 0) {
+        this.pathLength = base + 1 + (last - first);
       } else {
         // Without escapes the raw bytes are exactly what JSON.stringify would produce for the decoded key.
-        this.ensurePath(base + end - start + 2);
-        this.path[base] = OPEN_BRACKET;
-        const next = copyBytes(buf, start, end, this.path, base + 1);
-        this.path[next] = CLOSE_BRACKET;
+        path[base] = OPEN_BRACKET;
+        const next = copyBytes(buf, start, end, path, base + 1);
+        path[next] = CLOSE_BRACKET;
         this.pathLength = next + 1;
       }
       return;
     }
-    const decoded = JSON.parse(buf.toString("utf8", start, end)) as string;
-    const segment = identifierPattern.test(decoded) ? `.${decoded}` : `[${JSON.stringify(decoded)}]`;
-    this.ensurePath(base + Buffer.byteLength(segment));
-    this.pathLength = base + this.path.write(segment, base, "utf8");
+    // The normalized key is what JSON.stringify gives for the decoded key, and it is an identifier exactly when the
+    // decoded key is one (identifier characters are never escaped).
+    this.ensurePath(base + end - start + 2);
+    const path = this.path;
+    const stop = normalizeString(buf, start, end, path, base + 1);
+    if (isIdentifier(path, base + 2, stop - 1)) {
+      path[base] = DOT;
+      path.copyWithin(base + 1, base + 2, stop - 1);
+      this.pathLength = stop - 2;
+    } else {
+      path[base] = OPEN_BRACKET;
+      path[stop] = CLOSE_BRACKET;
+      this.pathLength = stop + 1;
+    }
   }
 
   string(buf: Buffer, start: number, end: number, escaped: boolean): void {
@@ -126,8 +258,11 @@ export class GronFlattener implements JsonSink {
     if (!escaped) {
       this.writeLine(buf, start, end);
     } else {
-      const normalized = Buffer.from(JSON.stringify(JSON.parse(buf.toString("utf8", start, end))), "utf8");
-      this.writeLine(normalized, 0, normalized.length);
+      // Normalize before writing: the room a line reserves has to be its real length, which decides where blocks flush.
+      const size = end - start;
+      if (size > this.scratch.length && size <= SCRATCH_LIMIT) this.scratch = Buffer.allocUnsafe(SCRATCH_LIMIT);
+      const scratch = size <= this.scratch.length ? this.scratch : Buffer.allocUnsafe(size);
+      this.writeLine(scratch, 0, normalizeString(buf, start, end, scratch, 0));
     }
     this.endValue();
   }
@@ -142,26 +277,42 @@ export class GronFlattener implements JsonSink {
     this.number(buf, start, end);
   }
 
-  /** Extends the path for array elements. Object members were already extended by `key`. */
+  /**
+   * Extends the path for array elements. Object members were already extended by `key`.
+   *
+   * The previous element's `[index]` is still in place, since anything nested in it was written after it, so the next
+   * index is that one plus one, counted up in its decimal digits.
+   */
   private beginValue(): void {
     const top = this.top;
     if (top < 0 || this.kinds[top] !== ARRAY) return;
-    const index = this.indexes[top]!;
-    this.indexes[top] = index + 1;
     const base = this.bases[top]!;
-    this.ensurePath(base + 24);
-    const path = this.path;
-    path[base] = OPEN_BRACKET;
-    let digits = 1;
-    for (let rest = Math.floor(index / 10); rest > 0; rest = Math.floor(rest / 10)) digits += 1;
-    let remaining = index;
-    for (let at = base + digits; at > base; at -= 1) {
-      const quotient = Math.floor(remaining / 10);
-      path[at] = ZERO + (remaining - quotient * 10);
-      remaining = quotient;
+    const end = this.ends[top]!;
+    if (end === 0) {
+      this.ensurePath(base + 3);
+      this.path[base] = OPEN_BRACKET;
+      this.path[base + 1] = ZERO;
+      this.path[base + 2] = CLOSE_BRACKET;
+      this.ends[top] = this.pathLength = base + 3;
+      return;
     }
-    path[base + digits + 1] = CLOSE_BRACKET;
-    this.pathLength = base + digits + 2;
+    const path = this.path;
+    let at = end - 2;
+    while (at > base && path[at] === NINE) {
+      path[at] = ZERO;
+      at -= 1;
+    }
+    if (at > base) {
+      path[at] = path[at]! + 1;
+      this.pathLength = end;
+      return;
+    }
+    // Every digit was a 9 and is now a 0: the index gains a leading 1.
+    this.ensurePath(end + 1);
+    this.path[base + 1] = ONE;
+    this.path[end - 1] = ZERO;
+    this.path[end] = CLOSE_BRACKET;
+    this.ends[top] = this.pathLength = end + 1;
   }
 
   private endValue(): void {
@@ -173,7 +324,7 @@ export class GronFlattener implements JsonSink {
     if (depth === this.kinds.length) this.grow();
     this.kinds[depth] = kind;
     this.bases[depth] = this.pathLength;
-    this.indexes[depth] = 0;
+    this.ends[depth] = 0;
     this.top = depth;
   }
 
@@ -188,17 +339,18 @@ export class GronFlattener implements JsonSink {
     kinds.set(this.kinds);
     const bases = new Uint32Array(size);
     bases.set(this.bases);
-    const indexes = new Float64Array(size);
-    indexes.set(this.indexes);
+    const ends = new Uint32Array(size);
+    ends.set(this.ends);
     this.kinds = kinds;
     this.bases = bases;
-    this.indexes = indexes;
+    this.ends = ends;
   }
 
   private ensurePath(needed: number): void {
     if (needed <= this.path.length) return;
     const grown = Buffer.allocUnsafe(Math.max(needed, this.path.length * 2));
-    this.path.copy(grown, 0, 0, this.pathLength);
+    // Everything, not just `pathLength`: array elements count up from the `[index]` bytes left after it.
+    this.path.copy(grown);
     this.path = grown;
   }
 
@@ -240,7 +392,11 @@ export async function flattenStream(
 ): Promise<void> {
   let sorter: SortingSink | null = null;
   try {
-    sorter = options.sort ? new SortingSink(out, (lines) => new GronFlattener(lines), { memoryLimit: options.sortMemory }) : null;
+    if (options.sort) {
+      // Loaded only when sorting, so unsorted runs skip its start-up cost.
+      const { SortingSink } = await import("./sort.js");
+      sorter = new SortingSink(out, (lines) => new GronFlattener(lines), { memoryLimit: options.sortMemory });
+    }
     const gate: JsonGate = sorter ?? out;
     const tokenizer = new JsonTokenizer(sorter ?? new GronFlattener(out), gate);
     reading: for await (const piece of input) {

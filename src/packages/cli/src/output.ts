@@ -1,6 +1,4 @@
-import { randomBytes } from "node:crypto";
 import { createWriteStream, realpathSync, statSync, unlinkSync, type Stats } from "node:fs";
-import { chmod, rename, unlink } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import type { Writable } from "node:stream";
 import type { LineMatcher } from "./matcher.js";
@@ -74,7 +72,9 @@ class FileSink implements OutputSink {
       stream = createWriteStream(this.file);
     } else {
       this.mode = existing === null ? null : existing.mode & 0o7777;
-      this.temp = join(dirname(this.target), `.${basename(this.target)}.${process.pid}.${randomBytes(4).toString("hex")}.tmp`);
+      // The global Web Crypto object, unlike node:crypto, costs nothing at start-up for runs that never write a file.
+      const suffix = Buffer.from(crypto.getRandomValues(new Uint8Array(4))).toString("hex");
+      this.temp = join(dirname(this.target), `.${basename(this.target)}.${process.pid}.${suffix}.tmp`);
       stream = createWriteStream(this.temp, { flags: "wx" });
       this.installCleanup();
     }
@@ -94,6 +94,7 @@ class FileSink implements OutputSink {
       await this.closed;
       if (this.error !== null) throw this.error;
       if (this.temp !== null) {
+        const { chmod, rename } = await import("node:fs/promises");
         if (this.mode !== null) await chmod(this.temp, this.mode);
         await rename(this.temp, this.target);
       }
@@ -111,7 +112,10 @@ class FileSink implements OutputSink {
     this.settled = true;
     stream.destroy();
     await this.closed;
-    if (this.temp !== null) await unlink(this.temp).catch(() => undefined);
+    if (this.temp !== null) {
+      const { unlink } = await import("node:fs/promises");
+      await unlink(this.temp).catch(() => undefined);
+    }
     this.uninstallCleanup();
   }
 
