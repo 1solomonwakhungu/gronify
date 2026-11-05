@@ -2,18 +2,19 @@
 
 ## Current state
 
-Checked on 2026-11-04.
+Checked on 2026-11-05.
 
-- **Version:** 1.3.0, released 2026-11-04 through release-please PR #109. The GitHub release `v1.3.0` carries `gronify-v1.3.0.tar.gz`, `gronify-v1.3.0.zip`, and `checksums.txt`.
+- **Version:** 1.3.1, released 2026-11-05 through release-please PR #128. The GitHub release `v1.3.1` carries `gronify-v1.3.1.tar.gz`, `gronify-v1.3.1.zip`, and `checksums.txt`.
 - **Distribution:**
-  - npm: 1.3.0, published by the Release workflow with provenance.
+  - npm: 1.3.1, published by the Release workflow with provenance.
   - Homebrew: `Formula/gronify.rb` in `1solomonwakhungu/homebrew-tap` points at the v1.2.0 tarball and depends only on `node@22` (no `fastgron`).
   - Release archive and build from source, as described in the README.
 - **One product:** the Node/npm CLI in `src/packages/cli`. The experimental Rust prototype (`native/`, its workflow, and its landing-page benchmarks) was removed on 2026-11-04.
-- **Benchmarks:** the landing page and `BENCHMARKS.md` report the sweep at `00d950204b4d60e510870c3bf2d86718924d6832`, whose runtime source is identical to 1.3.0. A refreshed sweep is planned in a later PR.
+- **Benchmarks:** the landing page and `BENCHMARKS.md` report the 2026-11-05 sweep of npm `gronify@1.3.1`, run at the release commit `4c78c13e5ba299462e33a87e8a02be25fda1badd`. The published tarball's `dist/` is identical to the build that was measured. See [the evidence README](docs/benchmarks/2026-11-05-v1.3.1/README.md).
 - **CI:** Quality Check and Release workflows. Release workflow success does not mean a new version was published.
 - **Audits:** the CLI allowlist (`src/packages/cli/audit-ci.jsonc`) is empty. The landing allowlist (`landing-page/audit-ci.jsonc`) has one entry; see Open items.
-- **What 1.3.0 adds:** faster flatten, tokenizer and long literal search (#110, #111), cheaper unflatten path handling (#112), bounded literal validation that recovers record-stream memory (#119), quiet exit when a socket stdout disconnects (#113), and the cross-tool benchmark (#104).
+- **What 1.3.1 adds:** faster flatten and search through byte-level tokenizer paths (#127), and faster streaming unflatten through reused frames and borrowed keys (#129). Output is byte-identical to 1.3.0; independent differential reviews of both PRs found no differences across tens of thousands of fuzzed inputs and chunk sizes.
+- **What 1.3.0 added:** faster flatten, tokenizer and long literal search (#110, #111), cheaper unflatten path handling (#112), bounded literal validation that recovers record-stream memory (#119), quiet exit when a socket stdout disconnects (#113), and the cross-tool benchmark (#104).
 - **What 1.2.0 added:**
   - `flatten`, `search`, and ordered `unflatten` stream without retaining a full document tree. Historical record-stream runs used about 100 MB; token size, path depth, sorting, and out-of-order input affect memory. `-o` writes atomically. (#95, #94)
   - Numbers are printed exactly as written (`12345678901234567890`, `1.10`), object keys keep document order, and JSON errors report byte offset, line, and column. (#95)
@@ -31,6 +32,13 @@ Checked on 2026-11-04.
   - Product and growth: #12 (pro features), #13 (payments), #14 (team management), #15 (marketing campaigns), #16 (SEO content), #17 (referrals).
 
 ## History
+
+### 2026-11-05 — 1.3.1 release and rebenchmark
+
+- #127 (byte-level tokenizer paths for flatten and search) and #129 (streaming unflatten that reuses parent frames and borrows the last path key) merged, and release PR #128 published npm `gronify@1.3.1` and GitHub release `v1.3.1`.
+- A serial `bench:compare` sweep ran at `4c78c13` (median of 3 runs, 60 s timeout, 8 GiB guard): 149 ok, 30 skipped, 11 failed, 2 timed out. These counts match the previous receipt, and every failure, skip, and timeout came from another tool or an unsupported pairing. The `dist/` in the npm tarball matches the measured build.
+- Gronify, `00d9502` → 1.3.1: 1 GiB flatten 3.83 → 3.63 s (80 → 65 MiB); 1 GiB search count 4.47 → 4.27 s (75 → 55 MiB); 2.2 GiB unflatten 5.56 → 5.10 s; first 10 matches 40 → 33 ms; 1 MB flatten 48 → 37 ms; 50,000-level piped flatten 0.54 → 0.52 s. All 32 Gronify workloads got faster, and the tools finish in the same order within each workload.
+- The landing page now shows 1.3.1 (`site-config.ts`, `llms-full.txt`). Its benchmark copy is derived from the receipt, so the page and the receipt now report the same version.
 
 ### 2026-11-04 — Node flatten/search performance pass
 
