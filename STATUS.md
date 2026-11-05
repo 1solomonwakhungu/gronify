@@ -13,7 +13,8 @@ Checked on 2026-11-04.
 - **Benchmarks:** the landing page and `BENCHMARKS.md` report the sweep at `00d950204b4d60e510870c3bf2d86718924d6832`, whose runtime source is identical to 1.3.0. A refreshed sweep is planned in a later PR.
 - **CI:** Quality Check and Release workflows. Release workflow success does not mean a new version was published.
 - **Audits:** the CLI allowlist (`src/packages/cli/audit-ci.jsonc`) is empty. The landing allowlist (`landing-page/audit-ci.jsonc`) has one entry; see Open items.
-- **What 1.2.0 adds:**
+- **What 1.3.0 adds:** faster flatten, tokenizer and long literal search (#110, #111), cheaper unflatten path handling (#112), bounded literal validation that recovers record-stream memory (#119), quiet exit when a socket stdout disconnects (#113), and the cross-tool benchmark (#104).
+- **What 1.2.0 added:**
   - `flatten`, `search`, and ordered `unflatten` stream without retaining a full document tree. Historical record-stream runs used about 100 MB; token size, path depth, sorting, and out-of-order input affect memory. `-o` writes atomically. (#95, #94)
   - Numbers are printed exactly as written (`12345678901234567890`, `1.10`), object keys keep document order, and JSON errors report byte offset, line, and column. (#95)
   - Result caps (`search -m/--max-count`, `flatten --limit`) stop reading early; `--sort` gives stable, diffable key order; `search --exit-status` exits 1 on no match and 2 on error. (#98)

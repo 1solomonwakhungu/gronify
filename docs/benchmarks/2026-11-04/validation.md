@@ -39,18 +39,20 @@ The 1,049,407,501-byte event-record fixture is about 1,001 MiB, not exactly 1 Gi
 
 ## Receipt audit
 
+The exact executed harness (`bench-compare.executed.mjs`, SHA-256 matching the receipt's `harnessSha256`) and the run log (`default-run.txt`) are kept in this directory.
+
 ```sh
 node scripts/validate-metadata.mjs
 git diff --check
 git diff --exit-code -- src/packages/cli/src
 ```
 
-An offline verifier checked the 460 retained default-suite attempts, median arithmetic, and source/build/external-binary hashes. Metadata and whitespace checks passed; the runtime source directory has no changes. The repository's complete documentation/package metadata Prettier check also passed.
+An offline verifier (removed with the Rust prototype; see `native/evidence/current-00d9502/verify.py` at commit `e2ea085`) checked the 460 retained default-suite attempts, median arithmetic, and source/build/external-binary hashes. Metadata and whitespace checks passed; the runtime source directory has no changes. The repository's complete documentation/package metadata Prettier check also passed.
 
 ## Landing page
 
 `npm run lint`, `npm run build`, and `npm run audit` passed in `landing-page`. The production build generated all six static pages. The audit used the existing `GHSA-g3hv-75wg-m249` minimatch allowlist: eight moderate transitive development findings, no high or critical findings. No audit exception was added.
 
-Chromium checks at 320, 375, 414, 768, and 1440 pixels found no horizontal overflow, missing in-page link targets, unnamed buttons, images without alt text, or runtime JavaScript errors. All six charts rendered and the source revision, measured values, and memory-limit label were present. Mobile and desktop screenshots were inspected; a mobile intro-padding issue was corrected and the final build and checks repeated. These are basic layout and accessibility checks, not a full accessibility audit. The temporary QA browser and server were closed.
+Chromium checks at 320, 375, 414, 768, and 1440 pixels found no horizontal overflow, missing in-page link targets, unnamed buttons, images without alt text, or runtime JavaScript errors. All charts rendered and the source revision, measured values, and memory-limit label were present. Mobile and desktop screenshots were inspected; a mobile intro-padding issue was corrected and the final build and checks repeated. These are basic layout and accessibility checks, not a full accessibility audit. The temporary QA browser and server were closed.
 
 Structured browser results are retained in [landing-qa.json](landing-qa.json). The independent evidence review is in [benchmark-refresh-2026-11-04.md](../../review/benchmark-refresh-2026-11-04.md).
