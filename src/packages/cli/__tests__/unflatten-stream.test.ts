@@ -405,6 +405,36 @@ describe("streaming unflatten", () => {
     }
   });
 
+  test("reused parent paths longer than 64 bytes still detect a change in the last byte", async () => {
+    const long = "k".repeat(70);
+    const gron =
+      `json = {}\njson.${long} = {}\njson.${long}.a = {}\njson.${long}.a.x = 1\njson.${long}.b = 2\n` +
+      `json.${long.slice(0, -1)}z = {}\njson.${long.slice(0, -1)}z.c = 3\njson.${long}.d = 4\n`;
+    for (const size of [1, 5, 64, 1 << 20]) {
+      // The last line reopens a closed container, so the in-memory rebuild takes over.
+      expect(JSON.parse(await unflatten(gron, {}, size))).toEqual({ [long]: { a: { x: 1 }, b: 2, d: 4 }, [`${long.slice(0, -1)}z`]: { c: 3 } });
+      // With output already released, the same line is an error. One whole-input chunk is never released early.
+      if (size < 64) await expect(unflatten(gron, { budgetBytes: 16 }, size)).rejects.toThrow(/^line 8: parent path is not the container/);
+    }
+  });
+
+  test("last keys that become parents survive chunk boundaries, escapes and the in-memory rebuild", async () => {
+    const gron = Buffer.from(
+      'json = {}\njson["\\u00e9"] = {}\njson["\\u00e9"]["a\\u002eb"] = []\njson["\\u00e9"]["a\\u002eb"][0] = "x"\n' +
+        'json["é"].plain = {}\njson["é"].plain["q\\""] = 1\njson.z = "😀"\n',
+      "utf8"
+    );
+    const expected = '{"é":{"a.b":["x"],"plain":{"q\\"":1}},"z":"😀"}\n';
+    for (const size of [1, 2, 3, 7, 1 << 20]) {
+      expect(await unflatten(gron, {}, size)).toBe(expected);
+    }
+    // Same lines reordered, so the tree builder reads the borrowed last keys.
+    const reordered = 'json = {}\njson["é"] = {}\njson.z = "😀"\njson["\\u00e9"]["q\\u0022"] = 1\n';
+    for (const size of [1, 3, 1 << 20]) {
+      expect(await unflatten(reordered, {}, size)).toBe('{"é":{"q\\"":1},"z":"😀"}\n');
+    }
+  });
+
   test("emits one-line compound values", async () => {
     expect(await unflatten('json = {}\njson.a = {"b":[1,{"c":2}]}\njson.d = 1\n')).toBe('{"a":{"b":[1,{"c":2}]},"d":1}\n');
     expect(await unflatten('json = {}\njson.a = {"b":[1]}\n', { pretty: true })).toBe(
