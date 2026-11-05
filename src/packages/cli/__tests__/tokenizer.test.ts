@@ -236,6 +236,66 @@ describe("JsonTokenizer", () => {
       expect(sink.events).toEqual(["[", "num 1", "num 2", "num 3", "]"]);
       expect(stops.length).toBeGreaterThan(1);
     });
+
+    test("stops before the comma that follows a blocking value, never inside the next member", () => {
+      const sink = new RecordingSink();
+      const gate: JsonGate = { blocked: false };
+      for (const method of ["number", "string", "literal"] as const) {
+        const record = sink[method].bind(sink);
+        sink[method] = (buf: Buffer, start: number, end: number, escaped = false) => {
+          record(buf, start, end, escaped);
+          gate.blocked = true;
+        };
+      }
+      const document = Buffer.from('{"a":1,"b":["x",true],"c":{"d":null},"e":2}', "utf8");
+      const tokenizer = new JsonTokenizer(sink, gate);
+      const stops: string[] = [];
+      let pos = 0;
+      while (pos < document.length) {
+        pos = tokenizer.write(document, pos);
+        stops.push(document.toString("latin1", pos, pos + 1));
+        gate.blocked = false;
+      }
+      tokenizer.end();
+      expect(sink.events).toEqual(tokenize([document]));
+      expect(stops).toEqual([",", ",", "]", "}", "}", ""]);
+    });
+  });
+
+  describe("member and element transitions", () => {
+    const documents = [
+      '{"a":1,"b":"x","c":[1,"y",true,{"d":null}],"e":{}}',
+      '{ "a" : 1 , "b":\n"x" ,"c" :[ 1 ,"y",\ttrue , {"d":null} ] }',
+      '[[],{},"s",-1.5e3,false,[{"k":"v"}]]',
+    ];
+
+    test("emits the same tokens for every split into two and three chunks", () => {
+      for (const text of documents) {
+        const bytes = Buffer.from(text, "utf8");
+        const expected = tokenize([bytes]);
+        for (let i = 0; i <= bytes.length; i += 1) {
+          expect(tokenize(splitAt(bytes, i))).toEqual(expected);
+          for (let j = i; j <= bytes.length; j += 3) {
+            expect(tokenize([bytes.subarray(0, i), bytes.subarray(i, j), bytes.subarray(j)])).toEqual(expected);
+          }
+        }
+      }
+    });
+
+    test.each([
+      ['{"a":1,}', "Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 7"],
+      ["[1,]", "Unexpected ']' after ',' (trailing commas are not allowed) at byte offset 3"],
+      ['{"a":1,x}', "Unexpected 'x', expected a string key at byte offset 7"],
+      ["[1,x]", "Unexpected 'x', expected a value at byte offset 3"],
+      ['{"a" 1}', "Unexpected '1', expected ':' at byte offset 5"],
+      ['{"a":}', "Unexpected '}', expected a value at byte offset 5"],
+      ['{"a"::1}', "Unexpected ':', expected a value at byte offset 5"],
+    ])("reports %s at the same offset for every split", (text, message) => {
+      const bytes = Buffer.from(text, "utf8");
+      for (let i = 0; i <= bytes.length; i += 1) {
+        expect(failure(splitAt(bytes, i)).message).toContain(message);
+      }
+    });
   });
 
   describe("invalid input", () => {
