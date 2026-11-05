@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/1solomonwakhungu/gronify/compare/v1.3.0...v1.3.1) (2026-11-05)
+
+
+### Performance Improvements
+
+* **cli:** faster streaming unflatten via reused frames and borrowed keys ([#129](https://github.com/1solomonwakhungu/gronify/issues/129)) ([dd3530d](https://github.com/1solomonwakhungu/gronify/commit/dd3530dbcf3883600650a743e371dda17bc64418))
+* **cli:** speed up flatten and search with byte-level tokenizer paths ([#127](https://github.com/1solomonwakhungu/gronify/issues/127)) ([ae3254d](https://github.com/1solomonwakhungu/gronify/commit/ae3254d0a8b916ca4518413f04ac210515ee63f9))
+
 ## [1.3.0](https://github.com/1solomonwakhungu/gronify/compare/v1.2.0...v1.3.0) (2026-11-04)
 
 
