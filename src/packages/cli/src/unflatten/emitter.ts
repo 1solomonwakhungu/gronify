@@ -120,7 +120,7 @@ export class StreamEmitter implements LineSink {
     const last = segments - 1;
     writer.memberPrefix();
     if (writer.isArray[segments - 1] !== 1) {
-      writer.key(parser.arena, parser.segOffset[last] as number, parser.segLength[last] as number);
+      writer.key(parser.lastKeySource, parser.lastKeyStart, parser.segLength[last] as number);
     }
     this.writeValue(segments);
   }
@@ -166,9 +166,9 @@ export class StreamEmitter implements LineSink {
       this.keys = keys;
     }
     const keys = this.keys;
-    const arena = parser.arena;
-    const from = parser.segOffset[last] as number;
-    for (let index = 0; index < length; index += 1) keys[offset + index] = arena[from + index] as number;
+    const source = parser.lastKeySource;
+    const from = parser.lastKeyStart;
+    for (let index = 0; index < length; index += 1) keys[offset + index] = source[from + index] as number;
     this.frameLength[depth] = length;
   }
 
