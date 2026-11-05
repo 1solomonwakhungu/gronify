@@ -8,7 +8,7 @@ The CLI reads from files or stdin and writes to stdout or atomically to `-o <fil
 
 Gronify is designed for platform engineers, SREs, developer-experience teams, support engineers, AI coding agents, and developers who inspect large JSON payloads in CI logs, service responses, support bundles, generated configuration, or incident debugging sessions.
 
-The project is open source under the MIT license. The current release is 1.3.0 (2026-11-04). Official website: <https://gronify.vercel.app>.
+The project is open source under the MIT license. The current release is 1.3.1 (2026-11-05). Official website: <https://gronify.vercel.app>.
 
 ## Features
 

@@ -9,7 +9,7 @@ export const homebrewTapUrl =
 export const skillsUrl =
   "https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search";
 
-export const cliVersion = "1.3.0";
+export const cliVersion = "1.3.1";
 export const nodeRequirement = "20 or newer";
 export const npmBuildRequirement = "10 or newer";
-export const lastReleaseIsoDate = "2026-11-04";
+export const lastReleaseIsoDate = "2026-11-05";
