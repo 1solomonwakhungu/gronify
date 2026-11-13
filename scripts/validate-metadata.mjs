@@ -1,4 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+
+const guideContentDir = "landing-page/src/app/guides/content";
 
 const requiredFiles = [
   "README.md",
@@ -13,6 +15,8 @@ const requiredFiles = [
   "landing-page/src/app/seo-data.ts",
   "landing-page/src/app/sitemap.ts",
   "landing-page/src/app/opengraph-image.tsx",
+  "landing-page/src/app/site-chrome.tsx",
+  "landing-page/src/app/guides/registry.ts",
   "LICENSE",
   "CONTRIBUTING.md",
   "SECURITY.md",
@@ -51,6 +55,7 @@ const staleClaimPatterns = [
     // only claim-shaped phrases are matched: a verb list ending in "and diff", "Gronify diffs ...", "diff two JSON
     // files", "a diff mode", "diffing support", "built-in diffing".
     prose: true,
+    diffPhrasing: true,
     pattern: new RegExp(
       [
         String.raw`\bgronify\s+(?:can\s+|will\s+|also\s+)?diffs?\b`,
@@ -80,7 +85,7 @@ const staleClaimPatterns = [
   },
 ];
 
-function scanForStaleClaims(file) {
+function scanForStaleClaims(file, { skipDiffPhrasing = false } = {}) {
   if (!existsSync(file)) {
     return;
   }
@@ -90,7 +95,11 @@ function scanForStaleClaims(file) {
   const prose = /\.(?:md|txt)$/i.test(file)
     ? contents.replace(/^ *```[\s\S]*?^ *```/gm, " ").replace(/`[^`\n]*`/g, " ")
     : contents;
-  for (const { pattern, message, prose: proseOnly } of staleClaimPatterns) {
+  for (const claim of staleClaimPatterns) {
+    if (skipDiffPhrasing && claim.diffPhrasing) {
+      continue;
+    }
+    const { pattern, message, prose: proseOnly } = claim;
     if (pattern.test(proseOnly ? prose : contents)) {
       errors.push(`${file} ${message}`);
     }
@@ -135,6 +144,20 @@ scanForStaleClaims("landing-page/src/app/benchmarks.tsx");
 scanForStaleClaims("landing-page/src/app/benchmark-data.ts");
 scanForStaleClaims("landing-page/src/app/seo-data.ts");
 scanForStaleClaims("landing-page/src/app/opengraph-image.tsx");
+scanForStaleClaims("landing-page/src/app/site-chrome.tsx");
+scanForStaleClaims("landing-page/src/app/guides/page.tsx");
+scanForStaleClaims("landing-page/src/app/guides/guide-article.tsx");
+
+// A guide may explain comparing two JSON files with the system diff tool, so the claim-shaped diff phrases are skipped.
+if (existsSync(guideContentDir)) {
+  for (const name of readdirSync(guideContentDir).sort()) {
+    if (name.endsWith(".ts")) {
+      scanForStaleClaims(`${guideContentDir}/${name}`, {
+        skipDiffPhrasing: true,
+      });
+    }
+  }
+}
 
 if (
   existsSync("landing-page/public/llms.txt") &&
