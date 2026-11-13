@@ -171,7 +171,7 @@ if (existsSync("src/packages/cli/package.json")) {
   const expected = {
     license: "MIT",
     author: "Solomon Wakhungu",
-    homepage: "https://github.com/1solomonwakhungu/gronify#readme",
+    homepage: "https://gronify.vercel.app",
   };
 
   for (const [field, value] of Object.entries(expected)) {
