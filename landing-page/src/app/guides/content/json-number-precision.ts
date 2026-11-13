@@ -299,7 +299,7 @@ stdin ledger.json differ: char 138, line 1
       question:
         "What happens to a number too big for a double, such as 1e1000?",
       answer:
-        "Gronify 1.3.1 prints `1e1000` and jq 1.8.2 prints `1E+1000`. Node's `JSON.parse` returns `Infinity` and Python's `json.loads` returns `inf`, and neither can be written back as valid JSON. In jq 1.8.2, adding zero to it gives `1.7976931348623157e+308`.",
+        "Gronify 1.3.1 prints `1e1000` and jq 1.8.2 prints `1E+1000`. Node's `JSON.parse` returns `Infinity`, which `JSON.stringify` writes back as `null`. Python's `json.loads` returns `inf`, which `json.dumps` writes as `Infinity`, and that is not valid JSON. In jq 1.8.2, adding zero to it gives `1.7976931348623157e+308`.",
     },
   ],
   related: ["jq-alternative", "gron-alternative", "flatten-json"],

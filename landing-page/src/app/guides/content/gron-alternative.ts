@@ -11,7 +11,7 @@ export const gronAlternative: Guide = {
   description:
     "gron, fastgron and Gronify compared with dates: latest releases, install methods, output format, speed, memory on large files, npm and Windows support.",
   h1: "gron alternatives: gron, fastgron and Gronify compared",
-  lede: "gron has two alternatives that print the same `json.path = value` lines. [fastgron](https://github.com/adamritter/fastgron) is a C++ tool that flattened every record file from 1 MB to 1 GB faster than the other two in our benchmark. Gronify is a Node.js CLI that installs with `npm install -g gronify` and streams its input, so its memory use barely moves between a 1 MB file and a 1 GB one. [gron](https://github.com/tomnomnom/gron) still runs and has the widest packaging; its latest release is from April 2022. The facts below were checked on 2026-11-12 against gron 0.7.1, fastgron 0.7.7, and Gronify 1.3.1.",
+  lede: "This page compares gron with two alternatives that print the same `json.path = value` lines. [fastgron](https://github.com/adamritter/fastgron) is a C++ tool that flattened every record file from 1 MB to 1 GB faster than the other two in our benchmark. Gronify is a Node.js CLI that installs with `npm install -g gronify` and streams its input, so its memory use barely moves between a 1 MB file and a 1 GB one. [gron](https://github.com/tomnomnom/gron) still runs and has the widest packaging; its latest release is from April 2022. The facts below were checked on 2026-11-12 against gron 0.7.1, fastgron 0.7.7, and Gronify 1.3.1.",
   published: "2026-11-12",
   updated: "2026-11-12",
   sections: [
@@ -385,7 +385,7 @@ Tip: Validate your JSON with a linter like https://jsonlint.com
     {
       question: "Does gron --no-sort keep the original key order?",
       answer:
-        "No. In six runs of `gron --no-sort` on the sample file from this page, the first key printed was `service` four times, `version` once, and `owner` once. fastgron and Gronify print keys in document order on every run.",
+        "No. The first key `gron --no-sort` printed for the sample file changed from run to run (`service`, `version`, `regions`, and `owner` all appeared). fastgron and Gronify print keys in document order on every run.",
     },
     {
       question: "Is fastgron a drop-in replacement for gron?",

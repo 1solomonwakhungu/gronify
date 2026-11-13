@@ -322,7 +322,7 @@ $ npx skills add https://github.com/1solomonwakhungu/gronify --skill gronify-jso
       blocks: [
         {
           kind: "paragraph",
-          text: "An agent without the skill can follow the same routine from its project instructions file: `CLAUDE.md` for Claude Code, `AGENTS.md` for Codex CLI and other agents that read it. These lines agree with the skill:",
+          text: "An agent without the skill can follow the same routine from its project instructions file: `CLAUDE.md` for Claude Code, `AGENTS.md` for Codex CLI and other agents that read it. Claude Code 2.1.277 and later also reads `AGENTS.md` when the project has no `CLAUDE.md`. These lines agree with the skill:",
         },
         {
           kind: "terminal",

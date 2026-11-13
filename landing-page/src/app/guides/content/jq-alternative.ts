@@ -15,6 +15,62 @@ export const jqAlternative: Guide = {
   updated: "2026-11-12",
   sections: [
     {
+      id: "other-jq-alternatives",
+      heading: "Other jq alternatives and what each is for",
+      blocks: [
+        {
+          kind: "paragraph",
+          text: "Tools that get listed as jq alternatives do one of three things. Some run jq's own language in a different implementation, some are interactive viewers, and some flatten JSON for line tools the way gron does.",
+        },
+        {
+          kind: "table",
+          caption: "jq alternatives by kind and by the job each one fits",
+          columns: ["Tool", "Kind", "Use it for"],
+          rows: [
+            [
+              "[jaq](https://github.com/01mf02/jaq)",
+              "jq implementation in Rust",
+              'Running jq programs. Its README calls it "a clone of the JSON data processing tool jq" and adds YAML, CBOR, TOML, and XML support.',
+            ],
+            [
+              "[gojq](https://github.com/itchyny/gojq)",
+              "jq implementation in Go",
+              "Running jq programs with arbitrary-precision integer arithmetic and YAML input. It does not keep object key order.",
+            ],
+            [
+              "[fx](https://github.com/antonmedv/fx)",
+              "Interactive viewer and processor",
+              "Browsing a document in the terminal, or processing it with JavaScript expressions in place of jq syntax.",
+            ],
+            [
+              "[jless](https://github.com/PaulJuliusMartinez/jless)",
+              "Interactive viewer",
+              "Reading a document by hand: expand and collapse objects and arrays, move around, and search with a regex.",
+            ],
+            [
+              "[jnv](https://github.com/ynqa/jnv)",
+              "Interactive jq filter editor",
+              "Typing a jq filter next to a view of the document. It applies the filter with jaq, so jq does not have to be installed.",
+            ],
+            [
+              "[gron](https://github.com/tomnomnom/gron)",
+              "Flattener in Go",
+              "The original `path = value` output for grep, with `gron -u` to turn filtered lines back into JSON.",
+            ],
+            [
+              "[fastgron](https://github.com/adamritter/fastgron)",
+              "Flattener in C++",
+              "gron output on big files. Its README says it is 50x faster than gron there, and it adds a fixed-string filter (`-F`) and path queries.",
+            ],
+          ],
+        },
+        {
+          kind: "paragraph",
+          text: "Only jaq and gojq replace jq in the literal sense, and neither removes the exploration step, because their filters need a path too. jaq 3.1.2 printed the same output as jq 1.8.2 for every filter on this page that succeeds. How the three flatteners differ is covered in [the gron alternatives comparison](/guides/gron-alternative).",
+        },
+      ],
+    },
+    {
       id: "when-to-use-jq",
       heading: "When jq is the right tool",
       blocks: [
@@ -91,7 +147,7 @@ $ jq -c '.data.projects[0].envs[0].deploy | keys' deploys.json
           label: "jq error from indexing an array with a key name",
           lines: transcript`
 $ jq '.data.projects.envs' deploys.json
-jq: error (at deploys.json:1): Cannot index array with string "envs"
+jq: error (at deploys.json:1): Cannot index array with string ("envs")
 `,
         },
         {
@@ -203,63 +259,7 @@ ada@example.com
         },
         {
           kind: "paragraph",
-          text: 'The second command selects a record by one field and returns another, which a line filter cannot do. Keys that are not plain identifiers carry over as well: Gronify prints `json.headers["content-type"]`, and `.headers["content-type"]` is valid jq. More cases, such as searching by key name only, are in [the guide to finding a JSON path](/guides/find-json-path).',
-        },
-      ],
-    },
-    {
-      id: "other-jq-alternatives",
-      heading: "Other jq alternatives and what each is for",
-      blocks: [
-        {
-          kind: "paragraph",
-          text: "Tools that get listed as jq alternatives do one of three things. Some run jq's own language in a different implementation, some are interactive viewers, and some flatten JSON for line tools the way gron does.",
-        },
-        {
-          kind: "table",
-          caption: "jq alternatives by kind and by the job each one fits",
-          columns: ["Tool", "Kind", "Use it for"],
-          rows: [
-            [
-              "[jaq](https://github.com/01mf02/jaq)",
-              "jq implementation in Rust",
-              'Running jq programs. Its README calls it "a clone of the JSON data processing tool jq" and adds YAML, CBOR, TOML, and XML support.',
-            ],
-            [
-              "[gojq](https://github.com/itchyny/gojq)",
-              "jq implementation in Go",
-              "Running jq programs with arbitrary-precision integer arithmetic and YAML input. It does not keep object key order.",
-            ],
-            [
-              "[fx](https://github.com/antonmedv/fx)",
-              "Interactive viewer and processor",
-              "Browsing a document in the terminal, or processing it with JavaScript expressions in place of jq syntax.",
-            ],
-            [
-              "[jless](https://github.com/PaulJuliusMartinez/jless)",
-              "Interactive viewer",
-              "Reading a document by hand: expand and collapse objects and arrays, move around, and search with a regex.",
-            ],
-            [
-              "[jnv](https://github.com/ynqa/jnv)",
-              "Interactive jq filter editor",
-              "Typing a jq filter next to a view of the document. It applies the filter with jaq, so jq does not have to be installed.",
-            ],
-            [
-              "[gron](https://github.com/tomnomnom/gron)",
-              "Flattener in Go",
-              "The original `path = value` output for grep, with `gron -u` to turn filtered lines back into JSON.",
-            ],
-            [
-              "[fastgron](https://github.com/adamritter/fastgron)",
-              "Flattener in C++",
-              "gron output on big files. Its README says it is 50x faster than gron there, and it adds a fixed-string filter (`-F`) and path queries.",
-            ],
-          ],
-        },
-        {
-          kind: "paragraph",
-          text: "Only jaq and gojq replace jq in the literal sense, and neither removes the exploration step, because their filters need a path too. jaq 3.1.2 printed the same output as jq 1.8.2 for every filter on this page that succeeds. How the three flatteners differ is covered in [the gron alternatives comparison](/guides/gron-alternative).",
+          text: 'The second command selects a record by one field and returns another, which a line filter cannot do. Bracketed keys carry over unchanged: Gronify prints `json.headers["content-type"]`, and `.headers["content-type"]` is valid jq. A key that contains `$` is the exception: Gronify prints it bare, as in `json.headers.$ref`, and jq needs `.headers["$ref"]`. More cases, such as searching by key name only, are in [the guide to finding a JSON path](/guides/find-json-path).',
         },
       ],
     },
