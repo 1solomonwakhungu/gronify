@@ -3,7 +3,12 @@ import "@primer/react-brand/fonts/fonts.css";
 import "@primer/react-brand/lib/css/main.css";
 import "./globals.css";
 import { Providers } from "./providers";
-import { siteUrl, structuredData } from "./seo-data";
+import {
+  homeDescription,
+  homeTitle,
+  siteStructuredData,
+  siteUrl,
+} from "./seo-data";
 
 export const viewport: Viewport = {
   themeColor: "#0a0a0f",
@@ -12,9 +17,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Gronify — Streaming JSON Parsing CLI: Flatten & Search",
-  description:
-    "Gronify streams JSON from files and pipes: local-first CLI to flatten greppable paths, search with regex, and unflatten (ungron) JSON.",
+  title: homeTitle,
+  description: homeDescription,
   applicationName: "Gronify",
   category: "developer tools",
   authors: [
@@ -23,19 +27,13 @@ export const metadata: Metadata = {
   creator: "Solomon Wakhungu",
   keywords: [
     "gronify",
-    "JSON parsing",
-    "JSON parsing CLI",
-    "parse JSON command line",
-    "streaming gron CLI",
-    "streaming ungron",
+    "grep JSON",
+    "search JSON command line",
+    "flatten JSON",
     "gron alternative",
-    "fastgron alternative",
-    "gron typescript",
-    "gron windows",
-    "grep nested JSON",
-    "JSON CLI for AI coding agents",
-    "preserve exact numbers JSON CLI",
-    "sort JSON keys for diff CLI",
+    "jq alternative",
+    "ungron",
+    "JSON CLI",
   ],
   alternates: {
     canonical: siteUrl,
@@ -58,9 +56,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Gronify — Streaming JSON Parsing CLI: Flatten & Search",
-    description:
-      "Stream-parse large JSON from files or stdin, flatten nested payloads into greppable paths, search with regex, and unflatten (ungron) JSON.",
+    title: homeTitle,
+    description: homeDescription,
     url: siteUrl,
     siteName: "Gronify",
     locale: "en_US",
@@ -68,9 +65,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Gronify — Streaming JSON Parsing CLI: Flatten & Search",
-    description:
-      "Stream-parse large JSON from files or stdin, flatten nested payloads into greppable paths, search with regex, and unflatten (ungron) JSON.",
+    title: homeTitle,
+    description: homeDescription,
   },
 };
 
@@ -85,7 +81,7 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+            __html: JSON.stringify(siteStructuredData).replace(/</g, "\\u003c"),
           }}
         />
         <Providers>{children}</Providers>
