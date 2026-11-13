@@ -33,6 +33,13 @@ Checked on 2026-11-05.
 
 ## History
 
+### 2026-11-12 — `flatten --pretty` indents by path depth
+
+- `--pretty` on `flatten` and on `search --invert-match` counted every dot and opening bracket on the whole line, so a line whose value held one (`0.5`, `"db.internal"`, `[]`) or whose bracket-quoted key held one (`json["a.b"]`) was indented deeper than its siblings. The depth now comes from the path alone: the formatter stops at the space that ends the path and skips quoted keys up to their closing quote. Two spaces per level below the top-level keys, capped at six levels, as before.
+- Output is byte-identical to 1.3.1 for documents whose values and quoted keys hold no dot or opening bracket. On eleven files (the test fixture, `package-lock.json`, generated documents with hostile keys and values; about 128,000 lines, each plain and colored) every changed line is explained by such a value or key, and every line's indent equals the depth of its node in the document.
+- The blank-line grouping is unchanged: a blank line still goes before each new top-level key and between a top-level `= {}` or `= []` line and its children. It does not depend on values, so it was left for a separate decision.
+- Tests: 648 pass (30 new: 26 in `formatter.test.ts`, 4 in `cli.test.ts`). Two existing expectations that encoded the old indentation were updated.
+
 ### 2026-11-05 — 1.3.1 release and rebenchmark
 
 - #127 (byte-level tokenizer paths for flatten and search) and #129 (streaming unflatten that reuses parent frames and borrows the last path key) merged, and release PR #128 published npm `gronify@1.3.1` and GitHub release `v1.3.1`.
