@@ -1,8 +1,7 @@
 import { ImageResponse } from "next/og";
-import { cliVersion } from "./seo-data";
+import { cliVersion, homeTitle } from "./seo-data";
 
-export const alt =
-  "Gronify — Streaming JSON Parsing CLI: Flatten & Search in the Terminal";
+export const alt = homeTitle;
 export const size = {
   width: 1200,
   height: 630,
@@ -82,7 +81,7 @@ export default function OpenGraphImage() {
               fontSize: 18,
             }}
           >
-            {`Local-first TypeScript JSON CLI · MIT · v${cliVersion}`}
+            {`Open source JSON CLI · MIT · v${cliVersion}`}
           </div>
         </div>
 
@@ -95,7 +94,7 @@ export default function OpenGraphImage() {
               lineHeight: 1.08,
             }}
           >
-            Parse, flatten, and search JSON in the terminal.
+            Flatten and grep nested JSON from the command line.
           </div>
           <div
             style={{
@@ -105,8 +104,8 @@ export default function OpenGraphImage() {
               maxWidth: "980px",
             }}
           >
-            Stream large JSON from files and pipes, filter greppable paths with
-            text or regex, keep exact source numbers, and unflatten gron.
+            Print every value with its full path, search by text or regex, keep
+            numbers exact, and stream multi-gigabyte files.
           </div>
         </div>
 
