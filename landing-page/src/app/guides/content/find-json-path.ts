@@ -222,9 +222,9 @@ $ echo '{"$ref":"#/defs/user"}' | jq '.["$ref"]'
               "Only the leading `json` is removed",
             ],
             [
-              "`json[1].id` in a file whose root is an array",
-              "`.[1].id`",
-              "The filter starts with a dot",
+              '`json[1].id` or `json["first name"]`, where a bracket follows `json` directly',
+              '`.[1].id` or `.["first name"]`',
+              "A dot is added in front",
             ],
             [
               "`json.users[1].email`, wanted for every user",
@@ -246,13 +246,13 @@ $ echo '{"$ref":"#/defs/user"}' | jq '.["$ref"]'
       blocks: [
         {
           kind: "paragraph",
-          text: "On a machine that has jq and where you cannot install anything else, jq can report paths by itself. It prints a path as an array of keys and indexes. `paths(scalars)` lists the path of every leaf value:",
+          text: "On a machine that has jq and where you cannot install anything else, jq can report paths by itself. It prints a path as an array of keys and indexes. `paths(scalars | true)` lists the path of every leaf value. The shorter `paths(scalars)` that most answers quote leaves out every `false` and `null`, which in this file drops `users[0].manager` and `users[1].active`:",
         },
         {
           kind: "terminal",
           label: "jq listing the path of every leaf value",
           lines: transcript`
-$ jq -c 'paths(scalars)' account.json | head -5
+$ jq -c 'paths(scalars | true)' account.json | head -5
 ["account","id"]
 ["account","email"]
 ["account","notes"]
@@ -323,7 +323,7 @@ jq: 1 compile error
         },
         {
           kind: "paragraph",
-          text: "Replace `leaf_paths` with `paths(scalars)`. Nothing else in the filter needs to change, and the result is the list of arrays shown in the previous section.",
+          text: "Replace `leaf_paths` with `paths(scalars)` and nothing else in the filter needs to change. Both skip `false` and `null` leaves, so use `paths(scalars | true)` if you need those too.",
         },
       ],
     },
@@ -350,7 +350,7 @@ Stopped after 1 match (--max-count); there may be more
         },
         {
           kind: "paragraph",
-          text: "Measured time and memory for large inputs are in the [benchmarks](/#benchmarks). [gron](https://github.com/tomnomnom/gron) and [fastgron](https://github.com/adamritter/fastgron) print the same `json.users[1].email` paths, so if either is already installed, piping its output through grep finds the same lines and the jq conversion above applies unchanged. To browse a document by hand, a terminal viewer such as [jless](https://github.com/PaulJuliusMartinez/jless) is the better fit.",
+          text: "Measured time and memory for large inputs are in the [benchmarks](/#benchmarks). [gron](https://github.com/tomnomnom/gron) and [fastgron](https://github.com/adamritter/fastgron) print the same `json.users[1].email` paths, so if either is already installed, piping its output through grep finds the same paths (gron ends each line with `;`, so a pattern anchored with `$` needs `;$`), and the jq conversion above applies unchanged. To browse a document by hand, a terminal viewer such as [jless](https://github.com/PaulJuliusMartinez/jless) is the better fit.",
         },
       ],
     },
@@ -359,7 +359,7 @@ Stopped after 1 match (--max-count); there may be more
     {
       question: "Is the path Gronify prints a JSONPath expression?",
       answer:
-        'Almost. Replace the leading `json` with `$` and it is JSONPath as defined in [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535): `$.users[1].email`, or `$.settings["display name"]` for a bracketed key. Both returned the expected values in the Python package jsonpath-rfc9535 2.0.2.',
+        'Almost. Replace the leading `json` with `$` and it is JSONPath as defined in [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535): `$.users[1].email`, or `$.settings["display name"]` for a bracketed key. Both returned the expected values in the Python package jsonpath-rfc9535 2.0.2. A key that starts with `$` needs brackets there as well: `$["$ref"]`.',
     },
     {
       question: "How do I print only the paths, without the values?",

@@ -186,7 +186,7 @@ $ gronify flatten deploy.json | grep REGION | fastgron -u
     },
     {
       id: "accepted-input",
-      heading: "Which gron output it accepts",
+      heading: "Which gron and fastgron output gronify unflatten accepts",
       blocks: [
         {
           kind: "paragraph",
@@ -320,12 +320,12 @@ $ gronify unflatten strings.gron
       question:
         "Can I convert gron output back to JSON without installing gron?",
       answer:
-        "Yes. `gronify unflatten` reads the lines gron 0.7.1 writes, trailing semicolons included, and installs with `npm install -g gronify` on Node.js 20 or newer. The file has to be complete, because a subset that gron itself would pad with missing parents is rejected.",
+        "Yes. `gronify unflatten` reads the lines gron 0.7.1 writes, trailing semicolons included, and installs with `npm install -g gronify` on Node.js 20 or newer. The file has to be complete, because a subset that gron itself would rebuild by creating the missing parents is rejected.",
     },
     {
       question: "How do I delete an array element without leaving null behind?",
       answer:
-        "Unflatten keeps array positions, so removing the lines of `json.env[0]` leaves `null` at index 0. Removing the lines of the last element shortens the array. To remove an element and renumber the rest, use jq: `jq -c 'del(.env[0])' deploy.json` returns the array with one entry.",
+        "Unflatten keeps array positions, so removing the lines of `json.env[0]` leaves `null` at index 0. Removing the lines of the last element shortens the array. To remove an element and renumber the rest, use jq: `jq -c 'del(.env[0])' deploy.json` prints the document with one entry left in `env`.",
     },
     {
       question: "What happens if an edited line is not valid?",

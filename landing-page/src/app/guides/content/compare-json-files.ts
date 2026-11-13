@@ -57,7 +57,7 @@ $ diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatte
         },
         {
           kind: "paragraph",
-          text: "`--no-color` is a global flag, so it goes before the command name. Gronify already leaves color off when its output is a pipe, and the flag makes that explicit. The npm command is under [install](/#install), and the line format has its own guide on [flattening JSON from the command line](/guides/flatten-json).",
+          text: "`--no-color` is a global flag, accepted before or after the command name. Gronify already leaves color off when its output is a pipe, and the flag makes that explicit. The npm command is under [install](/#install), and the line format has its own guide on [flattening JSON from the command line](/guides/flatten-json).",
         },
       ],
     },
@@ -109,7 +109,7 @@ $ cat new.json | gronify --no-color flatten --sort | diff old.gron -
         },
         {
           kind: "paragraph",
-          text: "If Gronify fails on one side (a missing file, invalid JSON), it prints the error to stderr and writes nothing. `diff` then sees empty input and reports every line as removed, so read stderr before trusting a diff that deletes everything.",
+          text: "If Gronify fails on one side, it prints the error to stderr and exits with status 1, but `diff` still runs on whatever reached it. A missing file gives `diff` empty input. JSON that breaks partway through a top-level array gives it the lines flattened before the error. Either way the diff shows a large block of removed or added lines, so read stderr before trusting it.",
         },
       ],
     },
@@ -188,11 +188,11 @@ $ diff <(jq -S . hosts-old.json) <(jq -S . hosts-new.json)
         },
         {
           kind: "paragraph",
-          text: "One host was added. The flattened comparison reports three changed lines and one new line, and that count grows with the length of the array. Pretty-printed JSON carries no indexes, so the jq form reports the insertion as a single line. Neither form recognises an array whose elements were only reordered.",
+          text: "One host was added. The flattened comparison reports three changed lines and one new line, and that count grows with the length of the array. Pretty-printed JSON carries no indexes, so the jq form reports the insertion as a single line. Neither form recognizes an array whose elements were only reordered.",
         },
         {
           kind: "paragraph",
-          text: "For arrays that shift or reorder, use a tool that compares the parsed structure. [jd](https://github.com/josephburnett/jd) compares JSON and YAML values, and its README documents `jd -set a.json b.json` to treat arrays as sets, `-mset` for multisets, and `-setkeys` to name the keys that identify an object in a set. [dyff](https://github.com/homeport/dyff) describes itself as a diff tool for YAML files, and sometimes JSON. Its command is `dyff between old.json new.json`, and `--ignore-order-changes` ignores order changes in lists.",
+          text: "For arrays that shift or reorder, use a tool that compares the parsed structure. [jd](https://github.com/josephburnett/jd) compares JSON and YAML values, and its README documents `jd -set a.json b.json` to treat arrays as sets, `-mset` for multisets, and `-setkeys` to name the keys that identify an object in a set. [dyff](https://github.com/homeport/dyff) describes itself as a diff tool for YAML files, and sometimes JSON. Its command is `dyff between old.json new.json`, and its help text lists `--ignore-order-changes` to ignore order changes in lists.",
         },
       ],
     },
@@ -202,7 +202,7 @@ $ diff <(jq -S . hosts-old.json) <(jq -S . hosts-new.json)
       blocks: [
         {
           kind: "paragraph",
-          text: "These ran with the `diff` that ships with macOS. GNU diff accepts the same flags.",
+          text: "These ran with the `diff` that ships with macOS. GNU diff 3.10 accepts the same flags and printed the same output.",
         },
         { kind: "subheading", text: "Unified output with readable names" },
         {
@@ -312,7 +312,7 @@ index af94cd3..2eb3520 100644
       blocks: [
         {
           kind: "paragraph",
-          text: "How much `--sort` holds in memory depends on the root of the document. A top-level array, the usual shape of a large export, is written as it is read, one record at a time. Everything inside an object waits until that object closes. Gronify keeps up to 64 MiB of line data in memory (`GRONIFY_SORT_MEMORY` changes the limit), then writes the oldest buffers to an anonymous temp file in `$TMPDIR` and reads them back at the end. A file that is one very large object therefore needs temp space of roughly the size of its flattened output.",
+          text: "How much `--sort` holds in memory depends on the root of the document. A top-level array, the usual shape of a large export, is written as it is read, one record at a time. Everything inside an object is held until the document ends, or until the enclosing record ends when the root is an array. Gronify keeps up to 64 MiB of line data in memory (`GRONIFY_SORT_MEMORY` changes the limit), then moves buffers to an anonymous temp file in `$TMPDIR`, finished ones first, and reads them back at the end. A file that is one very large object therefore needs temp space of roughly the size of its flattened output.",
         },
         {
           kind: "paragraph",
@@ -358,7 +358,7 @@ $ diff <(gronify --no-color search --sort old.json services.worker) <(gronify --
     {
       question: "Can I get a JSON Patch out of this?",
       answer:
-        "No. The result is a line diff for people to read. [jd](https://github.com/josephburnett/jd) writes RFC 6902 JSON Patch with `-f patch` and RFC 7386 merge patches with `-f merge`, and applies a patch with `-p`.",
+        "No. The result is a line diff for people to read. The README of [jd](https://github.com/josephburnett/jd) documents `-f patch` for RFC 6902 JSON Patch, `-f merge` for RFC 7386 merge patches, and `-p` to apply a patch.",
     },
   ],
   related: ["flatten-json", "large-json-files", "grep-json"],
