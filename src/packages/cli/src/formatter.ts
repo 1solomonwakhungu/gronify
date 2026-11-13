@@ -15,6 +15,30 @@ function chalk(): ChalkInstance {
   return chalkInstance;
 }
 
+/**
+ * Counts the segments after the root in the path of a gron line: `json.a[0]["b.c"] = 1` has three. Only the path is
+ * read. It ends at the first space outside a bracket-quoted key (the one that starts ` = `), so the value never
+ * counts, and neither do the dots, brackets or ` = ` inside a quoted key, which is skipped up to its closing quote.
+ */
+function gronPathDepth(line: string): number {
+  let depth = 0;
+  for (let i = 0; i < line.length; i++) {
+    const c = line.charCodeAt(i);
+    if (c === 0x20) break; // space: the path is over
+    if (c === 0x2e) {
+      depth++; // .key
+    } else if (c === 0x5b) {
+      depth++; // [0] or ["key"]
+      if (line.charCodeAt(i + 1) === 0x22) {
+        // Keys are quoted as JSON strings, so a backslash always escapes the character after it.
+        i += 2;
+        while (i < line.length && line.charCodeAt(i) !== 0x22) i += line.charCodeAt(i) === 0x5c ? 2 : 1;
+      }
+    }
+  }
+  return depth;
+}
+
 export interface FormatOptions {
   color?: boolean;
   pretty?: boolean;
@@ -73,8 +97,8 @@ export class OutputFormatter {
       // Strip ANSI codes to analyze the original line structure
       const cleanLine = colored.replace(/\u001b\[[0-9;]*m/g, '');
 
-      // Calculate indentation based on nesting level
-      const nestingLevel = Math.max(0, (cleanLine.match(/\[/g) || []).length + (cleanLine.match(/\./g) || []).length - 1);
+      // Calculate indentation based on nesting level, which comes from the path alone
+      const nestingLevel = Math.max(0, gronPathDepth(cleanLine) - 1);
       const indent = '  '.repeat(Math.min(nestingLevel, 6)); // Max 6 levels
 
       // Extract top-level object (e.g., "users" from "json.users[0].name")

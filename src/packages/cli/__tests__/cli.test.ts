@@ -874,8 +874,7 @@ describe("Gronify CLI", () => {
       expect(leaf.stdout).toBe(`json${".a".repeat(depth)} = 1`);
     });
 
-    test("should group and indent --pretty output exactly as before streaming", async () => {
-      // Expected text was captured from the pre-streaming CLI.
+    test("should group and indent --pretty output by path depth", async () => {
       const result = await runCLI(
         ["--pretty", "flatten"],
         '{"user":{"name":"A","tags":[1]},"posts":[{"t":"x.y"}],"id":1}',
@@ -887,17 +886,70 @@ describe("Gronify CLI", () => {
           "json.user = {}",
           "",
           '  json.user.name = "A"',
-          "    json.user.tags = []",
+          "  json.user.tags = []",
           "    json.user.tags[0] = 1",
           "",
-          "  json.posts = []",
+          "json.posts = []",
           "",
           "  json.posts[0] = {}",
-          '      json.posts[0].t = "x.y"',
+          '    json.posts[0].t = "x.y"',
           "",
           "json.id = 1",
         ].join("\n"),
       );
+    });
+
+    describe("--pretty indentation ignores values and quoted keys", () => {
+      const doc = '{"a":{"lag":0.5,"host":"db.internal","n":1,"t":["x[0] = y"]},"b.c":{"x = y":{"k[0]":"json.a = 1"}}}';
+      const pretty = [
+        "json = {}",
+        "json.a = {}",
+        "",
+        "  json.a.lag = 0.5",
+        '  json.a.host = "db.internal"',
+        "  json.a.n = 1",
+        "  json.a.t = []",
+        '    json.a.t[0] = "x[0] = y"',
+        "",
+        'json["b.c"] = {}',
+        '  json["b.c"]["x = y"] = {}',
+        '    json["b.c"]["x = y"]["k[0]"] = "json.a = 1"',
+      ].join("\n");
+
+      test("flatten", async () => {
+        const result = await runCLI(["--no-color", "--pretty", "flatten"], doc);
+
+        expect(result.exitCode).toBe(0);
+        expect(result.stdout).toBe(pretty);
+      });
+
+      test("search --invert-match, which formats the same lines", async () => {
+        const result = await runCLI(["--no-color", "--pretty", "search", "--invert-match", "no such text"], doc);
+
+        expect(result.exitCode).toBe(0);
+        expect(result.stdout).toBe(pretty);
+      });
+
+      test("colored output on a terminal", async () => {
+        // Report stdout as a terminal before the CLI starts, so the real chalk colors the piped output.
+        const child = spawnSync(
+          "node",
+          ["--import", "data:text/javascript,process.stdout.isTTY=true", "dist/index.js", "--color", "--pretty", "flatten"],
+          { input: doc, encoding: "utf8", env: { ...process.env, FORCE_COLOR: "1", NO_COLOR: "" } },
+        );
+
+        expect(child.status).toBe(0);
+        expect(child.stdout).toContain("\u001b[");
+        expect(child.stdout.replace(/\u001b\[[0-9;]*m/g, "").trim()).toBe(pretty);
+      });
+
+      test("the depth cap holds at six levels", async () => {
+        const result = await runCLI(["--no-color", "--pretty", "flatten"], '{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":1.5}}}}}}}}}');
+
+        expect(result.stdout.split("\n").filter((line) => line !== "").map((line) => line.length - line.trimStart().length)).toEqual([
+          0, 0, 2, 4, 6, 8, 10, 12, 12, 12,
+        ]);
+      });
     });
 
     describe("-o output is atomic", () => {
