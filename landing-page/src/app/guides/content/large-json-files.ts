@@ -28,7 +28,7 @@ export const largeJsonFiles: Guide = {
           items: [
             "`JSON.parse` takes a string. The whole file must become one JavaScript string, and then the parser builds every object and array before it returns. In Node.js the first step fails on a file over about 512 MB.",
             '[jq](https://github.com/jqlang/jq) does not stream by default. Its [FAQ](https://github.com/jqlang/jq/wiki/FAQ) describes the `--stream` parser as the way "to avoid having to read JSON texts completely before processing them". Without it, jq parses each JSON text completely before the filter runs, and a file that is one large array is one text.',
-            "[gron](https://github.com/tomnomnom/gron) 0.7.1 decodes the whole document before it prints, and most text editors and browser-based viewers load the file before they show anything.",
+            "[gron](https://github.com/tomnomnom/gron) 0.7.1 decodes the whole document before it prints, and so does any editor or browser viewer that loads the file before it shows anything.",
           ],
         },
       ],
@@ -168,7 +168,7 @@ $ node count-errors.mjs events.json
       blocks: [
         {
           kind: "paragraph",
-          text: "`events.json` is the 609,375,097-byte file from the error above: one minified array of 3.2 million log records. [Install Gronify](/#install), and three commands answer most first questions about it.",
+          text: "`events.json` is the 609,375,097-byte file from the error above: one minified array of 3.2 million log records. It is that size because 609 MB is just past Node's string limit; the same commands run unchanged on a multi-gigabyte file. [Install Gronify](/#install), and three commands answer most first questions about it.",
         },
         {
           kind: "terminal",
@@ -204,7 +204,7 @@ Stopped after 12 lines (--limit); there may be more
         },
         {
           kind: "paragraph",
-          text: "In the project's benchmark run of 5 November 2026 (gronify 1.3.1, Apple M5 Pro), counting matches in a 1 GB array of records peaked at 55 MiB of memory. [fastgron](https://github.com/adamritter/fastgron) 0.7.7 with its `-F` filter finished the same count sooner, with memory that grew with the file, so it is the better choice when the file fits in RAM. The full table is under [benchmarks](/#benchmarks).",
+          text: "In the project's benchmark run of 5 November 2026 (gronify 1.3.1, Apple M5 Pro), counting matches in a 1 GB array of records peaked at 55 MiB of memory. [fastgron](https://github.com/adamritter/fastgron) 0.7.7 with its `-F` filter finished the same count sooner, with memory that grew with the file, so it is the better choice when you have about twice the file's size in free RAM. The full table is under [benchmarks](/#benchmarks).",
         },
       ],
     },
