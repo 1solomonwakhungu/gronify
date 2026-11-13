@@ -17,7 +17,7 @@ function isIsoDate(value: string): boolean {
   );
 }
 
-function guideProblems(guide: Guide): string[] {
+function guideProblems(guide: Guide, registered: Set<string>): string[] {
   const problems: string[] = [];
   const report = (field: string, message: string) =>
     problems.push(`${field} ${message}`);
@@ -35,6 +35,17 @@ function guideProblems(guide: Guide): string[] {
     for (const problem of inlineProblems(value)) report(field, problem);
     for (const href of linkHrefs(value)) {
       if (href.startsWith("#")) anchorLinks.push({ field, id: href.slice(1) });
+      if (href.startsWith("/")) {
+        // The site has three kinds of page: the home page, /guides, and a guide.
+        const page = /^\/(?:guides(?:\/([^/#?]+))?)?(?:#[a-z0-9-]+)?$/.exec(
+          href,
+        );
+        if (page === null) {
+          report(field, `links to "${href}", which is not a page on this site`);
+        } else if (page[1] !== undefined && !registered.has(page[1])) {
+          report(field, `links to "${href}", which is not a registered guide`);
+        }
+      }
     }
   };
 
@@ -167,6 +178,9 @@ function guideProblems(guide: Guide): string[] {
       report(field, `"${slug}" must be lowercase kebab-case`);
     }
     if (slug === guide.slug) report(field, "points at the guide itself");
+    if (!registered.has(slug)) {
+      report(field, `"${slug}" is not a registered guide`);
+    }
     if (related.has(slug)) report(field, `"${slug}" is listed twice`);
     related.add(slug);
   });
@@ -192,6 +206,7 @@ function guideProblems(guide: Guide): string[] {
 export function validateGuides(guides: Guide[]): Guide[] {
   const problems: string[] = [];
   const slugs = new Set<string>();
+  const registered = new Set(guides.map((guide) => guide.slug));
   const uniqueFields = {
     title: new Map<string, string>(),
     h1: new Map<string, string>(),
@@ -204,7 +219,7 @@ export function validateGuides(guides: Guide[]): Guide[] {
       problems.push(`${file}: slug "${guide.slug}" is registered twice`);
     }
     slugs.add(guide.slug);
-    for (const problem of guideProblems(guide)) {
+    for (const problem of guideProblems(guide, registered)) {
       problems.push(`${file}: ${problem}`);
     }
     // Two pages with the same title, h1, or description compete for one query.
