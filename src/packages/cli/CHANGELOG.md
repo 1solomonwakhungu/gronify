@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/1solomonwakhungu/gronify/compare/v1.3.1...v1.3.2) (2026-11-13)
+
+
+### Bug Fixes
+
+* **cli:** indent flatten --pretty by path depth, not by the whole line ([#142](https://github.com/1solomonwakhungu/gronify/issues/142)) ([2e98b68](https://github.com/1solomonwakhungu/gronify/commit/2e98b6868b99b69637bbf4c219d8de002d0caf29))
+
 ## [1.3.1](https://github.com/1solomonwakhungu/gronify/compare/v1.3.0...v1.3.1) (2026-11-05)
 
 
