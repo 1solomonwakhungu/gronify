@@ -19,13 +19,12 @@ import posthog from "posthog-js";
 import type { ReactNode } from "react";
 
 import type { BenchmarkView } from "./benchmark-data";
-import { GronifyLogo } from "./logo";
 import styles from "./page.module.css";
+import { SiteFooter, SiteHeader } from "./site-chrome";
 import {
   cliVersion,
   nodeRequirement,
   npmBuildRequirement,
-  npmPackageUrl,
   repositoryUrl,
   skillsUrl,
 } from "./site-config";
@@ -402,43 +401,7 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
         Skip to main content
       </a>
 
-      <header className={styles.navBar}>
-        <div className={styles.navBarInner}>
-          <a className={styles.wordmark} href="#top" aria-label="Gronify, home">
-            <GronifyLogo height={18} decorative />
-            <span className={styles.wordmarkText}>Gronify</span>
-          </a>
-          <nav className={styles.navLinks} aria-label="Page sections">
-            <a className={styles.navLink} href="#workflow">
-              Workflow
-            </a>
-            <a className={styles.navLink} href="#compare">
-              Compare
-            </a>
-            <a className={styles.navLink} href="#benchmarks">
-              Benchmarks
-            </a>
-            <a className={styles.navLink} href="#agents">
-              Agents
-            </a>
-            <a className={styles.navLink} href="#commands">
-              Commands
-            </a>
-            <a className={styles.navLink} href="#install">
-              Install
-            </a>
-          </nav>
-          <Button
-            as="a"
-            href={repositoryUrl}
-            variant="secondary"
-            size="small"
-            onClick={() => captureRepositoryLinkClick("header")}
-          >
-            View on GitHub
-          </Button>
-        </div>
-      </header>
+      <SiteHeader onHome />
 
       <main id="top">
         <Box paddingBlockStart={64} />
@@ -858,73 +821,7 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
         </CTABanner>
       </main>
 
-      <footer className={styles.footer}>
-        <div className={styles.footerInner}>
-          <div className={styles.footerBrand}>
-            <GronifyLogo height={18} decorative />
-            <Text as="p" size="200" variant="muted">
-              Gronify — local-first streaming JSON parsing and search CLI for
-              the terminal. MIT licensed.
-            </Text>
-          </div>
-          <Stack
-            direction="horizontal"
-            gap="normal"
-            padding="none"
-            flexWrap="wrap"
-          >
-            <Link href="#faq" size="small" arrowDirection="none">
-              FAQ
-            </Link>
-            <Link
-              href={repositoryUrl}
-              size="small"
-              arrowDirection="none"
-              onClick={() => captureRepositoryLinkClick("footer")}
-            >
-              Repository
-            </Link>
-            <Link href={npmPackageUrl} size="small" arrowDirection="none">
-              npm
-            </Link>
-            <Link
-              href={skillsUrl}
-              size="small"
-              arrowDirection="none"
-              onClick={() => captureSkillLinkClick("footer")}
-            >
-              Agent Skill
-            </Link>
-            <Link
-              href={`${repositoryUrl}/issues`}
-              size="small"
-              arrowDirection="none"
-            >
-              Issues
-            </Link>
-            <Link
-              href={`${repositoryUrl}/security`}
-              size="small"
-              arrowDirection="none"
-            >
-              Security
-            </Link>
-            <Link
-              href={`${repositoryUrl}/blob/main/LICENSE`}
-              size="small"
-              arrowDirection="none"
-            >
-              MIT License
-            </Link>
-            <Link href="/llms.txt" size="small" arrowDirection="none">
-              llms.txt
-            </Link>
-            <Link href="/llms-full.txt" size="small" arrowDirection="none">
-              llms-full.txt
-            </Link>
-          </Stack>
-        </div>
-      </footer>
+      <SiteFooter onHome />
     </>
   );
 }
