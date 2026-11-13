@@ -42,8 +42,10 @@ Checked on 2026-11-12.
 
 - `--pretty` on `flatten` and on `search --invert-match` counted every dot and opening bracket on the whole line, so a line whose value held one (`0.5`, `"db.internal"`, `[]`) or whose bracket-quoted key held one (`json["a.b"]`) was indented deeper than its siblings. The depth now comes from the path alone: the formatter stops at the space that ends the path and skips quoted keys up to their closing quote. Two spaces per level below the top-level keys, capped at six levels, as before.
 - Output is byte-identical to 1.3.1 for documents whose values and quoted keys hold no dot or opening bracket. On eleven files (the test fixture, `package-lock.json`, generated documents with hostile keys and values; about 128,000 lines, each plain and colored) every changed line is explained by such a value or key, and every line's indent equals the depth of its node in the document.
-- The blank-line grouping is unchanged: a blank line still goes before each new top-level key and between a top-level `= {}` or `= []` line and its children. It does not depend on values, so it was left for a separate decision.
-- Tests: 648 pass (30 new: 26 in `formatter.test.ts`, 4 in `cli.test.ts`). Two existing expectations that encoded the old indentation were updated.
+- The blank-line grouping is unchanged from 1.3.1: for identifier keys, a blank line goes before each top-level key after the first and between a top-level `= {}` or `= []` line and its children. It is decided by paths, not by values (a repeated top-level key with an equal value is the one exception), so it was left for a separate decision.
+- The `flatten-json` guide's `--pretty` subsection now describes the path-based indent, says that 1.3.1 and earlier also count the value, and shows a transcript from the fixed build. npm serves 1.3.1 until a release PR is merged.
+- An independent review compared the old and new builds on about 7 million lines (in-process fuzzing and CLI runs, plain and colored, with `--sort`, `--limit`, `-o` and `search --invert-match`) and found no line whose indent differs from its node's depth.
+- Tests: 649 pass (31 new: 26 in `formatter.test.ts`, 5 in `cli.test.ts`). Three existing tests that encoded the old indentation were updated.
 
 ### 2026-11-12 — Search rework: home page, guides, README, npm metadata (#138, #139, #140, #141)
 

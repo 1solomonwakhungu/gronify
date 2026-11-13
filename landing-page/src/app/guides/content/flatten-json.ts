@@ -3,6 +3,8 @@ import { transcript, type Guide } from "../types";
 // Every transcript below is pasted from gronify 1.3.1 (plus jq 1.8.2 and grep) run against the config.json, keys.json, and dots.json files shown in
 // the transcripts. Statements about gron 0.7.1, fastgron 0.7.7, and the npm
 // package flat 6.0.1 come from running those versions on the same files.
+// One exception: the `--pretty` transcript is pasted from gronify built from PR #142 (formatter at commit f2dd419), which
+// indents by path depth and ships in the release after 1.3.1. The 1.3.1 figures in that subsection come from 1.3.1.
 export const flattenJson: Guide = {
   slug: "flatten-json",
   title: "Flatten nested JSON on the command line | Gronify",
@@ -209,25 +211,25 @@ json.name = "api"
         { kind: "subheading", text: "What --pretty does to flattened lines" },
         {
           kind: "paragraph",
-          text: '`--pretty` indents each line and adds blank lines. Each line is indented two spaces for every dot and opening bracket it contains beyond the first, up to twelve spaces. In Gronify 1.3.1 the count runs over the whole line, value included, so `lag = 0.5` sits one step deeper than `host = "r1"`. A blank line goes before each new top-level key, and also between a top-level `= {}` or `= []` line and its own children:',
+          text: '`--pretty` indents each line and adds blank lines. Each line is indented two spaces for every dot and opening bracket in its path beyond the first, up to twelve spaces, so lines at the same depth line up. Gronify 1.3.1 and earlier also count the dots and brackets in the value: there `lag = 0.5` sits one step deeper than `host = "r1"`, and a `= []` line one step deeper than a `= {}` line. The release after 1.3.1 counts the path only, and the transcript below comes from that build. A blank line goes before each new top-level key, and also between a top-level `= {}` or `= []` line and its own children:',
         },
         {
           kind: "terminal",
           label: "Indented flatten output for one array of objects",
           lines: transcript`
 $ gronify --pretty flatten config.json | grep replicas
-    json.db.replicas = []
+  json.db.replicas = []
     json.db.replicas[0] = {}
       json.db.replicas[0].host = "r1"
-        json.db.replicas[0].lag = 0.5
+      json.db.replicas[0].lag = 0.5
     json.db.replicas[1] = {}
       json.db.replicas[1].host = "r2"
-        json.db.replicas[1].lag = 1.25
+      json.db.replicas[1].lag = 1.25
 `,
         },
         {
           kind: "paragraph",
-          text: "Indented lines still unflatten, but a pattern anchored at `^json` matches only 7 of this file's 26 lines once they are indented. Leave `--pretty` off when another program reads the output.",
+          text: "Indented lines still unflatten, but a pattern anchored at `^json` matches only 10 of this file's 26 lines once they are indented (7 in 1.3.1). Leave `--pretty` off when another program reads the output.",
         },
       ],
     },
