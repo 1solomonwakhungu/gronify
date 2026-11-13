@@ -703,3 +703,183 @@
   outline: var(--brand-borderWidth-thick) solid var(--brand-color-focus);
   outline-offset: var(--base-size-4);
 }
+
+/* Guides (/guides and /guides/<slug>). Long-form pages built from the same
+   hairlines, tokens, and transcript panels as the home page. */
+.guideLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--base-size-40);
+}
+
+/* Wide screens: a readable measure for the article, with the section list
+   pinned beside it. */
+@media screen and (min-width: 64rem) {
+  .guideLayout {
+    grid-template-columns: minmax(0, 44rem) minmax(0, 1fr);
+    gap: var(--base-size-64);
+  }
+}
+
+.guideMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-48);
+  min-width: 0;
+}
+
+.guideHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-16);
+  min-width: 0;
+}
+
+.guideIntro {
+  max-inline-size: 44rem;
+}
+
+.guideSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-16);
+  min-width: 0;
+}
+
+.guideSubheading {
+  margin-block-start: var(--base-size-16);
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--base-size-4) var(--base-size-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--brand-body-fontFamily);
+  font-size: var(--brand-text-size-100);
+  line-height: var(--brand-text-lineHeight-200);
+  color: var(--brand-color-text-muted);
+}
+
+.breadcrumbItem {
+  display: flex;
+  gap: var(--base-size-8);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.breadcrumbItem:not(:last-child)::after {
+  content: "/";
+}
+
+.breadcrumbLink {
+  color: var(--brand-color-text-muted);
+  font-family: var(--brand-body-fontFamily);
+  font-size: var(--brand-text-size-100);
+  line-height: var(--brand-text-lineHeight-200);
+  text-decoration: none;
+  border-radius: var(--brand-borderRadius-small);
+  transition: color var(--duration-quick) var(--ease-smooth-out);
+}
+
+.breadcrumbLink:hover {
+  color: var(--brand-color-text-default);
+}
+
+.breadcrumbLink:focus-visible {
+  outline: var(--brand-borderWidth-thick) solid var(--brand-color-focus);
+  outline-offset: var(--base-size-4);
+}
+
+/* Section list. Hidden on narrow screens so the answer stays on the first
+   screen; the headings themselves remain the outline there. */
+.guideToc {
+  display: none;
+}
+
+@media screen and (min-width: 64rem) {
+  .guideToc {
+    display: flex;
+    flex-direction: column;
+    gap: var(--base-size-12);
+    position: sticky;
+    inset-block-start: var(--base-size-96);
+    align-self: start;
+    padding-inline-start: var(--base-size-24);
+    border-inline-start: var(--brand-borderWidth-thin) solid
+      var(--brand-color-border-muted);
+  }
+}
+
+.guideTocList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proseList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-8);
+  margin: 0;
+  padding-inline-start: var(--base-size-24);
+  font-family: var(--brand-body-fontFamily);
+  font-size: var(--brand-text-size-200);
+  line-height: var(--brand-text-lineHeight-200);
+  color: var(--brand-color-text-default);
+}
+
+.proseCode {
+  padding: var(--base-size-2) var(--base-size-4);
+  border-radius: var(--brand-borderRadius-small);
+  background-color: var(--brand-color-canvas-subtle);
+  font-size: 0.9em;
+}
+
+.guideFigure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-8);
+  margin: 0;
+  min-width: 0;
+}
+
+.guideCaption {
+  font-family: var(--brand-body-fontFamily);
+  font-size: var(--brand-text-size-100);
+  line-height: var(--brand-text-lineHeight-200);
+  color: var(--brand-color-text-muted);
+}
+
+/* Guide tables hold phrases rather than short status words, so their cells
+   wrap and the table fits the article measure. */
+.guideTable {
+  font-family: var(--brand-body-fontFamily);
+}
+
+@media screen and (min-width: 48rem) {
+  .guideTable {
+    min-inline-size: 0;
+  }
+
+  .guideTable .matrixCell {
+    white-space: normal;
+  }
+
+  .guideTable tbody th {
+    min-inline-size: 0;
+    inline-size: 40%;
+  }
+}
+
+/* Guide link lists reuse the connected frame as a plain list. */
+.guideLinkList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
