@@ -1,4 +1,12 @@
+import { compareJsonFiles } from "./content/compare-json-files";
+import { findJsonPath } from "./content/find-json-path";
+import { flattenJson } from "./content/flatten-json";
 import { grepJson } from "./content/grep-json";
+import { gronAlternative } from "./content/gron-alternative";
+import { jqAlternative } from "./content/jq-alternative";
+import { jsonForAiAgents } from "./content/json-for-ai-agents";
+import { jsonNumberPrecision } from "./content/json-number-precision";
+import { unflattenJson } from "./content/unflatten-json";
 import type { Guide } from "./types";
 import { validateGuides } from "./validate";
 
@@ -10,6 +18,14 @@ import { validateGuides } from "./validate";
 export const guides: Guide[] = validateGuides([
   // One guide per line, in index order.
   grepJson,
+  flattenJson,
+  findJsonPath,
+  unflattenJson,
+  compareJsonFiles,
+  gronAlternative,
+  jqAlternative,
+  jsonNumberPrecision,
+  jsonForAiAgents,
 ]);
 
 const guidesBySlug = new Map(guides.map((guide) => [guide.slug, guide]));
