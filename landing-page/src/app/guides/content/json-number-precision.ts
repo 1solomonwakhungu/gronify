@@ -6,7 +6,7 @@ import { transcript, type Guide } from "../types";
 // run; its behaviour is quoted from the jq 1.6 manual and the jq FAQ.
 export const jsonNumberPrecision: Guide = {
   slug: "json-number-precision",
-  title: "When jq rounds big integers and how to avoid it | Gronify",
+  title: "jq large number precision: when big integers get rounded",
   description:
     "jq 1.6 and older round integers above 2^53. jq 1.7 and newer keep a number as written until arithmetic touches it. Check your version and keep ids exact.",
   h1: "Why big integers change in jq, and how to keep them exact",

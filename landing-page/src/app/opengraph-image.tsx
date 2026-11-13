@@ -94,7 +94,7 @@ export default function OpenGraphImage() {
               lineHeight: 1.08,
             }}
           >
-            Flatten and grep nested JSON from the command line.
+            A gron-style CLI to search and flatten nested JSON.
           </div>
           <div
             style={{

@@ -36,11 +36,11 @@ The project is open source under the MIT license and requires Node.js 20 or newe
 - [Find the path to any key or value in a JSON file](https://gronify.vercel.app/guides/find-json-path): Print the full path of a key or value with `gronify search`, turn it into a jq filter, or list paths with jq alone using `paths(scalars)`.
 - [Unflatten gron lines back into JSON (ungron)](https://gronify.vercel.app/guides/unflatten-json): The round trip, which gron and fastgron output `gronify unflatten` reads, and why filtered lines can fail.
 - [Compare two JSON files with `diff`, ignoring key order](https://gronify.vercel.app/guides/compare-json-files): Flatten both files with `gronify flatten --sort` so the keys line up, then run the system `diff`. Every changed line shows the full path to its value.
+- [Search a multi-gigabyte JSON file from the command line](https://gronify.vercel.app/guides/large-json-files): Why Node stops at `ERR_STRING_TOO_LONG` near 512 MB and jq parses the whole file first, and how to search the file as a stream with `gronify search` or `jq --stream`.
 - [gron alternatives: gron, fastgron and Gronify compared](https://gronify.vercel.app/guides/gron-alternative): Latest releases, install methods, output format, speed, memory on large files, and npm and Windows support, with dates.
 - [A jq alternative for exploring JSON you do not know yet](https://gronify.vercel.app/guides/jq-alternative): jq transforms JSON whose structure you know. For a payload you have not seen, Gronify prints every path so you can find a value and write the jq filter.
 - [Why big integers change in jq, and how to keep them exact](https://gronify.vercel.app/guides/json-number-precision): jq 1.6 and older round integers above 2^53. jq 1.7 and newer keep a number as written until arithmetic touches it.
 - [Let a coding agent search large JSON without reading it all](https://gronify.vercel.app/guides/json-for-ai-agents): Show the shape, count matches, and print a capped sample so a huge file never enters the context whole. Covers the agent skill install.
-- [Search a multi-gigabyte JSON file from the command line](https://gronify.vercel.app/guides/large-json-files): Why Node stops at `ERR_STRING_TOO_LONG` near 512 MB and jq parses the whole file first, and how to search the file as a stream with `gronify search` or `jq --stream`.
 
 ## Optional
 

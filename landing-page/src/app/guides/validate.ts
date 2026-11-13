@@ -1,9 +1,4 @@
-import {
-  guideSlugOf,
-  inlineProblems,
-  linkHrefs,
-  plainTextProblems,
-} from "./inline";
+import { inlineProblems, linkHrefs, plainTextProblems } from "./inline";
 import type { Guide, GuideBlock, RichText } from "./types";
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -40,9 +35,16 @@ function guideProblems(guide: Guide, registered: Set<string>): string[] {
     for (const problem of inlineProblems(value)) report(field, problem);
     for (const href of linkHrefs(value)) {
       if (href.startsWith("#")) anchorLinks.push({ field, id: href.slice(1) });
-      const slug = guideSlugOf(href);
-      if (slug !== null && !registered.has(slug)) {
-        report(field, `links to "${href}", which is not a registered guide`);
+      if (href.startsWith("/")) {
+        // The site has three kinds of page: the home page, /guides, and a guide.
+        const page = /^\/(?:guides(?:\/([^/#?]+))?)?(?:#[a-z0-9-]+)?$/.exec(
+          href,
+        );
+        if (page === null) {
+          report(field, `links to "${href}", which is not a page on this site`);
+        } else if (page[1] !== undefined && !registered.has(page[1])) {
+          report(field, `links to "${href}", which is not a registered guide`);
+        }
       }
     }
   };

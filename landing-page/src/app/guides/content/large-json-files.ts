@@ -36,7 +36,7 @@ export const largeJsonFiles: Guide = {
     {
       id: "string-length-error",
       heading:
-        "What Cannot create a string longer than 0x1fffffe8 characters means",
+        'What "Cannot create a string longer than 0x1fffffe8 characters" means',
       blocks: [
         {
           kind: "paragraph",

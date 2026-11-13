@@ -6,7 +6,7 @@ import { transcript, type Guide } from "../types";
 // on 2026-11-12.
 export const jqAlternative: Guide = {
   slug: "jq-alternative",
-  title: "A jq alternative for JSON you have not seen | Gronify",
+  title: "A jq alternative for exploring unknown JSON | Gronify",
   description:
     "jq transforms JSON whose structure you already know. For a payload you have not seen, Gronify prints every path so you can find a value and write the jq filter.",
   h1: "A jq alternative for exploring JSON you do not know yet",
@@ -175,7 +175,7 @@ json.data.projects[1].envs[0].deploy.commit.author.email = "grace@example.com"
     },
     {
       id: "path-to-jq-filter",
-      heading: "Turn the path into a jq filter",
+      heading: "From one path to a jq filter over every record",
       blocks: [
         {
           kind: "paragraph",
