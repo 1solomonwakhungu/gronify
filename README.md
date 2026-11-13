@@ -368,13 +368,13 @@ How the order is defined:
 **This is not the order `gron` uses**, and it differs from sorting the lines with `sort`:
 
 - `gron` 0.7.1 puts every bare key (`json.b`) before every bracketed key (`json["10"]`, `json["b x"]`) at the same level, whatever the key text, and compares keys as UTF-8 bytes (so it prints `"～"` before `"😀"`, the reverse of the above). It also merges duplicate keys. `gronify flatten --sort` and `gron` agree only when every key is ASCII, all keys of a level are bare or all are bracketed, no key needs escaping (`gron` compares the escaped text, so `"a\"b"` and keys with tabs can sort differently), and no key repeats.
-- Plain `sort` on the lines compares whole lines. It puts `json.a$ = 1` between `json.a = {}` and `json.a.x = 2`, and `json.arr[10]` before `json.arr[2]`, and its output no longer unflattens.
+- Plain `sort` on the lines compares whole lines. It puts `json.a$ = 1` between `json.a = {}` and `json.a.x = 2`, and `json.arr[10]` before `json.arr[2]`. That output is out of document order, so `unflatten` rebuilds it in memory, and rejects it when the disorder first shows up past 16 MiB (see [`unflatten`](#unflatten-file)).
 
 Why this order suits diffing:
 
 - It is stable: two documents that differ only in key order give identical output, so `diff <(gronify flatten --sort a.json) <(gronify flatten --sort b.json)` shows real changes and ignores reordering.
 - A changed object shows up as one contiguous block, and array elements stay in index order, so a diff reads like the document.
-- It round-trips. The output is in document order (a container before its children, siblings together, array indexes ascending), so `gronify flatten --sort data.json | gronify unflatten` streams in one pass, at any size, and rebuilds the same data with the keys sorted. Lines sorted with plain `sort` do not.
+- It round-trips. The output is in document order (a container before its children, siblings together, array indexes ascending), so `gronify flatten --sort data.json | gronify unflatten` streams in one pass, at any size, and rebuilds the same data with the keys sorted. Lines sorted with plain `sort` do not stream.
 - `search --sort` filters first and sorts what is left, so it only holds matching lines. `--sort` is ignored with `--count`, which needs no order.
 
 **Memory cost.** The document is never turned into JS objects. Each object's members are kept as already-flattened bytes plus a key string and a few numbers per member, and are put in key order when the object closes. The figures below were measured when `--sort` was added in 1.2.0 (see the 2026-10-30 entry in [STATUS.md](https://github.com/1solomonwakhungu/gronify/blob/main/STATUS.md)), before the flatten speedups in 1.3.0 and 1.3.1:
