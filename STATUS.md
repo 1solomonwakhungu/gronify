@@ -2,13 +2,14 @@
 
 ## Current state
 
-Checked on 2026-11-05.
+Checked on 2026-11-12.
 
 - **Version:** 1.3.1, released 2026-11-05 through release-please PR #128. The GitHub release `v1.3.1` carries `gronify-v1.3.1.tar.gz`, `gronify-v1.3.1.zip`, and `checksums.txt`.
 - **Distribution:**
   - npm: 1.3.1, published by the Release workflow with provenance.
-  - Homebrew: `Formula/gronify.rb` in `1solomonwakhungu/homebrew-tap` points at the v1.2.0 tarball and depends only on `node@22` (no `fastgron`).
+  - Homebrew: `Formula/gronify.rb` in `1solomonwakhungu/homebrew-tap` points at the v1.3.1 tarball and depends only on `node@22` (no `fastgron`).
   - Release archive and build from source, as described in the README.
+- **Website:** <https://gronify.vercel.app> has the home page, a `/guides` index, and ten guides under `/guides/<slug>`, one per search intent. Guides are typed content files in `landing-page/src/app/guides/content/`; `registry.ts` lists them and the build validates them (see `landing-page/README.md`). `llms.txt` and `llms-full.txt` are served with `X-Robots-Tag: noindex`.
 - **One product:** the Node/npm CLI in `src/packages/cli`. The experimental Rust prototype (`native/`, its workflow, and its landing-page benchmarks) was removed on 2026-11-04.
 - **Benchmarks:** the landing page and `BENCHMARKS.md` report the 2026-11-05 sweep of npm `gronify@1.3.1`, run at the release commit `4c78c13e5ba299462e33a87e8a02be25fda1badd`. The published tarball's `dist/` is identical to the build that was measured. See [the evidence README](docs/benchmarks/2026-11-05-v1.3.1/README.md).
 - **CI:** Quality Check and Release workflows. Release workflow success does not mean a new version was published.
@@ -22,6 +23,10 @@ Checked on 2026-11-05.
 
 ## Open items
 
+- **Search indexing (owner action).** On 2026-11-12 no search engine we could query returned a page from `gronify.vercel.app`; Google could not be checked from a script. In Search Console (the site already carries the verification tag), submit `https://gronify.vercel.app/sitemap.xml` and request indexing for the home page and `/guides`. Until pages are indexed, none of the copy work can show in results.
+- **npm page lags the repo.** The README, description, keywords, and homepage changed in #138 with `docs`/`chore` commits, which do not trigger a release. npmjs.com shows them only after the next release is published.
+- **Links.** The repository has no stars, so Homebrew core is out of reach for now. Places that list tools like this one and accept submissions: `toolleeo/awesome-cli-apps-in-a-csv`, `burningtree/awesome-json`, `fiatjaf/awesome-jq`, AlternativeTo (as an alternative to gron and jq), and one Show HN. Nothing has been submitted.
+- **Domain.** `vercel.app` is on the Public Suffix List, so Search Console only offers a URL-prefix property. No documented ranking penalty was found. A later move to a custom domain needs redirects and canonicals.
 - **Landing audit exception `GHSA-g3hv-75wg-m249`** (minimatch, reached only through eslint and its plugins, dev-only). The only fix is minimatch 11, which the 3.x consumers cannot take. Remove the entry once the eslint plugin stack moves off minimatch 3 and `npm run audit` in `landing-page` passes with an empty allowlist.
 - **`unflattenGron` in `src/packages/cli/src/gron.ts`:** no longer used by the CLI. It stays as the reference implementation for the streaming `unflatten` differential tests; drop it if those tests are retired.
 - **Roadmap issues still open, by theme:**
@@ -39,6 +44,16 @@ Checked on 2026-11-05.
 - Output is byte-identical to 1.3.1 for documents whose values and quoted keys hold no dot or opening bracket. On eleven files (the test fixture, `package-lock.json`, generated documents with hostile keys and values; about 128,000 lines, each plain and colored) every changed line is explained by such a value or key, and every line's indent equals the depth of its node in the document.
 - The blank-line grouping is unchanged: a blank line still goes before each new top-level key and between a top-level `= {}` or `= []` line and its children. It does not depend on values, so it was left for a separate decision.
 - Tests: 648 pass (30 new: 26 in `formatter.test.ts`, 4 in `cli.test.ts`). Two existing expectations that encoded the old indentation were updated.
+
+### 2026-11-12 — Search rework: home page, guides, README, npm metadata (#138, #139, #140, #141)
+
+- The site was one page aimed at "JSON parsing CLI", a phrase people use when they want a parser library. The home page now uses the searcher's words (title "Gronify: grep, search, and flatten JSON on the command line"), with a twelve-question FAQ, and its `FAQPage` JSON-LD renders only on `/` (#139).
+- #140 added the guide system: a typed `Guide` model, build-time validation (title and description length, markup, links, duplicate titles), per-page canonical, `TechArticle` and `BreadcrumbList` JSON-LD, sitemap entries, and the shared header and footer in `site-chrome.tsx`. The home page HTML was byte-identical before and after apart from asset hashes.
+- #141 added nine guides (ten with `grep-json` from #140), links from each home page section to its guide, and synced `llms.txt` and `llms-full.txt`. Each guide was written with every command run on gronify 1.3.1 and, where shown, jq 1.8.2, gron 0.7.1, and fastgron 0.7.7, then replayed by independent reviewers.
+- #138 rewrote the README opening, added a comparison table and the guide links, and changed the npm `description`, `keywords`, and `homepage`.
+- Claims corrected along the way, all confirmed by running the tools: `--regex` is a JavaScript regular expression, not ERE; exact numbers are not unique to Gronify (gron, fastgron, and untouched literals in jq 1.7+ keep them too); `unflatten` rejects grep-filtered lines that lack their container lines, where `gron -u` and `fastgron -u` create the parents; `gron -u` cannot read Gronify's lines because they have no `;`; JSON Lines input is rejected; plain-sorted lines do unflatten within the 16 MiB rebuild budget; jq's `paths(scalars)` skips `false` and `null`.
+- Google removed FAQ rich results on 2026-05-07 and the software rich result needs ratings, which this project does not have, so no rich result is expected from the structured data.
+- `flatten --pretty` in 1.3.1 counts dots and brackets inside the value when it indents. The `flatten-json` guide describes that behaviour pinned to 1.3.1; the fix is tracked separately.
 
 ### 2026-11-05 — 1.3.1 release and rebenchmark
 

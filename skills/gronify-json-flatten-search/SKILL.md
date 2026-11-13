@@ -1,6 +1,6 @@
 ---
 name: gronify-json-flatten-search
-description: Flattens and searches JSON as greppable key-value path lines using the Gronify CLI (gron and ungron workflow), with result caps, exact numbers, and a key-sorted output that makes JSON diffable with the system diff tool. Use when an AI agent needs to explore a large or unknown JSON file without flooding its context, grep nested JSON, inspect API payloads, make two JSON documents comparable as key-sorted lines, check whether a path or value exists, or replace jq with path-based queries.
+description: Flattens and searches JSON as greppable key-value path lines using the Gronify CLI (gron and ungron workflow), with result caps, exact numbers, and a key-sorted output that makes JSON diffable with the system diff tool. Use when an AI agent needs to explore a large or unknown JSON file without flooding its context, grep nested JSON, inspect API payloads, make two JSON documents comparable as key-sorted lines, check whether a path or value exists, or find a path before writing a jq filter.
 ---
 
 # Gronify
@@ -75,7 +75,7 @@ if gronify --no-color search --exit-status config.json -m 1 'debug = true' > /de
 
 ## Exact values
 
-Gronify prints numbers exactly as written in the source: `12345678901234567890`, `1.10`, `1e2`, and `-0` survive unchanged. `jq` parses numbers as doubles, so depending on its version an integer above 2^53 (a 64-bit ID, a nanosecond timestamp) can come back rounded and `1.10` as `1.1`. Search for the original digits and trust the printed ones.
+Gronify prints numbers exactly as written in the source: `12345678901234567890`, `1.10`, `1e2`, and `-0` survive unchanged. `jq` 1.6 and older parse numbers as doubles, and newer versions convert a number once a filter does arithmetic on it, so an integer above 2^53 (a 64-bit ID, a nanosecond timestamp) can come back rounded. Search for the original digits and trust the printed ones.
 
 Input must be strict JSON (no comments or trailing commas). Duplicate keys produce one line per occurrence. A syntax error exits non-zero and reports the byte offset, line, and column.
 

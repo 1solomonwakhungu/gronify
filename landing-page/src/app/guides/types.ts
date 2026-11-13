@@ -29,9 +29,8 @@ export type { TerminalLine };
  * path with brackets, such as `json.orders[2]`, inside backticks so it is not
  * read as a link.
  *
- * A link to "/guides/<slug>" whose guide is not in the registry yet renders as
- * plain text and becomes a link once that guide lands, so guides may link to
- * each other before both exist.
+ * A link to "/guides/<slug>" must name a registered guide. The build fails on
+ * any other slug, so a typo cannot ship as a dead link.
  *
  * `plainText()` in `inline.ts` strips the marks. JSON-LD uses that form.
  */
@@ -143,7 +142,7 @@ export type Guide = {
   faqs: GuideFaq[];
   /**
    * Slugs of other guides to list under "Related guides", most relevant first.
-   * A slug that is not in the registry yet is skipped without an error.
+   * Every slug must be a registered guide; the build fails on any other.
    */
   related: string[];
 };

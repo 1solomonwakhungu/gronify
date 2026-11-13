@@ -50,7 +50,7 @@ export const faqs: FaqItem[] = [
   {
     question: "Is Gronify an alternative to jq?",
     answer:
-      "For finding data, yes. For transforming it, no. jq can report paths too, but you have to write a filter for it. Gronify shows you the path when all you have is a key name or a value. It also prints numbers exactly as written and streams large files without extra flags. Gronify has no query language, so keep jq for reshaping, arithmetic, and building new JSON.",
+      "For finding data, yes. For transforming it, no. jq can report paths too, but you have to write a filter for it. Gronify shows you the path when all you have is a key name or a value. It also streams large files without extra flags. Gronify has no query language, so keep jq for reshaping, arithmetic, and building new JSON.",
   },
   {
     question: "Does Gronify work on Windows, macOS, and Linux?",
