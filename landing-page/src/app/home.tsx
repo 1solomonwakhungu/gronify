@@ -44,10 +44,10 @@ const heroTranscript: TerminalLine[] = [
 
 const rivers = [
   {
-    heading: "Flatten nested JSON into greppable paths",
+    heading: "Flatten nested JSON into greppable lines",
     description:
-      "Stream nested objects and arrays into one path assignment per line in document order, ready for standard shell pipelines.",
-    label: "Every JSON value on one greppable path line",
+      "gronify flatten prints each value on its own line as path = value, in the order it appears in the file. Pipe the lines to grep, head, or anything else that reads text.",
+    label: "gronify flatten output for a small service JSON file",
     lines: [
       { kind: "command", text: "gronify flatten service.json" },
       { kind: "output", text: "json = {}" },
@@ -62,8 +62,8 @@ const rivers = [
   {
     heading: "Search JSON keys and values with text or regex",
     description:
-      "Filter flattened JSON paths in one pass with plain text or extended regex, case-sensitive matching, inverted matches, match counts, or grep-style exit codes—no external grep required.",
-    label: "Regex search across a JSON payload",
+      "gronify search flattens and filters in one pass, so you do not need grep. A plain term matches keys and values without regard to case. Add --regex for patterns, -c for exact case, -v to invert, or --count for a total.",
+    label: "Regex search for user email paths in a JSON file",
     lines: [
       {
         kind: "command",
@@ -74,24 +74,24 @@ const rivers = [
     ] satisfies TerminalLine[],
   },
   {
-    heading: "Unflatten gron output back into valid JSON",
+    heading: "Unflatten gron lines back into JSON (ungron)",
     description:
-      "Stream document-order gron assignments through the built-in unflatten (ungron) command to reconstruct valid JSON with source numbers preserved verbatim.",
-    label: "Round-tripping gron assignments back to JSON",
+      "gronify unflatten rebuilds JSON from the lines flatten writes, and streams as it goes. Numbers come out with the digits they went in with, 64-bit IDs and trailing zeros included.",
+    label: "Flattening a JSON file and unflattening it back to JSON",
     lines: [
       {
         kind: "command",
-        text: "gronify flatten data.json | gronify unflatten",
+        text: "gronify flatten checkout.json | gronify unflatten",
       },
       { kind: "output", text: '{"service":{"name":"checkout"}}' },
     ] satisfies TerminalLine[],
   },
   {
-    heading: "Stream large files and stop when you have enough",
+    heading: "Search large JSON files without loading them",
     description:
-      "All three commands stream files or stdin pipes. Memory depends on the document and options; --sort spills buffered object lines past 64 MiB to a temp file, and out-of-order unflatten input rebuilds in memory only within the first 16 MiB (failing past that). With -m or --limit, Gronify stops reading at the cap, writes a notice to stderr (the final line in the transcript), and exits 0.",
+      "All three commands read a file or stdin in chunks and write output as they go, so the file does not have to fit in memory. With -m or --limit, Gronify stops reading at the cap, prints a notice to stderr (the last line here), and exits 0.",
     label:
-      "Streaming a compressed JSON export into gronify search with a two-match cap",
+      "Piping a compressed JSON export into gronify search with a two-match cap",
     lines: [
       {
         kind: "command",
@@ -110,10 +110,9 @@ const rivers = [
 const buildComparisons = (facts: ComparisonFacts) => [
   {
     kicker: "vs. jq & JSON.parse()",
-    title: "Explore unknown schemas and preserve exact numbers",
-    description: `jq excels when you already know the exact path and want data transformations, while Node's JSON.parse() hits V8 string limits (~512 MB, ERR_STRING_TOO_LONG) on multi-gigabyte dumps. Gronify streams raw bytes with zero upfront query DSL and prints numbers as written. ${facts.numericCheck} JSON.parse() rounds integers above 2^53, and some jq versions or arithmetic filters can too.`,
-    label:
-      "Printing 64-bit integers and trailing decimals as written during search",
+    title: "Find a key's path without writing a jq filter",
+    description: `jq is the better tool once you know the path and want to reshape data. Gronify needs no query. Search for a key or a value and it prints the full path. It also prints numbers as written. ${facts.numericCheck} JSON.parse() rounds integers above 2^53, and jq can too, depending on version and filter. Node cannot hand JSON.parse() a string over about 512 MB (ERR_STRING_TOO_LONG); Gronify reads the bytes in chunks.`,
+    label: "Search output with a 64-bit integer and a trailing zero intact",
     lines: [
       {
         kind: "command",
@@ -125,9 +124,9 @@ const buildComparisons = (facts: ComparisonFacts) => [
   },
   {
     kicker: "vs. gron & fastgron",
-    title: "Cross-platform npm install, built-in search, and streaming ungron",
-    description: `A cross-platform gron and fastgron alternative for macOS, Linux, and Windows: install via npm with built-in regex search and no separate grep or platform-specific binary to set up. Unlike gron, Gronify preserves document order by default and streams single-document flatten and unflatten in one pass: ${facts.unflatten} (${facts.measuredOn}, from the benchmark below).`,
-    label: "Streaming unflatten from gron paths to an atomic output file",
+    title: "A gron alternative with built-in search and streaming ungron",
+    description: `Gronify installs with npm on macOS, Linux, and Windows and has search built in, so there is no grep or per-platform binary to set up. It keeps document order unless you pass --sort, and it streams in both directions: ${facts.unflatten} (${facts.measuredOn}, from the benchmark below). gron and fastgron are native binaries that need no Node.js, and fastgron flattens faster when the file fits in memory.`,
+    label: "Unflattening a gron file to an output file with -o",
     lines: [
       {
         kind: "command",
@@ -138,9 +137,9 @@ const buildComparisons = (facts: ComparisonFacts) => [
   },
   {
     kicker: "vs. raw grep on JSON",
-    title: "Full path context on minified or deeply nested payloads",
-    description: `Running grep on minified JSON dumps an entire multi-megabyte line; on formatted JSON it prints an isolated key or value without parent array indexes. Gronify emits the complete root-to-leaf path on every line and ${facts.deep} (${facts.measuredOn}).`,
-    label: "Finding the exact parent path inside minified nested JSON",
+    title: "Grep minified JSON and still see the full path",
+    description: `grep on minified JSON prints the whole file, because it is one line. On pretty-printed JSON it prints the matching key or value with no parent keys or array indexes. Gronify prints the full path on every line and has no nesting limit. Gronify ${facts.deep} (${facts.measuredOn}).`,
+    label: "Finding the full path of a value inside minified JSON",
     lines: [
       {
         kind: "command",
@@ -154,9 +153,9 @@ const buildComparisons = (facts: ComparisonFacts) => [
   },
   {
     kicker: "With system diff",
-    title: "Sort object keys deterministically without breaking array order",
+    title: "Compare two JSON files with --sort and system diff",
     description:
-      "Plain line-sorting interleaves sibling subtrees and orders [10] before [2]. Gronify's --sort orders object keys by UTF-16 code unit at every level, keeps each subtree contiguous, preserves array index order, and spills buffered object lines above 64 MiB to a temp file so two payloads compare cleanly with system diff.",
+      "Flatten both files with --sort and hand the output to diff. --sort orders object keys at every level by UTF-16 code unit, keeps each object's lines together, and leaves arrays in index order. Reordered keys then produce no output, and a real change shows up with its full path. Piping through plain sort would put [10] before [2] and split objects apart.",
     label:
       "Comparing two JSON files path by path using flatten --sort with system diff",
     lines: [
@@ -174,18 +173,18 @@ const buildComparisons = (facts: ComparisonFacts) => [
 
 const buildAgentRivers = (facts: ComparisonFacts) => [
   {
-    heading: "Count and cap matches before reading into prompt context",
-    description: `Large JSON exports quickly exhaust an LLM context window if read whole. Pass --no-color, check match cardinality with --count first, then sample matches with -m or inspect schema shape with flatten --limit. Because Gronify stops reading the input stream at the cap, in our benchmark ${facts.capped} (${facts.measuredOn}).`,
-    label: "Progressive JSON narrowing for AI coding agents",
+    heading: "Count matches first, then read only a few lines",
+    description: `Run search --count to learn how many lines match before printing any. Then take a sample with -m, or look at the shape of the file with flatten --limit. Add --no-color so the output is plain text wherever it runs. Gronify stops reading the input at the cap, so when matches come early the file size hardly matters: in our benchmark ${facts.capped} (${facts.measuredOn}).`,
+    label: "Counting matches in a JSON export, then printing the first three",
     lines: [
       {
         kind: "command",
-        text: "gronify --no-color search payload.json error --count",
+        text: "gronify --no-color search export.json error --count",
       },
       { kind: "output", text: "482" },
       {
         kind: "command",
-        text: "gronify --no-color search payload.json error -m 3",
+        text: "gronify --no-color search export.json error -m 3",
       },
       { kind: "output", text: 'json.events[0].error = "upstream timeout"' },
       { kind: "output", text: 'json.events[14].error = "rate limit exceeded"' },
@@ -195,15 +194,16 @@ const buildAgentRivers = (facts: ComparisonFacts) => [
         text: "Stopped after 3 matches (--max-count); there may be more",
       },
     ] satisfies TerminalLine[],
-    linkText: "Explore result-cap flags",
+    linkText: "See the result-cap flags",
     linkHref: "#commands",
     isExternal: false,
   },
   {
-    heading: "Automate checks with exit codes, atomic writes, and agent skills",
+    heading: "Use exit codes in scripts and install the agent skill",
     description:
-      "Use --exit-status for deterministic shell branching (0 match, 1 no match, 2 error) and -o to write output atomically only after a run succeeds. Install the open gronify-json-flatten-search skill so supported AI coding agents automatically apply capped, context-safe JSON exploration.",
-    label: "Installing the Gronify agent skill and checking JSON exit status",
+      "With --exit-status, search exits 0 on a match, 1 on no match, and 2 on an error, as grep does. -o writes to a temp file and replaces the target only after the run succeeds. The gronify-json-flatten-search skill teaches supported coding agents the count-then-cap routine above.",
+    label:
+      "Installing the Gronify agent skill and branching on the exit status",
     lines: [
       {
         kind: "command",
@@ -225,22 +225,22 @@ const useCases = [
   {
     title: "Incident response",
     description:
-      "Parse service responses and logs to find status, version, region, and error paths immediately without opening an editor.",
+      "Pipe a service response into gronify search and see every status, version, or error field with its full path, without opening an editor.",
   },
   {
-    title: "CI investigation",
+    title: "Failed CI builds",
     description:
-      "Inspect generated JSON manifests and build artifacts with deterministic path output and --exit-status checks that fit shell scripts.",
+      "Check a generated manifest or build artifact from a script. search --exit-status fails the step when the value you need is missing.",
   },
   {
     title: "Support bundles",
     description:
-      "Stream and search deeply nested multi-gigabyte exports locally while keeping sensitive customer payloads on your machine.",
+      "Search a multi-gigabyte customer export on your own machine. Gronify makes no network requests, so the data stays where it is.",
   },
   {
-    title: "Configuration review",
+    title: "Config changes",
     description:
-      "Flatten both JSON versions with --sort so object keys line up deterministically, then compare paths with diff instead of tracing braces.",
+      "Flatten the old and new file with --sort, then run diff. Reordered keys drop out and each change shows its full path.",
   },
 ];
 
@@ -249,7 +249,7 @@ const commands = [
     name: "flatten",
     signature: "gronify flatten [file]",
     description:
-      "Stream-parse JSON from a file or stdin into one greppable assignment per path. Numbers keep their exact source digits.",
+      "Print JSON from a file or stdin as one path = value line per value. Numbers keep the digits they have in the source.",
     examples: [
       "gronify flatten data.json",
       "cat data.json | gronify flatten",
@@ -260,7 +260,7 @@ const commands = [
     name: "search",
     signature: "gronify search <file_or_term> [term]",
     description:
-      "Stream-filter JSON from a file or stdin with plain text, extended regex, case sensitivity, match caps, or counts.",
+      "Flatten and filter in one pass. Match plain text or a regex, cap the results, or print only the count.",
     examples: [
       'gronify search data.json "service"',
       'gronify search data.json --regex "users\\[[0-9]+\\]"',
@@ -271,7 +271,7 @@ const commands = [
     name: "unflatten",
     signature: "gronify unflatten [file]",
     description:
-      "Turn gron path assignments from a file or stdin back into valid JSON. Input in document order, as flatten writes it, streams in one pass.",
+      "Turn gron lines from a file or stdin back into JSON. Input in the order flatten writes it streams in a single pass.",
     examples: [
       "gronify unflatten data.gron",
       "gronify flatten data.json | gronify unflatten",
@@ -307,7 +307,7 @@ const optionGroups = [
   {
     title: "Search options",
     options: [
-      ["-r, --regex", "Match with extended regular expressions"],
+      ["-r, --regex", "Treat the term as a JavaScript regular expression"],
       ["-c, --case-sensitive", "Respect exact letter case"],
       ["--count", "Print only the number of matches"],
       ["-v, --invert-match", "Show lines that do not match"],
@@ -452,17 +452,16 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
           <div className={styles.heroReveal}>
             <Hero align="start" variant="gridline-expressive">
               <Hero.Label>
-                v{cliVersion} · Local-first TypeScript CLI · MIT
+                v{cliVersion} · Open source CLI · MIT license
               </Hero.Label>
               <Hero.Heading>
-                Gronify: Parse, flatten, and search JSON in the terminal.
+                Flatten and grep nested JSON from the command line.
               </Hero.Heading>
               <Hero.Description>
-                A standalone streaming JSON parser and gron CLI that flattens
-                nested payloads into greppable path assignments, filters keys
-                and values with plain text or regex, and unflattens (ungron)
-                back to valid JSON—without loading multi-gigabyte files into
-                memory.
+                Gronify is a gron-style CLI that prints every JSON value on its
+                own line with its full path, searches those lines by plain text
+                or regex, and turns them back into JSON. It streams, so a
+                multi-gigabyte file never has to fit in memory.
               </Hero.Description>
               <Hero.ButtonGroup>
                 <Button as="a" href="#install" variant="primary">
@@ -492,17 +491,15 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
           paddingBlockEnd="none"
         >
           <SectionIntro align="center" fullWidth>
-            <SectionIntro.Label>
-              Streaming JSON parsing workflow
-            </SectionIntro.Label>
+            <SectionIntro.Label>How it works</SectionIntro.Label>
             <SectionIntro.Heading size="3">
-              Flatten, search, and unflatten JSON in one standalone CLI.
+              Make JSON greppable, search it, and convert it back.
             </SectionIntro.Heading>
             <SectionIntro.Description>
-              Traditional JSON parsing loads an entire document with
-              JSON.parse() or demands an upfront query DSL. Gronify tokenizes
-              raw byte streams chunk by chunk so you can flatten paths, filter
-              matches, and round-trip large JSON documents.
+              grep cannot tell you where a match sits inside nested JSON, and jq
+              needs the path before you know it. Gronify prints each value with
+              its full path, so a text search finds the key, the value, and its
+              position in the document.
             </SectionIntro.Description>
           </SectionIntro>
         </Section>
@@ -531,16 +528,15 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
           paddingBlockEnd="none"
         >
           <SectionIntro align="center" fullWidth>
-            <SectionIntro.Label>Ecosystem comparison</SectionIntro.Label>
+            <SectionIntro.Label>Comparison</SectionIntro.Label>
             <SectionIntro.Heading size="3">
-              When to use Gronify vs. jq, gron, fastgron, and grep.
+              Gronify vs jq, gron, fastgron, and plain grep.
             </SectionIntro.Heading>
             <SectionIntro.Description>
-              Pick the right command-line tool for the payload in front of you:
-              schema-free path discovery, numbers printed as written,
-              single-document streaming unflatten, and deterministic key order
-              for system diff. Measured speed and memory for the same tools are
-              in the{" "}
+              Use jq when you know the path and want to transform data. Use
+              Gronify to find the path, keep numbers exact, search a file too
+              large to load, or line up two files for diff. Measured time and
+              memory for the same tools are in the{" "}
               <a className={styles.inlineLink} href="#benchmarks">
                 benchmarks below
               </a>
@@ -582,16 +578,15 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
           paddingBlockEnd="none"
         >
           <SectionIntro align="center" fullWidth>
-            <SectionIntro.Label>
-              AI coding agents & automation
-            </SectionIntro.Label>
+            <SectionIntro.Label>AI agents and scripts</SectionIntro.Label>
             <SectionIntro.Heading size="3">
-              Explore large JSON files without flooding LLM context.
+              Use Gronify with AI coding agents on large JSON files.
             </SectionIntro.Heading>
             <SectionIntro.Description>
-              Built for shell scripts and AI coding agents that inspect unknown
-              JSON payloads: count matches first, stop reading early at a line
-              cap, branch on grep-style exit codes, and write output atomically.
+              An agent that reads a large JSON file whole fills its context with
+              data it does not need. With Gronify it can count the matches, read
+              a capped sample, and branch on the exit code. Shell scripts use
+              the same flags.
             </SectionIntro.Description>
           </SectionIntro>
         </Section>
@@ -631,15 +626,14 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
           paddingBlockEnd="none"
         >
           <SectionIntro align="center" fullWidth>
-            <SectionIntro.Label>Operational JSON use cases</SectionIntro.Label>
+            <SectionIntro.Label>Use cases</SectionIntro.Label>
             <SectionIntro.Heading size="3">
-              Built for terminal JSON debugging and shell pipelines.
+              Debug API responses, CI artifacts, and config in the shell.
             </SectionIntro.Heading>
             <SectionIntro.Description>
-              Inspect API responses, CI artifacts, support bundles, and
-              generated manifests locally over stdin and stdout, with strict
-              JSON syntax diagnostics reporting exact byte offset, line, and
-              column.
+              Gronify reads a file or stdin and writes to stdout, so it fits
+              anywhere a pipe does. When the JSON is broken, the error gives the
+              byte offset, line, and column.
             </SectionIntro.Description>
           </SectionIntro>
         </Section>
@@ -669,14 +663,14 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
           paddingBlockEnd="none"
         >
           <SectionIntro align="center" fullWidth>
-            <SectionIntro.Label>CLI command reference</SectionIntro.Label>
+            <SectionIntro.Label>Commands</SectionIntro.Label>
             <SectionIntro.Heading size="3">
-              Three Gronify commands: flatten, search, and unflatten.
+              Gronify commands: flatten, search, and unflatten.
             </SectionIntro.Heading>
             <SectionIntro.Description>
-              Move from raw JSON to greppable paths and back over files or
-              stdin. Global options control formatting and atomic file writes;
-              command flags cap, sort, and filter output.
+              Each command reads a file or stdin and writes to stdout, or to a
+              file with -o. Global options set color, indentation, and the
+              output file. Command flags cap, sort, and filter the output.
             </SectionIntro.Description>
           </SectionIntro>
         </Section>
@@ -753,15 +747,15 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
           paddingBlockEnd="none"
         >
           <SectionIntro align="center" fullWidth>
-            <SectionIntro.Label>Cross-platform installation</SectionIntro.Label>
+            <SectionIntro.Label>Install</SectionIntro.Label>
             <SectionIntro.Heading size="3">
-              Install Gronify via npm, Homebrew, or source.
+              Install Gronify with npm, Homebrew, or from source.
             </SectionIntro.Heading>
             <SectionIntro.Description>
-              Install on macOS, Linux, or Windows via npm, use Homebrew where
-              supported, download a GitHub release archive, or build the
-              TypeScript CLI from source. Result caps, --sort, and --exit-status
-              require v1.2.0 or newer.
+              Install with npm on macOS, Linux, or Windows, or use Homebrew, a
+              GitHub release archive, or a source build. Gronify needs Node.js
+              20 or newer. Result caps, --sort, and --exit-status need v1.2.0 or
+              later.
             </SectionIntro.Description>
           </SectionIntro>
         </Section>
@@ -837,11 +831,11 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
 
         <CTABanner align="center" hasGridLines className={styles.ctaBanner}>
           <CTABanner.Heading as="h2" size="3">
-            Parse and search nested JSON locally with Gronify.
+            Try Gronify on the next JSON file you have to search.
           </CTABanner.Heading>
           <CTABanner.Description>
-            Gronify is open source and MIT licensed. Read the source, report an
-            issue, or build the standalone TypeScript CLI locally.
+            Gronify is open source under the MIT license. Read the code, report
+            an issue, or build the CLI from source.
           </CTABanner.Description>
           <CTABanner.ButtonGroup>
             <Button

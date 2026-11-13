@@ -1,4 +1,4 @@
-import { benchmarkFaqAnswer } from "./benchmark-data";
+import { benchmarkFaqAnswer, benchmarkView } from "./benchmark-data";
 import {
   cliVersion,
   homebrewTapUrl,
@@ -18,94 +18,115 @@ export {
   siteUrl,
 };
 
+/** The home page <title> and meta description, shared with the JSON-LD below. */
+export const homeTitle =
+  "Gronify: grep, search, and flatten JSON on the command line";
+export const homeDescription =
+  "Gronify is an open source CLI for developers who search nested JSON. It prints every value with its full path, matches text or regex, and streams large files.";
+
 export type FaqItem = {
   question: string;
   answer: string;
 };
 
+const facts = benchmarkView.comparisonFacts;
+
 export const faqs: FaqItem[] = [
   {
-    question: "Does Gronify require fastgron or grep?",
+    question: "What is Gronify?",
     answer:
-      "No. Streaming JSON parsing, path flattening, regex search, and unflattening gron output back to JSON are all built into the standalone Gronify CLI with zero external binaries required.",
+      "Gronify is an open source command-line tool that flattens JSON into one line per value, each with its full path, so you can search nested data with plain text or a regex. It is modeled on gron, has search and unflatten built in, and streams its input, so multi-gigabyte files work.",
   },
   {
-    question: "Can I use Gronify on Windows, macOS, and Linux?",
+    question: "How do I grep or search a JSON file from the command line?",
     answer:
-      "Yes. Install globally with npm install -g gronify (or run npx gronify) on Windows, macOS, or Linux, install via Homebrew where supported, download a GitHub release archive, or build the TypeScript CLI from source with Node.js 20 or newer. Because gronify search is built in, Windows PowerShell and CMD users get consistent text and regex filtering without installing grep or rewriting pipelines around Select-String.",
+      "Run gronify search file.json term. Gronify flattens the file and prints each matching line as path = value, so you see where the match sits. A plain term is a case-insensitive substring match on the whole line. Add --regex for a JavaScript regular expression, -c for exact case, or --count for a total. From a pipe, pass only the term: curl -s URL | gronify search status.",
   },
   {
-    question: "How large a JSON file can Gronify parse and search?",
+    question: "Is Gronify a drop-in replacement for gron?",
     answer:
-      "Flatten, search, and document-order unflatten stream files or stdin. Memory depends on document shape, nesting, token size, flags, and output. --sort spills buffered object lines past 64 MiB to a temp file, while out-of-order unflatten can rebuild in memory only when detected within the first 16 MiB. Use --no-color or -o for large unflatten output. The benchmark section reports measured time and memory with the exact source commit and test conditions.",
+      "No. Gronify uses the same path = value lines, but the commands and the output differ. The commands are gronify flatten and gronify unflatten, where gron uses gron and gron --ungron. Lines have no trailing semicolon. Keys stay in document order unless you pass --sort, while gron sorts by default. --sort compares keys by UTF-16 code unit; gron puts bare keys before bracketed ones and compares UTF-8 bytes. Gronify unflatten reads gron's output, but it needs every parent line, so it rejects grep-filtered lines that gron --ungron accepts. gron --ungron does not read Gronify's output, which lacks the semicolons.",
   },
   {
-    question: "Does --sort produce the same key order as gron?",
+    question: "Is Gronify an alternative to jq?",
     answer:
-      "No. Gronify's --sort compares object keys by UTF-16 code unit at each level, keeps each key's subtree contiguous, and leaves array index order unchanged ([2] before [10]); upstream gron puts bare keys before bracketed ones and compares UTF-8 bytes, so the two can differ. Gronify's sorted output is stable across key reorderings, makes flattened paths cleanly diffable with the system diff tool, and streams straight back through unflatten.",
+      "For finding data, yes. For transforming it, no. jq needs a filter that names the path, and Gronify shows you the path when all you have is a key name or a value. It also prints numbers exactly as written and streams large files without extra flags. Gronify has no query language, so keep jq for reshaping, arithmetic, and building new JSON.",
   },
   {
-    question:
-      "Does Gronify preserve exact 64-bit integers and decimal precision?",
+    question: "Does Gronify work on Windows, macOS, and Linux?",
     answer:
-      "Yes. Gronify validates JSON numbers without converting them to 64-bit IEEE-754 floats, printing every number verbatim as written in the source so 12345678901234567890 (above 2^53), 1.10, and -0 survive flatten, search, and unflatten unchanged.",
+      "Yes. Gronify is a Node.js program, so npm install -g gronify works on all three with Node.js 20 or newer. Search is built in, so PowerShell and cmd users do not need grep. Homebrew, a GitHub release archive, and a source build are also available. CI runs the tests on Linux and macOS, not on Windows.",
   },
   {
-    question: "How does Gronify report invalid JSON syntax errors?",
-    answer:
-      "Gronify enforces strict JSON parsing—rejecting trailing commas, comments, single quotes, invalid UTF-8, and truncated inputs—and exits non-zero while reporting the exact byte offset, line, and column of the syntax error.",
+    question: "How large a JSON file can Gronify handle?",
+    answer: `Gronify has no built-in size limit, because flatten, search, and unflatten read their input in chunks and write output as they go. In the benchmark, ${facts.unflatten} (${facts.measuredOn}). Memory depends on the document and the flags. One string or number must fit in memory. --sort holds each object's lines and spills to a temp file past 64 MiB. Unflatten input that is out of document order is rebuilt in memory only when the problem shows up in the first 16 MiB; after that it fails. Colored unflatten output builds the whole document, so pass --no-color for very large input.`,
   },
   {
-    question: "How does Gronify compare to jq, gron, and fastgron?",
-    answer: `Use jq when you already know the exact schema and need data transformations. Compared to gron and fastgron, Gronify is a TypeScript alternative that installs via npm on macOS, Linux, and Windows with built-in regex search—no separate grep required. It prints numbers exactly as written, keeps document order by default, and streams single-document flatten, search, and unflatten (ungron) with streaming input on the default path. Measured results: ${benchmarkFaqAnswer}`,
+    question: "Does Gronify round large numbers like jq or JSON.parse?",
+    answer:
+      "No. Gronify checks that each number is valid JSON and prints it exactly as written, so 12345678901234567890, 1.10, -0, and 1e-7 come through flatten, search, and unflatten unchanged. JSON.parse rounds integers above 2^53 (9007199254740992) to the nearest double. jq can round them too, depending on its version and the filter you run.",
   },
   {
-    question: "How do I compare two JSON files using Gronify and system diff?",
+    question: "How do I compare two JSON files from the command line?",
     answer:
-      "Run diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten --sort new.json) in bash or zsh, or write two sorted files with -o on Windows and compare them with diff. Gronify has no diff subcommand; instead, --sort normalizes object key order at every nesting level while keeping each object's subtree intact and array elements in numeric index order, so system diff highlights only real data changes.",
+      "Flatten both files with --sort and give the output to your system's diff. In bash or zsh: diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten --sort new.json). --sort puts object keys in the same order on both sides and leaves arrays in index order, so reordered keys produce no output. Gronify has no diff command of its own. In PowerShell or cmd, write each side to a file with -o and compare the files.",
   },
   {
-    question:
-      "How can AI coding agents explore large JSON files without flooding LLM context?",
+    question: "How do AI coding agents use Gronify on large JSON files?",
     answer:
-      "Pass --no-color and narrow progressively: run gronify --no-color search file.json term --count to check match volume first, sample matches with search -m 20, or inspect top-level schema shape with flatten --limit 50. Gronify closes the input stream immediately when -m or --limit is hit, avoiding the rest of a large file when enough matches occur near the start. Agents can also install the gronify-json-flatten-search skill from skills.sh.",
+      "They count first, then read a capped sample. gronify --no-color search file.json term --count prints how many lines match. search -m 20 prints the first 20 matches and stops reading the file, and flatten --limit 50 shows the shape of the document. A large file never enters the model's context whole. The gronify-json-flatten-search skill on skills.sh teaches supported agents this routine.",
   },
   {
-    question: "Does Gronify send JSON payloads to an external service?",
+    question: "Does Gronify send my JSON data anywhere?",
     answer:
-      "No. Gronify is 100% local-first. Every file and stdin stream is parsed, searched, and reconstructed directly on your own machine.",
+      "No. Gronify reads files and stdin on your machine and writes to stdout or a local file. It makes no network requests and has no telemetry.",
+  },
+  {
+    question: "What does Gronify do with invalid JSON?",
+    answer:
+      "It stops with exit code 1 (2 with search --exit-status) and an error that names the byte offset, line, and column, such as: Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 7 (line 1, column 8). Gronify accepts strict JSON only, so trailing commas, comments, single quotes, invalid UTF-8, and JSON Lines input are errors. Lines before the error may already be printed, so check the exit code in scripts.",
+  },
+  {
+    question: "How fast is Gronify compared with gron, fastgron, and jq?",
+    answer: benchmarkFaqAnswer,
   },
 ];
 
-export const structuredData = {
+const websiteId = `${siteUrl}/#website`;
+const authorId = `${siteUrl}/#author`;
+const softwareId = `${siteUrl}/#software`;
+const homePageId = `${siteUrl}/#webpage`;
+
+/** Rendered by the root layout, so every route carries it. */
+export const siteStructuredData = {
   "@context": "https://schema.org",
   "@graph": [
     {
       "@type": "WebSite",
-      "@id": `${siteUrl}/#website`,
+      "@id": websiteId,
       url: siteUrl,
       name: "Gronify",
       description:
-        "Gronify streams JSON from files and pipes: local-first CLI to flatten greppable paths, search with regex, and unflatten (ungron) JSON.",
+        "Documentation and benchmarks for Gronify, a command-line tool that flattens and searches JSON.",
       inLanguage: "en",
       publisher: {
-        "@id": `${siteUrl}/#author`,
+        "@id": authorId,
       },
     },
     {
       "@type": "Person",
-      "@id": `${siteUrl}/#author`,
+      "@id": authorId,
       name: "Solomon Wakhungu",
       url: "https://github.com/1solomonwakhungu",
     },
     {
       "@type": ["SoftwareApplication", "SoftwareSourceCode"],
-      "@id": `${siteUrl}/#software`,
+      "@id": softwareId,
       name: "Gronify",
       url: siteUrl,
       image: `${siteUrl}/opengraph-image`,
       description:
-        "Local-first, standalone TypeScript CLI that stream-parses multi-gigabyte JSON into greppable path assignments, filters keys and values with plain text or extended regex, preserves exact source numbers (including 64-bit integers and trailing decimals), and unflattens (ungron) path assignments back into valid JSON.",
+        "Gronify is an open source command-line tool that flattens nested JSON into one line per value with its full path, searches those lines with plain text or a regular expression, and rebuilds JSON from them. It reads files and stdin as a stream, so multi-gigabyte files work, and it prints numbers exactly as written.",
       applicationCategory: "DeveloperApplication",
       applicationSubCategory: "Command Line Interface",
       operatingSystem: "macOS, Linux, Windows",
@@ -114,12 +135,13 @@ export const structuredData = {
       softwareVersion: cliVersion,
       softwareRequirements: `Node.js ${nodeRequirement}`,
       featureList: [
-        "Stream-parse large JSON from files or stdin",
-        "Flatten nested JSON into greppable path assignments in document order",
-        "Built-in plain-text and extended regex search with result caps and exit codes",
-        "Preserve exact 64-bit integers above 2^53 and trailing decimals verbatim",
-        "Stream-unflatten (ungron) document-order gron assignments back to valid JSON",
-        "Deterministic UTF-16 object key sorting (--sort) for system diff",
+        "Flatten nested JSON into one path = value line per value, in document order",
+        "Search keys and values with plain text or a regular expression, with no separate grep",
+        "Rebuild JSON from gron lines (unflatten, also called ungron)",
+        "Stream files and stdin, so multi-gigabyte input works",
+        "Print numbers exactly as written, including integers above 2^53",
+        "Stop reading the input once a result cap is reached (-m, --limit)",
+        "Sort object keys with --sort so two files compare cleanly with system diff",
       ],
       dateModified: lastReleaseIsoDate,
       license: `${repositoryUrl}/blob/main/LICENSE`,
@@ -134,20 +156,45 @@ export const structuredData = {
         priceCurrency: "USD",
       },
       author: {
-        "@id": `${siteUrl}/#author`,
+        "@id": authorId,
+      },
+    },
+  ],
+};
+
+/** Rendered by the home page only: other routes must not carry the home FAQ. */
+export const homeStructuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": homePageId,
+      url: siteUrl,
+      name: homeTitle,
+      description: homeDescription,
+      inLanguage: "en",
+      isPartOf: {
+        "@id": websiteId,
+      },
+      about: {
+        "@id": softwareId,
+      },
+      primaryImageOfPage: {
+        "@type": "ImageObject",
+        url: `${siteUrl}/opengraph-image`,
       },
     },
     {
       "@type": "FAQPage",
       "@id": `${siteUrl}/#faq`,
-      name: "Gronify — Frequently Asked Questions",
+      name: "Gronify frequently asked questions",
       url: siteUrl,
       inLanguage: "en",
       isPartOf: {
-        "@id": `${siteUrl}/#website`,
+        "@id": homePageId,
       },
       about: {
-        "@id": `${siteUrl}/#software`,
+        "@id": softwareId,
       },
       mainEntity: faqs.map((faq) => ({
         "@type": "Question",

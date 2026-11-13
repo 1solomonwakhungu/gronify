@@ -1,7 +1,7 @@
 import { Benchmarks } from "./benchmarks";
 import { benchmarkView, reproduceCommand } from "./benchmark-data";
 import { Home } from "./home";
-import { faqs } from "./seo-data";
+import { faqs, homeStructuredData } from "./seo-data";
 import { Terminal, type TerminalLine } from "./terminal";
 
 const reproduceLines: TerminalLine[] = [
@@ -12,20 +12,29 @@ const reproduceLines: TerminalLine[] = [
 
 export default function Page() {
   return (
-    <Home
-      faqs={faqs}
-      facts={benchmarkView.comparisonFacts}
-      benchmarks={
-        <Benchmarks
-          view={benchmarkView}
-          reproduce={
-            <Terminal
-              label="Reproduce the cross-tool benchmark"
-              lines={reproduceLines}
-            />
-          }
-        />
-      }
-    />
+    <>
+      {/* Home-only JSON-LD (WebPage and FAQPage). The site-wide graph is in the root layout. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(homeStructuredData).replace(/</g, "\\u003c"),
+        }}
+      />
+      <Home
+        faqs={faqs}
+        facts={benchmarkView.comparisonFacts}
+        benchmarks={
+          <Benchmarks
+            view={benchmarkView}
+            reproduce={
+              <Terminal
+                label="Reproduce the cross-tool benchmark"
+                lines={reproduceLines}
+              />
+            }
+          />
+        }
+      />
+    </>
   );
 }
