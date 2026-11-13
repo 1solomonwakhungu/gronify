@@ -1,4 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+
+const guideContentDir = "landing-page/src/app/guides/content";
 
 const requiredFiles = [
   "README.md",
@@ -13,6 +15,8 @@ const requiredFiles = [
   "landing-page/src/app/seo-data.ts",
   "landing-page/src/app/sitemap.ts",
   "landing-page/src/app/opengraph-image.tsx",
+  "landing-page/src/app/site-chrome.tsx",
+  "landing-page/src/app/guides/registry.ts",
   "LICENSE",
   "CONTRIBUTING.md",
   "SECURITY.md",
@@ -48,17 +52,29 @@ const staleClaimPatterns = [
   },
   {
     // `--sort` only makes the output diffable. Naming the system `diff` tool is fine, so code spans are ignored and
-    // only claim-shaped phrases are matched: a verb list ending in "and diff", "Gronify diffs ...", "diff two JSON
-    // files", "a diff mode", "diffing support", "built-in diffing".
+    // only claim-shaped phrases are matched: "Gronify diffs ...", "a diff mode", "diffing support", "built-in diffing".
+    // These are false on every page, guides included.
     prose: true,
     pattern: new RegExp(
       [
         String.raw`\bgronify\s+(?:can\s+|will\s+|also\s+)?diffs?\b`,
+        String.raw`(?<!\b(?:no|not\s+an?|without\s+an?)\s+)\bdiff(?:ing)?\s+(?:command|subcommand|support|mode|feature)s?\b`,
+        String.raw`(?<!\b(?:no|not\s+an?|without\s+an?)\s+)\bbuilt-in\s+diff(?:s|ing)?\b`,
+      ].join("|"),
+      "i",
+    ),
+    message: "claims diff support that is not present",
+  },
+  {
+    // Looser phrasing that reads as a claim on product pages: a verb list ending in "and diff", "diff two JSON
+    // files", "JSON diff". A guide may use these words to explain the system `diff` tool, so guides skip this entry.
+    prose: true,
+    diffPhrasing: true,
+    pattern: new RegExp(
+      [
         String.raw`\b(?:search|inspect|flatten|unflatten|explor|quer|filter)\w*\b[^.\n]*?\b(?:and|or)\s+diffs?\b(?!\s+(?:the|them|it|its|a|an|two|both|with|by|against|those|these)\b)`,
         String.raw`\bdiffs?\s+(?:two|2|any|your|the two)\s+(?:JSON|payloads?)\b`,
         String.raw`\b(?:JSON|gron)\s+diff(?:s|ing)?\b`,
-        String.raw`(?<!\b(?:no|not\s+an?|without\s+an?)\s+)\bdiff(?:ing)?\s+(?:command|subcommand|support|mode|feature)s?\b`,
-        String.raw`(?<!\b(?:no|not\s+an?|without\s+an?)\s+)\bbuilt-in\s+diff(?:s|ing)?\b`,
       ].join("|"),
       "i",
     ),
@@ -80,7 +96,7 @@ const staleClaimPatterns = [
   },
 ];
 
-function scanForStaleClaims(file) {
+function scanForStaleClaims(file, { skipDiffPhrasing = false } = {}) {
   if (!existsSync(file)) {
     return;
   }
@@ -90,7 +106,11 @@ function scanForStaleClaims(file) {
   const prose = /\.(?:md|txt)$/i.test(file)
     ? contents.replace(/^ *```[\s\S]*?^ *```/gm, " ").replace(/`[^`\n]*`/g, " ")
     : contents;
-  for (const { pattern, message, prose: proseOnly } of staleClaimPatterns) {
+  for (const claim of staleClaimPatterns) {
+    if (skipDiffPhrasing && claim.diffPhrasing) {
+      continue;
+    }
+    const { pattern, message, prose: proseOnly } = claim;
     if (pattern.test(proseOnly ? prose : contents)) {
       errors.push(`${file} ${message}`);
     }
@@ -135,6 +155,20 @@ scanForStaleClaims("landing-page/src/app/benchmarks.tsx");
 scanForStaleClaims("landing-page/src/app/benchmark-data.ts");
 scanForStaleClaims("landing-page/src/app/seo-data.ts");
 scanForStaleClaims("landing-page/src/app/opengraph-image.tsx");
+scanForStaleClaims("landing-page/src/app/site-chrome.tsx");
+scanForStaleClaims("landing-page/src/app/guides/page.tsx");
+scanForStaleClaims("landing-page/src/app/guides/guide-article.tsx");
+
+// A guide may explain comparing two JSON files with the system diff tool, so the claim-shaped diff phrases are skipped.
+if (existsSync(guideContentDir)) {
+  for (const name of readdirSync(guideContentDir).sort()) {
+    if (name.endsWith(".ts")) {
+      scanForStaleClaims(`${guideContentDir}/${name}`, {
+        skipDiffPhrasing: true,
+      });
+    }
+  }
+}
 
 if (
   existsSync("landing-page/public/llms.txt") &&
