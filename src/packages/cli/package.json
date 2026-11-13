@@ -1,16 +1,25 @@
 {
   "name": "gronify",
   "version": "1.3.1",
-  "description": "A standalone command-line tool to flatten, search, and unflatten JSON.",
+  "description": "Grep JSON from the command line: flatten nested JSON, search it with text or regex, and unflatten it. A gron-style CLI.",
   "keywords": [
     "json",
     "gron",
-    "cli",
+    "ungron",
+    "grep",
+    "greppable",
+    "flatten",
+    "unflatten",
     "search",
-    "platform-engineering",
+    "json-flatten",
+    "json-search",
+    "json-grep",
+    "cli",
+    "command-line",
+    "streaming",
     "developer-tools"
   ],
-  "homepage": "https://github.com/1solomonwakhungu/gronify#readme",
+  "homepage": "https://gronify.vercel.app",
   "bugs": {
     "url": "https://github.com/1solomonwakhungu/gronify/issues"
   },
