@@ -943,6 +943,30 @@ describe("Gronify CLI", () => {
         expect(child.stdout.replace(/\u001b\[[0-9;]*m/g, "").trim()).toBe(pretty);
       });
 
+      test("sorted output and output written with -o", async () => {
+        const sorted = [
+          "json = {}",
+          "json.a = {}",
+          "",
+          '  json.a.host = "db.internal"',
+          "  json.a.lag = 0.5",
+          "  json.a.n = 1",
+          "  json.a.t = []",
+          '    json.a.t[0] = "x[0] = y"',
+          "",
+          'json["b.c"] = {}',
+          '  json["b.c"]["x = y"] = {}',
+          '    json["b.c"]["x = y"]["k[0]"] = "json.a = 1"',
+        ].join("\n");
+        const outputFile = join(dir, "pretty-sorted.gron");
+        const piped = await runCLI(["--no-color", "--pretty", "flatten", "--sort"], doc);
+        const written = await runCLI(["--no-color", "--pretty", "-o", outputFile, "flatten", "--sort"], doc);
+
+        expect(piped.stdout).toBe(sorted);
+        expect(written.exitCode).toBe(0);
+        expect(readFileSync(outputFile, "utf8").trim()).toBe(sorted);
+      });
+
       test("the depth cap holds at six levels", async () => {
         const result = await runCLI(["--no-color", "--pretty", "flatten"], '{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":1.5}}}}}}}}}');
 
