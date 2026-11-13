@@ -1,7 +1,6 @@
 import { transcript, type Guide } from "../types";
 
-// Every transcript below is pasted from gronify 1.3.1 (plus jq 1.8.2, sed, and
-// grep) run against the config.json, keys.json, and dots.json files shown in
+// Every transcript below is pasted from gronify 1.3.1 (plus jq 1.8.2 and grep) run against the config.json, keys.json, and dots.json files shown in
 // the transcripts. Statements about gron 0.7.1, fastgron 0.7.7, and the npm
 // package flat 6.0.1 come from running those versions on the same files.
 export const flattenJson: Guide = {
@@ -87,7 +86,7 @@ json[2].a = null
       blocks: [
         {
           kind: "paragraph",
-          text: "The two transcripts above contain every case:",
+          text: "The two transcripts above contain every case but the last:",
         },
         {
           kind: "list",
@@ -210,7 +209,7 @@ json.name = "api"
         { kind: "subheading", text: "What --pretty does to flattened lines" },
         {
           kind: "paragraph",
-          text: '`--pretty` indents each line and puts a blank line between top-level keys. The indent is two spaces for every dot and opening bracket on the line after the first, up to twelve spaces. The count includes the value, so `lag = 0.5` sits one step deeper than `host = "r1"`:',
+          text: '`--pretty` indents each line and adds blank lines. Each line is indented two spaces for every dot and opening bracket it contains beyond the first, up to twelve spaces. In Gronify 1.3.1 the count runs over the whole line, value included, so `lag = 0.5` sits one step deeper than `host = "r1"`. A blank line goes before each new top-level key, and also between a top-level `= {}` or `= []` line and its own children:',
         },
         {
           kind: "terminal",
@@ -228,7 +227,7 @@ $ gronify --pretty flatten config.json | grep replicas
         },
         {
           kind: "paragraph",
-          text: "Indented lines still unflatten, but a pattern anchored at `^json` matches only 7 of this file's 26 lines once they are indented. Use `--pretty` for reading on screen and leave it off when another program reads the output.",
+          text: "Indented lines still unflatten, but a pattern anchored at `^json` matches only 7 of this file's 26 lines once they are indented. Leave `--pretty` off when another program reads the output.",
         },
       ],
     },
@@ -238,17 +237,14 @@ $ gronify --pretty flatten config.json | grep replicas
       blocks: [
         {
           kind: "paragraph",
-          text: "`gronify unflatten` reads the lines and writes JSON. Piping one command into the other returns the document unchanged. For this file the result is byte-identical to `config.json`, so you can edit a value with a line tool such as sed and rebuild:",
+          text: "`gronify unflatten` reads the lines and writes JSON. Piping one command into the other returns the document unchanged. For this file the result is byte-identical to `config.json`:",
         },
         {
           kind: "terminal",
-          label:
-            "Round trip from JSON to lines and back, then an edit with sed",
+          label: "Round trip from JSON to lines and back",
           lines: transcript`
 $ gronify flatten config.json | gronify unflatten
 {"name":"api","port":8080,"debug":false,"owner":null,"tags":["web","eu"],"db":{"host":"db.internal","replicas":[{"host":"r1","lag":0.5},{"host":"r2","lag":1.25}]},"grid":[[1,2],[3,4]],"limits":{},"plugins":[]}
-$ gronify flatten config.json | sed 's/port = 8080/port = 9090/' | gronify unflatten
-{"name":"api","port":9090,"debug":false,"owner":null,"tags":["web","eu"],"db":{"host":"db.internal","replicas":[{"host":"r1","lag":0.5},{"host":"r2","lag":1.25}]},"grid":[[1,2],[3,4]],"limits":{},"plugins":[]}
 `,
         },
         {
@@ -259,7 +255,7 @@ $ gronify flatten config.json | sed 's/port = 8080/port = 9090/' | gronify unfla
     },
     {
       id: "lines-or-flat-object",
-      heading: "One line per value or one flat object",
+      heading: "Flatten JSON with jq: lines or one flat object",
       blocks: [
         {
           kind: "paragraph",
