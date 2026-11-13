@@ -156,8 +156,10 @@ export type Guide = {
  *   json.orders[0].id = 1001
  *   `
  *
- * A line that starts with "$ " is a command; every other line is output. Blank
- * lines are dropped. The text is taken raw, so backslashes and quotes need no
+ * A line that starts with "$ " is a command; every other line is output, and
+ * that includes the continuation lines of a multi-line command. Start every
+ * line at column 0. To show a file's contents, use a `$ cat file` transcript.
+ * Blank lines are dropped. The text is taken raw, so backslashes and quotes need no
  * escaping. Two things cannot appear inside the template: a backtick and
  * "${". For a transcript that needs either, write the `TerminalLine` objects
  * by hand.
@@ -176,9 +178,14 @@ export function transcript(
     .split("\n")
     .map((line) => line.trimEnd())
     .filter((line) => line.trim() !== "")
-    .map((line) =>
-      line.startsWith("$ ")
+    .map((line) => {
+      if (/^\s+\$ /.test(line)) {
+        throw new Error(
+          `transcript line "${line.trim()}" is indented; start every line of the template at column 0 so "$ " marks a command`,
+        );
+      }
+      return line.startsWith("$ ")
         ? { kind: "command" as const, text: line.slice(2) }
-        : { kind: "output" as const, text: line },
-    );
+        : { kind: "output" as const, text: line };
+    });
 }

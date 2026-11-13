@@ -1,4 +1,4 @@
-import { inlineProblems } from "./inline";
+import { inlineProblems, linkHrefs, plainTextProblems } from "./inline";
 import type { Guide, GuideBlock, RichText } from "./types";
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -25,16 +25,24 @@ function guideProblems(guide: Guide): string[] {
     if (value.trim() === "") report(field, "is empty");
     if (value !== value.trim()) report(field, "has leading or trailing space");
   };
+  const requirePlainText = (field: string, value: string) => {
+    requireText(field, value);
+    for (const problem of plainTextProblems(value)) report(field, problem);
+  };
+  const anchorLinks: { field: string; id: string }[] = [];
   const checkRichText = (field: string, value: RichText) => {
     requireText(field, value);
     for (const problem of inlineProblems(value)) report(field, problem);
+    for (const href of linkHrefs(value)) {
+      if (href.startsWith("#")) anchorLinks.push({ field, id: href.slice(1) });
+    }
   };
 
   if (!slugPattern.test(guide.slug)) {
     report("slug", `"${guide.slug}" must be lowercase kebab-case`);
   }
 
-  requireText("title", guide.title);
+  requirePlainText("title", guide.title);
   if (guide.title.length > titleMaxLength) {
     report(
       "title",
@@ -42,7 +50,7 @@ function guideProblems(guide: Guide): string[] {
     );
   }
 
-  requireText("description", guide.description);
+  requirePlainText("description", guide.description);
   if (
     guide.description.length < descriptionMinLength ||
     guide.description.length > descriptionMaxLength
@@ -53,7 +61,7 @@ function guideProblems(guide: Guide): string[] {
     );
   }
 
-  requireText("h1", guide.h1);
+  requirePlainText("h1", guide.h1);
   checkRichText("lede", guide.lede);
 
   for (const field of ["published", "updated"] as const) {
@@ -83,7 +91,7 @@ function guideProblems(guide: Guide): string[] {
       report(`${at}.id`, `"${section.id}" is used twice`);
     }
     sectionIds.add(section.id);
-    requireText(`${at}.heading`, section.heading);
+    requirePlainText(`${at}.heading`, section.heading);
     if (section.blocks.length === 0) report(`${at}.blocks`, "is empty");
 
     section.blocks.forEach((block: GuideBlock, blockIndex) => {
@@ -93,10 +101,10 @@ function guideProblems(guide: Guide): string[] {
           checkRichText(`${field}.text`, block.text);
           break;
         case "subheading":
-          requireText(`${field}.text`, block.text);
+          requirePlainText(`${field}.text`, block.text);
           break;
         case "terminal":
-          requireText(`${field}.label`, block.label);
+          requirePlainText(`${field}.label`, block.label);
           if (block.lines.length === 0) report(`${field}.lines`, "is empty");
           block.lines.forEach((line, lineIndex) => {
             if (line.text.trim() === "") {
@@ -111,13 +119,16 @@ function guideProblems(guide: Guide): string[] {
           );
           break;
         case "table":
-          requireText(`${field}.caption`, block.caption);
+          requirePlainText(`${field}.caption`, block.caption);
           if (block.columns.length < 2) {
             report(`${field}.columns`, "needs at least two columns");
           }
           block.columns.forEach((column, columnIndex) =>
-            requireText(`${field}.columns[${columnIndex}]`, column),
+            requirePlainText(`${field}.columns[${columnIndex}]`, column),
           );
+          if (new Set(block.columns).size !== block.columns.length) {
+            report(`${field}.columns`, "names a column twice");
+          }
           if (block.rows.length === 0) report(`${field}.rows`, "is empty");
           block.rows.forEach((row, rowIndex) => {
             if (row.length !== block.columns.length) {
@@ -141,7 +152,7 @@ function guideProblems(guide: Guide): string[] {
 
   const questions = new Set<string>();
   guide.faqs.forEach((faq, faqIndex) => {
-    requireText(`faqs[${faqIndex}].question`, faq.question);
+    requirePlainText(`faqs[${faqIndex}].question`, faq.question);
     checkRichText(`faqs[${faqIndex}].answer`, faq.answer);
     if (questions.has(faq.question)) {
       report(`faqs[${faqIndex}].question`, "is used twice");
@@ -160,6 +171,16 @@ function guideProblems(guide: Guide): string[] {
     related.add(slug);
   });
 
+  // A same-page link must land on a section of this guide or a template anchor.
+  for (const { field, id } of anchorLinks) {
+    if (!sectionIds.has(id) && !reservedSectionIds.has(id)) {
+      report(
+        field,
+        `links to "#${id}", which is not a section id of this guide`,
+      );
+    }
+  }
+
   return problems;
 }
 
@@ -171,6 +192,11 @@ function guideProblems(guide: Guide): string[] {
 export function validateGuides(guides: Guide[]): Guide[] {
   const problems: string[] = [];
   const slugs = new Set<string>();
+  const uniqueFields = {
+    title: new Map<string, string>(),
+    h1: new Map<string, string>(),
+    description: new Map<string, string>(),
+  };
 
   for (const guide of guides) {
     const file = `guides/content/${guide.slug}.ts`;
@@ -180,6 +206,14 @@ export function validateGuides(guides: Guide[]): Guide[] {
     slugs.add(guide.slug);
     for (const problem of guideProblems(guide)) {
       problems.push(`${file}: ${problem}`);
+    }
+    // Two pages with the same title, h1, or description compete for one query.
+    for (const field of ["title", "h1", "description"] as const) {
+      const seenIn = uniqueFields[field].get(guide[field]);
+      if (seenIn !== undefined) {
+        problems.push(`${file}: ${field} is the same as in ${seenIn}`);
+      }
+      uniqueFields[field].set(guide[field], file);
     }
   }
 

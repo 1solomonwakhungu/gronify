@@ -68,6 +68,23 @@ export function guideSlugOf(href: string): string | null {
   return /^\/guides\/([^/#?]+)/.exec(href)?.[1] ?? null;
 }
 
+/** Markdown bold or an HTML tag: neither is parsed, so both would render literally. */
+const unsupportedMarkupPattern = /\*\*|<\/?[a-z][a-z0-9]*[\s>/]/i;
+
+/** Marks that must not appear in a plain-text field such as a heading. */
+export function plainTextProblems(text: string): string[] {
+  return /`|\]\(/.test(text) || unsupportedMarkupPattern.test(text)
+    ? ["is plain text; no backticks, [label](href), **bold**, or HTML tags"]
+    : [];
+}
+
+/** Every href linked from a `RichText` string, in order. */
+export function linkHrefs(text: RichText): string[] {
+  return parseInline(text).flatMap((node) =>
+    node.kind === "link" ? [node.href] : [],
+  );
+}
+
 function textProblems(nodes: InlineNode[]): string[] {
   const problems: string[] = [];
   for (const node of nodes) {
@@ -80,7 +97,17 @@ function textProblems(nodes: InlineNode[]): string[] {
           'has a malformed link; use [label](href) with no "]" in the label and no space in the href',
         );
       }
+      if (unsupportedMarkupPattern.test(node.text)) {
+        problems.push(
+          "has Markdown bold or an HTML tag; only `code` and [label](href) are parsed",
+        );
+      }
     } else if (node.kind === "link") {
+      if (/[()]/.test(node.href)) {
+        problems.push(
+          `links to "${node.href}", which contains a parenthesis; write %28 or %29`,
+        );
+      }
       if (!/^(?:\/(?!\/)|#[a-z0-9]|https:\/\/)/.test(node.href)) {
         problems.push(
           `links to "${node.href}"; an href must start with "/", "#", or "https://" (put bracketed paths in backticks)`,
