@@ -372,5 +372,5 @@ json.a.b = 2
         "Close. gron 0.7.1 ends each line with a semicolon, sorts keys by default, and prints non-ASCII keys bare. Gronify prints no semicolons, keeps document order unless you pass `--sort`, and brackets those keys. `gronify unflatten` accepted gron's semicolons and `fastgron -u` 0.7.7 read Gronify's lines, but `gron -u` rejected them with `statement has no value` until each line ended in a semicolon.",
     },
   ],
-  related: ["unflatten-json", "grep-json", "find-json-path"],
+  related: ["unflatten-json", "grep-json", "compare-json-files"],
 };

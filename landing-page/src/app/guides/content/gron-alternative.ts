@@ -61,8 +61,8 @@ export const gronAlternative: Guide = {
             ],
             [
               "Ungron of grep-filtered lines",
-              "Yes, `gron -u`",
-              "Yes, `fastgron -u`",
+              "Yes, `-u`",
+              "Yes, `-u`",
               "No, `unflatten` needs every container line",
             ],
             [
@@ -192,7 +192,7 @@ json.owner.id = 12345678901234567890
         },
         {
           kind: "paragraph",
-          text: "gron sorted the keys and ended every line with `;`. fastgron and Gronify printed identical bytes, in document order and with no semicolon. All three kept the 20-digit `id` as written. A script written against gron's format needs a flag: `fastgron --sort --semicolon` printed exactly what gron printed for this file, and `gronify flatten --sort` printed gron's order without the `;`.",
+          text: "gron sorted the keys and ended every line with `;`. fastgron and Gronify printed identical bytes, in document order and with no semicolon. All three kept the 20-digit `id` as written. A script written against gron's format needs a flag: `fastgron --sort --semicolon` printed exactly what gron printed for this file, and `gronify flatten --sort` printed gron's order without the `;`. The same sorted output is what lines two files up for `diff`; see [comparing two JSON files](/guides/compare-json-files).",
         },
         {
           kind: "paragraph",

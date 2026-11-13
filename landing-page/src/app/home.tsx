@@ -439,7 +439,7 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
                 v{cliVersion} · Open source CLI · MIT license
               </Hero.Label>
               <Hero.Heading>
-                Flatten and grep nested JSON from the command line.
+                A gron-style CLI to search and flatten nested JSON.
               </Hero.Heading>
               <Hero.Description>
                 Gronify is a gron-style CLI that prints every JSON value on its
