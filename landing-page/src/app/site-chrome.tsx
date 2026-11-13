@@ -91,8 +91,8 @@ export function SiteFooter({ onHome = false }: ChromeProps) {
         <div className={styles.footerBrand}>
           <GronifyLogo height={18} decorative />
           <Text as="p" size="200" variant="muted">
-            Gronify — local-first streaming JSON parsing and search CLI for the
-            terminal. MIT licensed.
+            Gronify flattens, searches, and unflattens JSON from the command
+            line. MIT licensed.
           </Text>
         </div>
         <Stack
@@ -107,6 +107,9 @@ export function SiteFooter({ onHome = false }: ChromeProps) {
             arrowDirection="none"
           >
             FAQ
+          </Link>
+          <Link href="/guides" size="small" arrowDirection="none">
+            Guides
           </Link>
           <Link
             href={repositoryUrl}
