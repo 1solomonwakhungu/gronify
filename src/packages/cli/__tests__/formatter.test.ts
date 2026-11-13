@@ -1,6 +1,7 @@
-// Mock chalk to avoid ESM issues in jest's CommonJS environment
+// Mock chalk to avoid ESM issues in jest's CommonJS environment. The stand-in still wraps text in ANSI codes, so a
+// colored line reaches the pretty formatter looking like a real one.
 jest.mock("chalk", () => {
-  const wrap = (s: string) => s;
+  const wrap = (s: string) => `\u001b[36m${s}\u001b[39m`;
   return {
     default: {
       red: wrap,
@@ -23,6 +24,7 @@ import {
   loadColors,
   shouldUseColor,
 } from "../src/formatter";
+import { flattenJson } from "../src/gron";
 
 // Colored formatting needs chalk, which the formatter loads on demand.
 beforeAll(() => loadColors());
@@ -197,22 +199,23 @@ describe("OutputFormatter", () => {
       "json.id = null",
     ];
 
-    /** The pre-streaming pretty algorithm, kept here as the reference. */
-    function referencePretty(lines: string[]): string {
-      const result: string[] = [];
-      let lastTopLevel = "";
-      lines.forEach((line, index) => {
-        const cleanLine = line.replace(/\u001b\[[0-9;]*m/g, "");
-        const nestingLevel = Math.max(0, (cleanLine.match(/\[/g) || []).length + (cleanLine.match(/\./g) || []).length - 1);
-        const indent = "  ".repeat(Math.min(nestingLevel, 6));
-        const topLevelMatch = cleanLine.match(/^json\.([^\[.]+)/);
-        const currentTopLevel = topLevelMatch ? topLevelMatch[1] : "root";
-        if (index > 0 && currentTopLevel !== lastTopLevel && lastTopLevel !== "root") result.push("");
-        result.push(indent + line);
-        lastTopLevel = currentTopLevel || "root";
-      });
-      return result.join("\n");
-    }
+    /** The pretty form of `gron`: two spaces per level below the top-level keys, a blank line between groups. */
+    const prettyGron = [
+      "json = {}",
+      "json.users = []",
+      "",
+      "  json.users[0] = {}",
+      '    json.users[0].name = "Alice"',
+      "    json.users[0].tags = []",
+      '      json.users[0].tags[0] = "a"',
+      "",
+      "json.settings = {}",
+      "",
+      "            json.settings.deep.er.still.and.more.and.more.x = 1",
+      "  json.settings.flag = true",
+      "",
+      "json.id = null",
+    ].join("\n");
 
     test("returns null when there is nothing to format", () => {
       const fmt = new OutputFormatter({ color: false, pretty: false });
@@ -223,8 +226,8 @@ describe("OutputFormatter", () => {
     test("pretty lines joined with newlines equal the batch pretty output", () => {
       const fmt = new OutputFormatter({ color: false, pretty: true });
       const format = fmt.createGronLineFormatter()!;
-      expect(gron.map(format).join("\n")).toBe(referencePretty(gron));
-      expect(fmt.formatGron(gron.join("\n"))).toBe(referencePretty(gron));
+      expect(gron.map(format).join("\n")).toBe(prettyGron);
+      expect(fmt.formatGron(gron.join("\n"))).toBe(prettyGron);
     });
 
     test("each stream formatter starts with fresh grouping state", () => {
@@ -234,7 +237,7 @@ describe("OutputFormatter", () => {
       const second = fmt.createGronLineFormatter()!;
       expect(second(gron[0]!)).toBe("json = {}");
       // A stale state would put a blank separator in front of this line.
-      expect(second(gron[1]!)).toBe("  json.users = []");
+      expect(second(gron[1]!)).toBe("json.users = []");
     });
 
     test("search formatter matches formatSearchResults line by line when color is on", () => {
@@ -245,6 +248,161 @@ describe("OutputFormatter", () => {
       const format = fmt.createSearchLineFormatter("name")!;
       expect(format).toBeInstanceOf(Function);
       expect(gron.map(format).join("\n")).toBe(fmt.formatSearchResults(gron.join("\n"), "name"));
+    });
+  });
+
+  describe("pretty indentation", () => {
+    const stripAnsi = (text: string) => text.replace(/\u001b\[[0-9;]*m/g, "");
+
+    /** Formats each line with a formatter of its own, so no grouping separator gets in the way of the indentation. */
+    function prettyLine(line: string, color = false): string {
+      if (color) {
+        // @ts-expect-error: writable for tests
+        process.stdout.isTTY = true;
+        delete process.env.NO_COLOR;
+      }
+      return new OutputFormatter({ color, pretty: true }).createGronLineFormatter()!(line);
+    }
+
+    /** Leading spaces of every non-blank line of pretty output. */
+    function indents(output: string): number[] {
+      return output
+        .split("\n")
+        .filter((line) => line !== "")
+        .map((line) => line.length - line.trimStart().length);
+    }
+
+    /** What the indentation should be, read off the document itself and never off the printed lines. */
+    function expectedIndents(doc: unknown, cap = 6): number[] {
+      const result: number[] = [];
+      const walk = (value: unknown, depth: number): void => {
+        result.push(2 * Math.min(Math.max(0, depth - 1), cap));
+        if (value !== null && typeof value === "object") {
+          for (const child of Array.isArray(value) ? value : Object.values(value)) walk(child, depth + 1);
+        }
+      };
+      walk(doc, 0);
+      return result;
+    }
+
+    test.each([
+      "1",
+      "0.5",
+      "-1.25e-7",
+      "true",
+      "null",
+      "{}",
+      "[]",
+      '"plain"',
+      '"db.internal"',
+      '"a[0]"',
+      '"]"',
+      '"[[[...]]]"',
+      '"x = y"',
+      '" = "',
+      '"https://example.com/a.b?c[]=1"',
+      '"a \\"quoted\\" [.] value"',
+    ])("indents siblings alike whatever the value: %s", (value) => {
+      expect(prettyLine(`json.a.k = ${value}`)).toBe(`  json.a.k = ${value}`);
+      expect(prettyLine(`json.k = ${value}`)).toBe(`json.k = ${value}`);
+    });
+
+    test("indents the reported document evenly", () => {
+      const fmt = new OutputFormatter({ color: false, pretty: true });
+      expect(fmt.formatGron(flattenJson({ a: { lag: 0.5, host: "db.internal", n: 1 } }))).toBe(
+        ["json = {}", "json.a = {}", "", "  json.a.lag = 0.5", '  json.a.host = "db.internal"', "  json.a.n = 1"].join("\n"),
+      );
+    });
+
+    test("does not read a string value that looks like a path", () => {
+      expect(prettyLine('json.a = "json.b.c.d[0].e = 1"')).toBe('json.a = "json.b.c.d[0].e = 1"');
+      expect(prettyLine('json.a.b = "json[\\"x.y\\"][0] = {}"')).toBe('  json.a.b = "json[\\"x.y\\"][0] = {}"');
+      expect(prettyLine('json.a[0] = "json = []"')).toBe('  json.a[0] = "json = []"');
+    });
+
+    test("counts a bracket-quoted key as one level, whatever it contains", () => {
+      expect(prettyLine('json["a.b"] = 1')).toBe('json["a.b"] = 1');
+      expect(prettyLine('json["a.b"].c = 1')).toBe('  json["a.b"].c = 1');
+      expect(prettyLine('json["a.b.c.d.e.f"]["g.h"] = 1')).toBe('  json["a.b.c.d.e.f"]["g.h"] = 1');
+      expect(prettyLine('json["x = y"].c = "v"')).toBe('  json["x = y"].c = "v"');
+      expect(prettyLine('json["k[0]"]["[[["].c = 1')).toBe('    json["k[0]"]["[[["].c = 1');
+      expect(prettyLine('json.a["json.b = 1"] = 2')).toBe('  json.a["json.b = 1"] = 2');
+      expect(prettyLine('json[""].a = 1')).toBe('  json[""].a = 1');
+    });
+
+    test("finds the end of a quoted key that holds escaped quotes and backslashes", () => {
+      // The keys are `q"]. = [`, `a\` and `\"`: the path only ends after the real closing quote.
+      expect(prettyLine('json["q\\"]. = ["].z = "]"')).toBe('  json["q\\"]. = ["].z = "]"');
+      expect(prettyLine('json["a\\\\"].b = "x.y"')).toBe('  json["a\\\\"].b = "x.y"');
+      expect(prettyLine('json["\\\\\\""].b.c = 1')).toBe('    json["\\\\\\""].b.c = 1');
+    });
+
+    test("indents array elements by their own depth", () => {
+      expect(prettyLine("json.a = []")).toBe("json.a = []");
+      expect(prettyLine("json.a[0] = 1.5")).toBe("  json.a[0] = 1.5");
+      expect(prettyLine("json.a[0] = []")).toBe("  json.a[0] = []");
+      expect(prettyLine('json.a[0][12] = "x.y[0]"')).toBe('    json.a[0][12] = "x.y[0]"');
+      expect(prettyLine("json[0] = {}")).toBe("json[0] = {}");
+      expect(prettyLine("json[0].a = 0.5")).toBe("  json[0].a = 0.5");
+    });
+
+    test("stops indenting after six levels", () => {
+      const path = (segments: number) => `json${".a".repeat(segments)}`;
+      expect(prettyLine(`${path(6)} = 1`)).toBe(`${" ".repeat(10)}${path(6)} = 1`);
+      expect(prettyLine(`${path(7)} = 1`)).toBe(`${" ".repeat(12)}${path(7)} = 1`);
+      expect(prettyLine(`${path(8)} = 1`)).toBe(`${" ".repeat(12)}${path(8)} = 1`);
+      expect(prettyLine(`${path(40)}[0]["b.c"] = "x.y"`)).toBe(`${" ".repeat(12)}${path(40)}[0]["b.c"] = "x.y"`);
+      // A value full of dots and brackets pushes neither a shallow line to the cap nor a line past it.
+      expect(prettyLine('json.a.a = "......[[[[[["')).toBe('  json.a.a = "......[[[[[["');
+    });
+
+    test("indents the root line by nothing, whatever its value", () => {
+      expect(prettyLine("json = 1.5")).toBe("json = 1.5");
+      expect(prettyLine('json = "a.b[0] = c"')).toBe('json = "a.b[0] = c"');
+      expect(prettyLine("json = []")).toBe("json = []");
+    });
+
+    test("gives colored lines the indentation of plain ones", () => {
+      const lines = [
+        "json.a.lag = 0.5",
+        'json.a.host = "db.internal"',
+        "json.a.n = 1",
+        "json.a.tags = []",
+        'json.a.tags[0] = "x[0] = y"',
+        'json["a.b"]["x = y"].c = "v.w"',
+        'json["q\\"]. = ["].z = "]"',
+        "json.a.a.a.a.a.a.a.a.a = 1.25",
+      ];
+      for (const line of lines) {
+        const plain = prettyLine(line);
+        const colored = prettyLine(line, true);
+        expect(stripAnsi(colored)).toBe(plain);
+        expect(colored.length - colored.trimStart().length).toBe(plain.length - plain.trimStart().length);
+      }
+      // The lines the colorizer recognises really are colored, so the indentation was computed on a colored line.
+      expect(prettyLine(lines[0]!, true)).toMatch(/^  \u001b\[/);
+    });
+
+    test.each([false, true])("matches the depth of every node of a document with hostile keys and values (color: %s)", (color) => {
+      const doc = {
+        "a.b": { "x = y": { "k[0]": [1.5, "json.a.b = 1", [], {}], 'q"]. = [': { z: "]", "": [[["a.b[0] = c"]]] } } },
+        plain: { lag: 0.5, host: "db.internal", n: 1, list: [0.25, "a[0]", { "é.ü": "…", "\\": "\\.", "tab\t.": [] }] },
+        deep: { d: { d: { d: { d: { d: { d: { d: { d: [1.25, { "x.y": "z.w" }] } } } } } } } },
+        "json.id = 1": "json.id = 1",
+        id: 1,
+      };
+      const gronLines = flattenJson(doc).split("\n");
+      if (color) {
+        // @ts-expect-error: writable for tests
+        process.stdout.isTTY = true;
+        delete process.env.NO_COLOR;
+      }
+      const format = new OutputFormatter({ color, pretty: true }).createGronLineFormatter()!;
+      const output = stripAnsi(gronLines.map(format).join("\n"));
+
+      expect(indents(output)).toEqual(expectedIndents(doc));
+      // Indentation and grouping only add whitespace: the lines themselves are untouched.
+      expect(output.split("\n").filter((line) => line !== "").map((line) => line.trimStart())).toEqual(gronLines);
     });
   });
 });
