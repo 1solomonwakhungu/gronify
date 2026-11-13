@@ -46,7 +46,7 @@ const rivers = [
   {
     heading: "Flatten nested JSON into greppable lines",
     description:
-      "gronify flatten prints each value on its own line as path = value, in the order it appears in the file. Pipe the lines to grep, head, or anything else that reads text.",
+      "gronify flatten prints each value on its own line as path = value, in document order. Pipe the lines to grep, head, or any other text tool.",
     label: "gronify flatten output for a small service JSON file",
     lines: [
       { kind: "command", text: "gronify flatten service.json" },
@@ -125,7 +125,7 @@ const buildComparisons = (facts: ComparisonFacts) => [
   {
     kicker: "vs. gron & fastgron",
     title: "A gron alternative with built-in search and streaming ungron",
-    description: `Gronify installs with npm on macOS, Linux, and Windows and has search built in, so there is no grep or per-platform binary to set up. It keeps document order unless you pass --sort, and it streams in both directions: ${facts.unflatten} (${facts.measuredOn}, from the benchmark below). gron and fastgron are native binaries that need no Node.js, and fastgron flattens faster when the file fits in memory.`,
+    description: `Gronify installs with npm on macOS, Linux, and Windows and searches by text or regex. gron leaves filtering to grep, and fastgron filters by fixed string (-F). Gronify keeps document order unless you pass --sort and streams in both directions: ${facts.unflatten} (${facts.measuredOn}, from the benchmark below). gron and fastgron are native binaries that need no Node.js, and fastgron flattens faster when the file fits in memory.`,
     label: "Unflattening a gron file to an output file with -o",
     lines: [
       {
@@ -174,7 +174,7 @@ const buildComparisons = (facts: ComparisonFacts) => [
 const buildAgentRivers = (facts: ComparisonFacts) => [
   {
     heading: "Count matches first, then read only a few lines",
-    description: `Run search --count to learn how many lines match before printing any. Then take a sample with -m, or look at the shape of the file with flatten --limit. Add --no-color so the output is plain text wherever it runs. Gronify stops reading the input at the cap, so when matches come early the file size hardly matters: in our benchmark ${facts.capped} (${facts.measuredOn}).`,
+    description: `Run search --count to learn how many lines match before printing any. Then take a sample with -m, or look at the shape of the file with flatten --limit. Add --no-color so the output is plain text wherever it runs. Gronify stops reading the input at the cap, so when matches come early the file size hardly matters. In our benchmark, ${facts.capped} (${facts.measuredOn}).`,
     label: "Counting matches in a JSON export, then printing the first three",
     lines: [
       {
@@ -240,7 +240,7 @@ const useCases = [
   {
     title: "Config changes",
     description:
-      "Flatten the old and new file with --sort, then run diff. Reordered keys drop out and each change shows its full path.",
+      "Flatten the old and new file with --sort, then run diff. Reordered keys drop out and each change shows its path.",
   },
 ];
 
@@ -496,10 +496,10 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
               Make JSON greppable, search it, and convert it back.
             </SectionIntro.Heading>
             <SectionIntro.Description>
-              grep cannot tell you where a match sits inside nested JSON, and jq
-              needs the path before you know it. Gronify prints each value with
-              its full path, so a text search finds the key, the value, and its
-              position in the document.
+              grep cannot tell you where a match sits inside nested JSON, and a
+              jq filter is easiest to write once you know the path. Gronify
+              prints each value with its full path, so a text search finds the
+              key, the value, and its position in the document.
             </SectionIntro.Description>
           </SectionIntro>
         </Section>
@@ -749,7 +749,7 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
           <SectionIntro align="center" fullWidth>
             <SectionIntro.Label>Install</SectionIntro.Label>
             <SectionIntro.Heading size="3">
-              Install Gronify with npm, Homebrew, or from source.
+              Install Gronify with npm or Homebrew, or build from source.
             </SectionIntro.Heading>
             <SectionIntro.Description>
               Install with npm on macOS, Linux, or Windows, or use Homebrew, a

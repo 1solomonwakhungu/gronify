@@ -22,7 +22,7 @@ export {
 export const homeTitle =
   "Gronify: grep, search, and flatten JSON on the command line";
 export const homeDescription =
-  "Gronify is an open source CLI for developers who search nested JSON. It prints every value with its full path, matches text or regex, and streams large files.";
+  "Gronify is an open source CLI that makes nested JSON greppable. It prints every value with its full path, matches text or regex, and streams large files.";
 
 export type FaqItem = {
   question: string;
@@ -50,7 +50,7 @@ export const faqs: FaqItem[] = [
   {
     question: "Is Gronify an alternative to jq?",
     answer:
-      "For finding data, yes. For transforming it, no. jq needs a filter that names the path, and Gronify shows you the path when all you have is a key name or a value. It also prints numbers exactly as written and streams large files without extra flags. Gronify has no query language, so keep jq for reshaping, arithmetic, and building new JSON.",
+      "For finding data, yes. For transforming it, no. jq can report paths too, but you have to write a filter for it. Gronify shows you the path when all you have is a key name or a value. It also prints numbers exactly as written and streams large files without extra flags. Gronify has no query language, so keep jq for reshaping, arithmetic, and building new JSON.",
   },
   {
     question: "Does Gronify work on Windows, macOS, and Linux?",
@@ -62,9 +62,9 @@ export const faqs: FaqItem[] = [
     answer: `Gronify has no built-in size limit, because flatten, search, and unflatten read their input in chunks and write output as they go. In the benchmark, ${facts.unflatten} (${facts.measuredOn}). Memory depends on the document and the flags. One string or number must fit in memory. --sort holds each object's lines and spills to a temp file past 64 MiB. Unflatten input that is out of document order is rebuilt in memory only when the problem shows up in the first 16 MiB; after that it fails. Colored unflatten output builds the whole document, so pass --no-color for very large input.`,
   },
   {
-    question: "Does Gronify round large numbers like jq or JSON.parse?",
+    question: "Does Gronify round large numbers the way JSON.parse does?",
     answer:
-      "No. Gronify checks that each number is valid JSON and prints it exactly as written, so 12345678901234567890, 1.10, -0, and 1e-7 come through flatten, search, and unflatten unchanged. JSON.parse rounds integers above 2^53 (9007199254740992) to the nearest double. jq can round them too, depending on its version and the filter you run.",
+      "No. Gronify checks that each number is valid JSON and prints it exactly as written, so 12345678901234567890, 1.10, -0, and 1e-7 come through flatten, search, and unflatten unchanged. JSON.parse rounds integers above 2^53 (9007199254740992) to the nearest double. jq 1.7 and later keeps a number as written when it passes through untouched, but rounds it once a filter does arithmetic on it.",
   },
   {
     question: "How do I compare two JSON files from the command line?",
@@ -87,7 +87,7 @@ export const faqs: FaqItem[] = [
       "It stops with exit code 1 (2 with search --exit-status) and an error that names the byte offset, line, and column, such as: Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 7 (line 1, column 8). Gronify accepts strict JSON only, so trailing commas, comments, single quotes, invalid UTF-8, and JSON Lines input are errors. Lines before the error may already be printed, so check the exit code in scripts.",
   },
   {
-    question: "How fast is Gronify compared with gron, fastgron, and jq?",
+    question: "How fast is Gronify compared with gron and fastgron?",
     answer: benchmarkFaqAnswer,
   },
 ];
