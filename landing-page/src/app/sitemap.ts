@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { guides } from "./guides/registry";
-import { lastReleaseIsoDate, siteUrl } from "./site-config";
+import { homeUpdatedIsoDate, lastReleaseIsoDate, siteUrl } from "./site-config";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   // The index changes whenever a guide does, so it takes the newest guide date.
@@ -11,7 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
       url: siteUrl,
-      lastModified: new Date(lastReleaseIsoDate),
+      lastModified: new Date(homeUpdatedIsoDate),
       changeFrequency: "weekly",
       priority: 1,
     },

@@ -26,7 +26,7 @@ Users inspect service responses, generated configuration, CI artifacts, support 
 
 - Requires Node.js 20+ for the executable or source install; npm 10+ is required when building from source.
 - Supports streaming flatten, search, and ordered unflatten on multi-gigabyte inputs. Memory depends on token size, path depth, sorting, and input order; quote measured RSS with its workload and source revision.
-- Supports plain-text search, extended regex, case-sensitive matching, inverted matches, match counts, optional color, and pretty output.
+- Supports plain-text search, JavaScript regular expressions, case-sensitive matching, inverted matches, match counts, optional color, and pretty output.
 - Since 1.2.0: result caps (`search -m/--max-count`, `flatten --limit`), `--sort` for stable key order, and `search --exit-status`.
 - Numbers are printed exactly as written in the source.
 - Installation is available through npm, Homebrew, GitHub release archives, or source.
