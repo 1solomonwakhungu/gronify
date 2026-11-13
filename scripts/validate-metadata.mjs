@@ -52,18 +52,29 @@ const staleClaimPatterns = [
   },
   {
     // `--sort` only makes the output diffable. Naming the system `diff` tool is fine, so code spans are ignored and
-    // only claim-shaped phrases are matched: a verb list ending in "and diff", "Gronify diffs ...", "diff two JSON
-    // files", "a diff mode", "diffing support", "built-in diffing".
+    // only claim-shaped phrases are matched: "Gronify diffs ...", "a diff mode", "diffing support", "built-in diffing".
+    // These are false on every page, guides included.
+    prose: true,
+    pattern: new RegExp(
+      [
+        String.raw`\bgronify\s+(?:can\s+|will\s+|also\s+)?diffs?\b`,
+        String.raw`(?<!\b(?:no|not\s+an?|without\s+an?)\s+)\bdiff(?:ing)?\s+(?:command|subcommand|support|mode|feature)s?\b`,
+        String.raw`(?<!\b(?:no|not\s+an?|without\s+an?)\s+)\bbuilt-in\s+diff(?:s|ing)?\b`,
+      ].join("|"),
+      "i",
+    ),
+    message: "claims diff support that is not present",
+  },
+  {
+    // Looser phrasing that reads as a claim on product pages: a verb list ending in "and diff", "diff two JSON
+    // files", "JSON diff". A guide may use these words to explain the system `diff` tool, so guides skip this entry.
     prose: true,
     diffPhrasing: true,
     pattern: new RegExp(
       [
-        String.raw`\bgronify\s+(?:can\s+|will\s+|also\s+)?diffs?\b`,
         String.raw`\b(?:search|inspect|flatten|unflatten|explor|quer|filter)\w*\b[^.\n]*?\b(?:and|or)\s+diffs?\b(?!\s+(?:the|them|it|its|a|an|two|both|with|by|against|those|these)\b)`,
         String.raw`\bdiffs?\s+(?:two|2|any|your|the two)\s+(?:JSON|payloads?)\b`,
         String.raw`\b(?:JSON|gron)\s+diff(?:s|ing)?\b`,
-        String.raw`(?<!\b(?:no|not\s+an?|without\s+an?)\s+)\bdiff(?:ing)?\s+(?:command|subcommand|support|mode|feature)s?\b`,
-        String.raw`(?<!\b(?:no|not\s+an?|without\s+an?)\s+)\bbuilt-in\s+diff(?:s|ing)?\b`,
       ].join("|"),
       "i",
     ),

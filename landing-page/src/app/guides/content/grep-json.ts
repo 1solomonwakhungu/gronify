@@ -52,7 +52,7 @@ $ jq . orders.json | grep pending
       blocks: [
         {
           kind: "paragraph",
-          text: "The fix comes from [gron](https://github.com/tomnomnom/gron): rewrite the document as one assignment per value, each with its full path from the root. After that, a line filter returns complete answers.",
+          text: "[gron](https://github.com/tomnomnom/gron) solved this by rewriting the document as one assignment per value, each with its full path from the root. After that, a line filter returns complete answers.",
         },
         {
           kind: "terminal",
@@ -148,7 +148,7 @@ json.orders[2].status = "pending"
         },
         {
           kind: "paragraph",
-          text: "In grep, `-c` counts matches. In Gronify, `-c` means case-sensitive, and counting is spelled `--count`.",
+          text: "In grep, `-c` counts matching lines. In Gronify, `-c` means case-sensitive, and counting is spelled `--count`.",
         },
       ],
     },
@@ -156,7 +156,7 @@ json.orders[2].status = "pending"
       id: "count-cap-invert",
       heading: "Count, cap, and invert matches",
       blocks: [
-        { kind: "subheading", text: "Count before printing" },
+        { kind: "subheading", text: "Count the matches" },
         {
           kind: "paragraph",
           text: "`--count` prints the number of matching lines and nothing else.",
@@ -252,7 +252,7 @@ Stopped after 1 match (--max-count); there may be more
         },
         {
           kind: "paragraph",
-          text: "Input is parsed as it arrives and is not loaded whole, so memory does not grow with the number of records. With `-m`, Gronify closes the pipe once it has enough matches. Each run reads exactly one JSON document. A log with one object per line (NDJSON) stops with an error at the second object, and that is a job for ripgrep or jq.",
+          text: "Input is parsed as it arrives and is not loaded whole, so memory does not grow with the number of records. With `-m`, Gronify closes the pipe once it has enough matches. Each run reads exactly one JSON document. Given a log with one object per line (NDJSON), Gronify exits with an error at the second object. Use ripgrep or jq for those.",
         },
       ],
     },
@@ -343,12 +343,12 @@ alan@example.org
             ],
             [
               "Search a directory of files or an NDJSON log",
-              "`ripgrep`",
+              "ripgrep (`rg`)",
               "It walks directories and matches line by line",
             ],
             [
               "Check whether a string occurs anywhere in a file",
-              "`grep -q` or `ripgrep`",
+              "`grep -q` or ripgrep (`rg`)",
               "No JSON parsing is needed",
             ],
           ],
@@ -365,7 +365,7 @@ alan@example.org
     {
       question: "How do I search JSON on Windows without grep?",
       answer:
-        "Install Gronify with `npm install -g gronify` on Node.js 20 or newer. `gronify search` does its own matching, so the same command runs in PowerShell, CMD, macOS, and Linux without grep or `Select-String`.",
+        "Install Gronify with `npm install -g gronify` on Node.js 20 or newer. `gronify search` does its own matching, so it needs neither grep nor `Select-String`. The project's CI runs on Linux and macOS, not on Windows.",
     },
     {
       question: "How do I match a value only under a specific key?",

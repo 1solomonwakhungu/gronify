@@ -862,6 +862,18 @@
   font-family: var(--brand-body-fontFamily);
 }
 
+/* Guide cells hold phrases, so the stacked form puts the label above the value. */
+@media screen and (max-width: 47.99rem) {
+  .guideTable td.matrixCell {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--base-size-4);
+  }
+
+  .guideTable .matrixCell > :first-child {
+    grid-column: 1;
+  }
+}
+
 @media screen and (min-width: 48rem) {
   .guideTable {
     min-inline-size: 0;

@@ -99,7 +99,10 @@ export function guidesIndexStructuredData(
         isPartOf: { "@id": `${siteUrl}/#website` },
         about: { "@id": `${siteUrl}/#software` },
         hasPart: guides.map((guide) => ({
+          "@type": "TechArticle",
           "@id": `${guideUrl(guide.slug)}#article`,
+          headline: guide.h1,
+          url: guideUrl(guide.slug),
         })),
       },
       breadcrumbList(`${guidesIndexUrl}#breadcrumb`, [homeCrumb, guidesCrumb]),
