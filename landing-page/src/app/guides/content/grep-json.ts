@@ -172,7 +172,7 @@ $ gronify search orders.json --count status
         { kind: "subheading", text: "Stop after the first matches" },
         {
           kind: "paragraph",
-          text: "`-m <n>` (long form `--max-count`) prints the first n matches in document order and then stops reading the input, so a match near the top of a large file returns without scanning the rest. The notice on the last line goes to stderr, so it stays out of a pipe or a redirected file.",
+          text: "`-m <n>` (long form `--max-count`) prints the first n matches in document order and then stops reading the input, so a match near the top of a large file returns without scanning the rest. The notice on the last line goes to stderr, so it stays out of a pipe or a redirected file. A coding agent can sample a file the same way; see [searching large JSON from a coding agent](/guides/json-for-ai-agents).",
         },
         {
           kind: "terminal",
@@ -252,7 +252,7 @@ Stopped after 1 match (--max-count); there may be more
         },
         {
           kind: "paragraph",
-          text: "Input is parsed as it arrives and is not loaded whole, so memory does not grow with the number of records. With `-m`, Gronify closes the pipe once it has enough matches. Each run reads exactly one JSON document. Given a log with one object per line (NDJSON), Gronify exits with an error at the second object. Use ripgrep or jq for those.",
+          text: "Input is parsed as it arrives and is not loaded whole, so memory does not grow with the number of records. With `-m`, Gronify closes the pipe once it has enough matches. Each run reads exactly one JSON document. Given a log with one object per line (NDJSON), Gronify exits with an error at the second object. Use ripgrep or jq for those. For files in the gigabytes, see [searching large JSON files](/guides/large-json-files).",
         },
       ],
     },
@@ -262,7 +262,7 @@ Stopped after 1 match (--max-count); there may be more
       blocks: [
         {
           kind: "paragraph",
-          text: "`gronify unflatten` reads flattened lines and writes JSON. It needs every container line, such as `json = {}` and `json.orders = []`, before the values inside it. A narrow search prints only leaf lines, so piping it straight into `unflatten` fails with `root must be assigned before child paths`. There are two ways to keep the containers.",
+          text: "[`gronify unflatten`](/guides/unflatten-json) reads flattened lines and writes JSON. It needs every container line, such as `json = {}` and `json.orders = []`, before the values inside it. A narrow search prints only leaf lines, so piping it straight into `unflatten` fails with `root must be assigned before child paths`. There are two ways to keep the containers.",
         },
         {
           kind: "paragraph",

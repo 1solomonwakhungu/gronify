@@ -59,7 +59,8 @@ function renderNodes(
     const target = linkTarget(node.href);
     if (target === "internal") {
       const slug = guideSlugOf(node.href);
-      // A guide that has not landed yet stays plain text until it does.
+      // The build rejects links to unregistered guides, so this only guards a
+      // caller that renders content the validator has not seen.
       if (slug !== null && !linkableSlugs.includes(slug)) {
         return <Fragment key={index}>{children}</Fragment>;
       }

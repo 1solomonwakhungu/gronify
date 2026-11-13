@@ -53,7 +53,7 @@ Rules the build enforces (`src/app/guides/validate.ts` fails `npm run build` and
 
 Every command and output line in a transcript must be pasted from a real run of the built CLI (`cd src/packages/cli && npm ci && npm run build`, then `node dist/index.js ...`).
 
-A slug in `related`, or an inline link to `/guides/<slug>`, may name a guide that is not registered yet. It is left out (or rendered as plain text) until that guide lands.
+A slug in `related`, or an inline link to `/guides/<slug>`, must name a registered guide. The build fails on any other slug, so register a new guide before another guide links to it.
 
 The header and footer live in `src/app/site-chrome.tsx` and are shared by the home page and the guides.
 

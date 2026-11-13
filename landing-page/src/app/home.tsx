@@ -15,6 +15,7 @@ import {
   Stack,
   Text,
 } from "@primer/react-brand";
+import NextLink from "next/link";
 import posthog from "posthog-js";
 import type { ReactNode } from "react";
 
@@ -44,6 +45,7 @@ const heroTranscript: TerminalLine[] = [
 const rivers = [
   {
     heading: "Flatten nested JSON into greppable lines",
+    guide: { href: "/guides/flatten-json", text: "guide to flattening JSON" },
     description:
       "gronify flatten prints each value on its own line as path = value, in document order. Pipe the lines to grep, head, or any other text tool.",
     label: "gronify flatten output for a small service JSON file",
@@ -60,6 +62,7 @@ const rivers = [
   },
   {
     heading: "Search JSON keys and values with text or regex",
+    guide: { href: "/guides/grep-json", text: "guide to grepping JSON" },
     description:
       "gronify search flattens and filters in one pass, so you do not need grep. A plain term matches keys and values without regard to case. Add --regex for patterns, -c for exact case, -v to invert, or --count for a total.",
     label: "Regex search for user email paths in a JSON file",
@@ -74,6 +77,7 @@ const rivers = [
   },
   {
     heading: "Unflatten gron lines back into JSON (ungron)",
+    guide: { href: "/guides/unflatten-json", text: "ungron guide" },
     description:
       "gronify unflatten rebuilds JSON from the lines flatten writes, and streams as it goes. Numbers come out with the digits they went in with, 64-bit IDs and trailing zeros included.",
     label: "Flattening a JSON file and unflattening it back to JSON",
@@ -87,6 +91,10 @@ const rivers = [
   },
   {
     heading: "Search large JSON files without loading them",
+    guide: {
+      href: "/guides/large-json-files",
+      text: "guide to searching large JSON files",
+    },
     description:
       "All three commands read a file or stdin in chunks and write output as they go, so the file does not have to fit in memory. With -m or --limit, Gronify stops reading at the cap, prints a notice to stderr (the last line here), and exits 0.",
     label:
@@ -110,6 +118,7 @@ const buildComparisons = (facts: ComparisonFacts) => [
   {
     kicker: "vs. jq & JSON.parse()",
     title: "Find a key's path without writing a jq filter",
+    guide: { href: "/guides/jq-alternative", text: "jq alternative guide" },
     description: `jq is the better tool once you know the path and want to reshape data. Gronify needs no query. Search for a key or a value and it prints the full path. It also prints numbers as written. ${facts.numericCheck} JSON.parse() rounds integers above 2^53, and jq can too, depending on version and filter. Node cannot hand JSON.parse() a string over about 512 MB (ERR_STRING_TOO_LONG); Gronify reads the bytes in chunks.`,
     label: "Search output with a 64-bit integer and a trailing zero intact",
     lines: [
@@ -124,6 +133,10 @@ const buildComparisons = (facts: ComparisonFacts) => [
   {
     kicker: "vs. gron & fastgron",
     title: "A gron alternative with built-in search and streaming ungron",
+    guide: {
+      href: "/guides/gron-alternative",
+      text: "gron, fastgron, and Gronify comparison",
+    },
     description: `Gronify installs with npm on macOS, Linux, and Windows and searches by text or regex. gron leaves filtering to grep, and fastgron filters by fixed string (-F). Gronify keeps document order unless you pass --sort and streams in both directions: ${facts.unflatten} (${facts.measuredOn}, from the benchmark below). gron and fastgron are native binaries that need no Node.js, and fastgron flattens faster when the file fits in memory.`,
     label: "Unflattening a gron file to an output file with -o",
     lines: [
@@ -137,6 +150,10 @@ const buildComparisons = (facts: ComparisonFacts) => [
   {
     kicker: "vs. raw grep on JSON",
     title: "Grep minified JSON and still see the full path",
+    guide: {
+      href: "/guides/find-json-path",
+      text: "guide to finding a JSON path",
+    },
     description: `grep on minified JSON prints the whole file, because it is one line. On pretty-printed JSON it prints the matching key or value with no parent keys or array indexes. Gronify prints the full path on every line and has no nesting limit. Gronify ${facts.deep} (${facts.measuredOn}).`,
     label: "Finding the full path of a value inside minified JSON",
     lines: [
@@ -153,6 +170,10 @@ const buildComparisons = (facts: ComparisonFacts) => [
   {
     kicker: "With system diff",
     title: "Compare two JSON files with --sort and system diff",
+    guide: {
+      href: "/guides/compare-json-files",
+      text: "guide to comparing two JSON files",
+    },
     description:
       "Flatten both files with --sort and hand the output to diff. --sort orders object keys at every level by UTF-16 code unit, keeps each object's lines together, and leaves arrays in index order. Reordered keys then produce no output, and a real change shows up with its full path. Piping through plain sort would put [10] before [2] and split objects apart.",
     label:
@@ -418,7 +439,7 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
                 v{cliVersion} · Open source CLI · MIT license
               </Hero.Label>
               <Hero.Heading>
-                Flatten and grep nested JSON from the command line.
+                A gron-style CLI to search and flatten nested JSON.
               </Hero.Heading>
               <Hero.Description>
                 Gronify is a gron-style CLI that prints every JSON value on its
@@ -478,7 +499,16 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
                   <Heading as="h3" size="4">
                     {river.heading}
                   </Heading>
-                  <Text>{river.description}</Text>
+                  <Text>
+                    {river.description} Read the{" "}
+                    <NextLink
+                      className={styles.inlineLink}
+                      href={river.guide.href}
+                    >
+                      {river.guide.text}
+                    </NextLink>
+                    .
+                  </Text>
                 </River.Content>
               </River>
             ))}
@@ -521,7 +551,14 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
                       {item.title}
                     </Heading>
                     <Text as="p" variant="muted" size="200">
-                      {item.description}
+                      {item.description} Read the{" "}
+                      <NextLink
+                        className={styles.inlineLink}
+                        href={item.guide.href}
+                      >
+                        {item.guide.text}
+                      </NextLink>
+                      .
                     </Text>
                     <Box paddingBlockStart={16} className={styles.cellFooter}>
                       <Terminal label={item.label} lines={item.lines} />
@@ -549,7 +586,14 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
               An agent that reads a large JSON file whole fills its context with
               data it does not need. With Gronify it can count the matches, read
               a capped sample, and branch on the exit code. Shell scripts use
-              the same flags.
+              the same flags. Read the{" "}
+              <NextLink
+                className={styles.inlineLink}
+                href="/guides/json-for-ai-agents"
+              >
+                guide for AI coding agents
+              </NextLink>
+              .
             </SectionIntro.Description>
           </SectionIntro>
         </Section>
