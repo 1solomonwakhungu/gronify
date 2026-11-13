@@ -335,6 +335,11 @@ describe("OutputFormatter", () => {
       expect(prettyLine('json["q\\"]. = ["].z = "]"')).toBe('  json["q\\"]. = ["].z = "]"');
       expect(prettyLine('json["a\\\\"].b = "x.y"')).toBe('  json["a\\\\"].b = "x.y"');
       expect(prettyLine('json["\\\\\\""].b.c = 1')).toBe('    json["\\\\\\""].b.c = 1');
+      // An escaped quote followed by `]` and dots is still inside the key `a"].b.c`.
+      expect(prettyLine('json["a\\"].b.c"].d = 1')).toBe('  json["a\\"].b.c"].d = 1');
+      // A key ending in a backslash (`a\`): the quote after the escaped backslash closes it.
+      expect(prettyLine('json["a\\\\"].b = 1')).toBe('  json["a\\\\"].b = 1');
+      expect(prettyLine('json["a\\\\"] = 1')).toBe('json["a\\\\"] = 1');
     });
 
     test("indents array elements by their own depth", () => {
