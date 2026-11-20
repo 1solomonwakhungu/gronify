@@ -33,6 +33,14 @@ Checked on 2026-11-20.
 
 ## History
 
+### 2026-11-20 — JSON Lines input: `flatten`/`search -s, --stream` (alias `--jsonl`)
+
+- `flatten` and `search` read JSON Lines / NDJSON with `-s`, `--stream` or `--jsonl`. Output has the `gron -s` / `fastgron -s` structure: `json = []`, then `json[i]` and its paths for each non-blank line, so `flatten -s | unflatten` gives the array of records. Empty input prints `json = []` (as both tools do). Blank lines and CRLF are skipped; a record may not span lines and a line may not hold two values, with errors naming the line and byte offset. Without the flag the input is still one strict document, and the trailing-value error now suggests `--stream`.
+- Implemented in the tokenizer as an implicit records array, so the flattener and the sorter are unchanged: `--sort` streams one record at a time, and `--limit`/`-m` stop reading at the cap. Output is byte-identical to flattening the same records as one array (checked on 5 million records, sorted and unsorted). A 1 GB file flattened at 160–230 MB peak RSS with or without `--sort`, the same range as the single-array form.
+- No measurable change on single-document throughput or start-up time (hyperfine A/B against `2e98b68` on 46 MB pretty-printed and 200 MB compact inputs).
+- Tests: 721 pass on top of #148 and #145 (45 new in `__tests__/jsonl.test.ts`), and CI runs them on Linux, macOS, and Windows.
+- **Follow-up after release:** the landing page (`llms.txt`, `llms-full.txt`, and the `find-json-path`, `flatten-json`, `gron-alternative`, `jq-alternative`, `json-for-ai-agents`, `large-json-files` guides) still says JSON Lines is rejected, which is true of npm 1.3.2 and older. Update those pages once a release with `--stream` is on npm.
+
 ### 2026-11-20 — README demo and badges
 
 - Added `branding/demo.svg`, an animated terminal demo (about 6 s of motion in a 9 s loop, 5 KB, static under `prefers-reduced-motion`). `scripts/build-demo-svg.mjs` regenerates it by running the built CLI on sample files, so every output line is real gronify 1.3.2 output.
