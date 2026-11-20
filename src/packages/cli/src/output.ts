@@ -1,5 +1,6 @@
 import { createWriteStream, realpathSync, statSync, unlinkSync, type Stats } from "node:fs";
-import { basename, dirname, join, resolve } from "node:path";
+import { constants } from "node:os";
+import { basename, dirname, join, posix } from "node:path";
 import type { Writable } from "node:stream";
 import type { LineMatcher } from "./matcher.js";
 
@@ -16,6 +17,39 @@ export interface OutputSink {
   abort(): Promise<void>;
 }
 
+/**
+ * Paths that name a device rather than a file, so they are opened in place instead of replaced. On POSIX that is
+ * anything under /dev or /proc: /dev/stdout and /dev/fd/N resolve to whatever the descriptor points at (often a
+ * regular file), so the decision uses the path the user gave, since renaming over the entry would replace the link
+ * itself. On Windows it is the device namespace (`\\.\NUL`) and the reserved names such as `NUL` and `CON`, which
+ * name a device in any directory and with any extension.
+ */
+export function isDevicePath(file: string, platform: NodeJS.Platform = process.platform): boolean {
+  if (platform !== "win32") return /^\/(dev|proc)\//.test(posix.resolve(file));
+  if (/^[\\/]{2}\.[\\/]/.test(file)) return true;
+  const name = file.split(/[\\/]/).pop()!.replace(/^[a-z]:/i, "");
+  return /^(nul|con|prn|aux|conin\$|conout\$|com[1-9¹²³]|lpt[1-9¹²³])(\.[^.]*)*[ .]*$/i.test(name);
+}
+
+/** Windows refuses a rename while a virus scanner or indexer briefly holds either file; it clears within moments. */
+const RENAME_RETRY_CODES = new Set(["EPERM", "EACCES", "EBUSY"]);
+const RENAME_RETRY_MS = [10, 20, 40, 80, 160, 320];
+
+async function replaceFile(from: string, to: string, platform: NodeJS.Platform = process.platform): Promise<void> {
+  const { rename } = await import("node:fs/promises");
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      await rename(from, to);
+      return;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code ?? "";
+      const delay = RENAME_RETRY_MS[attempt];
+      if (platform !== "win32" || delay === undefined || !RENAME_RETRY_CODES.has(code)) throw error;
+      await new Promise((done) => setTimeout(done, delay));
+    }
+  }
+}
+
 /** stdout cannot be closed, and what was already written to it cannot be taken back. */
 class StdoutSink implements OutputSink {
   open(): Writable {
@@ -30,7 +64,8 @@ class StdoutSink implements OutputSink {
 /**
  * Writes to a temp file next to the target and renames it over the target on `commit`, so the target is replaced
  * all at once or not at all. That keeps an input that is also the output file readable while it streams, and keeps
- * a previous good file when the run fails half way. Existing devices and pipes (`-o /dev/null`) are written in place.
+ * a previous good file when the run fails half way. Existing devices and pipes (`-o /dev/null`, `-o NUL` on Windows)
+ * are written in place.
  */
 class FileSink implements OutputSink {
   private stream: Writable | null = null;
@@ -44,7 +79,12 @@ class FileSink implements OutputSink {
   private readonly onSignal = (signal: NodeJS.Signals): void => {
     this.removeTemp();
     this.uninstallCleanup();
-    process.kill(process.pid, signal);
+    try {
+      process.kill(process.pid, signal);
+    } catch {
+      // Windows cannot raise SIGHUP (it only delivers it when the console closes): exit the way a shell reports it.
+      process.exit(128 + (constants.signals[signal] ?? 1));
+    }
   };
   private readonly onExit = (): void => this.removeTemp();
 
@@ -66,9 +106,7 @@ class FileSink implements OutputSink {
       throw Object.assign(new Error(`EISDIR: illegal operation on a directory, open '${this.file}'`), { code: "EISDIR" });
     }
     let stream: Writable;
-    // Paths like /dev/stdout and /dev/fd/N resolve to whatever the descriptor points at (often a regular file), so
-    // decide from the path the user gave: renaming over a /dev or /proc entry would replace the link itself.
-    if (/^\/(dev|proc)\//.test(resolve(this.file)) || (existing !== null && !existing.isFile())) {
+    if (isDevicePath(this.file) || (existing !== null && !existing.isFile())) {
       stream = createWriteStream(this.file);
     } else {
       this.mode = existing === null ? null : existing.mode & 0o7777;
@@ -94,9 +132,9 @@ class FileSink implements OutputSink {
       await this.closed;
       if (this.error !== null) throw this.error;
       if (this.temp !== null) {
-        const { chmod, rename } = await import("node:fs/promises");
+        const { chmod } = await import("node:fs/promises");
         if (this.mode !== null) await chmod(this.temp, this.mode);
-        await rename(this.temp, this.target);
+        await replaceFile(this.temp, this.target);
       }
     } catch (error) {
       await this.abort();
