@@ -1,4 +1,4 @@
-import type { Metadata, ResolvingMetadata } from "next";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { GuideArticle } from "../guide-article";
@@ -16,18 +16,16 @@ export function generateStaticParams() {
   return guides.map((guide) => ({ slug: guide.slug }));
 }
 
-export async function generateMetadata(
-  { params }: GuidePageProps,
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: GuidePageProps): Promise<Metadata> {
   const { slug } = await params;
   const guide = getGuide(slug);
   if (!guide) return {};
 
   const url = guideUrl(guide.slug);
-  // Setting `openGraph` or `twitter` here replaces the root layout's objects
-  // whole, so the site-wide share image is carried over from the parent.
-  const inherited = await parent;
+  // `images` is left unset on purpose: `opengraph-image.tsx` in this segment
+  // supplies the guide's own share image for both Open Graph and Twitter.
 
   return {
     // `absolute` keeps the title exactly as written if the root layout ever
@@ -44,13 +42,11 @@ export async function generateMetadata(
       locale: "en_US",
       publishedTime: guide.published,
       modifiedTime: guide.updated,
-      images: inherited.openGraph?.images,
     },
     twitter: {
       card: "summary_large_image",
       title: guide.title,
       description: guide.description,
-      images: inherited.twitter?.images,
     },
   };
 }

@@ -57,6 +57,32 @@ A slug in `related`, or an inline link to `/guides/<slug>`, must name a register
 
 The header and footer live in `src/app/site-chrome.tsx` and are shared by the home page and the guides.
 
+## Share images
+
+Every page has its own 1200x630 Open Graph and Twitter image, rendered at build time with `next/og`:
+
+- `src/app/opengraph-image.tsx` for the home page.
+- `src/app/guides/opengraph-image.tsx` for `/guides`.
+- `src/app/guides/[slug]/opengraph-image.tsx` for each guide. It shows the guide's `h1`, its `description`, and the first transcript command that runs `gronify`, with up to two of its output lines (`src/app/guides/share-snippet.ts`).
+
+All three use the layout in `src/app/og-card.tsx`. A new guide gets its image from the registry with no extra work. Do not set `openGraph.images` or `twitter.images` in a page's metadata: the `opengraph-image` file in the segment supplies both, and an explicit value would point the page at the wrong image.
+
+## IndexNow
+
+[IndexNow](https://www.indexnow.org) tells Bing, Yandex, and the other participating engines (and the AI search tools built on Bing's index) that pages changed, instead of waiting for a crawl. The key lives in `indexNowKey` in `src/app/site-config.ts`, and `public/<key>.txt` serves it so the engines can verify the site owns it.
+
+After a deploy that adds or changes pages, run from this directory:
+
+```bash
+npm run build                                      # writes the sitemap the script reads
+node scripts/submit-indexnow.mjs --dry-run         # list the URLs and the payload; sends nothing
+node scripts/submit-indexnow.mjs                   # submit them
+```
+
+`npm run indexnow -- --dry-run` does the same. The script reads the built sitemap (`.next/server/app/sitemap.xml.body`) when it exists, otherwise `<site>/sitemap.xml`; `--sitemap <file-or-url>` picks one explicitly, for example `--sitemap https://gronify.vercel.app/sitemap.xml`. `--site` (or `NEXT_PUBLIC_SITE_URL`) sets the origin, and URLs on any other origin are skipped, because IndexNow rejects a request that mixes hosts. Before a real submission it confirms the key file is live and stops if it is not. It exits non-zero on any failure, and `--help` lists every option.
+
+Submit only pages that exist and changed; engines may ignore a key that resubmits unchanged URLs often. To rotate the key, change `indexNowKey` and rename and rewrite the key file in the same commit.
+
 ## Deploy Notes
 
 The landing page is deployed at <https://gronify.vercel.app> from the `landing-page` directory. Keep deployment configuration outside this package unless the repository adds a checked-in deployment workflow.
