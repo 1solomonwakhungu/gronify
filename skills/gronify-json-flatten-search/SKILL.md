@@ -1,11 +1,11 @@
 ---
 name: gronify-json-flatten-search
-description: Flattens and searches JSON as greppable key-value path lines using the Gronify CLI (gron and ungron workflow), with result caps, exact numbers, and a key-sorted output that makes JSON diffable with the system diff tool. Use when an AI agent needs to explore a large or unknown JSON file without flooding its context, grep nested JSON, inspect API payloads, make two JSON documents comparable as key-sorted lines, check whether a path or value exists, or find a path before writing a jq filter.
+description: Flattens and searches JSON as greppable key-value path lines using the Gronify CLI (gron and ungron workflow), with result caps, exact numbers, and a key-sorted output that makes JSON diffable with the system diff tool. Use when an AI agent needs to explore a large or unknown JSON file without flooding its context, grep nested JSON or a JSON Lines (NDJSON) log, inspect API payloads, make two JSON documents comparable as key-sorted lines, check whether a path or value exists, or find a path before writing a jq filter.
 ---
 
 # Gronify
 
-Gronify turns nested JSON into one assignment per path (`json.users[0].name = "Ann"`), searches those paths, and converts gron assignments back to JSON. `flatten` and `search` stream, so multi-gigabyte files work.
+Gronify turns nested JSON into one assignment per path (`json.users[0].name = "Ann"`), searches those paths, and converts gron assignments back to JSON. `flatten` and `search` stream, so multi-gigabyte files work, and with `-s/--stream` (or `--jsonl`) they read JSON Lines, one record per line.
 
 ## Check availability
 
@@ -19,6 +19,8 @@ brew install 1solomonwakhungu/tap/gronify
 Gronify needs Node.js 20 or newer. To build from a checkout instead: `cd src/packages/cli && npm ci && npm run build && npm link`.
 
 **Check the version before using `-m`, `--limit`, `--sort` or `--exit-status`.** They need Gronify 1.2.0 or newer; 1.1.0 and older fail with `error: unknown option '-m'` (exit 1). Run `gronify search --help | grep -e --max-count` (a build from source can report an older `--version` while having the flags), or `gronify --version`. If the flag is missing, update (`npm install -g gronify@latest`) or cap the output with `| head -n 20` instead and skip `--sort`.
+
+**`-s/--stream` and `--jsonl` need a release newer than 1.3.2**; 1.3.2 and older fail with `error: unknown option '-s'`. Check with `gronify flatten --help | grep -e --jsonl`. Without it, a JSON Lines file fails at line 2 with `Unexpected '{' after the top-level value`; use `jq -c` on such a file instead.
 
 ## Explore without flooding your context
 
@@ -38,13 +40,29 @@ gronify --no-color search payload.json --regex 'users\[[0-9]+\]\.email' -m 20   
 
 ## Commands
 
-- `gronify flatten [file]`: every value with its full path. Reads stdin when no file is given.
-- `gronify search <file_or_term> [term]`: path or value filtering, no separate `grep` needed. Plain terms are case-insensitive and literal. Options: `-r/--regex`, `-c/--case-sensitive`, `--count`, `-v/--invert-match`, `-m/--max-count`, `--sort`, `--exit-status`. Quote shell-sensitive patterns.
+- `gronify flatten [file]`: every value with its full path. Reads stdin when no file is given. Options: `--limit`, `--sort`, `-s/--stream` (alias `--jsonl`).
+- `gronify search <file_or_term> [term]`: path or value filtering, no separate `grep` needed. Plain terms are case-insensitive and literal. Options: `-r/--regex`, `-c/--case-sensitive`, `--count`, `-v/--invert-match`, `-m/--max-count`, `--sort`, `--exit-status`, `-s/--stream` (alias `--jsonl`). Quote shell-sensitive patterns.
 - `gronify unflatten [file]`: gron assignments back to JSON; the root and parent containers must appear before their children. It streams, so multi-gigabyte gron is fine as long as it is in document order, which is what `gronify flatten` and `flatten --sort` write.
 
 ```bash
 curl -sS https://example.com/api/status | gronify --no-color search version -m 5
 ```
+
+## JSON Lines logs
+
+For `.jsonl` / `.ndjson` files and line-delimited streams (application logs, API exports, agent transcripts), pass `-s`, `--stream`, or `--jsonl` to `flatten` or `search`. Each non-blank line is one record, printed as `json[0]`, `json[1]`, ... under a first `json = []` line, the same structure as `gron -s` and `fastgron -s`:
+
+```bash
+gronify --no-color search --stream app.jsonl --count error           # how many gron lines match
+gronify --no-color search --stream app.jsonl -m 20 '.level = "error"' # the first 20 matches, then stop reading
+gronify --no-color flatten --jsonl --limit 40 app.jsonl               # the shape of the first records
+```
+
+- The `[i]` in `json[i]` is the record number, counted from 0 over non-blank lines, not the line number. Blank lines and `\r\n` endings are fine.
+- Every option works with it: caps stop reading early, `--sort` sorts each record's keys while holding only that record, `--exit-status`, `-o`, and `--pretty` behave as for one document.
+- Each line must hold exactly one complete JSON value. Errors name the line and byte offset (`... at byte offset 8 (line 1, column 9)`). A pretty-printed JSON file is one document: do not pass `-s` for it.
+- Empty input prints `json = []` and exits 0.
+- `gronify flatten -s app.jsonl | gronify unflatten` rebuilds one JSON array of the records.
 
 ## Order and diffing
 
@@ -77,7 +95,7 @@ if gronify --no-color search --exit-status config.json -m 1 'debug = true' > /de
 
 Gronify prints numbers exactly as written in the source: `12345678901234567890`, `1.10`, `1e2`, and `-0` survive unchanged. `jq` 1.6 and older parse numbers as doubles, and newer versions convert a number once a filter does arithmetic on it, so an integer above 2^53 (a 64-bit ID, a nanosecond timestamp) can come back rounded. Search for the original digits and trust the printed ones.
 
-Input must be strict JSON (no comments or trailing commas). Duplicate keys produce one line per occurrence. A syntax error exits non-zero and reports the byte offset, line, and column.
+Input must be strict JSON (no comments or trailing commas), one document per run, or one per line with `--stream`. Duplicate keys produce one line per occurrence. A syntax error exits non-zero and reports the byte offset, line, and column.
 
 ## Reconstruct JSON
 
