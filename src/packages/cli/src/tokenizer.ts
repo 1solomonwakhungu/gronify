@@ -38,6 +38,8 @@ export class JsonSyntaxError extends SyntaxError {
 
 const OBJECT = 0;
 const ARRAY = 1;
+/** The implicit array that holds the records of a JSON Lines stream. It has no bytes of its own. */
+const STREAM = 2;
 
 // Grammar states. The last three are mid-token states that survive chunk boundaries.
 const TOP_VALUE = 0;
@@ -50,9 +52,16 @@ const OBJECT_KEY = 6;
 const OBJECT_COLON = 7;
 const OBJECT_VALUE = 8;
 const OBJECT_NEXT = 9;
-const IN_STRING = 10;
-const IN_KEY = 11;
-const IN_BARE = 12;
+/** JSON Lines: at the start of a line, before a record. Blank lines stay here. */
+const STREAM_VALUE = 10;
+/** JSON Lines: after a record, where only spaces, tabs and carriage returns may come before the newline. */
+const STREAM_NEXT = 11;
+const IN_STRING = 12;
+const IN_KEY = 13;
+const IN_BARE = 14;
+
+/** The state after a value completes inside a container of each kind. */
+const NEXT_STATE = new Uint8Array([OBJECT_NEXT, ARRAY_NEXT, STREAM_NEXT]);
 
 const NUMBER = 0;
 const LITERAL = 1;
@@ -127,6 +136,15 @@ function describeByte(c: number): string {
   return `byte 0x${c.toString(16).padStart(2, "0")}`;
 }
 
+export interface TokenizerOptions {
+  /**
+   * Read JSON Lines (NDJSON) instead of one document: every non-blank line holds exactly one JSON value, and the sink
+   * sees the records as the elements of one array, opened before the first byte and closed by `end`. Blank and
+   * whitespace-only lines are skipped, `\r\n` endings are accepted, and a record may not span lines.
+   */
+  stream?: boolean | undefined;
+}
+
 /**
  * Incremental, strict (RFC 8259) JSON tokenizer over raw bytes. Feed it chunks with `write` and finish with `end`.
  * Nothing is buffered except the bytes of a scalar token that straddles a chunk boundary, and a stack with one byte
@@ -136,6 +154,9 @@ export class JsonTokenizer {
   private state = TOP_VALUE;
   private containers = new Uint8Array(256);
   private depth = 0;
+  private readonly stream: boolean;
+  /** Whether the implicit records array was announced to the sink (JSON Lines only). */
+  private opened = false;
 
   // Position tracking: offsets are absolute byte offsets, lines only advance on whitespace newlines.
   private consumed = 0;
@@ -158,7 +179,21 @@ export class JsonTokenizer {
   constructor(
     private readonly sink: JsonSink,
     private readonly gate: JsonGate = { blocked: false },
-  ) {}
+    options: TokenizerOptions = {},
+  ) {
+    this.stream = Boolean(options.stream);
+    if (this.stream) {
+      this.containers[0] = STREAM;
+      this.depth = 1;
+      this.state = STREAM_VALUE;
+    }
+  }
+
+  /** In JSON Lines mode, announces the records array to the sink once, before anything else. */
+  private open(): void {
+    this.opened = true;
+    this.sink.startArray();
+  }
 
   /**
    * Consumes `buf` from `start`. Returns the index it stopped at, which is `buf.length` unless the gate blocked.
@@ -171,6 +206,7 @@ export class JsonTokenizer {
       this.chunkBase = this.consumed;
       this.consumed += len;
     }
+    if (this.stream && !this.opened) this.open();
     const gate = this.gate;
     let pos = start;
 
@@ -189,6 +225,10 @@ export class JsonTokenizer {
           continue;
         }
         if (c === 0x0a) {
+          if (this.stream) {
+            if (state === STREAM_NEXT) this.state = STREAM_VALUE;
+            else if (state !== STREAM_VALUE) this.fail("Unexpected end of line inside a JSON Lines record (each record must be on one line)", pos);
+          }
           pos += 1;
           this.line += 1;
           this.lineStart = this.chunkBase + pos;
@@ -249,6 +289,9 @@ export class JsonTokenizer {
         case DONE:
           this.fail(`Unexpected ${describeByte(c)} after the top-level value`, pos);
           break;
+        case STREAM_NEXT:
+          this.fail(`Unexpected ${describeByte(c)} after the record on this line (JSON Lines allows one value per line)`, pos);
+          break;
         default:
           pos = this.startValue(buf, pos, len, c, state);
       }
@@ -262,7 +305,8 @@ export class JsonTokenizer {
    * of the input cannot add a line. Call it after `write` returned `pos`. It does not validate the closers.
    */
   finishesAt(buf: Buffer, pos: number): boolean {
-    if (this.state >= IN_STRING) return false;
+    // A JSON Lines stream can always continue with another record.
+    if (this.stream || this.state >= IN_STRING) return false;
     let open = this.depth;
     for (; pos < buf.length; pos += 1) {
       const c = buf[pos]!;
@@ -273,13 +317,26 @@ export class JsonTokenizer {
     return open === 0;
   }
 
-  /** Signals end of input and throws unless exactly one complete JSON value was seen. */
+  /**
+   * Signals end of input and throws unless exactly one complete JSON value was seen. In JSON Lines mode it throws
+   * unless the last record is complete, then closes the records array; input with no records gives an empty array.
+   */
   end(): void {
     const state = this.state;
     if (state === IN_BARE) {
       this.completeBare(EMPTY, 0, 0);
     } else if (state === IN_STRING || state === IN_KEY) {
       this.failAt("Unterminated string", this.tokenOffset);
+    }
+    if (this.stream && (this.state === STREAM_VALUE || this.state === STREAM_NEXT)) {
+      if (!this.opened) this.open();
+      this.depth = 0;
+      this.state = DONE;
+      this.sink.endArray();
+      return;
+    }
+    if (this.stream && this.state !== DONE) {
+      this.failAt("Unexpected end of input inside a JSON Lines record", this.consumed);
     }
     if (this.state !== DONE) {
       this.failAt(this.depth === 0 ? "Unexpected end of input (empty document)" : "Unexpected end of input", this.consumed);
@@ -337,7 +394,7 @@ export class JsonTokenizer {
   /** State after a value completes, based on the enclosing container. */
   private nextState(): number {
     if (this.depth === 0) return DONE;
-    return this.containers[this.depth - 1] === ARRAY ? ARRAY_NEXT : OBJECT_NEXT;
+    return NEXT_STATE[this.containers[this.depth - 1]!]!;
   }
 
   private beginString(buf: Buffer, pos: number, len: number, state: number): number {
@@ -385,6 +442,7 @@ export class JsonTokenizer {
           i += 1;
           continue;
         }
+        if (c === 0x0a && this.stream) this.fail("Unterminated string: the line ends inside it (JSON Lines records must be on one line)", i);
         this.fail(`Unescaped control character ${describeByte(c)} in string`, i);
       }
 
