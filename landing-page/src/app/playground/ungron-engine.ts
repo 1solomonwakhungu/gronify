@@ -23,6 +23,8 @@ export interface UnflattenResult {
   messages: string[];
   /** The error message without the `Error: unflattening gron: ` prefix, or null. */
   error: string | null;
+  /** The error is the playground's output limit, not a problem with the input. */
+  limitExceeded: boolean;
 }
 
 /** Longest JSON the playground writes, in UTF-16 code units, so a sparse `json[4000000000]` cannot hang the tab. */
@@ -217,9 +219,55 @@ interface ParsedLine {
 // ---------------------------------------------------------------------------------------------------------------
 // Line parser (parse.ts)
 
+/** Characters the regex `.` does not match. Each of them is also matched by `\s`. */
+function isLineTerminator(code: number): boolean {
+  return code === 0x0a || code === 0x0d || code === 0x2028 || code === 0x2029;
+}
+
+const SPACE = /\s/;
+
+/**
+ * Whether `text` matches `/^json.*?\s*=\s*.+$/`, the test the CLI uses to choose its error message, in linear time.
+ * The regex backtracks quadratically on a long line with many `=` signs, and the playground runs it on every keystroke.
+ *
+ * The regex matches when some `=` at index `i >= 4` has
+ * - before it: no line terminator in `text[4, i)`, except inside an all-whitespace run that ends at the `=`;
+ * - after it: optional whitespace, then at least one character, with no line terminator in that last part. So every
+ *   line terminator after the `=` must have only whitespace between the `=` and it, and something must follow it.
+ */
+export function looksLikeAssignment(text: string): boolean {
+  if (!text.startsWith("json")) return false;
+  const length = text.length;
+  let lastTerminator = -1;
+  for (let i = 0; i < length; i += 1) if (isLineTerminator(text.charCodeAt(i))) lastTerminator = i;
+  // The last non-whitespace character at or before the last line terminator.
+  let lastSolid = -1;
+  for (let i = lastTerminator; i >= 0; i -= 1) {
+    if (!SPACE.test(text[i])) {
+      lastSolid = i;
+      break;
+    }
+  }
+
+  let seenTerminator = false;
+  // A non-whitespace character after a line terminator: no later `=` can satisfy the part before it.
+  let prefixBroken = false;
+  for (let i = 4; i < length; i += 1) {
+    const code = text.charCodeAt(i);
+    if (code === 0x3d && !prefixBroken) {
+      const after = i + 1;
+      const suffixOk = lastTerminator < after ? after < length : lastSolid < after && lastTerminator < length - 1;
+      if (suffixOk) return true;
+    }
+    if (isLineTerminator(code)) seenTerminator = true;
+    else if (seenTerminator && !SPACE.test(text[i])) prefixBroken = true;
+  }
+  return false;
+}
+
 function pathError(buf: Uint8Array, start: number, end: number, lineNumber: number, message: string): never {
   // A line with no `=` followed by a value is "expected a gron assignment", whatever its path looks like.
-  if (!/^json.*?\s*=\s*.+$/.test(decode(buf, start, end))) throw lineError(lineNumber, "expected a gron assignment");
+  if (!looksLikeAssignment(decode(buf, start, end))) throw lineError(lineNumber, "expected a gron assignment");
   throw lineError(lineNumber, message);
 }
 
@@ -750,15 +798,15 @@ export function unflatten(source: string, options: UnflattenOptions = {}): Unfla
       // The CLI drops what it streamed and rebuilds the document in memory, which it can do for the first 16 MiB.
       output = buildTree(buf, pretty);
     }
-    return { output, messages: [], error: null };
+    return { output, messages: [], error: null, limitExceeded: false };
   } catch (error) {
     if (error instanceof OutputTooLargeError) {
       const message = `the JSON would be larger than the playground's ${MAX_OUTPUT_CHARS / (1024 * 1024)} MB output limit; run 'gronify unflatten' in a terminal instead`;
-      return { output: "", messages: [`Error: unflattening gron: ${message}`], error: message };
+      return { output: "", messages: [`Error: unflattening gron: ${message}`], error: message, limitExceeded: true };
     }
     const message = error instanceof Error ? error.message : String(error);
     const messages = [`Error: unflattening gron: ${message}`];
     if (/^line \d+:/.test(message)) messages.push("Tip: Gron lines should look like: json.path = value");
-    return { output: "", messages, error: message };
+    return { output: "", messages, error: message, limitExceeded: false };
   }
 }

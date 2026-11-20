@@ -57,7 +57,7 @@ A slug in `related`, or an inline link to `/guides/<slug>`, must name a register
 
 ## Playground
 
-`/playground` runs `flatten`, `search`, and `unflatten` in the browser. The engine in `src/app/playground/` is a port of the CLI with no Node APIs: `gron-engine.ts` (tokenizer, flattener, `--sort`, search, and the CLI's messages), `ungron-engine.ts` (the document-order pass and the in-memory fallback), and `cli-command.ts` (the command shown on the page). Input is limited to 2 MB (`MAX_INPUT_BYTES`).
+`/playground` runs `flatten`, `search`, and `unflatten` in the browser. The engine in `src/app/playground/` is a port of the CLI with no Node APIs: `gron-engine.ts` (tokenizer, flattener, `--sort`, search, and the CLI's messages), `ungron-engine.ts` (the document-order pass and the in-memory fallback), and `cli-command.ts` (the command shown on the page). Input is limited to 2 MB (`MAX_INPUT_BYTES`), and output to 16 MB (`MAX_OUTPUT_CHARS` in both engines), because every gron line repeats its full path: 40 KB of deeply nested arrays would flatten to 600 million characters. Past either limit the page shows an error that points to the CLI.
 
 `npm run test:playground` compares the engine with CLI output recorded in `scripts/playground-golden.json`, and CI runs it. After changing the engine, the samples, or the CLI's output, check against the built CLI (with seeded random documents too) and re-record:
 

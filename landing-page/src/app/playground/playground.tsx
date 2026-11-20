@@ -29,6 +29,8 @@ type Outcome = {
   /** stderr lines other than the error itself. */
   notes: string[];
   error: string | null;
+  /** Heading for the error panel. */
+  errorTitle: string;
   /** Shown instead of output when there is nothing to run yet. */
   idle: string | null;
   matched: number | null;
@@ -47,6 +49,98 @@ function plural(count: number, one: string, many: string): string {
 /** Parses a positive integer field; null when empty or invalid. */
 function positiveInteger(value: string): number | null {
   return /^[1-9][0-9]{0,8}$/.test(value) ? Number(value) : null;
+}
+
+/** The settings the engine runs on: the editor state, deferred while typing. */
+type EngineSettings = {
+  input: string;
+  mode: PlaygroundMode;
+  term: string;
+  regex: boolean;
+  caseSensitive: boolean;
+  invert: boolean;
+  count: boolean;
+  maxCountOn: boolean;
+  maxCount: string;
+  limitOn: boolean;
+  limit: string;
+  sort: boolean;
+  pretty: boolean;
+  tooLarge: boolean;
+};
+
+function runEngine(d: EngineSettings): Outcome {
+  const empty: Outcome = { text: "", lines: [], notes: [], error: null, errorTitle: "", idle: null, matched: null };
+  if (d.tooLarge) {
+    return {
+      ...empty,
+      idle: `The playground runs up to ${formatBytes(MAX_INPUT_BYTES)} in your browser. Install the CLI for bigger files: it streams multi-gigabyte JSON.`,
+    };
+  }
+  if (d.mode === "unflatten") {
+    const result = unflatten(d.input, { pretty: d.pretty });
+    return {
+      ...empty,
+      text: result.output,
+      lines: result.output === "" ? [] : result.output.replace(/\n$/, "").split("\n"),
+      notes: result.messages.slice(1),
+      error: result.error,
+      errorTitle: result.limitExceeded ? "Too large for the browser" : "Invalid gron",
+    };
+  }
+  if (d.mode === "search" && d.term === "") {
+    return { ...empty, idle: "Type a search term to filter the flattened lines." };
+  }
+  const result =
+    d.mode === "flatten"
+      ? flatten(d.input, { sort: d.sort, limit: d.limitOn ? positiveInteger(d.limit) : null })
+      : search(d.input, {
+          term: d.term,
+          regex: d.regex,
+          caseSensitive: d.caseSensitive,
+          invert: d.invert,
+          count: d.count,
+          maxCount: d.maxCountOn ? positiveInteger(d.maxCount) : null,
+          sort: d.sort,
+        });
+  return {
+    ...empty,
+    text: stdoutOf(result),
+    lines: result.lines,
+    notes: result.error === null ? result.messages : result.messages.slice(1),
+    error: result.error,
+    errorTitle: result.limitExceeded
+      ? "Too large for the browser"
+      : d.mode === "search" && d.regex
+        ? "Invalid JSON or regex"
+        : "Invalid JSON",
+    matched: d.mode === "search" ? result.matched : null,
+  };
+}
+
+/**
+ * Converts the editor text when the mode switches between JSON and gron: JSON to gron for `unflatten`, gron back to
+ * JSON otherwise. Returns null, leaving the other editor as it was, when the text is invalid, when it or the result is
+ * over the input limit (2 MB of JSON can flatten to far more gron), or when the engine throws, so a mode switch never
+ * hangs the tab or takes the page down.
+ */
+function convertForMode(text: string, target: PlaygroundMode): string | null {
+  if (utf8ByteLength(text) > MAX_INPUT_BYTES) return null;
+  try {
+    let converted: string;
+    if (target === "unflatten") {
+      const flattened = flatten(text);
+      if (flattened.error !== null) return null;
+      converted = stdoutOf(flattened);
+    } else {
+      const rebuilt = unflatten(text, { pretty: true });
+      if (rebuilt.error !== null) return null;
+      converted = rebuilt.output;
+    }
+    return utf8ByteLength(converted) > MAX_INPUT_BYTES ? null : converted;
+  } catch {
+    return null;
+  }
 }
 
 /** A button that copies text and reports the result in a live region next to it. */
@@ -201,47 +295,22 @@ export function Playground() {
   const stale = deferred !== settings;
 
   const outcome: Outcome = useMemo(() => {
-    const empty: Outcome = { text: "", lines: [], notes: [], error: null, idle: null, matched: null };
-    const d = deferred;
-    if (d.tooLarge) {
+    try {
+      return runEngine(deferred);
+    } catch (error) {
+      // The engines report bad input as results, so this is a bug or a browser limit. Show it in the output panel
+      // instead of letting it take the whole page down to the error boundary.
+      const message = error instanceof Error ? error.message : String(error);
       return {
-        ...empty,
-        idle: `The playground runs up to ${formatBytes(MAX_INPUT_BYTES)} in your browser. Install the CLI for bigger files: it streams multi-gigabyte JSON.`,
+        text: "",
+        lines: [],
+        notes: [],
+        error: `The playground could not run this input (${message}). Run the command above with the CLI instead.`,
+        errorTitle: "Could not run in the browser",
+        idle: null,
+        matched: null,
       };
     }
-    if (d.mode === "unflatten") {
-      const result = unflatten(d.input, { pretty: d.pretty });
-      return {
-        ...empty,
-        text: result.output,
-        lines: result.output === "" ? [] : result.output.replace(/\n$/, "").split("\n"),
-        notes: result.messages.slice(1),
-        error: result.error,
-      };
-    }
-    if (d.mode === "search" && d.term === "") {
-      return { ...empty, idle: "Type a search term to filter the flattened lines." };
-    }
-    const result =
-      d.mode === "flatten"
-        ? flatten(d.input, { sort: d.sort, limit: d.limitOn ? positiveInteger(d.limit) : null })
-        : search(d.input, {
-            term: d.term,
-            regex: d.regex,
-            caseSensitive: d.caseSensitive,
-            invert: d.invert,
-            count: d.count,
-            maxCount: d.maxCountOn ? positiveInteger(d.maxCount) : null,
-            sort: d.sort,
-          });
-    return {
-      ...empty,
-      text: stdoutOf(result),
-      lines: result.lines,
-      notes: result.error === null ? result.messages : result.messages.slice(1),
-      error: result.error,
-      matched: d.mode === "search" ? result.matched : null,
-    };
   }, [deferred]);
 
   const baseFile = sample?.file ?? "input.json";
@@ -285,7 +354,10 @@ export function Playground() {
     setJsonInput(next.json);
     setTerm(next.term);
     // Unflatten mode works on gron, so give it this sample's gron.
-    if (mode === "unflatten") setGronInput(stdoutOf(flatten(next.json)));
+    if (mode === "unflatten") {
+      const gron = convertForMode(next.json, "unflatten");
+      if (gron !== null) setGronInput(gron);
+    }
     posthog.capture("playground_sample_selected", { sample: next.id, mode });
   }
 
@@ -293,13 +365,11 @@ export function Playground() {
     if (next === mode) return;
     if (next === "unflatten") {
       // Carry the current JSON over as gron, so the round trip is one click.
-      const flattened = flatten(jsonInput);
-      if (flattened.error === null) setGronInput(stdoutOf(flattened));
+      const gron = convertForMode(jsonInput, "unflatten");
+      if (gron !== null) setGronInput(gron);
     } else if (mode === "unflatten") {
-      const rebuilt = unflatten(gronInput, { pretty: true });
-      if (rebuilt.error === null && rebuilt.output !== jsonInput) {
-        setJsonInput(rebuilt.output);
-      }
+      const json = convertForMode(gronInput, next);
+      if (json !== null && json !== jsonInput) setJsonInput(json);
     }
     setMode(next);
     posthog.capture("playground_mode_changed", { mode: next });
@@ -498,7 +568,7 @@ export function Playground() {
             {outcome.error !== null ? (
               <div className={styles.error} role="alert">
                 <p className={styles.errorTitle}>
-                  {deferred.mode === "unflatten" ? "Invalid gron" : deferred.regex && deferred.mode === "search" ? "Invalid JSON or regex" : "Invalid JSON"}
+                  {outcome.errorTitle}
                 </p>
                 <code className={styles.errorMessage}>{outcome.error}</code>
               </div>

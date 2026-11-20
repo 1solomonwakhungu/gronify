@@ -13,6 +13,24 @@
 /** Largest input the playground processes, in UTF-8 bytes. The CLI streams files of any size. */
 export const MAX_INPUT_BYTES = 2 * 1024 * 1024;
 
+/**
+ * Most output the playground generates, in UTF-16 code units, counting every line before it is filtered. Each line
+ * repeats its full path, so output can grow with the square of the nesting depth: 40 KB of `[[[...]]]` would print
+ * 600 million characters. The CLI streams that to disk; a browser tab cannot hold it.
+ */
+export const MAX_OUTPUT_CHARS = 16 * 1024 * 1024;
+
+/** The output passed `MAX_OUTPUT_CHARS`. A playground limit only; the CLI has no such limit. */
+export class OutputTooLargeError extends Error {
+  constructor(command: string) {
+    super(
+      `the output is larger than the playground's ${MAX_OUTPUT_CHARS / (1024 * 1024)} MB limit ` +
+        `(deeply nested or very large JSON); run 'gronify ${command}' in a terminal instead`,
+    );
+    this.name = "OutputTooLargeError";
+  }
+}
+
 /** A strict JSON syntax error, worded and positioned exactly as the CLI reports it. */
 export class JsonSyntaxError extends SyntaxError {
   readonly offset: number;
@@ -62,6 +80,8 @@ export interface GronResult {
   matched: number;
   /** A `--limit`/`-m` cap ended the run before the input did. */
   stoppedEarly: boolean;
+  /** The error is the playground's output limit, not a problem with the input. */
+  limitExceeded: boolean;
 }
 
 /** Everything the CLI writes to stdout for `result`. */
@@ -468,15 +488,32 @@ class LineOutput implements Gate {
   private readonly invert: boolean;
   private readonly countOnly: boolean;
   private readonly limit: number;
+  private readonly command: string;
+  /** Characters of every line generated so far, kept or not. */
+  private size = 0;
 
-  constructor(matcher: ((line: string) => boolean) | null, invert: boolean, countOnly: boolean, limit: number) {
+  constructor(
+    matcher: ((line: string) => boolean) | null,
+    invert: boolean,
+    countOnly: boolean,
+    limit: number,
+    command: string,
+  ) {
     this.matcher = matcher;
     this.invert = invert;
     this.countOnly = countOnly;
     this.limit = limit;
+    this.command = command;
   }
 
+  /**
+   * Every generated line passes through here, including `--sort` lines that are buffered before they are kept, so
+   * this is where the output budget is charged. It is charged before matching, since a regex over a long line costs
+   * time whether or not it matches.
+   */
   accepts(line: string): boolean {
+    this.size += line.length + 1;
+    if (this.size > MAX_OUTPUT_CHARS) throw new OutputTooLargeError(this.command);
     return this.matcher === null || this.matcher(line) !== this.invert;
   }
 
@@ -738,18 +775,18 @@ function failure(context: string, error: unknown, tip: string | null): GronResul
   const message = error instanceof Error ? error.message : String(error);
   const messages = [`Error: ${context}: ${message}`];
   if (tip !== null) messages.push(tip);
-  return { lines: [], messages, error: message, matched: 0, stoppedEarly: false };
+  return { lines: [], messages, error: message, matched: 0, stoppedEarly: false, limitExceeded: error instanceof OutputTooLargeError };
 }
 
 /** `gronify --no-color flatten [--sort] [--limit n]` */
 export function flatten(input: string, options: FlattenOptions = {}): GronResult {
   const limit = options.limit ?? Infinity;
   try {
-    const { out, exhausted } = runFlatten(encodeInput(input), new LineOutput(null, false, false, limit), Boolean(options.sort));
+    const { out, exhausted } = runFlatten(encodeInput(input), new LineOutput(null, false, false, limit, "flatten"), Boolean(options.sort));
     const messages: string[] = [];
     const stoppedEarly = out.stopped && !exhausted;
     if (stoppedEarly) messages.push(`Stopped after ${plural(limit, "line", "lines")} (--limit); there may be more`);
-    return { lines: out.lines, messages, error: null, matched: out.matched, stoppedEarly };
+    return { lines: out.lines, messages, error: null, matched: out.matched, stoppedEarly, limitExceeded: false };
   } catch (error) {
     return failure(
       "flattening JSON",
@@ -765,14 +802,14 @@ export function search(input: string, options: SearchOptions): GronResult {
   const context = options.regex ? "searching JSON (invalid regex or JSON)" : "searching JSON";
   try {
     const matcher = createLineMatcher(options.term, options);
-    const out = new LineOutput(matcher, Boolean(options.invert), Boolean(options.count), limit);
+    const out = new LineOutput(matcher, Boolean(options.invert), Boolean(options.count), limit, "search");
     // Counting needs no order, so --sort is skipped with --count.
     const { exhausted } = runFlatten(encodeInput(input), out, Boolean(options.sort) && !options.count);
     const messages: string[] = [];
     const stoppedEarly = out.stopped && !exhausted;
     if (options.count) {
       if (stoppedEarly) messages.push(`Stopped counting at ${plural(limit, "match", "matches")} (--max-count)`);
-      return { lines: [String(out.matched)], messages, error: null, matched: out.matched, stoppedEarly };
+      return { lines: [String(out.matched)], messages, error: null, matched: out.matched, stoppedEarly, limitExceeded: false };
     }
     if (stoppedEarly) {
       const what = options.invert ? plural(limit, "line", "lines") : plural(limit, "match", "matches");
@@ -786,7 +823,7 @@ export function search(input: string, options: SearchOptions): GronResult {
         messages.push("Tip: Search is a case-insensitive substring match; use --regex for patterns");
       }
     }
-    return { lines: out.lines, messages, error: null, matched: out.matched, stoppedEarly };
+    return { lines: out.lines, messages, error: null, matched: out.matched, stoppedEarly, limitExceeded: false };
   } catch (error) {
     return failure(context, error, null);
   }
