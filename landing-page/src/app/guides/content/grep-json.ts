@@ -10,7 +10,7 @@ export const grepJson: Guide = {
   h1: "How to grep nested JSON from the command line",
   lede: "To grep JSON, flatten it first so that every value sits on its own line next to its full path, then filter those lines. `gronify search orders.json pending` does both in one streaming pass and prints each match as `json.path = value`, so you can see where in the document the match lives.",
   published: "2026-11-12",
-  updated: "2026-11-12",
+  updated: "2026-11-19",
   sections: [
     {
       id: "why-grep-fails",
@@ -365,7 +365,7 @@ alan@example.org
     {
       question: "How do I search JSON on Windows without grep?",
       answer:
-        "Install Gronify with `npm install -g gronify` on Node.js 20 or newer. `gronify search` does its own matching, so it needs neither grep nor `Select-String`. The project's CI runs on Linux and macOS, not on Windows.",
+        "Install Gronify with `npm install -g gronify` on Node.js 20 or newer. `gronify search` does its own matching, so it needs neither grep nor `Select-String`. The project's CI runs the test suite on Windows, Linux, and macOS.",
     },
     {
       question: "How do I match a value only under a specific key?",

@@ -55,7 +55,7 @@ export const faqs: FaqItem[] = [
   {
     question: "Does Gronify work on Windows, macOS, and Linux?",
     answer:
-      "Yes. Gronify is a Node.js program, so npm install -g gronify works on all three with Node.js 20 or newer. Search is built in, so PowerShell and cmd users do not need grep. Homebrew, a GitHub release archive, and a source build are also available. CI runs the tests on Linux and macOS, not on Windows.",
+      "Yes. Gronify is a Node.js program, so npm install -g gronify works on all three with Node.js 20 or newer. Search is built in, so PowerShell and cmd users do not need grep. Homebrew, a GitHub release archive, and a source build are also available. CI runs the test suite on Linux, macOS, and Windows.",
   },
   {
     question: "How large a JSON file can Gronify handle?",
