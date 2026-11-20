@@ -13,7 +13,7 @@ export const gronAlternative: Guide = {
   h1: "gron alternatives: gron, fastgron and Gronify compared",
   lede: "This page compares gron with two alternatives that print the same `json.path = value` lines. [fastgron](https://github.com/adamritter/fastgron) is a C++ tool that flattened every record file from 1 MB to 1 GB faster than the other two in our benchmark. Gronify is a Node.js CLI that installs with `npm install -g gronify` and streams its input, so its memory use barely moves between a 1 MB file and a 1 GB one. [gron](https://github.com/tomnomnom/gron) still runs and has the widest packaging; its latest release is from April 2022. The facts below were checked on 2026-11-12 against gron 0.7.1, fastgron 0.7.7, and Gronify 1.3.1.",
   published: "2026-11-12",
-  updated: "2026-11-12",
+  updated: "2026-11-19",
   sections: [
     {
       id: "comparison-table",
@@ -139,7 +139,7 @@ export const gronAlternative: Guide = {
           items: [
             "gron publishes Windows zips for 386, amd64, and arm64 with v0.7.1, and Scoop's main bucket carries the same version.",
             "fastgron publishes `fastgron.exe`. Its README says that binary is built without libcurl, so it cannot read `http` or `https` URLs directly.",
-            "Gronify installs through npm on any system with Node.js 20 or newer. Its CI runs the tests on Linux and macOS and has no Windows job, so the project does not test Windows itself.",
+            "Gronify installs through npm on any system with Node.js 20 or newer. Its CI runs the full test suite on Windows, Linux, and macOS with Node.js 20 and 22.",
           ],
         },
       ],
