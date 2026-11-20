@@ -14,7 +14,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from "fs";
-import { tmpdir } from "os";
+import { devNull, tmpdir } from "os";
 import { join } from "path";
 import { flattenJson } from "../src/gron";
 
@@ -432,7 +432,8 @@ describe("Gronify CLI", () => {
         expect(tempFiles()).toEqual([]);
       });
 
-      test("should keep the target's mode and replace it only when done", async () => {
+      // Windows has no permission bits beyond read-only, so there is no mode to keep.
+      (process.platform === "win32" ? test.skip : test)("should keep the target's mode and replace it only when done", async () => {
         const file = join(work, "mode.json");
         writeFileSync(file, "old\n");
         chmodSync(file, 0o640);
@@ -468,7 +469,7 @@ describe("Gronify CLI", () => {
       const inputFile = join(dir, "gap.gron");
       writeFileSync(inputFile, "json = []\njson[5000000] = 1\njson[0] = 2\n");
 
-      const result = await runCLI(["--no-color", "-o", "/dev/null", "unflatten", inputFile]);
+      const result = await runCLI(["--no-color", "-o", devNull, "unflatten", inputFile]);
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("line 3: array index 0 does not follow the previous index");
@@ -1080,11 +1081,16 @@ describe("Gronify CLI", () => {
       });
 
       test("should replace a symlinked -o target's file and keep the link", async () => {
-        if (!posix) return;
         const real = join(work, "real.gron");
         const link = join(work, "link.gron");
         writeFileSync(real, "old\n");
-        symlinkSync(real, link);
+        try {
+          symlinkSync(real, link, "file");
+        } catch (error) {
+          // Windows only lets administrators and Developer Mode create symlinks.
+          if (!posix && (error as NodeJS.ErrnoException).code === "EPERM") return;
+          throw error;
+        }
 
         const result = await runCLI(["-o", link, "flatten"], "[1]");
 
@@ -1093,8 +1099,7 @@ describe("Gronify CLI", () => {
         expect(readFileSync(real, "utf8")).toBe("json = []\njson[0] = 1\n");
       });
 
-      test("should keep the mode of an existing -o file", async () => {
-        if (!posix) return;
+      (posix ? test : test.skip)("should keep the mode of an existing -o file", async () => {
         const target = join(work, "mode.gron");
         writeFileSync(target, "old\n");
         chmodSync(target, 0o640);
@@ -1166,8 +1171,7 @@ describe("Gronify CLI", () => {
         expect(tempFiles()).toEqual([]);
       });
 
-      test("should remove its temp file when killed", async () => {
-        if (!posix) return;
+      (posix ? test : test.skip)("should remove its temp file when killed", async () => {
         const target = join(work, "killed.gron");
         const signal = await new Promise<NodeJS.Signals | null>((resolve, reject) => {
           const child = spawn("node", ["dist/index.js", "-o", target, "flatten"]);

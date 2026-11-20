@@ -292,7 +292,9 @@ describe("agent features", () => {
       test("commits the capped output atomically", async () => {
         const target = join(work, "capped.gron");
         writeFileSync(target, "old\n");
-        chmodSync(target, 0o640);
+        // Windows keeps only a read-only bit, so the mode check is POSIX-only.
+        const posix = process.platform !== "win32";
+        if (posix) chmodSync(target, 0o640);
 
         const result = await runCLI(["--no-color", "-o", target, "search", "-m", "2", "region"], DOC);
 
@@ -302,7 +304,7 @@ describe("agent features", () => {
           'json.deployments[0].region = "us-central1"',
           'json.deployments[1].region = "us-east1"',
         ]);
-        expect(statSync(target).mode & 0o777).toBe(0o640);
+        if (posix) expect(statSync(target).mode & 0o777).toBe(0o640);
         expect(result.stderr).toContain("Stopped after 2 matches");
         expect(result.stderr).toContain(`Output written to ${target}`);
         expect(tempFiles()).toEqual([]);
