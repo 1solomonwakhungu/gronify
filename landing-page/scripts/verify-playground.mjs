@@ -115,6 +115,17 @@ const gronFixtures = {
   onlyBlank: "\n  \n",
   badPath: "json = {}\njson.1a = 1",
   junkAfterPath: "json = {}\njson.a b = 1",
+  // Filtered gron (grep or search output): missing parents, the root included, are synthesized.
+  filteredDeep: 'json.a.b[2].c = "x"\njson.a.b[4] = 1\njson.a.d = true',
+  filteredRootArray: "json[1].id = 7\njson[3].id = 9",
+  filteredReopen: "json.a.x = 1\njson.b = 2\njson.a.y = 3",
+  filteredIntoExplicit: 'json = {}\njson.a = {}\njson.a.k = 1\njson.b.c = 2\njson.a.z = 3',
+  filteredMissingInFull: "json = {}\njson.x = 1\njson.a.b = 2",
+  filteredIndexBack: "json.a[3] = 1\njson.a[1] = 2",
+  filteredScalarParent: "json.a = 1\njson.a.b = 2",
+  filteredKeyOnArray: "json.a[0] = 1\njson.a.b = 2",
+  filteredIndexOnObject: "json.a.b = 1\njson.a[0] = 2",
+  filteredScalarRoot: "json = 1\njson.a = 2",
 };
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -207,6 +218,11 @@ for (const [id, json] of Object.entries(jsonFixtures)) {
   gronInputs[`flattened-${id}`] = gron.stdoutOf(gron.flatten(json));
   gronInputs[`sorted-${id}`] = gron.stdoutOf(gron.flatten(json, { sort: true }));
 }
+// What `gronify search file term | gronify unflatten` sees: only the matching lines.
+for (const sample of samples) {
+  gronInputs[`searched-${sample.id}`] = gron.stdoutOf(gron.search(sample.json, { term: sample.term }));
+  gronInputs[`searched-sorted-${sample.id}`] = gron.stdoutOf(gron.search(sample.json, { term: sample.term, sort: true }));
+}
 for (const [id, text] of Object.entries(gronInputs)) {
   add(`unflatten/${id}`, text, { mode: "unflatten", file: "input.gron" });
   add(`unflatten-pretty/${id}`, text, { mode: "unflatten", file: "input.gron", pretty: true });
@@ -293,7 +309,19 @@ function* randomCases(count) {
       limit: random() < 0.3 ? 1 + Math.floor(random() * 6) : null,
       pretty: random() < 0.5,
     };
-    const input = mode === "unflatten" ? gron.stdoutOf(gron.flatten(json, { sort: settings.sort })) || json : json;
+    let input = json;
+    if (mode === "unflatten") {
+      input = gron.stdoutOf(gron.flatten(json, { sort: settings.sort })) || json;
+      // Half the time keep a random subset of the lines, as `grep` would, and sometimes shuffle a pair.
+      if (random() < 0.5) {
+        const lines = input.split("\n").filter(() => random() < 0.6);
+        if (lines.length > 1 && random() < 0.3) {
+          const at = Math.floor(random() * (lines.length - 1));
+          [lines[at], lines[at + 1]] = [lines[at + 1], lines[at]];
+        }
+        input = lines.join("\n");
+      }
+    }
     yield { name: `random/${i}`, input, settings: { ...base, ...settings } };
   }
 }

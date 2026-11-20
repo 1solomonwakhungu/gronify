@@ -543,6 +543,7 @@ export function Playground() {
           {mode === "unflatten" && (
             <p className={styles.paneNote}>
               Lines in document order (what flatten writes) convert in one pass; other orders are rebuilt in memory.
+              Filtered lines work too: missing parents are filled in, as they are in the CLI.
             </p>
           )}
         </section>
