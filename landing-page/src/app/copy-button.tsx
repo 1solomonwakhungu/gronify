@@ -25,19 +25,23 @@ async function writeClipboard(text: string): Promise<boolean> {
     // Permission denied or insecure context: try the fallback below.
   }
 
+  // `select()` moves focus into the textarea; put it back on the copy button
+  // afterwards so keyboard users keep their place.
+  const active = document.activeElement as HTMLElement | null;
+  const textarea = document.createElement("textarea");
   try {
-    const textarea = document.createElement("textarea");
     textarea.value = text;
     textarea.setAttribute("readonly", "");
     textarea.style.position = "fixed";
     textarea.style.opacity = "0";
     document.body.appendChild(textarea);
     textarea.select();
-    const copied = document.execCommand("copy");
-    textarea.remove();
-    return copied;
+    return document.execCommand("copy");
   } catch {
     return false;
+  } finally {
+    textarea.remove();
+    active?.focus();
   }
 }
 
