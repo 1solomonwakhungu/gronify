@@ -29,6 +29,7 @@ import {
   repositoryUrl,
   skillsUrl,
 } from "./site-config";
+import { HeroInstallCommand } from "./install-command";
 import { Terminal, type TerminalLine } from "./terminal";
 
 const heroTranscript: TerminalLine[] = [
@@ -119,6 +120,10 @@ const buildComparisons = (facts: ComparisonFacts) => [
     kicker: "vs. jq & JSON.parse()",
     title: "Find a key's path without writing a jq filter",
     guide: { href: "/guides/jq-alternative", text: "jq alternative guide" },
+    secondaryGuide: {
+      href: "/guides/json-number-precision",
+      text: "how jq rounds large numbers",
+    },
     description: `jq is the better tool once you know the path and want to reshape data. Gronify needs no query. Search for a key or a value and it prints the full path. It also prints numbers as written. ${facts.numericCheck} JSON.parse() rounds integers above 2^53, and jq can too, depending on version and filter. Node cannot hand JSON.parse() a string over about 512 MB (ERR_STRING_TOO_LONG); Gronify reads the bytes in chunks.`,
     label: "Search output with a 64-bit integer and a trailing zero intact",
     lines: [
@@ -434,7 +439,11 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
           fullWidth
         >
           <div className={styles.heroReveal}>
-            <Hero align="start" variant="gridline-expressive">
+            <Hero
+              align="start"
+              variant="gridline-expressive"
+              trailingComponent={HeroInstallCommand}
+            >
               <Hero.Label>
                 v{cliVersion} · Open source CLI · MIT license
               </Hero.Label>
@@ -558,6 +567,18 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
                       >
                         {item.guide.text}
                       </NextLink>
+                      {item.secondaryGuide ? (
+                        <>
+                          {" "}
+                          or see{" "}
+                          <NextLink
+                            className={styles.inlineLink}
+                            href={item.secondaryGuide.href}
+                          >
+                            {item.secondaryGuide.text}
+                          </NextLink>
+                        </>
+                      ) : null}
                       .
                     </Text>
                     <Box paddingBlockStart={16} className={styles.cellFooter}>
