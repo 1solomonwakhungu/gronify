@@ -458,12 +458,12 @@ describe("streaming unflatten", () => {
   });
 
   test.each([
-    ["json.a = 1\n", "line 1: root must be assigned before child paths"],
     ["json = {}\njson.a = nope\n", "line 2: invalid JSON value"],
     ["json = {}\n\nfoo = 1\n", "line 3: expected a gron assignment"],
     ["json = []\njson.a = 1\n", "line 2: array path requires a numeric index"],
     ["json = {}\njson[0] = 1\n", "line 2: property does not match its parent container"],
-    ["json = {}\njson.user.name = 1\n", "line 2: parent path must be assigned before its children"]
+    ["json = []\njson.user.name = 1\n", "line 2: path does not match its parent container"],
+    ["json = {}\njson[0].name = 1\n", "line 2: path does not match its parent container"]
   ])("reports %j", async (input, message) => {
     await expect(unflatten(input)).rejects.toThrow(message);
   });
@@ -579,10 +579,8 @@ describe("out-of-order input", () => {
     expect(JSON.parse(await unflatten("json = 1\njson = {}\njson.a = 1\n"))).toEqual({ a: 1 });
   });
 
-  test("the fallback reports the old error for a missing parent", async () => {
-    await expect(unflatten('json = {}\njson.user.name = "Alice"\n')).rejects.toThrow(
-      "line 2: parent path must be assigned before its children"
-    );
+  test("a missing parent is synthesized and a child under a scalar is still rejected", async () => {
+    expect(await unflatten('json = {}\njson.user.name = "Alice"\n')).toBe('{"user":{"name":"Alice"}}\n');
     await expect(unflatten("json = 5\njson.a = 1\n")).rejects.toThrow("line 2: property does not match its parent container");
   });
 
@@ -619,6 +617,268 @@ describe("out-of-order input", () => {
 
     test("input within the budget still falls back when read in tiny chunks", async () => {
       expect(JSON.parse(await unflatten(`${sorted}\n`, { budgetBytes: 1 << 20 }, 8))).toHaveLength(12);
+    });
+  });
+});
+
+// ------------------------------------------------------- filtered subsets
+
+describe("filtered subsets (missing parents)", () => {
+  const service = {
+    name: "api",
+    service: {
+      regions: [
+        { id: "us-east", port: 80 },
+        { id: "eu-west", port: 81 },
+        { id: "ap-south", port: 82 }
+      ],
+      owner: "platform"
+    },
+    big: 0,
+    tags: ["a", "regions-b"]
+  };
+  // A JavaScript number cannot hold the big integer, so it is spliced into the gron verbatim.
+  const serviceGron = flattenJson(service).replace("json.big = 0", "json.big = 12345678901234567890");
+  const filter = (gron: string, pattern: RegExp): string =>
+    `${gron
+      .split("\n")
+      .filter((line) => pattern.test(line))
+      .join("\n")}\n`;
+  /** Streams with a tiny budget, so anything but a single pass fails instead of quietly using the in-memory tree. */
+  const streamed = (gron: string, options: UnflattenOptions = {}, chunk = 16): Promise<string> =>
+    unflatten(gron, { budgetBytes: 32, ...options }, chunk);
+
+  test("rebuilds grep output that dropped the root and parent lines", async () => {
+    const gron = filter(serviceGron, /regions/);
+    expect(gron.startsWith("json.service.regions = []\n")).toBe(true);
+    const expected =
+      '{"service":{"regions":[{"id":"us-east","port":80},{"id":"eu-west","port":81},{"id":"ap-south","port":82}]},"tags":[null,"regions-b"]}\n';
+    expect(await unflatten(gron)).toBe(expected);
+    expect(await streamed(gron)).toBe(expected);
+  });
+
+  test("rebuilds search-style output of leaf lines only", async () => {
+    const gron = filter(serviceGron, /eu-west|owner/);
+    expect(gron).toBe('json.service.regions[1].id = "eu-west"\njson.service.owner = "platform"\n');
+    expect(await streamed(gron)).toBe('{"service":{"regions":[null,{"id":"eu-west"}],"owner":"platform"}}\n');
+  });
+
+  test("synthesizes an array root from an index segment", async () => {
+    expect(await streamed('json[2].name = "c"\njson[4].name = "e"\n')).toBe('[null,null,{"name":"c"},null,{"name":"e"}]\n');
+    expect(await streamed("json[0][1][2] = 1\n")).toBe("[[null,[null,null,1]]]\n");
+  });
+
+  test("pads sparse array subsets with null at every level", async () => {
+    const gron = "json.items[1].tags[2] = \"x\"\njson.items[1].tags[5] = \"y\"\njson.items[4].id = 4\njson.items[4].tags[0] = \"z\"\n";
+    const expected = '{"items":[null,{"tags":[null,null,"x",null,null,"y"]},null,null,{"id":4,"tags":["z"]}]}\n';
+    for (const size of [1, 2, 3, 7, 1 << 20]) expect(await streamed(gron, {}, size)).toBe(expected);
+  });
+
+  test("synthesizes deeply nested missing parents", async () => {
+    const depth = 300;
+    const path = Array.from({ length: depth }, (_, index) => (index % 2 === 0 ? `.k${index}` : `[${index % 3}]`)).join("");
+    let expected: unknown = "leaf";
+    for (let index = depth - 1; index >= 0; index -= 1) {
+      if (index % 2 === 0) {
+        expected = { [`k${index}`]: expected };
+      } else {
+        const array: unknown[] = Array.from({ length: (index % 3) + 1 }, () => null);
+        array[index % 3] = expected;
+        expected = array;
+      }
+    }
+    const gron = `json${path} = "leaf"\n`;
+    for (const size of [3, 1 << 20]) {
+      expect(await streamed(gron, {}, size)).toBe(`${JSON.stringify(expected)}\n`);
+      expect(await streamed(gron, { pretty: true }, size)).toBe(`${JSON.stringify(expected, null, 2)}\n`);
+    }
+  });
+
+  test("keeps big integers and decimals verbatim", async () => {
+    const gron = filter(serviceGron, /big/) + "json.stats.ratio = 1.10\njson.stats.huge = -1e400\n";
+    expect(await streamed(gron)).toBe('{"big":12345678901234567890,"stats":{"ratio":1.10,"huge":-1e400}}\n');
+  });
+
+  test("matches JSON.stringify with --pretty", async () => {
+    const gron = filter(serviceGron, /regions\[[02]\]\.id|owner|tags/);
+    const expected = { service: { regions: [{ id: "us-east" }, null, { id: "ap-south" }], owner: "platform" }, tags: ["a", "regions-b"] };
+    expect(await streamed(gron, { pretty: true })).toBe(`${JSON.stringify(expected, null, 2)}\n`);
+  });
+
+  test("an explicit empty root still takes synthesized members", async () => {
+    const gron = "json = {}\njson.service.regions[1].id = 1\njson.service.owner = 2\njson.name = 3\n";
+    expect(await streamed(gron)).toBe('{"service":{"regions":[null,{"id":1}],"owner":2},"name":3}\n');
+  });
+
+  test("a kept container line and synthesized siblings agree", async () => {
+    const gron = 'json.a = {}\njson.a.x = 1\njson.b.c = []\njson.b.c[1] = 2\njson.b.d.e = 3\n';
+    expect(await streamed(gron)).toBe('{"a":{"x":1},"b":{"c":[null,2],"d":{"e":3}}}\n');
+  });
+
+  test("synthesized keys spelled differently still name one container", async () => {
+    const gron = 'json["a"].x = 1\njson.a.y = 2\njson["\\u0061"].z = 3\njson["b c"]["d"] = 4\n';
+    for (const size of [1, 2, 5, 1 << 20]) expect(await streamed(gron, {}, size)).toBe('{"a":{"x":1,"y":2,"z":3},"b c":{"d":4}}\n');
+  });
+
+  test("out-of-order subsets are rebuilt in memory with missing parents synthesized", async () => {
+    const gron = 'json.b.y = 2\njson.a[3] = "d"\njson.b.x = 1\njson.a[1] = "b"\n';
+    expect(await unflatten(gron)).toBe('{"b":{"y":2,"x":1},"a":[null,"b",null,"d"]}\n');
+    expect(await unflatten(gron, { pretty: true })).toBe(`${JSON.stringify({ b: { y: 2, x: 1 }, a: [null, "b", null, "d"] }, null, 2)}\n`);
+    // Plain `sort` puts json.a[10] before json.a[2].
+    const sorted = filter(flattenJson({ a: Array.from({ length: 12 }, (_, index) => ({ v: index })) }), /\.v/)
+      .split("\n")
+      .sort()
+      .join("\n");
+    expect(JSON.parse(await unflatten(sorted))).toEqual({ a: Array.from({ length: 12 }, (_, index) => ({ v: index })) });
+  });
+
+  test("a synthesized object that is re-entered after closing merges in memory, and fails once streaming", async () => {
+    const gron = "json.a.x = 1\njson.b = 1\njson.a.y = 2\n";
+    expect(JSON.parse(await unflatten(gron))).toEqual({ a: { x: 1, y: 2 }, b: 1 });
+    const filler = Array.from({ length: 40 }, (_, index) => `json.f${index} = ${index}`).join("\n");
+    await expect(unflatten(`json.a.x = 1\n${filler}\njson.a.y = 2\n`, { budgetBytes: 64 }, 32)).rejects.toThrow(
+      /^line 42: parent path was already written and closed .*must be in document order/
+    );
+  });
+
+  test("a re-entered synthesized array element merges in memory", async () => {
+    expect(JSON.parse(await unflatten("json[0].a = 1\njson[1].a = 2\njson[0].b = 3\n"))).toEqual([{ a: 1, b: 3 }, { a: 2 }]);
+  });
+
+  test("a missing parent inside an explicit object that has members is rebuilt in memory", async () => {
+    const gron = "json = {}\njson.name = 1\njson.service.port = 2\n";
+    expect(await unflatten(gron)).toBe('{"name":1,"service":{"port":2}}\n');
+    const filler = Array.from({ length: 40 }, (_, index) => `json.f${index} = ${index}`).join("\n");
+    await expect(unflatten(`json = {}\n${filler}\njson.service.port = 2\n`, { budgetBytes: 64 }, 32)).rejects.toThrow(
+      /^line 42: .*must be in document order/
+    );
+  });
+
+  test("a later assignment replaces a synthesized container, as for an explicit one", async () => {
+    expect(JSON.parse(await unflatten("json.a.x = 1\njson.a = 5\n"))).toEqual({ a: 5 });
+    expect(JSON.parse(await unflatten("json.a.x = 1\njson.a = {}\njson.a.y = 2\n"))).toEqual({ a: { y: 2 } });
+    expect(JSON.parse(await unflatten("json.a.x = 1\njson = {}\njson.b = 2\n"))).toEqual({ b: 2 });
+  });
+
+  test.each([
+    ["json.a = 1\njson.a.b = 2\n", "line 2: property does not match its parent container"],
+    ["json.a = 1\njson.a.b.c = 2\n", "line 2: path does not match its parent container"],
+    ["json.a = 1\njson[0] = 2\n", "line 2: property does not match its parent container"],
+    ["json[0] = 1\njson.a = 2\n", "line 2: array path requires a numeric index"],
+    ["json.a.b = 1\njson.a[0] = 2\n", "line 2: property does not match its parent container"],
+    ["json.a[0].b = 1\njson.a.c = 2\n", "line 2: array path requires a numeric index"],
+    ["json.a[0].b = 1\njson.a.c.d = 2\n", "line 2: path does not match its parent container"],
+    ["json.a.b = 1\njson[0].c = 2\n", "line 2: path does not match its parent container"],
+    ["json[0][0] = 1\njson[0].x.y = 2\n", "line 2: path does not match its parent container"],
+    ["json = 5\njson.a.b = 1\n", "line 2: path does not match its parent container"],
+    ["json.a.b = 1\njson.a.b.c = 2\n", "line 2: property does not match its parent container"],
+    ["json.a.b = 1\njson.a = 2\njson.a.c = 3\n", "line 3: property does not match its parent container"],
+    ["json.a.b = nope\n", "line 1: invalid JSON value"],
+    ["json.a.b = 1\nfoo.c = 2\n", "line 2: expected a gron assignment"],
+    ["json.a..b = 1\n", "line 1: invalid property path"],
+    ["json.a[1 = 1\n", "line 1: unclosed bracket property"]
+  ])("rejects the conflict or malformed line in %j", async (input, message) => {
+    await expect(unflatten(input)).rejects.toThrow(message);
+    await expect(unflatten(input, {}, 3)).rejects.toThrow(message);
+  });
+
+  test("streams a long array gap inside a synthesized parent without queueing it", async () => {
+    let maxQueued = 0;
+    let total = 0;
+    let text = "";
+    const stream = new Writable({
+      highWaterMark: 64 * 1024,
+      write(chunk: Buffer, _encoding, callback) {
+        total += chunk.length;
+        text = (text + chunk.toString("latin1")).slice(-64);
+        maxQueued = Math.max(maxQueued, this.writableLength);
+        setImmediate(callback);
+      }
+    });
+    await unflattenStream(chunked("json.a[2000000][1000000].b.c = 1\njson.a[2000000][1000001] = 2\njson.z = 3\n", 7), sinkOf(stream), {
+      budgetBytes: 1 << 16
+    });
+    expect(total).toBe('{"a":['.length + 5 * 2_000_000 + "[".length + 5 * 1_000_000 + '{"b":{"c":1}},2]],"z":3}\n'.length);
+    expect(text.endsWith('null,{"b":{"c":1}},2]],"z":3}\n')).toBe(true);
+    expect(maxQueued).toBeLessThan(16 * 1024 * 1024);
+  });
+
+  describe("agrees with the reference builder on random subsets", () => {
+    function random(seed: number): () => number {
+      let state = seed;
+      return () => {
+        state = (state + 0x6d2b79f5) | 0;
+        let t = Math.imul(state ^ (state >>> 15), 1 | state);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    const keys = ["a", "b", "id", "$x", "service.name", "with space", 'q"uote', "br]ace", "é", "\u{1F600}", "", "x;y"];
+    function value(next: () => number, depth: number): unknown {
+      const roll = next();
+      if (depth > 5 || roll < 0.3) return next() < 0.5 ? Math.floor(next() * 100) : ["s", "é中", 'q"', null, true][Math.floor(next() * 5)];
+      const size = Math.floor(next() * 5);
+      if (roll < 0.65) return Array.from({ length: size }, () => value(next, depth + 1));
+      const object: Record<string, unknown> = {};
+      for (let index = 0; index < size; index += 1) object[keys[Math.floor(next() * keys.length)] as string] = value(next, depth + 1);
+      return object;
+    }
+
+    test("leaf-only subsets stream in one pass and match byte for byte", async () => {
+      const next = random(4242);
+      for (let round = 0; round < 200; round += 1) {
+        const doc = value(next, 0);
+        const keep = 0.15 + next() * 0.7;
+        const lines = flattenJson(doc as never)
+          .split("\n")
+          .filter((line) => !/ = (\{\}|\[\])$/.test(line) && next() < keep);
+        if (lines.length === 0) continue;
+        const gron = `${lines.join("\n")}\n`;
+        const expected = unflattenGron(gron);
+        const size = 1 + Math.floor(next() * 40);
+        expect(await streamed(gron, {}, size)).toBe(`${JSON.stringify(expected)}\n`);
+        expect(await streamed(gron, { pretty: true }, size)).toBe(`${JSON.stringify(expected, null, 2)}\n`);
+      }
+    });
+
+    test("subsets that keep some container lines match", async () => {
+      const next = random(99);
+      for (let round = 0; round < 200; round += 1) {
+        const doc = value(next, 0);
+        const keep = 0.2 + next() * 0.7;
+        const lines = flattenJson(doc as never)
+          .split("\n")
+          .filter(() => next() < keep);
+        if (lines.length === 0) continue;
+        const gron = `${lines.join("\n")}\n`;
+        const expected = unflattenGron(gron);
+        expect(await unflatten(gron, {}, 1 + Math.floor(next() * 40))).toBe(`${JSON.stringify(expected)}\n`);
+      }
+    });
+
+    test("shuffled subsets match after the in-memory rebuild", async () => {
+      const next = random(7);
+      for (let round = 0; round < 150; round += 1) {
+        const doc = value(next, 0);
+        const lines = flattenJson(doc as never)
+          .split("\n")
+          .filter(() => next() < 0.5);
+        for (let index = lines.length - 1; index > 0; index -= 1) {
+          const swap = Math.floor(next() * (index + 1));
+          [lines[index], lines[swap]] = [lines[swap] as string, lines[index] as string];
+        }
+        if (lines.length === 0) continue;
+        const gron = lines.join("\n");
+        let expected: unknown;
+        try {
+          expected = unflattenGron(gron);
+        } catch (error) {
+          await expect(unflatten(gron)).rejects.toThrow((error as Error).message);
+          continue;
+        }
+        // JSON.stringify turns the reference's array holes into the nulls the output has.
+        expect(JSON.parse(await unflatten(gron))).toEqual(JSON.parse(JSON.stringify(expected)));
+      }
     });
   });
 });

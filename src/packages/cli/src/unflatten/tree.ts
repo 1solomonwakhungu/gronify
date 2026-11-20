@@ -8,7 +8,9 @@ import type { JsonWriter } from "./writer.js";
  * In-memory fallback for gron that is not in document order. It accepts what
  * the streaming pass cannot: children after their siblings' descendants,
  * array indexes in any order, and assignments that replace earlier ones. As
- * in the streaming pass, values are kept verbatim.
+ * in the streaming pass, values are kept verbatim, and parents that were
+ * never assigned (including the root) are synthesized: an object for a
+ * property segment, an array for an index.
  */
 export class TreeBuilder implements LineSink {
   private root: TreeNode | undefined;
@@ -28,19 +30,28 @@ export class TreeBuilder implements LineSink {
       this.root = value;
       return true;
     }
-    if (this.root === undefined) throw lineError(lineNumber, "root must be assigned before child paths");
+    this.root ??= containerFor(parser.segIsIndex[0] === 1);
 
     let parent: TreeNode = this.root;
     for (let segment = 0; segment < segments - 1; segment += 1) {
       let child: TreeNode | undefined;
       if (parent instanceof TreeArray && parser.segIsIndex[segment] === 1) {
-        child = parent.items[parser.segIndex[segment] as number];
+        const index = parser.segIndex[segment] as number;
+        child = parent.items[index];
+        if (child === undefined) {
+          child = containerFor(parser.segIsIndex[segment + 1] === 1);
+          parent.items[index] = child;
+        }
       } else if (parent instanceof TreeObject && parser.segIsIndex[segment] !== 1) {
-        child = parent.entries.get(parser.keyAsLatin1(segment));
+        const key = parser.keyAsLatin1(segment);
+        child = parent.entries.get(key);
+        if (child === undefined) {
+          child = containerFor(parser.segIsIndex[segment + 1] === 1);
+          parent.entries.set(key, child);
+        }
       } else {
         throw lineError(lineNumber, "path does not match its parent container");
       }
-      if (child === undefined) throw lineError(lineNumber, "parent path must be assigned before its children");
       parent = child;
     }
 
@@ -74,6 +85,10 @@ export class TreeBuilder implements LineSink {
         return parser.valueBuf.toString("latin1", parser.valueStart, parser.valueEnd);
     }
   }
+}
+
+function containerFor(array: boolean): TreeObject | TreeArray {
+  return array ? new TreeArray() : new TreeObject();
 }
 
 interface Level {
