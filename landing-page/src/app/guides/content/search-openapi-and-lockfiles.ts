@@ -429,7 +429,7 @@ $ jq -r '.prefixes[] | select(.region == "eu-west-1" and .service == "S3") | .ip
     {
       question: "How do I find all deprecated endpoints in an OpenAPI spec?",
       answer:
-        'Anchor the search on operations under `paths`: `gronify search openapi.json --regex \'^json\\.paths\\["[^"]+"\\]\\.[a-z]+\\.deprecated = true$\'`. Each line names the path and the HTTP method. Drop the anchor to include deprecated parameters and schema properties.',
+        "Anchor the search on operations under `paths`: `gronify search openapi.json --regex '^json\\.paths\\[\"[^\"]+\"\\]\\.[a-z]+\\.deprecated = true$'`. Each line names the path and the HTTP method. To include deprecated parameters and schema properties as well, search for every `deprecated` flag with `--regex '\\.deprecated = true$'`, which matched 73 lines in GitHub's description.",
     },
     {
       question:
