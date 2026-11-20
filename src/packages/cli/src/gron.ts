@@ -123,6 +123,10 @@ function assign(target: JsonValue, key: PathPart, value: JsonValue, lineNumber: 
   });
 }
 
+function containerFor(next: PathPart | undefined): JsonValue {
+  return typeof next === "number" ? [] : {};
+}
+
 export function unflattenGron(source: string): JsonValue {
   let root: JsonValue | undefined;
 
@@ -154,9 +158,8 @@ export function unflattenGron(source: string): JsonValue {
       root = value;
       return;
     }
-    if (root === undefined) {
-      throw new Error(`line ${lineNumber}: root must be assigned before child paths`);
-    }
+    // Parents that were never assigned, including the root, are synthesized from the segment that follows them.
+    root ??= containerFor(parts[0]);
 
     let parent = root;
     for (let index = 0; index < parts.length - 1; index += 1) {
@@ -164,22 +167,18 @@ export function unflattenGron(source: string): JsonValue {
       if (part === undefined) {
         throw new Error(`line ${lineNumber}: invalid empty path segment`);
       }
-      if (Array.isArray(parent) && typeof part === "number") {
-        const child = parent[part];
-        if (child === undefined) {
-          throw new Error(`line ${lineNumber}: parent path must be assigned before its children`);
-        }
-        parent = child;
-      } else if (parent !== null && typeof parent === "object" && !Array.isArray(parent) && typeof part === "string") {
-        const child = parent[part];
-        if (child === undefined) {
-          throw new Error(`line ${lineNumber}: parent path must be assigned before its children`);
-        }
-        parent = child;
-      } else {
+      const isArray = Array.isArray(parent);
+      const isObject = parent !== null && typeof parent === "object" && !isArray;
+      if (!(isArray && typeof part === "number") && !(isObject && typeof part === "string")) {
         throw new Error(`line ${lineNumber}: path does not match its parent container`);
       }
-
+      const container = parent as Record<string | number, JsonValue>;
+      let child = Object.hasOwn(container, part) ? container[part] : undefined;
+      if (child === undefined) {
+        child = containerFor(parts[index + 1]);
+        assign(parent, part, child, lineNumber);
+      }
+      parent = child;
     }
 
     const finalPart = parts[parts.length - 1];

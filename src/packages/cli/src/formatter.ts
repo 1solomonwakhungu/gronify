@@ -15,6 +15,9 @@ function chalk(): ChalkInstance {
   return chalkInstance;
 }
 
+/** A JSON token: a string (group 1, with group 2 holding the `:` after a key), a number, a literal, or a bracket. */
+const JSON_TOKEN = /("(?:[^"\\]|\\.)*")(\s*:)?|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null|[{}[\]]/g;
+
 /**
  * Counts the segments after the root in the path of a gron line: `json.a[0]["b.c"] = 1` has three. Only the path is
  * read. It ends at the first space outside a bracket-quoted key (the one that starts ` = `), so the value never
@@ -135,15 +138,16 @@ export class OutputFormatter {
       return formatted;
     }
 
-    // Enhanced JSON syntax highlighting
-    return formatted
-      .replace(/"([^"]+)":/g, chalk().blue('"$1"') + chalk().gray(':'))
-      .replace(/: "([^"]+)"/g, ': ' + chalk().green('"$1"'))
-      .replace(/: (\d+)/g, ': ' + chalk().yellow('$1'))
-      .replace(/: (true|false)/g, ': ' + chalk().magenta('$1'))
-      .replace(/: (null)/g, ': ' + chalk().gray('$1'))
-      .replace(/({|})/g, chalk().gray('$1'))
-      .replace(/(\[|\])/g, chalk().gray('$1'));
+    // One pass over the tokens, so the escape codes added for one token are never matched (and colored) again.
+    const colors = chalk();
+    return formatted.replace(JSON_TOKEN, (token: string, string: string | undefined, colon: string | undefined) => {
+      if (string !== undefined) {
+        return colon === undefined ? colors.green(string) : colors.blue(string) + colors.gray(colon);
+      }
+      if (token === "true" || token === "false") return colors.magenta(token);
+      if (token === "null" || (token.length === 1 && "{}[]".includes(token))) return colors.gray(token);
+      return colors.yellow(token);
+    });
   }
 
   /**
