@@ -22,8 +22,15 @@ Checked on 2026-11-20.
   - Numbers are printed exactly as written (`12345678901234567890`, `1.10`), object keys keep document order, and JSON errors report byte offset, line, and column. (#95)
   - Result caps (`search -m/--max-count`, `flatten --limit`) stop reading early; `--sort` gives stable, diffable key order; `search --exit-status` exits 1 on no match and 2 on error. (#98)
 
+## Playground (branch `feat/browser-playground`, 2026-11-19)
+
+- **Done:** `/playground` flattens, searches, and unflattens JSON in the browser with output byte-identical to CLI 1.3.1 (`--no-color`). It has four samples, a mode switch, search flags (`--regex`, `-c`, `-v`, `--count`, `-m`, `--sort`), flatten `--sort`/`--limit`, unflatten `--pretty`, and a copyable `gronify`/`npx gronify` command (PostHog `playground_command_copied`). It is linked from the header, footer, home hero, sitemap, `llms.txt`, and `llms-full.txt`, and guides may link to it.
+- **Parity:** `npm run test:playground` (in CI) checks 476 cases against recorded CLI output. A live run against the built CLI with 3,000 seeded random documents passed (3,476 checks).
+- **Next:** after merge, request indexing for `/playground` in Search Console alongside the sitemap.
+
 ## Open items
 
+- **CLI: empty search term.** `gronify search file.json ''` does not search for the empty string. The empty argument is dropped, `file.json` becomes the term, and stdin is read instead. The playground asks for a term instead of showing that command.
 - **Guides lag `unflatten`.** After the next release, update the `unflatten-json`, `grep-json` and `gron-alternative` guides and `llms-full.txt`: `unflatten` now fills in missing parents, so the `root must be assigned before child paths` transcripts and the advice to keep container lines are out of date.
 - **Search indexing (owner action).** On 2026-11-12 no search engine we could query returned a page from `gronify.vercel.app`; Google could not be checked from a script. In Search Console (the site already carries the verification tag), submit `https://gronify.vercel.app/sitemap.xml` and request indexing for the home page and `/guides`. Until pages are indexed, none of the copy work can show in results. Once the IndexNow branch is deployed and `https://gronify.vercel.app/<indexNowKey>.txt` returns the key, run `node scripts/submit-indexnow.mjs` from `landing-page/` to notify Bing and Yandex; nothing has been submitted yet.
 - **Links.** The repository has no stars, so Homebrew core is out of reach for now. Places that list tools like this one and accept submissions: `toolleeo/awesome-cli-apps-in-a-csv`, `burningtree/awesome-json`, `fiatjaf/awesome-jq`, AlternativeTo (as an alternative to gron and jq), and one Show HN. Nothing has been submitted.

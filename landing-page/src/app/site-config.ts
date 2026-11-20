@@ -14,7 +14,10 @@ export const nodeRequirement = "20 or newer";
 export const npmBuildRequirement = "10 or newer";
 export const lastReleaseIsoDate = "2026-11-20";
 /** Date of the last change to the home page copy. Bump it with the copy; the sitemap reads it. */
-export const homeUpdatedIsoDate = "2026-11-12";
+export const homeUpdatedIsoDate = "2026-11-20";
+
+/** Date of the last change to the /playground page or its engine. The sitemap reads it. */
+export const playgroundUpdatedIsoDate = "2026-11-20";
 
 /**
  * IndexNow key (https://www.indexnow.org). `public/<key>.txt` must contain

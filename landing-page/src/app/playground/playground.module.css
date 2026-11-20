@@ -1,0 +1,498 @@
+/* JSON playground (/playground). Built from the same tokens, hairlines, and
+   radii as the rest of the site (DESIGN.md): 8px controls, 12px panels with a
+   border and no shadow, Geist Mono only for commands, paths, and flags. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-40);
+  min-width: 0;
+}
+
+.workbench {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-16);
+  min-width: 0;
+  accent-color: var(--brand-color-accent-primary);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--base-size-16);
+}
+
+/* Mode switch: native radios laid out as a segmented control. */
+.modes {
+  display: inline-flex;
+  margin: 0;
+  padding: var(--base-size-4);
+  gap: var(--base-size-4);
+  border: var(--brand-borderWidth-thin) solid var(--brand-color-border-muted);
+  border-radius: var(--brand-borderRadius-medium);
+  background-color: var(--brand-color-canvas-subtle);
+}
+
+.mode {
+  position: relative;
+  display: inline-flex;
+}
+
+.mode input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.mode span {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--base-size-32);
+  padding-inline: var(--base-size-12);
+  border-radius: calc(var(--brand-borderRadius-medium) - 2px);
+  font-family: var(--brand-fontStack-monospace);
+  font-size: var(--brand-text-size-100);
+  color: var(--brand-color-text-muted);
+  transition:
+    color var(--duration-quick) var(--ease-smooth-out),
+    background-color var(--duration-quick) var(--ease-smooth-out);
+}
+
+.mode:hover span {
+  color: var(--brand-color-text-default);
+}
+
+.mode input:checked + span {
+  color: var(--brand-color-text-onEmphasis);
+  background-color: var(--brand-color-accent-primary);
+}
+
+.mode input:focus-visible + span {
+  outline: var(--brand-borderWidth-thick) solid var(--brand-color-focus);
+  outline-offset: 2px;
+}
+
+.sampleField,
+.termField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-4);
+  min-width: 0;
+}
+
+.sampleField {
+  flex: 0 1 18rem;
+}
+
+.termField {
+  flex: 1 1 16rem;
+}
+
+.fieldLabel {
+  font-family: var(--brand-body-fontFamily);
+  font-size: var(--brand-text-size-100);
+  color: var(--brand-color-text-muted);
+}
+
+.select,
+.termInput,
+.countInput {
+  min-block-size: var(--base-size-40);
+  padding-inline: var(--base-size-12);
+  border: var(--brand-borderWidth-thin) solid var(--brand-color-border-default);
+  border-radius: var(--brand-borderRadius-medium);
+  background-color: var(--brand-color-canvas-default);
+  color: var(--brand-color-text-default);
+  font-size: var(--brand-text-size-200);
+  min-width: 0;
+}
+
+.select {
+  font-family: var(--brand-body-fontFamily);
+}
+
+.termInput,
+.countInput {
+  font-family: var(--brand-fontStack-monospace);
+}
+
+.select:focus-visible,
+.termInput:focus-visible,
+.countInput:focus-visible,
+.editor:focus-visible,
+.outputText:focus-visible {
+  outline: var(--brand-borderWidth-thick) solid var(--brand-color-focus);
+  outline-offset: -1px;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--base-size-16);
+}
+
+.options:empty {
+  display: none;
+}
+
+.flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--base-size-8);
+}
+
+/* One flag: a real checkbox, the flag as typed, and what it does. */
+.flag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--base-size-8);
+  min-block-size: var(--base-size-40);
+  padding-inline: var(--base-size-12);
+  border: var(--brand-borderWidth-thin) solid var(--brand-color-border-muted);
+  border-radius: var(--brand-borderRadius-medium);
+  cursor: pointer;
+  transition: border-color var(--duration-quick) var(--ease-smooth-out);
+}
+
+.flag:hover,
+.flag:has(input:checked) {
+  border-color: var(--brand-color-border-default);
+}
+
+.flag:has(input[type="checkbox"]:checked) {
+  background-color: var(--brand-color-canvas-subtle);
+}
+
+.flag[data-invalid] {
+  border-color: var(--brand-color-danger-fg);
+}
+
+.flag input[type="checkbox"] {
+  margin: 0;
+  inline-size: 16px;
+  block-size: 16px;
+  cursor: pointer;
+}
+
+.flag input[type="checkbox"]:focus-visible {
+  outline: var(--brand-borderWidth-thick) solid var(--brand-color-focus);
+  outline-offset: 2px;
+}
+
+.flagName {
+  font-family: var(--brand-fontStack-monospace);
+  font-size: var(--brand-text-size-100);
+  color: var(--brand-color-text-default);
+}
+
+.flagDescription {
+  font-size: var(--brand-text-size-100);
+  color: var(--brand-color-text-muted);
+}
+
+.countInput {
+  inline-size: 5.5rem;
+  min-block-size: var(--base-size-28);
+  padding-inline: var(--base-size-8);
+  font-size: var(--brand-text-size-100);
+}
+
+.countInput:disabled {
+  color: var(--brand-color-text-disabled);
+}
+
+/* The equivalent command, as a real code surface. */
+.commandBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--base-size-12);
+  padding: var(--base-size-12) var(--base-size-16);
+  border: var(--brand-borderWidth-thin) solid var(--brand-color-border-muted);
+  border-radius: var(--brand-borderRadius-large);
+  background-color: var(--brand-color-canvas-inset);
+}
+
+@media screen and (min-width: 48rem) {
+  .commandBar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+}
+
+.command {
+  font-family: var(--brand-fontStack-monospace);
+  font-size: var(--brand-text-size-100);
+  line-height: var(--brand-text-lineHeight-200);
+  color: var(--brand-color-text-default);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.prompt {
+  color: var(--brand-color-text-muted);
+  user-select: none;
+}
+
+.commandRunner {
+  display: inline-flex;
+  gap: var(--base-size-4);
+  justify-self: start;
+}
+
+.runnerButton,
+.copyButton {
+  min-block-size: var(--base-size-32);
+  min-inline-size: 24px;
+  padding-inline: var(--base-size-12);
+  border: var(--brand-borderWidth-thin) solid var(--brand-color-border-muted);
+  border-radius: var(--brand-borderRadius-medium);
+  background-color: transparent;
+  color: var(--brand-color-text-muted);
+  font-family: var(--brand-body-fontFamily);
+  font-size: var(--brand-text-size-100);
+  cursor: pointer;
+  transition:
+    color var(--duration-quick) var(--ease-smooth-out),
+    border-color var(--duration-quick) var(--ease-smooth-out);
+}
+
+.runnerButton:hover,
+.copyButton:hover {
+  color: var(--brand-color-text-default);
+  border-color: var(--brand-color-border-default);
+}
+
+.runnerButton[aria-pressed="true"] {
+  color: var(--brand-color-text-default);
+  border-color: var(--brand-color-accent-primary);
+}
+
+.runnerButton:focus-visible,
+.copyButton:focus-visible {
+  outline: var(--brand-borderWidth-thick) solid var(--brand-color-focus);
+  outline-offset: 2px;
+}
+
+.copy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--base-size-8);
+  justify-self: end;
+}
+
+.copyButton[aria-disabled="true"] {
+  color: var(--brand-color-text-disabled);
+  cursor: not-allowed;
+}
+
+.copyButton[data-state="copied"] {
+  color: var(--brand-color-success-fg);
+  border-color: var(--brand-color-success-fg);
+}
+
+.copyButton[data-state="failed"] {
+  color: var(--brand-color-danger-fg);
+  border-color: var(--brand-color-danger-fg);
+}
+
+.copyStatus {
+  font-size: var(--brand-text-size-100);
+  color: var(--brand-color-text-muted);
+  min-inline-size: 5.5rem;
+}
+
+.copyStatus:empty {
+  min-inline-size: 0;
+}
+
+/* Input and output side by side on wide screens, stacked below. */
+.panes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--base-size-16);
+}
+
+@media screen and (min-width: 64rem) {
+  .panes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-8);
+  min-width: 0;
+}
+
+.paneHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--base-size-8);
+  min-block-size: var(--base-size-40);
+}
+
+.paneTitle {
+  margin: 0;
+  font-family: var(--brand-body-fontFamily);
+  font-size: var(--brand-text-size-200);
+  font-weight: var(--base-text-weight-semibold, 600);
+  color: var(--brand-color-text-default);
+}
+
+.stats {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--base-size-12);
+}
+
+.stat {
+  font-family: var(--brand-fontStack-monospace);
+  font-size: var(--brand-text-size-100);
+  color: var(--brand-color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat[data-warning] {
+  color: var(--brand-color-danger-fg);
+}
+
+.editor,
+.output {
+  block-size: clamp(18rem, 60vh, 36rem);
+  border: var(--brand-borderWidth-thin) solid var(--brand-color-border-muted);
+  border-radius: var(--brand-borderRadius-large);
+  background-color: var(--brand-color-canvas-default);
+}
+
+.editor {
+  inline-size: 100%;
+  padding: var(--base-size-16);
+  resize: vertical;
+  font-family: var(--brand-fontStack-monospace);
+  font-size: var(--brand-text-size-100);
+  line-height: var(--brand-text-lineHeight-200);
+  color: var(--brand-color-text-default);
+  tab-size: 2;
+}
+
+.output {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: opacity var(--duration-quick) var(--ease-smooth-out);
+}
+
+.output[data-stale] {
+  opacity: 0.6;
+}
+
+.outputText {
+  flex: 1;
+  margin: 0;
+  padding: var(--base-size-16);
+  overflow: auto;
+  font-family: var(--brand-fontStack-monospace);
+  font-size: var(--brand-text-size-100);
+  line-height: var(--brand-text-lineHeight-200);
+  color: var(--brand-color-text-default);
+  white-space: pre;
+  tab-size: 2;
+}
+
+.idle {
+  margin: 0;
+  padding: var(--base-size-16);
+  font-size: var(--brand-text-size-200);
+  color: var(--brand-color-text-muted);
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-8);
+  margin: var(--base-size-16);
+  padding: var(--base-size-16);
+  border: var(--brand-borderWidth-thin) solid var(--brand-color-danger-fg);
+  border-radius: var(--brand-borderRadius-medium);
+}
+
+.errorTitle {
+  margin: 0;
+  font-size: var(--brand-text-size-200);
+  font-weight: var(--base-text-weight-semibold, 600);
+  color: var(--brand-color-danger-fg);
+}
+
+.errorMessage {
+  font-family: var(--brand-fontStack-monospace);
+  font-size: var(--brand-text-size-100);
+  line-height: var(--brand-text-lineHeight-200);
+  color: var(--brand-color-text-default);
+  overflow-wrap: anywhere;
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-4);
+}
+
+.note {
+  font-family: var(--brand-fontStack-monospace);
+  font-size: var(--brand-text-size-100);
+  color: var(--brand-color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.note::before {
+  content: "stderr: ";
+  color: var(--brand-color-text-subtle, var(--brand-color-text-muted));
+}
+
+.paneNote {
+  margin: 0;
+  padding-inline: var(--base-size-4);
+  font-size: var(--brand-text-size-100);
+  line-height: var(--brand-text-lineHeight-200);
+  color: var(--brand-color-text-muted);
+}
+
+.output .paneNote {
+  padding: var(--base-size-8) var(--base-size-16);
+  border-block-start: var(--brand-borderWidth-thin) solid var(--brand-color-border-muted);
+}
+
+.about {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--base-size-32);
+  padding-block-start: var(--base-size-32);
+  border-block-start: var(--brand-borderWidth-thin) solid var(--brand-color-border-muted);
+}
+
+@media screen and (min-width: 64rem) {
+  .about {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.guideList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--brand-text-size-200);
+}

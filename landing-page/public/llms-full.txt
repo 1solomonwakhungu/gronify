@@ -471,6 +471,10 @@ Compare meaningful paths instead of visually tracing braces through a large docu
 diff <(gronify --no-color flatten --sort old.json) <(gronify --no-color flatten --sort new.json)
 ```
 
+## Playground
+
+<https://gronify.vercel.app/playground> runs `flatten`, `search`, and `unflatten` in the browser on pasted JSON or gron, with sample payloads (a service deployment, a minified event export, a big-integer ledger, and a config with keys out of order). It is a browser port of the CLI logic with the same output: numbers stay as written, `--sort` uses UTF-16 key order, and JSON errors give the byte offset, line, and column. Search supports `--regex`, `-c`, `-v`, `--count`, `-m`, and `--sort`; flatten supports `--sort` and `--limit`; unflatten supports `--pretty`. The page shows the equivalent `gronify` or `npx gronify` command to copy. Input stays in the browser and is limited to 2 MB; the CLI streams files of any size.
+
 ## Guides
 
 Each guide answers one question with commands and output pasted from real runs. Index: <https://gronify.vercel.app/guides>.
