@@ -29,14 +29,15 @@ Checked on 2026-11-20.
 - **Domain.** `vercel.app` is on the Public Suffix List, so Search Console only offers a URL-prefix property. No documented ranking penalty was found. A later move to a custom domain needs redirects and canonicals.
 - **Landing audit exception `GHSA-g3hv-75wg-m249`** (minimatch, reached only through eslint and its plugins, dev-only). The only fix is minimatch 11, which the 3.x consumers cannot take. Remove the entry once the eslint plugin stack moves off minimatch 3 and `npm run audit` in `landing-page` passes with an empty allowlist.
 - **`unflattenGron` in `src/packages/cli/src/gron.ts`:** no longer used by the CLI. It stays as the reference implementation for the streaming `unflatten` differential tests; drop it if those tests are retired.
-- **Roadmap issues still open, by theme:**
-  - CLI leftovers: #3 (`diff`, `filter`, telemetry, progress indicators), #4 (pip, Windows binaries, reproducible builds, download page), #18 (items aimed at a UI: progressive and lazy loading, size warnings, rendering, monitoring).
-  - VS Code extension: #6, #7, #8.
-  - Browser and web: #9 (Chrome extension), #10 (web app), #22 (visual schema editing).
-  - Platform and integrations: #11 (backend API), #19 (APIs and data formats), #20 (libraries and SDKs), #23 (logs and observability).
-  - Product and growth: #12 (pro features), #13 (payments), #14 (team management), #15 (marketing campaigns), #16 (SEO content), #17 (referrals).
+- **Issue tracker:** checked on 2026-11-19, it has no open issues. The 19 speculative roadmap issues (VS Code extension, browser and web app, backend and SDKs, paid features, growth campaigns) were deleted; only four closed issues remain (#1, #2, #5, #21). File new issues for concrete bugs or features only.
 
 ## History
+
+### 2026-11-20 — README demo and badges
+
+- Added `branding/demo.svg`, an animated terminal demo (about 6 s of motion in a 9 s loop, 5 KB, static under `prefers-reduced-motion`). `scripts/build-demo-svg.mjs` regenerates it by running the built CLI on sample files, so every output line is real gronify 1.3.2 output.
+- README top now reads: badges (Quality Checks CI, npm version, weekly and monthly downloads, skills.sh, license), one-line description, the demo, a two-line install block, and the 1000 MiB flatten result from `BENCHMARKS.md` (3.63 s, 65 MiB peak RSS; gron stopped by the 8 GiB memory guard). Images use absolute `raw.githubusercontent.com` URLs so they render on npmjs.com, which shows them after the next release.
+- Dropped the stale roadmap-issue list from Open items.
 
 ### 2026-11-20 — Windows in CI (#148)
 

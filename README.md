@@ -1,9 +1,12 @@
-[![skills.sh](https://skills.sh/b/1solomonwakhungu/gronify)](https://skills.sh/1solomonwakhungu/gronify)
+[![Quality Checks](https://github.com/1solomonwakhungu/gronify/actions/workflows/quality-check.yaml/badge.svg?branch=main)](https://github.com/1solomonwakhungu/gronify/actions/workflows/quality-check.yaml)
 [![npm version](https://img.shields.io/npm/v/gronify)](https://www.npmjs.com/package/gronify)
+[![npm weekly downloads](https://img.shields.io/npm/dw/gronify)](https://www.npmjs.com/package/gronify)
+[![npm monthly downloads](https://img.shields.io/npm/dm/gronify)](https://www.npmjs.com/package/gronify)
+[![skills.sh](https://skills.sh/b/1solomonwakhungu/gronify)](https://skills.sh/1solomonwakhungu/gronify)
 [![license](https://img.shields.io/npm/l/gronify)](https://github.com/1solomonwakhungu/gronify/blob/main/LICENSE)
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/1solomonwakhungu/gronify/main/branding/logo.svg" alt="Gronify logo" width="180" height="180">
+  <img src="https://raw.githubusercontent.com/1solomonwakhungu/gronify/main/branding/logo.svg" alt="Gronify logo" width="120" height="120">
 </div>
 
 # Gronify
@@ -11,6 +14,17 @@
 [Website & Command Reference](https://gronify.vercel.app) · [npm Package](https://www.npmjs.com/package/gronify) · [Agent Skill](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search)
 
 Gronify lets you grep JSON from the command line. It flattens nested JSON into one `json.path = value` line per value, searches those lines with plain text or a regex, and turns the lines back into JSON. It is a gron-style command-line tool that you install with npm.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/1solomonwakhungu/gronify/main/branding/demo.svg" alt="Terminal demo. gronify search events.json --count error prints 4. gronify search events.json -m 3 error prints three json.events[n].level = &quot;error&quot; lines with their full paths, then stops after 3 matches. diff of gronify flatten --sort for old.json and new.json prints only the changed paths: json.service.image and json.service.replicas." width="800">
+</p>
+
+```bash
+npm install -g gronify   # Node.js 20 or newer
+npx gronify --help       # or run it once without installing
+```
+
+**Built for large files.** On a 1000 MiB JSON records file, `gronify flatten` finished in 3.63 s with a 65 MiB peak RSS. `gron` was stopped by the 8 GiB memory guard on the same file. Measured with gronify 1.3.1 on an Apple M5 Pro; the exact commands and every tool's numbers are in [BENCHMARKS.md](https://github.com/1solomonwakhungu/gronify/blob/main/src/packages/cli/BENCHMARKS.md).
 
 Take a `service.json` like this:
 
@@ -37,7 +51,7 @@ json.service.regions[1] = "eu-west1"
 json.service.regions[1] = "eu-west1"
 ```
 
-Install it with `npm install -g gronify` (Node.js 20 or newer). Use it when a large or unfamiliar JSON payload turns up in a CI log, an API response, a support bundle, or generated config, and you need to find a key or value before you know the schema.
+Use Gronify when a large or unfamiliar JSON payload turns up in a CI log, an API response, a support bundle, or generated config, and you need to find a key or value before you know the schema.
 
 ## Agent skills
 
@@ -474,10 +488,10 @@ The [Homebrew tap](https://github.com/1solomonwakhungu/homebrew-tap) formula ins
 
 ```text
 .
-|-- branding/              # Logo and icon assets
+|-- branding/              # Logo, icons, and the README demo (demo.svg)
 |-- docs/                  # Benchmark receipts and review notes
 |-- landing-page/          # Next.js marketing/demo page
-|-- scripts/               # Repository validation and package discovery helpers
+|-- scripts/               # Validation, package discovery, and the demo.svg generator
 |-- skills/gronify-json-flatten-search/  # Installable agent skill indexed by skills.sh
 |-- src/
 |   |-- README.md          # Source tree orientation

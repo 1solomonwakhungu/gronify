@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="458" viewBox="0 0 800 458" role="img" aria-labelledby="title desc">
+<title id="title">Gronify terminal demo: count matches, cap matches with full paths, and compare two JSON files with diff</title>
+<desc id="desc">Real output from gronify 1.3.2.
+$ gronify search events.json --count error
+4
+
+$ gronify search events.json -m 3 error
+json.events[1].level = &quot;error&quot;
+json.events[3].level = &quot;error&quot;
+json.events[5].level = &quot;error&quot;
+Stopped after 3 matches (--max-count); there may be more
+
+$ diff &lt;(gronify flatten --sort old.json) &lt;(gronify flatten --sort new.json)
+3c3
+&lt; json.service.image = &quot;checkout:1.4.0&quot;
+---
+&gt; json.service.image = &quot;checkout:1.5.0&quot;
+5c5
+&lt; json.service.replicas = 2
+---
+&gt; json.service.replicas = 3</desc>
+<style>
+text{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;font-size:14px;white-space:pre}
+.a,.mask,.cycle{animation-duration:9s;animation-iteration-count:infinite;animation-fill-mode:both}
+.a{animation-timing-function:linear}
+.cycle{animation-name:cycle}
+@keyframes cycle{0%,92.22%{opacity:1}97.78%,100%{opacity:0}}
+@keyframes l0{0%,3.33%{opacity:0}3.44%,100%{opacity:1}}
+@keyframes m1{0%,3.33%{transform:translateX(0)}10.50%,100%{transform:translateX(356px)}}
+@keyframes l2{0%,13.28%{opacity:0}14.17%,100%{opacity:1}}
+@keyframes l3{0%,19.61%{opacity:0}19.72%,100%{opacity:1}}
+@keyframes m4{0%,19.61%{transform:translateX(0)}26.24%,100%{transform:translateX(331px)}}
+@keyframes l5{0%,29.02%{opacity:0}29.91%,100%{opacity:1}}
+@keyframes l6{0%,30.35%{opacity:0}31.24%,100%{opacity:1}}
+@keyframes l7{0%,31.69%{opacity:0}32.58%,100%{opacity:1}}
+@keyframes l8{0%,33.02%{opacity:0}33.91%,100%{opacity:1}}
+@keyframes l9{0%,39.35%{opacity:0}39.47%,100%{opacity:1}}
+@keyframes m10{0%,39.35%{transform:translateX(0)}52.62%,100%{transform:translateX(649px)}}
+@keyframes l11{0%,55.39%{opacity:0}56.28%,100%{opacity:1}}
+@keyframes l12{0%,56.73%{opacity:0}57.62%,100%{opacity:1}}
+@keyframes l13{0%,58.06%{opacity:0}58.95%,100%{opacity:1}}
+@keyframes l14{0%,59.39%{opacity:0}60.28%,100%{opacity:1}}
+@keyframes l15{0%,60.73%{opacity:0}61.62%,100%{opacity:1}}
+@keyframes l16{0%,62.06%{opacity:0}62.95%,100%{opacity:1}}
+@keyframes l17{0%,63.39%{opacity:0}64.28%,100%{opacity:1}}
+@keyframes l18{0%,64.73%{opacity:0}65.62%,100%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.a,.mask,.cycle{animation:none!important}.mask{display:none}}
+</style>
+<rect width="800" height="458" rx="14" fill="#0e0d14"/>
+<rect x="8" y="8" width="784" height="442" rx="12" fill="#15141d" stroke="#262534"/>
+<text x="772" y="30" text-anchor="end" fill="#9a9cbd" style="font-size:12px">real output · gronify 1.3.2</text>
+<clipPath id="inside"><rect x="9" y="9" width="782" height="440" rx="11"/></clipPath>
+<g class="cycle" clip-path="url(#inside)">
+<g class="a" style="animation-name:l0"><text x="28" y="52"><tspan fill="#8583ff">$</tspan> <tspan fill="#e6e7f2">gronify search events.json --count error</tspan></text><rect class="mask" style="animation-name:m1;animation-timing-function:steps(40,end)" x="44.2" y="36" width="356" height="23" fill="#15141d"/></g>
+<text class="a" style="animation-name:l2" x="28" y="75" fill="#e6e7f2">4</text>
+<g class="a" style="animation-name:l3"><text x="28" y="110"><tspan fill="#8583ff">$</tspan> <tspan fill="#e6e7f2">gronify search events.json -m 3 error</tspan></text><rect class="mask" style="animation-name:m4;animation-timing-function:steps(37,end)" x="44.2" y="94" width="331" height="23" fill="#15141d"/></g>
+<text class="a" style="animation-name:l5" x="28" y="133" fill="#e6e7f2">json.events[1].level = &quot;error&quot;</text>
+<text class="a" style="animation-name:l6" x="28" y="156" fill="#e6e7f2">json.events[3].level = &quot;error&quot;</text>
+<text class="a" style="animation-name:l7" x="28" y="179" fill="#e6e7f2">json.events[5].level = &quot;error&quot;</text>
+<text class="a" style="animation-name:l8" x="28" y="202" fill="#9a9cbd">Stopped after 3 matches (--max-count); there may be more</text>
+<g class="a" style="animation-name:l9"><text x="28" y="237"><tspan fill="#8583ff">$</tspan> <tspan fill="#e6e7f2">diff &lt;(gronify flatten --sort old.json) &lt;(gronify flatten --sort new.json)</tspan></text><rect class="mask" style="animation-name:m10;animation-timing-function:steps(74,end)" x="44.2" y="221" width="649" height="23" fill="#15141d"/></g>
+<text class="a" style="animation-name:l11" x="28" y="260" fill="#9a9cbd">3c3</text>
+<text class="a" style="animation-name:l12" x="28" y="283" fill="#f59aa1">&lt; json.service.image = &quot;checkout:1.4.0&quot;</text>
+<text class="a" style="animation-name:l13" x="28" y="306" fill="#9a9cbd">---</text>
+<text class="a" style="animation-name:l14" x="28" y="329" fill="#7fdcaa">&gt; json.service.image = &quot;checkout:1.5.0&quot;</text>
+<text class="a" style="animation-name:l15" x="28" y="352" fill="#9a9cbd">5c5</text>
+<text class="a" style="animation-name:l16" x="28" y="375" fill="#f59aa1">&lt; json.service.replicas = 2</text>
+<text class="a" style="animation-name:l17" x="28" y="398" fill="#9a9cbd">---</text>
+<text class="a" style="animation-name:l18" x="28" y="421" fill="#7fdcaa">&gt; json.service.replicas = 3</text>
+</g>
+</svg>
