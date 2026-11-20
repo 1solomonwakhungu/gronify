@@ -138,11 +138,11 @@ describe("Gronify CLI", () => {
       expect(JSON.parse(result.stdout)).toEqual(input);
     });
 
-    test("should reject child paths before their parent", async () => {
+    test("should synthesize parents that were never assigned", async () => {
       const result = await runCLI(["unflatten"], "json = {}\njson.user.name = \"Alice\"");
 
-      expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain("parent path must be assigned");
+      expect(result.exitCode).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual({ user: { name: "Alice" } });
     });
   });
 
@@ -179,6 +179,107 @@ describe("Gronify CLI", () => {
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("Gron lines should look like");
+    });
+  });
+
+  describe("unflatten filtered subsets", () => {
+    const service = {
+      name: "api",
+      service: {
+        regions: [
+          { id: "us-east", port: 80 },
+          { id: "eu-west", port: 81 },
+        ],
+        owner: "platform",
+      },
+      tags: ["a", "regions-b"],
+    };
+    let dir: string;
+    let file: string;
+
+    beforeAll(() => {
+      dir = mkdtempSync(join(tmpdir(), "gronify-subset-"));
+      file = join(dir, "service.json");
+      writeFileSync(file, JSON.stringify(service));
+    });
+
+    afterAll(() => {
+      rmSync(dir, { recursive: true, force: true });
+    });
+
+    /** Runs a shell pipeline in which `G` is the built CLI. */
+    function pipeline(command: string, env: NodeJS.ProcessEnv = {}) {
+      return spawnSync("sh", ["-c", command], {
+        encoding: "utf8",
+        env: { ...process.env, G: `node ${join(process.cwd(), "dist/index.js")}`, F: file, ...env },
+      });
+    }
+
+    test("flatten | grep | unflatten rebuilds the matching branches", () => {
+      const result = pipeline('$G --no-color flatten "$F" | grep regions | $G --no-color unflatten');
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe(
+        '{"service":{"regions":[{"id":"us-east","port":80},{"id":"eu-west","port":81}]},"tags":[null,"regions-b"]}\n',
+      );
+    });
+
+    test("search | unflatten rebuilds leaf matches with their parents", () => {
+      const result = pipeline('$G --no-color search "$F" eu-west | $G --no-color unflatten');
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe('{"service":{"regions":[null,{"id":"eu-west"}]}}\n');
+    });
+
+    test("--pretty matches JSON.stringify", () => {
+      const result = pipeline('$G --no-color search "$F" --regex "owner|us-east" | $G --no-color --pretty unflatten');
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe(
+        `${JSON.stringify({ service: { regions: [{ id: "us-east" }], owner: "platform" } }, null, 2)}\n`,
+      );
+    });
+
+    test("--color highlights the rebuilt JSON without changing it", () => {
+      const gron = 'json.service.regions[1].id = "eu-west"\njson.service.port = 81\njson.ok = true\n';
+      const child = spawnSync(
+        "node",
+        ["--import", "data:text/javascript,process.stdout.isTTY=true", "dist/index.js", "--color", "--pretty", "unflatten"],
+        { input: gron, encoding: "utf8", env: { ...process.env, FORCE_COLOR: "1", NO_COLOR: "" } },
+      );
+      const expected = JSON.stringify({ service: { regions: [null, { id: "eu-west" }], port: 81 }, ok: true }, null, 2);
+
+      expect(child.status).toBe(0);
+      expect(child.stdout).toContain("\u001b[");
+      expect(child.stdout.replace(/\u001b\[[0-9;]*m/g, "").trim()).toBe(expected);
+    });
+
+    test("grep output larger than the 16 MiB buffer, with every container line dropped, rebuilds the document", () => {
+      const big = bigGron(28);
+      const leaves = big.gron
+        .split("\n")
+        .filter((line) => !/ = (\{\}|\[\])$/.test(line))
+        .join("\n");
+      expect(leaves.length).toBeGreaterThan(17 * 1024 * 1024);
+      const result = spawnSync("node", ["dist/index.js", "--no-color", "unflatten"], {
+        input: leaves,
+        encoding: "utf8",
+        maxBuffer: 64 * 1024 * 1024,
+      });
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe(big.json);
+    });
+
+    test.each([
+      ["json.a = 1\njson.a.b = 2\n", "line 2: property does not match its parent container"],
+      ["json.a = 1\njson[0] = 2\n", "line 2: property does not match its parent container"],
+      ["json.a.b = 1\njson.a[0].c = 2\n", "line 2: path does not match its parent container"],
+    ])("still rejects the conflict in %j", async (input, message) => {
+      const result = await runCLI(["--no-color", "unflatten"], input);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain(message);
     });
   });
 

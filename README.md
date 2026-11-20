@@ -79,18 +79,18 @@ The skill teaches supported coding agents when to flatten, search, and round-tri
 
 ## How it compares
 
-| Tool                                               | What it is                                              | Pick it when                                                                                                                                                                                                                |
-| -------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [jq](https://jqlang.org)                           | A query and transformation language for JSON.           | You know the schema and need to reshape, filter, or compute. Gronify does not transform data.                                                                                                                               |
-| [gron](https://github.com/tomnomnom/gron)          | The original greppable-JSON tool, a Go binary.          | You want a single binary with no Node.js, sorted output by default, and `gron -u` that rebuilds JSON from grepped lines. It also reads URLs. It parses the whole document before it prints, so memory grows with the input. |
-| [fastgron](https://github.com/adamritter/fastgron) | A gron implementation in C++.                           | Raw speed matters most. It flattens and filters fixed strings faster than Gronify in this repository's benchmarks, and it has path queries.                                                                                 |
-| Gronify                                            | A gron-style CLI written in TypeScript, shipped on npm. | You want an `npm install`, search with regex, counts, and result caps in one command, and low memory use on large files, including when you turn gron back into JSON.                                                       |
+| Tool                                               | What it is                                              | Pick it when                                                                                                                                                                                                                                                                       |
+| -------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [jq](https://jqlang.org)                           | A query and transformation language for JSON.           | You know the schema and need to reshape, filter, or compute. Gronify does not transform data.                                                                                                                                                                                      |
+| [gron](https://github.com/tomnomnom/gron)          | The original greppable-JSON tool, a Go binary.          | You want a single binary with no Node.js and sorted output by default. It also reads URLs. It parses the whole document before it prints, so memory grows with the input.                                                                                                          |
+| [fastgron](https://github.com/adamritter/fastgron) | A gron implementation in C++.                           | Raw speed matters most. It flattens and filters fixed strings faster than Gronify in this repository's benchmarks, and it has path queries.                                                                                                                                        |
+| Gronify                                            | A gron-style CLI written in TypeScript, shipped on npm. | You want an `npm install`, search with regex, counts, and result caps in one command, and low memory use on large files, including when you turn gron back into JSON. Like gron and fastgron, it reads JSON Lines with `-s` and rebuilds JSON from grepped lines with `unflatten`. |
 
 All three gron-style tools print numbers as written. Times and peak memory for every tool, with the exact commands, are in [BENCHMARKS.md](https://github.com/1solomonwakhungu/gronify/blob/main/src/packages/cli/BENCHMARKS.md).
 
 All three read JSON Lines with `-s` and number the records `json[0]`, `json[1]`, ... under `json = []`. Gronify also takes `--jsonl` for `-s`.
 
-The other gron tools do two things Gronify does not. They fetch URLs; with Gronify, pipe `curl -s` into it. `gron -u` and `fastgron -u` rebuild JSON from grepped lines; `gronify unflatten` does not invent missing parents, so filtered lines must keep their container lines (see [`unflatten`](#unflatten-file)).
+The other gron tools fetch URLs, which Gronify does not; pipe `curl -s` into it instead. Like `gron -u` and `fastgron -u`, `gronify unflatten` rebuilds JSON from grepped lines, filling in the parents that the filter dropped (see [`unflatten`](#unflatten-file)).
 
 ## Requirements
 
@@ -259,14 +259,16 @@ json.deployments[0].version = "2026.05.22"
 json.deployments[1].version = "2026.05.21"
 ```
 
-Keep one branch and turn it back into JSON. The pattern keeps the root line so `unflatten` has a parent for `deployments`:
+Turn the matches back into JSON. `unflatten` fills in the containers that the search left out, such as the root and `json.deployments[0] = {}`:
 
 ```bash
-gronify search demo.json --regex '^json = |deployments' | gronify unflatten
+gronify search demo.json deployments | gronify unflatten
+gronify search demo.json version | gronify unflatten
 ```
 
 ```text
 {"deployments":[{"region":"us-central1","version":"2026.05.22"},{"region":"us-east1","version":"2026.05.21"}]}
+{"deployments":[{"version":"2026.05.22"},{"version":"2026.05.21"}]}
 ```
 
 ## Guides
@@ -326,8 +328,8 @@ gronify --output data.json unflatten data.gron
 
 `unflatten` reads document-order input as a byte stream and writes JSON as it goes. Record count does not require a full in-memory tree; individual tokens, path depth, and out-of-order input still affect memory. A historical Apple M5 Pro run converted a 3 GB gron file in about 7 seconds at about 100 MB peak RSS; see the dated measurement in [STATUS.md](https://github.com/1solomonwakhungu/gronify/blob/main/STATUS.md) and [current benchmarks](https://github.com/1solomonwakhungu/gronify/blob/main/src/packages/cli/BENCHMARKS.md).
 
-- **Parents must be assigned.** Every path needs its containers first, starting with the root (`json = {}`). Lines that were filtered without them fail: `gronify flatten data.json | grep region | gronify unflatten` stops with `line 1: root must be assigned before child paths`. Keep the container lines when you filter, for example `gronify search data.json --regex '^json = |deployments' | gronify unflatten`. `gron -u` and `fastgron -u` create missing parents; Gronify does not. (`gron -u` also needs the trailing `;` that Gronify does not print.)
-- **Document order.** Gron written by `gronify flatten` streams in a single pass: each container comes before its children, siblings stay together, and array indexes ascend. Input that breaks this, such as lexically sorted gron (`json[10]` before `json[2]`) or a path that re-enters a container that was already closed, is still accepted when the problem shows up within the first 16 MiB of input. Gronify then rebuilds the whole document in memory. Once 16 MiB of input has been read or 16 MiB of output produced (a large array gap counts as output), out-of-order input fails with an error that names the line, because JSON may already have been written to stdout. Regenerate such input with `gronify flatten`. Output of `gronify flatten --sort` is in document order too, so it unflattens in a single pass; plain `sort` on the lines is not (see [Sorting keys](#sorting-keys)).
+- **Missing parents are filled in.** Filtered gron, such as `gronify flatten data.json | grep region | gronify unflatten` or `gronify search data.json region | gronify unflatten`, usually lacks the root and container lines. Gronify creates each missing container from the path segment that follows it, as `gron -u` and `fastgron -u` do: `.name` or `["name"]` means an object, `[3]` an array, and skipped array indexes become `null`. So `json.service.regions[1].id = "eu"` alone gives `{"service":{"regions":[null,{"id":"eu"}]}}`. Filtered gron in document order streams in a single pass like full gron. Each object that Gronify creates remembers its member keys, about 80 bytes per key, so that a key reused after its container closed is caught; arrays need no such record. Conflicting lines are still errors: a child under a scalar (`json.a = 1` then `json.a.b = 2`) or a property and an index on one container (`json.a = 1` then `json[0] = 2`). (`gron -u` reads Gronify's lines too, but needs a trailing `;` that Gronify does not print.)
+- **Document order.** Gron written by `gronify flatten` streams in a single pass: each container comes before its children, siblings stay together, and array indexes ascend. Input that breaks this, such as lexically sorted gron (`json[10]` before `json[2]`), a path that re-enters a container that was already closed, or a missing parent inside an object that was assigned with `= {}` and already has other members, is still accepted when the problem shows up within the first 16 MiB of input. Gronify then rebuilds the whole document in memory. Once 16 MiB of input has been read or 16 MiB of output produced (a large array gap counts as output), out-of-order input fails with an error that names the line, because JSON may already have been written to stdout. Regenerate such input with `gronify flatten`. Output of `gronify flatten --sort` is in document order too, so it unflattens in a single pass; plain `sort` on the lines is not (see [Sorting keys](#sorting-keys)).
 - **Values are written as they appear.** Numbers are validated, not parsed, so `12345678901234567890`, `1.10`, `-0`, and `1e-7` come out unchanged. Strings are normalized to what `JSON.stringify` writes (`"A\/"` becomes `"A/"`). Compound values written on one line (`json.a = {"n":12345678901234567890}`) keep their numbers too, with whitespace and strings normalized, keys in source order (integer-like keys are not moved first as `JSON.parse` would), and a repeated key keeping its last value. Only space, tab, LF, and CR separate tokens inside a value, so `[\v]` is rejected; around a line and around `=`, anything `String.prototype.trim` strips (including U+00A0) is ignored.
 - **Skipped array indexes become `null`.** `json[3] = 1` after `json = []` gives `[null,null,null,1]`. The nulls are streamed, not allocated, so `json[100000000] = 1` costs output size, not memory.
 - **Repeated assignments.** In streamed output a repeated object key is written again where it appears, and a JSON parser keeps the last one, so the data matches the old last-write-wins result. Reassigning an array index counts as out of order, because the position is already written. Because the duplicate is written, `--pretty` output for such input is not the same as `JSON.stringify(value, null, 2)` of the parsed result, which has the key once; and a strict consumer that rejects duplicate names will reject the output. Gron from `gronify flatten` never repeats a key.
@@ -556,9 +558,9 @@ npm test
 
 Gronify accepts strict JSON only, one document per run (or one per line with `--stream`). The error names the byte offset, line, and column of the first problem, for example `Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 7 (line 1, column 8)`. Trailing commas, comments, and single quotes are all rejected. JSON Lines is rejected unless you pass `--stream` (or `--jsonl`); the error is `Unexpected '{' after the top-level value` at line 2. A file that does not end in `.json`, `.jsonl` or `.ndjson` still flattens; Gronify only prints a warning to stderr.
 
-### `unflatten` says `root must be assigned before child paths`
+### `unflatten` says `property does not match its parent container`
 
-The input is missing its container lines, usually because it went through `grep`. Filter with a pattern that keeps them, as shown under [`unflatten`](#unflatten-file). A nested branch needs every ancestor line too (`json.service = {}` before `json.service.regions`); without them the error is `parent path must be assigned before its children`.
+Two lines disagree about what a container is. `json.a = 1` followed by `json.a.b = 2` puts a child under a number, and `json.a = 1` followed by `json[0] = 2` uses the root as both an object and an array. Missing parents are not the cause; `unflatten` fills those in. If the lines came from editing, check the paths; if they came from `gronify flatten`, regenerate them. Gronify 1.3.2 and earlier did not fill in missing parents and reported `root must be assigned before child paths` instead.
 
 ## Contributing
 
