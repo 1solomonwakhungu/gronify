@@ -278,6 +278,31 @@ describe("sorted flatten", () => {
       }
     });
 
+    test("removes the temp file when the platform refuses to unlink it while open", async () => {
+      const unlink = jest.spyOn(fs, "unlinkSync");
+      const close = jest.spyOn(fs, "closeSync");
+      // Refuse the first unlink of an open spill file, the way some Windows file systems do.
+      unlink.mockImplementationOnce(() => {
+        throw Object.assign(new Error("EPERM: operation not permitted, unlink"), { code: "EPERM" });
+      });
+      const exitListeners = process.listenerCount("exit");
+      try {
+        const text = bigObject(2000);
+        expect(await sorted(text, {}, 4096)).toBe(reference(text));
+        const removed = unlink.mock.calls.map(([path]) => String(path)).filter((path) => path.includes("gronify-sort-"));
+        expect(removed).toHaveLength(2);
+        expect(removed[0]).toBe(removed[1]);
+        expect(fs.existsSync(removed[0]!)).toBe(false);
+        // The file was closed before its second unlink, which Windows requires.
+        const lastClose = Math.max(...close.mock.invocationCallOrder);
+        expect(lastClose).toBeLessThan(unlink.mock.invocationCallOrder[1]!);
+        expect(process.listenerCount("exit")).toBe(exitListeners);
+      } finally {
+        unlink.mockRestore();
+        close.mockRestore();
+      }
+    });
+
     test("does not touch the disk when the data fits in memory", async () => {
       const open = jest.spyOn(fs, "openSync");
       try {
