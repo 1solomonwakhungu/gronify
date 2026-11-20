@@ -7,7 +7,8 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "audit": "audit-ci --config audit-ci.jsonc"
+    "audit": "audit-ci --config audit-ci.jsonc",
+    "indexnow": "node scripts/submit-indexnow.mjs"
   },
   "dependencies": {
     "@primer/react-brand": "^0.80.1",
