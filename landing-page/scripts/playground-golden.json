@@ -1,0 +1,2467 @@
+{
+ "flatten/deployment": {
+  "stdout": "json = {}\njson.service = \"checkout-api\"\njson.environment = \"production\"\njson.release = {}\njson.release.version = \"2026.11.3\"\njson.release.commit = \"8f3c2a1\"\njson.release.deployedAt = \"2026-11-18T14:02:11Z\"\njson.replicas = 6\njson.containers = []\njson.containers[0] = {}\njson.containers[0].name = \"api\"\njson.containers[0].image = \"registry.example.com/checkout-api:2026.11.3\"\njson.containers[0].ports = []\njson.containers[0].ports[0] = 8080\njson.containers[0].ports[1] = 9090\njson.containers[0].env = {}\njson.containers[0].env.LOG_LEVEL = \"info\"\njson.containers[0].env.DATABASE_URL = \"postgres://checkout@db.internal:5432/checkout\"\njson.containers[0].env.FEATURE_FLAGS = \"fast-refunds,split-tender\"\njson.containers[0].resources = {}\njson.containers[0].resources.cpu = \"500m\"\njson.containers[0].resources.memory = \"1Gi\"\njson.containers[1] = {}\njson.containers[1].name = \"sidecar-proxy\"\njson.containers[1].image = \"registry.example.com/envoy:1.31.2\"\njson.containers[1].ports = []\njson.containers[1].ports[0] = 15001\njson.containers[1].env = {}\njson.containers[1].resources = {}\njson.containers[1].resources.cpu = \"100m\"\njson.containers[1].resources.memory = \"128Mi\"\njson.healthCheck = {}\njson.healthCheck.path = \"/healthz\"\njson.healthCheck.intervalSeconds = 10\njson.healthCheck.timeoutSeconds = 2\njson.rollout = {}\njson.rollout.strategy = \"canary\"\njson.rollout.steps = []\njson.rollout.steps[0] = 10\njson.rollout.steps[1] = 50\njson.rollout.steps[2] = 100\njson.rollout.autoPromote = false\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/deployment": {
+  "stdout": "json = {}\njson.containers = []\njson.containers[0] = {}\njson.containers[0].env = {}\njson.containers[0].env.DATABASE_URL = \"postgres://checkout@db.internal:5432/checkout\"\njson.containers[0].env.FEATURE_FLAGS = \"fast-refunds,split-tender\"\njson.containers[0].env.LOG_LEVEL = \"info\"\njson.containers[0].image = \"registry.example.com/checkout-api:2026.11.3\"\njson.containers[0].name = \"api\"\njson.containers[0].ports = []\njson.containers[0].ports[0] = 8080\njson.containers[0].ports[1] = 9090\njson.containers[0].resources = {}\njson.containers[0].resources.cpu = \"500m\"\njson.containers[0].resources.memory = \"1Gi\"\njson.containers[1] = {}\njson.containers[1].env = {}\njson.containers[1].image = \"registry.example.com/envoy:1.31.2\"\njson.containers[1].name = \"sidecar-proxy\"\njson.containers[1].ports = []\njson.containers[1].ports[0] = 15001\njson.containers[1].resources = {}\njson.containers[1].resources.cpu = \"100m\"\njson.containers[1].resources.memory = \"128Mi\"\njson.environment = \"production\"\njson.healthCheck = {}\njson.healthCheck.intervalSeconds = 10\njson.healthCheck.path = \"/healthz\"\njson.healthCheck.timeoutSeconds = 2\njson.release = {}\njson.release.commit = \"8f3c2a1\"\njson.release.deployedAt = \"2026-11-18T14:02:11Z\"\njson.release.version = \"2026.11.3\"\njson.replicas = 6\njson.rollout = {}\njson.rollout.autoPromote = false\njson.rollout.steps = []\njson.rollout.steps[0] = 10\njson.rollout.steps[1] = 50\njson.rollout.steps[2] = 100\njson.rollout.strategy = \"canary\"\njson.service = \"checkout-api\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/events": {
+  "stdout": "json = []\njson[0] = {}\njson[0].id = \"evt_01\"\njson[0].type = \"checkout.completed\"\njson[0].ts = \"2026-11-18T09:12:44Z\"\njson[0].user = {}\njson[0].user.id = \"u_481\"\njson[0].user.plan = \"pro\"\njson[0].amount = 129.90\njson[0].currency = \"USD\"\njson[1] = {}\njson[1].id = \"evt_02\"\njson[1].type = \"payment.failed\"\njson[1].ts = \"2026-11-18T09:13:02Z\"\njson[1].user = {}\njson[1].user.id = \"u_212\"\njson[1].user.plan = \"free\"\njson[1].error = {}\njson[1].error.code = \"card_declined\"\njson[1].error.message = \"Your card was declined.\"\njson[1].error.retryable = false\njson[2] = {}\njson[2].id = \"evt_03\"\njson[2].type = \"checkout.completed\"\njson[2].ts = \"2026-11-18T09:15:37Z\"\njson[2].user = {}\njson[2].user.id = \"u_093\"\njson[2].user.plan = \"team\"\njson[2].amount = 48.00\njson[2].currency = \"EUR\"\njson[3] = {}\njson[3].id = \"evt_04\"\njson[3].type = \"webhook.failed\"\njson[3].ts = \"2026-11-18T09:16:10Z\"\njson[3].endpoint = \"https://hooks.example.com/orders\"\njson[3].error = {}\njson[3].error.code = \"timeout\"\njson[3].error.message = \"No response after 10s\"\njson[3].error.retryable = true\njson[3].attempt = 3\njson[4] = {}\njson[4].id = \"evt_05\"\njson[4].type = \"refund.created\"\njson[4].ts = \"2026-11-18T09:20:51Z\"\njson[4].user = {}\njson[4].user.id = \"u_481\"\njson[4].user.plan = \"pro\"\njson[4].amount = -129.90\njson[4].currency = \"USD\"\njson[4].reason = null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/events": {
+  "stdout": "json = []\njson[0] = {}\njson[0].amount = 129.90\njson[0].currency = \"USD\"\njson[0].id = \"evt_01\"\njson[0].ts = \"2026-11-18T09:12:44Z\"\njson[0].type = \"checkout.completed\"\njson[0].user = {}\njson[0].user.id = \"u_481\"\njson[0].user.plan = \"pro\"\njson[1] = {}\njson[1].error = {}\njson[1].error.code = \"card_declined\"\njson[1].error.message = \"Your card was declined.\"\njson[1].error.retryable = false\njson[1].id = \"evt_02\"\njson[1].ts = \"2026-11-18T09:13:02Z\"\njson[1].type = \"payment.failed\"\njson[1].user = {}\njson[1].user.id = \"u_212\"\njson[1].user.plan = \"free\"\njson[2] = {}\njson[2].amount = 48.00\njson[2].currency = \"EUR\"\njson[2].id = \"evt_03\"\njson[2].ts = \"2026-11-18T09:15:37Z\"\njson[2].type = \"checkout.completed\"\njson[2].user = {}\njson[2].user.id = \"u_093\"\njson[2].user.plan = \"team\"\njson[3] = {}\njson[3].attempt = 3\njson[3].endpoint = \"https://hooks.example.com/orders\"\njson[3].error = {}\njson[3].error.code = \"timeout\"\njson[3].error.message = \"No response after 10s\"\njson[3].error.retryable = true\njson[3].id = \"evt_04\"\njson[3].ts = \"2026-11-18T09:16:10Z\"\njson[3].type = \"webhook.failed\"\njson[4] = {}\njson[4].amount = -129.90\njson[4].currency = \"USD\"\njson[4].id = \"evt_05\"\njson[4].reason = null\njson[4].ts = \"2026-11-18T09:20:51Z\"\njson[4].type = \"refund.created\"\njson[4].user = {}\njson[4].user.id = \"u_481\"\njson[4].user.plan = \"pro\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/ledger": {
+  "stdout": "json = {}\njson.ledger = \"acct-7731\"\njson.currency = \"USD\"\njson.openingBalance = 1.10\njson.entries = []\njson.entries[0] = {}\njson.entries[0].id = 12345678901234567890\njson.entries[0].amount = 1.10\njson.entries[0].memo = \"Coffee\"\njson.entries[1] = {}\njson.entries[1].id = 12345678901234567891\njson.entries[1].amount = -250.00\njson.entries[1].fx = 1.0850\njson.entries[1].memo = \"Refund, EUR card\"\njson.entries[2] = {}\njson.entries[2].id = 9007199254740993\njson.entries[2].amount = 1e3\njson.entries[2].memo = \"Wire in\"\njson.entries[3] = {}\njson.entries[3].id = 18446744073709551615\njson.entries[3].amount = 0.1\njson.entries[3].memo = \"Interest\"\njson.closingBalance = 752.30\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/ledger": {
+  "stdout": "json = {}\njson.closingBalance = 752.30\njson.currency = \"USD\"\njson.entries = []\njson.entries[0] = {}\njson.entries[0].amount = 1.10\njson.entries[0].id = 12345678901234567890\njson.entries[0].memo = \"Coffee\"\njson.entries[1] = {}\njson.entries[1].amount = -250.00\njson.entries[1].fx = 1.0850\njson.entries[1].id = 12345678901234567891\njson.entries[1].memo = \"Refund, EUR card\"\njson.entries[2] = {}\njson.entries[2].amount = 1e3\njson.entries[2].id = 9007199254740993\njson.entries[2].memo = \"Wire in\"\njson.entries[3] = {}\njson.entries[3].amount = 0.1\njson.entries[3].id = 18446744073709551615\njson.entries[3].memo = \"Interest\"\njson.ledger = \"acct-7731\"\njson.openingBalance = 1.10\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/config": {
+  "stdout": "json = {}\njson.zeta = true\njson.server = {}\njson.server.port = 8443\njson.server.host = \"0.0.0.0\"\njson.server.tls = {}\njson.server.tls.enabled = true\njson.server.tls.cert = \"/etc/ssl/app.pem\"\njson[\"Accept-Language\"] = \"en-US\"\njson.alpha = []\njson.alpha[0] = 3\njson.alpha[1] = 1\njson.alpha[2] = 2\njson._internal = {}\njson._internal.retries = 3\njson._internal.backoff = \"exponential\"\njson[\"feature.flags\"] = {}\njson[\"feature.flags\"].newCheckout = false\njson[\"feature.flags\"].darkMode = true\njson[\"\"] = \"empty key\"\njson[\"café\"] = \"ünïcode\"\njson[\"path/escaped\"] = \"a/b\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/config": {
+  "stdout": "json = {}\njson[\"\"] = \"empty key\"\njson[\"Accept-Language\"] = \"en-US\"\njson._internal = {}\njson._internal.backoff = \"exponential\"\njson._internal.retries = 3\njson.alpha = []\njson.alpha[0] = 3\njson.alpha[1] = 1\njson.alpha[2] = 2\njson[\"café\"] = \"ünïcode\"\njson[\"feature.flags\"] = {}\njson[\"feature.flags\"].darkMode = true\njson[\"feature.flags\"].newCheckout = false\njson[\"path/escaped\"] = \"a/b\"\njson.server = {}\njson.server.host = \"0.0.0.0\"\njson.server.port = 8443\njson.server.tls = {}\njson.server.tls.cert = \"/etc/ssl/app.pem\"\njson.server.tls.enabled = true\njson.zeta = true\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/scalars": {
+  "stdout": "json = []\njson[0] = \"x\"\njson[1] = 42\njson[2] = -0\njson[3] = 1E+2\njson[4] = 0.000\njson[5] = 1.10\njson[6] = 12345678901234567890\njson[7] = true\njson[8] = false\njson[9] = null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/scalars": {
+  "stdout": "json = []\njson[0] = \"x\"\njson[1] = 42\njson[2] = -0\njson[3] = 1E+2\njson[4] = 0.000\njson[5] = 1.10\njson[6] = 12345678901234567890\njson[7] = true\njson[8] = false\njson[9] = null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/topString": {
+  "stdout": "json = \"just a string\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/topString": {
+  "stdout": "json = \"just a string\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/topNumber": {
+  "stdout": "json = 12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/topNumber": {
+  "stdout": "json = 12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/topNull": {
+  "stdout": "json = null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/topNull": {
+  "stdout": "json = null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/unicode": {
+  "stdout": "json = {}\njson[\"café\"] = \"naïve\"\njson[\"é\"] = \"raw é\"\njson.emoji = \"😀 😀\"\njson.lone = \"\\ud800\"\njson.ctl = \"\\u0001\\b\\f\\n\\r\\t\"\njson.slash = \"/\"\njson[\"quote\\\"key\"] = \"\\\"q\\\"\"\njson[\"back\\\\slash\"] = 1\njson.u2028 = \" \"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/unicode": {
+  "stdout": "json = {}\njson[\"back\\\\slash\"] = 1\njson[\"café\"] = \"naïve\"\njson.ctl = \"\\u0001\\b\\f\\n\\r\\t\"\njson.emoji = \"😀 😀\"\njson.lone = \"\\ud800\"\njson[\"quote\\\"key\"] = \"\\\"q\\\"\"\njson.slash = \"/\"\njson.u2028 = \" \"\njson[\"é\"] = \"raw é\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/duplicates": {
+  "stdout": "json = {}\njson.b = 1\njson.a = 2\njson.b = 3\njson.A = 4\njson._ = 5\njson.$x = 6\njson[\"1\"] = 7\njson[\"10\"] = 8\njson[\"9\"] = 9\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/duplicates": {
+  "stdout": "json = {}\njson.$x = 6\njson[\"1\"] = 7\njson[\"10\"] = 8\njson[\"9\"] = 9\njson.A = 4\njson._ = 5\njson.a = 2\njson.b = 1\njson.b = 3\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/longArray": {
+  "stdout": "json = []\njson[0] = {}\njson[0].i = 0\njson[0].tag = \"fizz\"\njson[1] = {}\njson[1].i = 1\njson[1].tag = \"n\"\njson[2] = {}\njson[2].i = 2\njson[2].tag = \"n\"\njson[3] = {}\njson[3].i = 3\njson[3].tag = \"fizz\"\njson[4] = {}\njson[4].i = 4\njson[4].tag = \"n\"\njson[5] = {}\njson[5].i = 5\njson[5].tag = \"n\"\njson[6] = {}\njson[6].i = 6\njson[6].tag = \"fizz\"\njson[7] = {}\njson[7].i = 7\njson[7].tag = \"n\"\njson[8] = {}\njson[8].i = 8\njson[8].tag = \"n\"\njson[9] = {}\njson[9].i = 9\njson[9].tag = \"fizz\"\njson[10] = {}\njson[10].i = 10\njson[10].tag = \"n\"\njson[11] = {}\njson[11].i = 11\njson[11].tag = \"n\"\njson[12] = {}\njson[12].i = 12\njson[12].tag = \"fizz\"\njson[13] = {}\njson[13].i = 13\njson[13].tag = \"n\"\njson[14] = {}\njson[14].i = 14\njson[14].tag = \"n\"\njson[15] = {}\njson[15].i = 15\njson[15].tag = \"fizz\"\njson[16] = {}\njson[16].i = 16\njson[16].tag = \"n\"\njson[17] = {}\njson[17].i = 17\njson[17].tag = \"n\"\njson[18] = {}\njson[18].i = 18\njson[18].tag = \"fizz\"\njson[19] = {}\njson[19].i = 19\njson[19].tag = \"n\"\njson[20] = {}\njson[20].i = 20\njson[20].tag = \"n\"\njson[21] = {}\njson[21].i = 21\njson[21].tag = \"fizz\"\njson[22] = {}\njson[22].i = 22\njson[22].tag = \"n\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/longArray": {
+  "stdout": "json = []\njson[0] = {}\njson[0].i = 0\njson[0].tag = \"fizz\"\njson[1] = {}\njson[1].i = 1\njson[1].tag = \"n\"\njson[2] = {}\njson[2].i = 2\njson[2].tag = \"n\"\njson[3] = {}\njson[3].i = 3\njson[3].tag = \"fizz\"\njson[4] = {}\njson[4].i = 4\njson[4].tag = \"n\"\njson[5] = {}\njson[5].i = 5\njson[5].tag = \"n\"\njson[6] = {}\njson[6].i = 6\njson[6].tag = \"fizz\"\njson[7] = {}\njson[7].i = 7\njson[7].tag = \"n\"\njson[8] = {}\njson[8].i = 8\njson[8].tag = \"n\"\njson[9] = {}\njson[9].i = 9\njson[9].tag = \"fizz\"\njson[10] = {}\njson[10].i = 10\njson[10].tag = \"n\"\njson[11] = {}\njson[11].i = 11\njson[11].tag = \"n\"\njson[12] = {}\njson[12].i = 12\njson[12].tag = \"fizz\"\njson[13] = {}\njson[13].i = 13\njson[13].tag = \"n\"\njson[14] = {}\njson[14].i = 14\njson[14].tag = \"n\"\njson[15] = {}\njson[15].i = 15\njson[15].tag = \"fizz\"\njson[16] = {}\njson[16].i = 16\njson[16].tag = \"n\"\njson[17] = {}\njson[17].i = 17\njson[17].tag = \"n\"\njson[18] = {}\njson[18].i = 18\njson[18].tag = \"fizz\"\njson[19] = {}\njson[19].i = 19\njson[19].tag = \"n\"\njson[20] = {}\njson[20].i = 20\njson[20].tag = \"n\"\njson[21] = {}\njson[21].i = 21\njson[21].tag = \"fizz\"\njson[22] = {}\njson[22].i = 22\njson[22].tag = \"n\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/nested": {
+  "stdout": "json = []\njson[0] = []\njson[0][0] = []\njson[0][0][0] = []\njson[0][0][0][0] = []\njson[0][0][0][0][0] = []\njson[0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = {}\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0].deep = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0].deep[0] = 1\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0].deep[1] = {}\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0].deep[1].z = 0\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0].deep[1].a = 1\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/nested": {
+  "stdout": "json = []\njson[0] = []\njson[0][0] = []\njson[0][0][0] = []\njson[0][0][0][0] = []\njson[0][0][0][0][0] = []\njson[0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0] = {}\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0].deep = []\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0].deep[0] = 1\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0].deep[1] = {}\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0].deep[1].a = 1\njson[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0].deep[1].z = 0\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/emptyContainers": {
+  "stdout": "json = {}\njson.a = {}\njson.b = []\njson.c = []\njson.c[0] = {}\njson.c[1] = []\njson.d = {}\njson.d.e = {}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/emptyContainers": {
+  "stdout": "json = {}\njson.a = {}\njson.b = []\njson.c = []\njson.c[0] = {}\njson.c[1] = []\njson.d = {}\njson.d.e = {}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/whitespace": {
+  "stdout": "json = {}\njson.a = []\njson.a[0] = 1\njson.a[1] = 2\njson.b = {}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/whitespace": {
+  "stdout": "json = {}\njson.a = []\njson.a[0] = 1\njson.a[1] = 2\njson.b = {}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/recordsArray": {
+  "stdout": "json = []\njson[0] = {}\njson[0].id = 2\njson[0].name = \"b\"\njson[0].tags = []\njson[0].tags[0] = \"x\"\njson[0].tags[1] = \"y\"\njson[1] = {}\njson[1].id = 1\njson[1].name = \"a\"\njson[1].meta = {}\njson[1].meta.z = 1\njson[1].meta.a = 2\njson[2] = {}\njson[2].id = 3\njson[2].name = \"c\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort/recordsArray": {
+  "stdout": "json = []\njson[0] = {}\njson[0].id = 2\njson[0].name = \"b\"\njson[0].tags = []\njson[0].tags[0] = \"x\"\njson[0].tags[1] = \"y\"\njson[1] = {}\njson[1].id = 1\njson[1].meta = {}\njson[1].meta.a = 2\njson[1].meta.z = 1\njson[1].name = \"a\"\njson[2] = {}\njson[2].id = 3\njson[2].name = \"c\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten/trailingComma": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 8 (line 1, column 9)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/trailingComma": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 8 (line 1, column 9)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/trailingArrayComma": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected ']' after ',' (trailing commas are not allowed) at byte offset 6 (line 1, column 7)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/trailingArrayComma": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected ']' after ',' (trailing commas are not allowed) at byte offset 6 (line 1, column 7)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/unclosed": {
+  "stdout": "json = []\njson[0] = 1\n",
+  "stderr": "Error: flattening JSON: Unexpected end of input at byte offset 5 (line 1, column 6)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/unclosed": {
+  "stdout": "json = []\njson[0] = 1\n",
+  "stderr": "Error: flattening JSON: Unexpected end of input at byte offset 5 (line 1, column 6)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/missingColon": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected '1', expected ':' at byte offset 5 (line 1, column 6)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/missingColon": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected '1', expected ':' at byte offset 5 (line 1, column 6)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/badHex": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Invalid \\u escape: 'G' is not a hex digit at byte offset 5 (line 1, column 6)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/badHex": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Invalid \\u escape: 'G' is not a hex digit at byte offset 5 (line 1, column 6)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/badEscape": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Invalid escape sequence '\\x' in string at byte offset 2 (line 1, column 3)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/badEscape": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Invalid escape sequence '\\x' in string at byte offset 2 (line 1, column 3)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/badLiteral": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected token 'tru', expected true, false or null at byte offset 1 (line 1, column 2)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/badLiteral": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected token 'tru', expected true, false or null at byte offset 1 (line 1, column 2)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/longLiteral": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected token, expected true, false or null at byte offset 0 (line 1, column 1)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/longLiteral": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected token, expected true, false or null at byte offset 0 (line 1, column 1)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/leadingZero": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Invalid number '01' at byte offset 0 (line 1, column 1)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/leadingZero": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Invalid number '01' at byte offset 0 (line 1, column 1)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/rawTab": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unescaped control character byte 0x09 in string at byte offset 8 (line 1, column 9)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/rawTab": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unescaped control character byte 0x09 in string at byte offset 8 (line 1, column 9)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/empty": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected end of input (empty document) at byte offset 0 (line 1, column 1)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/empty": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected end of input (empty document) at byte offset 0 (line 1, column 1)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/blank": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected end of input (empty document) at byte offset 4 (line 2, column 2)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/blank": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected end of input (empty document) at byte offset 4 (line 2, column 2)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/twoValues": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected '[' after the top-level value at byte offset 3 (line 1, column 4)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
+  "failed": true
+ },
+ "flatten-sort/twoValues": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected '[' after the top-level value at byte offset 3 (line 1, column 4)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
+  "failed": true
+ },
+ "flatten/lonelyMinus": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Invalid number '-' at byte offset 0 (line 1, column 1)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/lonelyMinus": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Invalid number '-' at byte offset 0 (line 1, column 1)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/badFraction": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Invalid number '1.' at byte offset 0 (line 1, column 1)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/badFraction": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Invalid number '1.' at byte offset 0 (line 1, column 1)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/unterminated": {
+  "stdout": "json = {}\n",
+  "stderr": "Error: flattening JSON: Unterminated string at byte offset 6 (line 1, column 7)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/unterminated": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unterminated string at byte offset 6 (line 1, column 7)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/multiLine": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected ']' after ',' (trailing commas are not allowed) at byte offset 30 (line 3, column 14)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/multiLine": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected ']' after ',' (trailing commas are not allowed) at byte offset 30 (line 3, column 14)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/multiLineKey": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected 'b', expected a string key at byte offset 14 (line 3, column 3)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/multiLineKey": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected 'b', expected a string key at byte offset 14 (line 3, column 3)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/controlInKey": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unescaped control character byte 0x01 in string at byte offset 3 (line 1, column 4)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/controlInKey": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unescaped control character byte 0x01 in string at byte offset 3 (line 1, column 4)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten/afterValue": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected 'x' after the top-level value at byte offset 9 (line 1, column 10)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
+  "failed": true
+ },
+ "flatten-sort/afterValue": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected 'x' after the top-level value at byte offset 9 (line 1, column 10)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
+  "failed": true
+ },
+ "flatten/singleQuotes": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected ''', expected a string key at byte offset 1 (line 1, column 2)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-sort/singleQuotes": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected ''', expected a string key at byte offset 1 (line 1, column 2)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-limit-1/deployment": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-1/deployment": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/deployment": {
+  "stdout": "json = {}\njson.service = \"checkout-api\"\njson.environment = \"production\"\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-3/deployment": {
+  "stdout": "json = {}\njson.containers = []\njson.containers[0] = {}\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-7/deployment": {
+  "stdout": "json = {}\njson.service = \"checkout-api\"\njson.environment = \"production\"\njson.release = {}\njson.release.version = \"2026.11.3\"\njson.release.commit = \"8f3c2a1\"\njson.release.deployedAt = \"2026-11-18T14:02:11Z\"\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-7/deployment": {
+  "stdout": "json = {}\njson.containers = []\njson.containers[0] = {}\njson.containers[0].env = {}\njson.containers[0].env.DATABASE_URL = \"postgres://checkout@db.internal:5432/checkout\"\njson.containers[0].env.FEATURE_FLAGS = \"fast-refunds,split-tender\"\njson.containers[0].env.LOG_LEVEL = \"info\"\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-1/events": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-1/events": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/events": {
+  "stdout": "json = []\njson[0] = {}\njson[0].id = \"evt_01\"\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-3/events": {
+  "stdout": "json = []\njson[0] = {}\njson[0].amount = 129.90\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-7/events": {
+  "stdout": "json = []\njson[0] = {}\njson[0].id = \"evt_01\"\njson[0].type = \"checkout.completed\"\njson[0].ts = \"2026-11-18T09:12:44Z\"\njson[0].user = {}\njson[0].user.id = \"u_481\"\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-7/events": {
+  "stdout": "json = []\njson[0] = {}\njson[0].amount = 129.90\njson[0].currency = \"USD\"\njson[0].id = \"evt_01\"\njson[0].ts = \"2026-11-18T09:12:44Z\"\njson[0].type = \"checkout.completed\"\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-1/ledger": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-1/ledger": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/ledger": {
+  "stdout": "json = {}\njson.ledger = \"acct-7731\"\njson.currency = \"USD\"\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-3/ledger": {
+  "stdout": "json = {}\njson.closingBalance = 752.30\njson.currency = \"USD\"\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-7/ledger": {
+  "stdout": "json = {}\njson.ledger = \"acct-7731\"\njson.currency = \"USD\"\njson.openingBalance = 1.10\njson.entries = []\njson.entries[0] = {}\njson.entries[0].id = 12345678901234567890\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-7/ledger": {
+  "stdout": "json = {}\njson.closingBalance = 752.30\njson.currency = \"USD\"\njson.entries = []\njson.entries[0] = {}\njson.entries[0].amount = 1.10\njson.entries[0].id = 12345678901234567890\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-1/config": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-1/config": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/config": {
+  "stdout": "json = {}\njson.zeta = true\njson.server = {}\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-3/config": {
+  "stdout": "json = {}\njson[\"\"] = \"empty key\"\njson[\"Accept-Language\"] = \"en-US\"\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-7/config": {
+  "stdout": "json = {}\njson.zeta = true\njson.server = {}\njson.server.port = 8443\njson.server.host = \"0.0.0.0\"\njson.server.tls = {}\njson.server.tls.enabled = true\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-7/config": {
+  "stdout": "json = {}\njson[\"\"] = \"empty key\"\njson[\"Accept-Language\"] = \"en-US\"\njson._internal = {}\njson._internal.backoff = \"exponential\"\njson._internal.retries = 3\njson.alpha = []\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-1/scalars": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-1/scalars": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/scalars": {
+  "stdout": "json = []\njson[0] = \"x\"\njson[1] = 42\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-3/scalars": {
+  "stdout": "json = []\njson[0] = \"x\"\njson[1] = 42\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-7/scalars": {
+  "stdout": "json = []\njson[0] = \"x\"\njson[1] = 42\njson[2] = -0\njson[3] = 1E+2\njson[4] = 0.000\njson[5] = 1.10\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-7/scalars": {
+  "stdout": "json = []\njson[0] = \"x\"\njson[1] = 42\njson[2] = -0\njson[3] = 1E+2\njson[4] = 0.000\njson[5] = 1.10\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-1/topString": {
+  "stdout": "json = \"just a string\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort-limit-1/topString": {
+  "stdout": "json = \"just a string\"\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/topString": {
+  "stdout": "json = \"just a string\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort-limit-3/topString": {
+  "stdout": "json = \"just a string\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-limit-7/topString": {
+  "stdout": "json = \"just a string\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort-limit-7/topString": {
+  "stdout": "json = \"just a string\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-limit-1/topNumber": {
+  "stdout": "json = 12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort-limit-1/topNumber": {
+  "stdout": "json = 12345678901234567890\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/topNumber": {
+  "stdout": "json = 12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort-limit-3/topNumber": {
+  "stdout": "json = 12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-limit-7/topNumber": {
+  "stdout": "json = 12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort-limit-7/topNumber": {
+  "stdout": "json = 12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-limit-1/topNull": {
+  "stdout": "json = null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort-limit-1/topNull": {
+  "stdout": "json = null\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/topNull": {
+  "stdout": "json = null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort-limit-3/topNull": {
+  "stdout": "json = null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-limit-7/topNull": {
+  "stdout": "json = null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort-limit-7/topNull": {
+  "stdout": "json = null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-limit-1/unicode": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-1/unicode": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/unicode": {
+  "stdout": "json = {}\njson[\"café\"] = \"naïve\"\njson[\"é\"] = \"raw é\"\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-3/unicode": {
+  "stdout": "json = {}\njson[\"back\\\\slash\"] = 1\njson[\"café\"] = \"naïve\"\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-7/unicode": {
+  "stdout": "json = {}\njson[\"café\"] = \"naïve\"\njson[\"é\"] = \"raw é\"\njson.emoji = \"😀 😀\"\njson.lone = \"\\ud800\"\njson.ctl = \"\\u0001\\b\\f\\n\\r\\t\"\njson.slash = \"/\"\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-7/unicode": {
+  "stdout": "json = {}\njson[\"back\\\\slash\"] = 1\njson[\"café\"] = \"naïve\"\njson.ctl = \"\\u0001\\b\\f\\n\\r\\t\"\njson.emoji = \"😀 😀\"\njson.lone = \"\\ud800\"\njson[\"quote\\\"key\"] = \"\\\"q\\\"\"\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-1/duplicates": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-1/duplicates": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/duplicates": {
+  "stdout": "json = {}\njson.b = 1\njson.a = 2\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-3/duplicates": {
+  "stdout": "json = {}\njson.$x = 6\njson[\"1\"] = 7\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-7/duplicates": {
+  "stdout": "json = {}\njson.b = 1\njson.a = 2\njson.b = 3\njson.A = 4\njson._ = 5\njson.$x = 6\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-7/duplicates": {
+  "stdout": "json = {}\njson.$x = 6\njson[\"1\"] = 7\njson[\"10\"] = 8\njson[\"9\"] = 9\njson.A = 4\njson._ = 5\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-1/longArray": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-1/longArray": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/longArray": {
+  "stdout": "json = []\njson[0] = {}\njson[0].i = 0\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-3/longArray": {
+  "stdout": "json = []\njson[0] = {}\njson[0].i = 0\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-7/longArray": {
+  "stdout": "json = []\njson[0] = {}\njson[0].i = 0\njson[0].tag = \"fizz\"\njson[1] = {}\njson[1].i = 1\njson[1].tag = \"n\"\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-7/longArray": {
+  "stdout": "json = []\njson[0] = {}\njson[0].i = 0\njson[0].tag = \"fizz\"\njson[1] = {}\njson[1].i = 1\njson[1].tag = \"n\"\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-1/nested": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-1/nested": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/nested": {
+  "stdout": "json = []\njson[0] = []\njson[0][0] = []\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-3/nested": {
+  "stdout": "json = []\njson[0] = []\njson[0][0] = []\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-7/nested": {
+  "stdout": "json = []\njson[0] = []\njson[0][0] = []\njson[0][0][0] = []\njson[0][0][0][0] = []\njson[0][0][0][0][0] = []\njson[0][0][0][0][0][0] = []\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-7/nested": {
+  "stdout": "json = []\njson[0] = []\njson[0][0] = []\njson[0][0][0] = []\njson[0][0][0][0] = []\njson[0][0][0][0][0] = []\njson[0][0][0][0][0][0] = []\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-1/emptyContainers": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-1/emptyContainers": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/emptyContainers": {
+  "stdout": "json = {}\njson.a = {}\njson.b = []\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-3/emptyContainers": {
+  "stdout": "json = {}\njson.a = {}\njson.b = []\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-7/emptyContainers": {
+  "stdout": "json = {}\njson.a = {}\njson.b = []\njson.c = []\njson.c[0] = {}\njson.c[1] = []\njson.d = {}\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-7/emptyContainers": {
+  "stdout": "json = {}\njson.a = {}\njson.b = []\njson.c = []\njson.c[0] = {}\njson.c[1] = []\njson.d = {}\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-1/whitespace": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-1/whitespace": {
+  "stdout": "json = {}\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/whitespace": {
+  "stdout": "json = {}\njson.a = []\njson.a[0] = 1\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-3/whitespace": {
+  "stdout": "json = {}\njson.a = []\njson.a[0] = 1\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-7/whitespace": {
+  "stdout": "json = {}\njson.a = []\njson.a[0] = 1\njson.a[1] = 2\njson.b = {}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-sort-limit-7/whitespace": {
+  "stdout": "json = {}\njson.a = []\njson.a[0] = 1\njson.a[1] = 2\njson.b = {}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-limit-1/recordsArray": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-1/recordsArray": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-3/recordsArray": {
+  "stdout": "json = []\njson[0] = {}\njson[0].id = 2\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-3/recordsArray": {
+  "stdout": "json = []\njson[0] = {}\njson[0].id = 2\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit-7/recordsArray": {
+  "stdout": "json = []\njson[0] = {}\njson[0].id = 2\njson[0].name = \"b\"\njson[0].tags = []\njson[0].tags[0] = \"x\"\njson[0].tags[1] = \"y\"\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit-7/recordsArray": {
+  "stdout": "json = []\njson[0] = {}\njson[0].id = 2\njson[0].name = \"b\"\njson[0].tags = []\njson[0].tags[0] = \"x\"\njson[0].tags[1] = \"y\"\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit/stops-before-error": {
+  "stdout": "json = []\njson[0] = 1\n",
+  "stderr": "Stopped after 2 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-sort-limit/stops-before-error": {
+  "stdout": "json = []\njson[0] = 1\n",
+  "stderr": "Stopped after 2 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-limit/last-line": {
+  "stdout": "json = []\njson[0] = 1\njson[1] = 2\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-limit/scalar": {
+  "stdout": "json = 7\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-0/deployment": {
+  "stdout": "json.containers[0].image = \"registry.example.com/checkout-api:2026.11.3\"\njson.containers[1].image = \"registry.example.com/envoy:1.31.2\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-1/deployment": {
+  "stdout": "json.containers[0].image = \"registry.example.com/checkout-api:2026.11.3\"\njson.containers[1].image = \"registry.example.com/envoy:1.31.2\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-2/deployment": {
+  "stdout": "json.containers[0].image = \"registry.example.com/checkout-api:2026.11.3\"\njson.containers[1].image = \"registry.example.com/envoy:1.31.2\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-3/deployment": {
+  "stdout": "json = {}\njson.service = \"checkout-api\"\njson.environment = \"production\"\njson.release = {}\njson.release.version = \"2026.11.3\"\njson.release.commit = \"8f3c2a1\"\njson.release.deployedAt = \"2026-11-18T14:02:11Z\"\njson.replicas = 6\njson.containers = []\njson.containers[0] = {}\njson.containers[0].name = \"api\"\njson.containers[0].ports = []\njson.containers[0].ports[0] = 8080\njson.containers[0].ports[1] = 9090\njson.containers[0].env = {}\njson.containers[0].env.LOG_LEVEL = \"info\"\njson.containers[0].env.DATABASE_URL = \"postgres://checkout@db.internal:5432/checkout\"\njson.containers[0].env.FEATURE_FLAGS = \"fast-refunds,split-tender\"\njson.containers[0].resources = {}\njson.containers[0].resources.cpu = \"500m\"\njson.containers[0].resources.memory = \"1Gi\"\njson.containers[1] = {}\njson.containers[1].name = \"sidecar-proxy\"\njson.containers[1].ports = []\njson.containers[1].ports[0] = 15001\njson.containers[1].env = {}\njson.containers[1].resources = {}\njson.containers[1].resources.cpu = \"100m\"\njson.containers[1].resources.memory = \"128Mi\"\njson.healthCheck = {}\njson.healthCheck.path = \"/healthz\"\njson.healthCheck.intervalSeconds = 10\njson.healthCheck.timeoutSeconds = 2\njson.rollout = {}\njson.rollout.strategy = \"canary\"\njson.rollout.steps = []\njson.rollout.steps[0] = 10\njson.rollout.steps[1] = 50\njson.rollout.steps[2] = 100\njson.rollout.autoPromote = false\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-4/deployment": {
+  "stdout": "2\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-5/deployment": {
+  "stdout": "json.containers[0].image = \"registry.example.com/checkout-api:2026.11.3\"\njson.containers[1].image = \"registry.example.com/envoy:1.31.2\"\n",
+  "stderr": "Stopped after 2 matches (--max-count); there may be more",
+  "failed": false
+ },
+ "search-6/deployment": {
+  "stdout": "json.containers[0].image = \"registry.example.com/checkout-api:2026.11.3\"\njson.containers[1].image = \"registry.example.com/envoy:1.31.2\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-7/deployment": {
+  "stdout": "json.containers[0].image = \"registry.example.com/checkout-api:2026.11.3\"\njson.containers[1].image = \"registry.example.com/envoy:1.31.2\"\n",
+  "stderr": "Stopped after 2 matches (--max-count); there may be more",
+  "failed": false
+ },
+ "search-8/deployment": {
+  "stdout": "json = {}\njson.service = \"checkout-api\"\njson.environment = \"production\"\n",
+  "stderr": "Stopped after 3 lines (--max-count); there may be more",
+  "failed": false
+ },
+ "search-9/deployment": {
+  "stdout": "2\n",
+  "stderr": "Stopped counting at 2 matches (--max-count)",
+  "failed": false
+ },
+ "search-10/deployment": {
+  "stdout": "2\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-11/deployment": {
+  "stdout": "json = {}\njson.containers = []\njson.containers[0] = {}\njson.containers[0].env = {}\njson.containers[0].env.DATABASE_URL = \"postgres://checkout@db.internal:5432/checkout\"\njson.containers[0].env.FEATURE_FLAGS = \"fast-refunds,split-tender\"\njson.containers[0].env.LOG_LEVEL = \"info\"\njson.containers[0].name = \"api\"\njson.containers[0].ports = []\njson.containers[0].ports[0] = 8080\njson.containers[0].ports[1] = 9090\njson.containers[0].resources = {}\njson.containers[0].resources.cpu = \"500m\"\njson.containers[0].resources.memory = \"1Gi\"\njson.containers[1] = {}\njson.containers[1].env = {}\njson.containers[1].name = \"sidecar-proxy\"\njson.containers[1].ports = []\njson.containers[1].ports[0] = 15001\njson.containers[1].resources = {}\njson.containers[1].resources.cpu = \"100m\"\njson.containers[1].resources.memory = \"128Mi\"\njson.environment = \"production\"\njson.healthCheck = {}\njson.healthCheck.intervalSeconds = 10\njson.healthCheck.path = \"/healthz\"\njson.healthCheck.timeoutSeconds = 2\njson.release = {}\njson.release.commit = \"8f3c2a1\"\njson.release.deployedAt = \"2026-11-18T14:02:11Z\"\njson.release.version = \"2026.11.3\"\njson.replicas = 6\njson.rollout = {}\njson.rollout.autoPromote = false\njson.rollout.steps = []\njson.rollout.steps[0] = 10\njson.rollout.steps[1] = 50\njson.rollout.steps[2] = 100\njson.rollout.strategy = \"canary\"\njson.service = \"checkout-api\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-0/events": {
+  "stdout": "json[1].type = \"payment.failed\"\njson[3].type = \"webhook.failed\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-1/events": {
+  "stdout": "json[1].type = \"payment.failed\"\njson[3].type = \"webhook.failed\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-2/events": {
+  "stdout": "json[1].type = \"payment.failed\"\njson[3].type = \"webhook.failed\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-3/events": {
+  "stdout": "json = []\njson[0] = {}\njson[0].id = \"evt_01\"\njson[0].type = \"checkout.completed\"\njson[0].ts = \"2026-11-18T09:12:44Z\"\njson[0].user = {}\njson[0].user.id = \"u_481\"\njson[0].user.plan = \"pro\"\njson[0].amount = 129.90\njson[0].currency = \"USD\"\njson[1] = {}\njson[1].id = \"evt_02\"\njson[1].ts = \"2026-11-18T09:13:02Z\"\njson[1].user = {}\njson[1].user.id = \"u_212\"\njson[1].user.plan = \"free\"\njson[1].error = {}\njson[1].error.code = \"card_declined\"\njson[1].error.message = \"Your card was declined.\"\njson[1].error.retryable = false\njson[2] = {}\njson[2].id = \"evt_03\"\njson[2].type = \"checkout.completed\"\njson[2].ts = \"2026-11-18T09:15:37Z\"\njson[2].user = {}\njson[2].user.id = \"u_093\"\njson[2].user.plan = \"team\"\njson[2].amount = 48.00\njson[2].currency = \"EUR\"\njson[3] = {}\njson[3].id = \"evt_04\"\njson[3].ts = \"2026-11-18T09:16:10Z\"\njson[3].endpoint = \"https://hooks.example.com/orders\"\njson[3].error = {}\njson[3].error.code = \"timeout\"\njson[3].error.message = \"No response after 10s\"\njson[3].error.retryable = true\njson[3].attempt = 3\njson[4] = {}\njson[4].id = \"evt_05\"\njson[4].type = \"refund.created\"\njson[4].ts = \"2026-11-18T09:20:51Z\"\njson[4].user = {}\njson[4].user.id = \"u_481\"\njson[4].user.plan = \"pro\"\njson[4].amount = -129.90\njson[4].currency = \"USD\"\njson[4].reason = null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-4/events": {
+  "stdout": "2\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-5/events": {
+  "stdout": "json[1].type = \"payment.failed\"\njson[3].type = \"webhook.failed\"\n",
+  "stderr": "Stopped after 2 matches (--max-count); there may be more",
+  "failed": false
+ },
+ "search-6/events": {
+  "stdout": "json[1].type = \"payment.failed\"\njson[3].type = \"webhook.failed\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-7/events": {
+  "stdout": "json[1].type = \"payment.failed\"\njson[3].type = \"webhook.failed\"\n",
+  "stderr": "Stopped after 2 matches (--max-count); there may be more",
+  "failed": false
+ },
+ "search-8/events": {
+  "stdout": "json = []\njson[0] = {}\njson[0].id = \"evt_01\"\n",
+  "stderr": "Stopped after 3 lines (--max-count); there may be more",
+  "failed": false
+ },
+ "search-9/events": {
+  "stdout": "2\n",
+  "stderr": "Stopped counting at 2 matches (--max-count)",
+  "failed": false
+ },
+ "search-10/events": {
+  "stdout": "2\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-11/events": {
+  "stdout": "json = []\njson[0] = {}\njson[0].amount = 129.90\njson[0].currency = \"USD\"\njson[0].id = \"evt_01\"\njson[0].ts = \"2026-11-18T09:12:44Z\"\njson[0].type = \"checkout.completed\"\njson[0].user = {}\njson[0].user.id = \"u_481\"\njson[0].user.plan = \"pro\"\njson[1] = {}\njson[1].error = {}\njson[1].error.code = \"card_declined\"\njson[1].error.message = \"Your card was declined.\"\njson[1].error.retryable = false\njson[1].id = \"evt_02\"\njson[1].ts = \"2026-11-18T09:13:02Z\"\njson[1].user = {}\njson[1].user.id = \"u_212\"\njson[1].user.plan = \"free\"\njson[2] = {}\njson[2].amount = 48.00\njson[2].currency = \"EUR\"\njson[2].id = \"evt_03\"\njson[2].ts = \"2026-11-18T09:15:37Z\"\njson[2].type = \"checkout.completed\"\njson[2].user = {}\njson[2].user.id = \"u_093\"\njson[2].user.plan = \"team\"\njson[3] = {}\njson[3].attempt = 3\njson[3].endpoint = \"https://hooks.example.com/orders\"\njson[3].error = {}\njson[3].error.code = \"timeout\"\njson[3].error.message = \"No response after 10s\"\njson[3].error.retryable = true\njson[3].id = \"evt_04\"\njson[3].ts = \"2026-11-18T09:16:10Z\"\njson[4] = {}\njson[4].amount = -129.90\njson[4].currency = \"USD\"\njson[4].id = \"evt_05\"\njson[4].reason = null\njson[4].ts = \"2026-11-18T09:20:51Z\"\njson[4].type = \"refund.created\"\njson[4].user = {}\njson[4].user.id = \"u_481\"\njson[4].user.plan = \"pro\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-0/ledger": {
+  "stdout": "json.entries[0].amount = 1.10\njson.entries[1].amount = -250.00\njson.entries[2].amount = 1e3\njson.entries[3].amount = 0.1\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-1/ledger": {
+  "stdout": "json.entries[0].amount = 1.10\njson.entries[1].amount = -250.00\njson.entries[2].amount = 1e3\njson.entries[3].amount = 0.1\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-2/ledger": {
+  "stdout": "json.entries[0].amount = 1.10\njson.entries[1].amount = -250.00\njson.entries[2].amount = 1e3\njson.entries[3].amount = 0.1\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-3/ledger": {
+  "stdout": "json = {}\njson.ledger = \"acct-7731\"\njson.currency = \"USD\"\njson.openingBalance = 1.10\njson.entries = []\njson.entries[0] = {}\njson.entries[0].id = 12345678901234567890\njson.entries[0].memo = \"Coffee\"\njson.entries[1] = {}\njson.entries[1].id = 12345678901234567891\njson.entries[1].fx = 1.0850\njson.entries[1].memo = \"Refund, EUR card\"\njson.entries[2] = {}\njson.entries[2].id = 9007199254740993\njson.entries[2].memo = \"Wire in\"\njson.entries[3] = {}\njson.entries[3].id = 18446744073709551615\njson.entries[3].memo = \"Interest\"\njson.closingBalance = 752.30\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-4/ledger": {
+  "stdout": "4\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-5/ledger": {
+  "stdout": "json.entries[0].amount = 1.10\njson.entries[1].amount = -250.00\n",
+  "stderr": "Stopped after 2 matches (--max-count); there may be more",
+  "failed": false
+ },
+ "search-6/ledger": {
+  "stdout": "json.entries[0].amount = 1.10\njson.entries[1].amount = -250.00\njson.entries[2].amount = 1e3\njson.entries[3].amount = 0.1\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-7/ledger": {
+  "stdout": "json.entries[0].amount = 1.10\njson.entries[1].amount = -250.00\n",
+  "stderr": "Stopped after 2 matches (--max-count); there may be more",
+  "failed": false
+ },
+ "search-8/ledger": {
+  "stdout": "json = {}\njson.ledger = \"acct-7731\"\njson.currency = \"USD\"\n",
+  "stderr": "Stopped after 3 lines (--max-count); there may be more",
+  "failed": false
+ },
+ "search-9/ledger": {
+  "stdout": "2\n",
+  "stderr": "Stopped counting at 2 matches (--max-count)",
+  "failed": false
+ },
+ "search-10/ledger": {
+  "stdout": "4\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-11/ledger": {
+  "stdout": "json = {}\njson.closingBalance = 752.30\njson.currency = \"USD\"\njson.entries = []\njson.entries[0] = {}\njson.entries[0].id = 12345678901234567890\njson.entries[0].memo = \"Coffee\"\njson.entries[1] = {}\njson.entries[1].fx = 1.0850\njson.entries[1].id = 12345678901234567891\njson.entries[1].memo = \"Refund, EUR card\"\njson.entries[2] = {}\njson.entries[2].id = 9007199254740993\njson.entries[2].memo = \"Wire in\"\njson.entries[3] = {}\njson.entries[3].id = 18446744073709551615\njson.entries[3].memo = \"Interest\"\njson.ledger = \"acct-7731\"\njson.openingBalance = 1.10\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-0/config": {
+  "stdout": "json.server.tls.enabled = true\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-1/config": {
+  "stdout": "json.server.tls.enabled = true\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-2/config": {
+  "stdout": "json.server.tls.enabled = true\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-3/config": {
+  "stdout": "json = {}\njson.zeta = true\njson.server = {}\njson.server.port = 8443\njson.server.host = \"0.0.0.0\"\njson.server.tls = {}\njson.server.tls.cert = \"/etc/ssl/app.pem\"\njson[\"Accept-Language\"] = \"en-US\"\njson.alpha = []\njson.alpha[0] = 3\njson.alpha[1] = 1\njson.alpha[2] = 2\njson._internal = {}\njson._internal.retries = 3\njson._internal.backoff = \"exponential\"\njson[\"feature.flags\"] = {}\njson[\"feature.flags\"].newCheckout = false\njson[\"feature.flags\"].darkMode = true\njson[\"\"] = \"empty key\"\njson[\"café\"] = \"ünïcode\"\njson[\"path/escaped\"] = \"a/b\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-4/config": {
+  "stdout": "1\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-5/config": {
+  "stdout": "json.server.tls.enabled = true\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-6/config": {
+  "stdout": "json.server.tls.enabled = true\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-7/config": {
+  "stdout": "json.server.tls.enabled = true\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-8/config": {
+  "stdout": "json = {}\njson.zeta = true\njson.server = {}\n",
+  "stderr": "Stopped after 3 lines (--max-count); there may be more",
+  "failed": false
+ },
+ "search-9/config": {
+  "stdout": "1\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-10/config": {
+  "stdout": "1\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-11/config": {
+  "stdout": "json = {}\njson[\"\"] = \"empty key\"\njson[\"Accept-Language\"] = \"en-US\"\njson._internal = {}\njson._internal.backoff = \"exponential\"\njson._internal.retries = 3\njson.alpha = []\njson.alpha[0] = 3\njson.alpha[1] = 1\njson.alpha[2] = 2\njson[\"café\"] = \"ünïcode\"\njson[\"feature.flags\"] = {}\njson[\"feature.flags\"].darkMode = true\njson[\"feature.flags\"].newCheckout = false\njson[\"path/escaped\"] = \"a/b\"\njson.server = {}\njson.server.host = \"0.0.0.0\"\njson.server.port = 8443\njson.server.tls = {}\njson.server.tls.cert = \"/etc/ssl/app.pem\"\njson.zeta = true\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-regexDigits/deployment": {
+  "stdout": "json.release.version = \"2026.11.3\"\njson.release.deployedAt = \"2026-11-18T14:02:11Z\"\njson.containers[0].image = \"registry.example.com/checkout-api:2026.11.3\"\njson.containers[0].ports[0] = 8080\njson.containers[0].ports[1] = 9090\njson.containers[0].env.DATABASE_URL = \"postgres://checkout@db.internal:5432/checkout\"\njson.containers[1].ports[0] = 15001\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-regexDigits/events": {
+  "stdout": "json[0].ts = \"2026-11-18T09:12:44Z\"\njson[1].ts = \"2026-11-18T09:13:02Z\"\njson[2].ts = \"2026-11-18T09:15:37Z\"\njson[3].ts = \"2026-11-18T09:16:10Z\"\njson[4].ts = \"2026-11-18T09:20:51Z\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-regexDigits/ledger": {
+  "stdout": "json.ledger = \"acct-7731\"\njson.entries[0].id = 12345678901234567890\njson.entries[1].id = 12345678901234567891\njson.entries[1].fx = 1.0850\njson.entries[2].id = 9007199254740993\njson.entries[3].id = 18446744073709551615\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-regexDigits/config": {
+  "stdout": "json.server.port = 8443\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-regexDigits/unicode": {
+  "stdout": "json.ctl = \"\\u0001\\b\\f\\n\\r\\t\"\njson.u2028 = \" \"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-regexAnchored/deployment": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '^json\\.entries\\[\\d+\\]\\.id = '\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-regexAnchored/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '^json\\.entries\\[\\d+\\]\\.id = '\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-regexAnchored/ledger": {
+  "stdout": "json.entries[0].id = 12345678901234567890\njson.entries[1].id = 12345678901234567891\njson.entries[2].id = 9007199254740993\njson.entries[3].id = 18446744073709551615\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-regexAnchored/config": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '^json\\.entries\\[\\d+\\]\\.id = '\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-regexAnchored/unicode": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '^json\\.entries\\[\\d+\\]\\.id = '\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-regexInvalid/deployment": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /(/i: Unterminated group",
+  "failed": true
+ },
+ "search-regexInvalid/events": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /(/i: Unterminated group",
+  "failed": true
+ },
+ "search-regexInvalid/ledger": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /(/i: Unterminated group",
+  "failed": true
+ },
+ "search-regexInvalid/config": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /(/i: Unterminated group",
+  "failed": true
+ },
+ "search-regexInvalid/unicode": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /(/i: Unterminated group",
+  "failed": true
+ },
+ "search-regexInvalidCount/deployment": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /[/i: Unterminated character class",
+  "failed": true
+ },
+ "search-regexInvalidCount/events": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /[/i: Unterminated character class",
+  "failed": true
+ },
+ "search-regexInvalidCount/ledger": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /[/i: Unterminated character class",
+  "failed": true
+ },
+ "search-regexInvalidCount/config": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /[/i: Unterminated character class",
+  "failed": true
+ },
+ "search-regexInvalidCount/unicode": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /[/i: Unterminated character class",
+  "failed": true
+ },
+ "search-upperCase/deployment": {
+  "stdout": "json.containers[0].image = \"registry.example.com/checkout-api:2026.11.3\"\njson.containers[1].image = \"registry.example.com/envoy:1.31.2\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-upperCase/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-upperCase/ledger": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-upperCase/config": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-upperCase/unicode": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-upperCaseSensitive/deployment": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-upperCaseSensitive/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-upperCaseSensitive/ledger": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-upperCaseSensitive/config": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-upperCaseSensitive/unicode": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-dash/deployment": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '-250'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-dash/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '-250'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-dash/ledger": {
+  "stdout": "json.entries[1].amount = -250.00\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-dash/config": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '-250'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-dash/unicode": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '-250'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-dashRegex/deployment": {
+  "stdout": "json.release.deployedAt = \"2026-11-18T14:02:11Z\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-dashRegex/events": {
+  "stdout": "json[0].ts = \"2026-11-18T09:12:44Z\"\njson[1].ts = \"2026-11-18T09:13:02Z\"\njson[2].ts = \"2026-11-18T09:15:37Z\"\njson[3].ts = \"2026-11-18T09:16:10Z\"\njson[4].ts = \"2026-11-18T09:20:51Z\"\njson[4].amount = -129.90\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-dashRegex/ledger": {
+  "stdout": "json.ledger = \"acct-7731\"\njson.entries[1].amount = -250.00\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-dashRegex/config": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '-\\d+'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-dashRegex/unicode": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '-\\d+'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-noMatch/deployment": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'definitely-not-here'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-noMatch/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'definitely-not-here'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-noMatch/ledger": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'definitely-not-here'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-noMatch/config": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'definitely-not-here'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-noMatch/unicode": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'definitely-not-here'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-noMatchCount/deployment": {
+  "stdout": "0\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-noMatchCount/events": {
+  "stdout": "0\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-noMatchCount/ledger": {
+  "stdout": "0\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-noMatchCount/config": {
+  "stdout": "0\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-noMatchCount/unicode": {
+  "stdout": "0\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-quote/deployment": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'it's'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-quote/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'it's'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-quote/ledger": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'it's'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-quote/config": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'it's'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-quote/unicode": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'it's'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-spaces/deployment": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'card was'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-spaces/events": {
+  "stdout": "json[1].error.message = \"Your card was declined.\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-spaces/ledger": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'card was'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-spaces/config": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'card was'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-spaces/unicode": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'card was'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-unicodeFold/deployment": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'É'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-unicodeFold/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'É'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-unicodeFold/ledger": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'É'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-unicodeFold/config": {
+  "stdout": "json[\"café\"] = \"ünïcode\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-unicodeFold/unicode": {
+  "stdout": "json[\"café\"] = \"naïve\"\njson[\"é\"] = \"raw é\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-unicodeExact/deployment": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'é'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-unicodeExact/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'é'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-unicodeExact/ledger": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'é'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-unicodeExact/config": {
+  "stdout": "json[\"café\"] = \"ünïcode\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-unicodeExact/unicode": {
+  "stdout": "json[\"café\"] = \"naïve\"\njson[\"é\"] = \"raw é\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-bigInt/deployment": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '12345678901234567890'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-bigInt/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '12345678901234567890'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-bigInt/ledger": {
+  "stdout": "json.entries[0].id = 12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-bigInt/config": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '12345678901234567890'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-bigInt/unicode": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '12345678901234567890'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-decimal/deployment": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '1.10'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-decimal/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '1.10'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-decimal/ledger": {
+  "stdout": "json.openingBalance = 1.10\njson.entries[0].amount = 1.10\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-decimal/config": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '1.10'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-decimal/unicode": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '1.10'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-regexBigInt/deployment": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '= \\d{17,}$'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-regexBigInt/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '= \\d{17,}$'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-regexBigInt/ledger": {
+  "stdout": "json.entries[0].id = 12345678901234567890\njson.entries[1].id = 12345678901234567891\njson.entries[3].id = 18446744073709551615\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-regexBigInt/config": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '= \\d{17,}$'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-regexBigInt/unicode": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '= \\d{17,}$'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search/trailingComma": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 8 (line 1, column 9)",
+  "failed": true
+ },
+ "search-regex/trailingComma": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 8 (line 1, column 9)",
+  "failed": true
+ },
+ "search/trailingArrayComma": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected ']' after ',' (trailing commas are not allowed) at byte offset 6 (line 1, column 7)",
+  "failed": true
+ },
+ "search-regex/trailingArrayComma": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected ']' after ',' (trailing commas are not allowed) at byte offset 6 (line 1, column 7)",
+  "failed": true
+ },
+ "search/unclosed": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected end of input at byte offset 5 (line 1, column 6)",
+  "failed": true
+ },
+ "search-regex/unclosed": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected end of input at byte offset 5 (line 1, column 6)",
+  "failed": true
+ },
+ "search/missingColon": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected '1', expected ':' at byte offset 5 (line 1, column 6)",
+  "failed": true
+ },
+ "search-regex/missingColon": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected '1', expected ':' at byte offset 5 (line 1, column 6)",
+  "failed": true
+ },
+ "search/badHex": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Invalid \\u escape: 'G' is not a hex digit at byte offset 5 (line 1, column 6)",
+  "failed": true
+ },
+ "search-regex/badHex": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid \\u escape: 'G' is not a hex digit at byte offset 5 (line 1, column 6)",
+  "failed": true
+ },
+ "search/badEscape": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Invalid escape sequence '\\x' in string at byte offset 2 (line 1, column 3)",
+  "failed": true
+ },
+ "search-regex/badEscape": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid escape sequence '\\x' in string at byte offset 2 (line 1, column 3)",
+  "failed": true
+ },
+ "search/badLiteral": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected token 'tru', expected true, false or null at byte offset 1 (line 1, column 2)",
+  "failed": true
+ },
+ "search-regex/badLiteral": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected token 'tru', expected true, false or null at byte offset 1 (line 1, column 2)",
+  "failed": true
+ },
+ "search/longLiteral": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected token, expected true, false or null at byte offset 0 (line 1, column 1)",
+  "failed": true
+ },
+ "search-regex/longLiteral": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected token, expected true, false or null at byte offset 0 (line 1, column 1)",
+  "failed": true
+ },
+ "search/leadingZero": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Invalid number '01' at byte offset 0 (line 1, column 1)",
+  "failed": true
+ },
+ "search-regex/leadingZero": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid number '01' at byte offset 0 (line 1, column 1)",
+  "failed": true
+ },
+ "search/rawTab": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unescaped control character byte 0x09 in string at byte offset 8 (line 1, column 9)",
+  "failed": true
+ },
+ "search-regex/rawTab": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unescaped control character byte 0x09 in string at byte offset 8 (line 1, column 9)",
+  "failed": true
+ },
+ "search/empty": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected end of input (empty document) at byte offset 0 (line 1, column 1)",
+  "failed": true
+ },
+ "search-regex/empty": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected end of input (empty document) at byte offset 0 (line 1, column 1)",
+  "failed": true
+ },
+ "search/blank": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected end of input (empty document) at byte offset 4 (line 2, column 2)",
+  "failed": true
+ },
+ "search-regex/blank": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected end of input (empty document) at byte offset 4 (line 2, column 2)",
+  "failed": true
+ },
+ "search/twoValues": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected '[' after the top-level value at byte offset 3 (line 1, column 4)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
+  "failed": true
+ },
+ "search-regex/twoValues": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected '[' after the top-level value at byte offset 3 (line 1, column 4)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
+  "failed": true
+ },
+ "search/lonelyMinus": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Invalid number '-' at byte offset 0 (line 1, column 1)",
+  "failed": true
+ },
+ "search-regex/lonelyMinus": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid number '-' at byte offset 0 (line 1, column 1)",
+  "failed": true
+ },
+ "search/badFraction": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Invalid number '1.' at byte offset 0 (line 1, column 1)",
+  "failed": true
+ },
+ "search-regex/badFraction": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid number '1.' at byte offset 0 (line 1, column 1)",
+  "failed": true
+ },
+ "search/unterminated": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unterminated string at byte offset 6 (line 1, column 7)",
+  "failed": true
+ },
+ "search-regex/unterminated": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unterminated string at byte offset 6 (line 1, column 7)",
+  "failed": true
+ },
+ "search/multiLine": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected ']' after ',' (trailing commas are not allowed) at byte offset 30 (line 3, column 14)",
+  "failed": true
+ },
+ "search-regex/multiLine": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected ']' after ',' (trailing commas are not allowed) at byte offset 30 (line 3, column 14)",
+  "failed": true
+ },
+ "search/multiLineKey": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected 'b', expected a string key at byte offset 14 (line 3, column 3)",
+  "failed": true
+ },
+ "search-regex/multiLineKey": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected 'b', expected a string key at byte offset 14 (line 3, column 3)",
+  "failed": true
+ },
+ "search/controlInKey": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unescaped control character byte 0x01 in string at byte offset 3 (line 1, column 4)",
+  "failed": true
+ },
+ "search-regex/controlInKey": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unescaped control character byte 0x01 in string at byte offset 3 (line 1, column 4)",
+  "failed": true
+ },
+ "search/afterValue": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected 'x' after the top-level value at byte offset 9 (line 1, column 10)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
+  "failed": true
+ },
+ "search-regex/afterValue": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected 'x' after the top-level value at byte offset 9 (line 1, column 10)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
+  "failed": true
+ },
+ "search/singleQuotes": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected ''', expected a string key at byte offset 1 (line 1, column 2)",
+  "failed": true
+ },
+ "search-regex/singleQuotes": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected ''', expected a string key at byte offset 1 (line 1, column 2)",
+  "failed": true
+ },
+ "search-m/stops-before-error": {
+  "stdout": "json[0].a = 1\n",
+  "stderr": "Stopped after 1 match (--max-count); there may be more",
+  "failed": false
+ },
+ "search-sort-m/records": {
+  "stdout": "json[0].id = 2\njson[1].id = 1\n",
+  "stderr": "Stopped after 2 matches (--max-count); there may be more",
+  "failed": false
+ },
+ "unflatten/outOfOrder": {
+  "stdout": "{\"b\":2,\"a\":{\"y\":\"y\",\"x\":1.10},\"c\":[12345678901234567890,true]}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/outOfOrder": {
+  "stdout": "{\n  \"b\": 2,\n  \"a\": {\n    \"y\": \"y\",\n    \"x\": 1.10\n  },\n  \"c\": [\n    12345678901234567890,\n    true\n  ]\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sparse": {
+  "stdout": "[null,null,null,1]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sparse": {
+  "stdout": "[\n  null,\n  null,\n  null,\n  1\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/replaced": {
+  "stdout": "{\"a\":1,\"b\":2,\"a\":\"again\"}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/replaced": {
+  "stdout": "{\n  \"a\": 1,\n  \"b\": 2,\n  \"a\": \"again\"\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/semicolons": {
+  "stdout": "{\"a\":[\"x\"]}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/semicolons": {
+  "stdout": "{\n  \"a\": [\n    \"x\"\n  ]\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/crlf": {
+  "stdout": "{\"two words\":2,\"n\":-0.0}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/crlf": {
+  "stdout": "{\n  \"two words\": 2,\n  \"n\": -0.0\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/inline": {
+  "stdout": "{\"a\":[1,2.50,{\"b\":null}],\"c\":\"é\"}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/inline": {
+  "stdout": "{\n  \"a\": [\n    1,\n    2.50,\n    {\n      \"b\": null\n    }\n  ],\n  \"c\": \"é\"\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/inlineDuplicate": {
+  "stdout": "{\"a\":2}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/inlineDuplicate": {
+  "stdout": "{\n  \"a\": 2\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/bracketKeys": {
+  "stdout": "{\"a/b\":1,\"é\":2,\"c\":3,\"é\":4}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/bracketKeys": {
+  "stdout": "{\n  \"a/b\": 1,\n  \"é\": 2,\n  \"c\": 3,\n  \"é\": 4\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/spacedAssignments": {
+  "stdout": "{\"a\":1}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/spacedAssignments": {
+  "stdout": "{\n  \"a\": 1\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/bom": {
+  "stdout": "1\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/bom": {
+  "stdout": "1\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/rootTwice": {
+  "stdout": "[2]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/rootTwice": {
+  "stdout": "[\n  2\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/noRoot": {
+  "stdout": "{\"a\":1}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/noRoot": {
+  "stdout": "{\n  \"a\": 1\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/notGron": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 1: expected a gron assignment\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/notGron": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 1: expected a gron assignment\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/badValue": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: invalid JSON value\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/badValue": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: invalid JSON value\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/leadingZeroIndex": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: invalid bracket property\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/leadingZeroIndex": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: invalid bracket property\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/unclosedBracket": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: unclosed bracket property\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/unclosedBracket": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: unclosed bracket property\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/numberKey": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: bracket properties must be strings or indexes\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/numberKey": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: bracket properties must be strings or indexes\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/arrayKey": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: array path requires a numeric index\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/arrayKey": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: array path requires a numeric index\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/objectIndex": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/objectIndex": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/missingParent": {
+  "stdout": "{\"a\":{\"b\":1}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/missingParent": {
+  "stdout": "{\n  \"a\": {\n    \"b\": 1\n  }\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/scalarParent": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 3: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/scalarParent": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 3: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/hugeIndex": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: array index is too large\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/hugeIndex": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: array index is too large\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/emptyValue": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: expected a gron assignment\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/emptyValue": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: expected a gron assignment\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/nothing": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: input contains no gron assignments",
+  "failed": true
+ },
+ "unflatten-pretty/nothing": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: input contains no gron assignments",
+  "failed": true
+ },
+ "unflatten/onlyBlank": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: input contains no gron assignments",
+  "failed": true
+ },
+ "unflatten-pretty/onlyBlank": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: input contains no gron assignments",
+  "failed": true
+ },
+ "unflatten/badPath": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: invalid property path\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/badPath": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: invalid property path\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/junkAfterPath": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: invalid character in path\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/junkAfterPath": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: invalid character in path\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/filteredDeep": {
+  "stdout": "{\"a\":{\"b\":[null,null,{\"c\":\"x\"},null,1],\"d\":true}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/filteredDeep": {
+  "stdout": "{\n  \"a\": {\n    \"b\": [\n      null,\n      null,\n      {\n        \"c\": \"x\"\n      },\n      null,\n      1\n    ],\n    \"d\": true\n  }\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/filteredRootArray": {
+  "stdout": "[null,{\"id\":7},null,{\"id\":9}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/filteredRootArray": {
+  "stdout": "[\n  null,\n  {\n    \"id\": 7\n  },\n  null,\n  {\n    \"id\": 9\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/filteredReopen": {
+  "stdout": "{\"a\":{\"x\":1,\"y\":3},\"b\":2}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/filteredReopen": {
+  "stdout": "{\n  \"a\": {\n    \"x\": 1,\n    \"y\": 3\n  },\n  \"b\": 2\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/filteredIntoExplicit": {
+  "stdout": "{\"a\":{\"k\":1,\"z\":3},\"b\":{\"c\":2}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/filteredIntoExplicit": {
+  "stdout": "{\n  \"a\": {\n    \"k\": 1,\n    \"z\": 3\n  },\n  \"b\": {\n    \"c\": 2\n  }\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/filteredMissingInFull": {
+  "stdout": "{\"x\":1,\"a\":{\"b\":2}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/filteredMissingInFull": {
+  "stdout": "{\n  \"x\": 1,\n  \"a\": {\n    \"b\": 2\n  }\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/filteredIndexBack": {
+  "stdout": "{\"a\":[null,2,null,1]}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/filteredIndexBack": {
+  "stdout": "{\n  \"a\": [\n    null,\n    2,\n    null,\n    1\n  ]\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/filteredScalarParent": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/filteredScalarParent": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/filteredKeyOnArray": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: array path requires a numeric index\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/filteredKeyOnArray": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: array path requires a numeric index\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/filteredIndexOnObject": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/filteredIndexOnObject": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/filteredScalarRoot": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/filteredScalarRoot": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/flattened-deployment": {
+  "stdout": "{\"service\":\"checkout-api\",\"environment\":\"production\",\"release\":{\"version\":\"2026.11.3\",\"commit\":\"8f3c2a1\",\"deployedAt\":\"2026-11-18T14:02:11Z\"},\"replicas\":6,\"containers\":[{\"name\":\"api\",\"image\":\"registry.example.com/checkout-api:2026.11.3\",\"ports\":[8080,9090],\"env\":{\"LOG_LEVEL\":\"info\",\"DATABASE_URL\":\"postgres://checkout@db.internal:5432/checkout\",\"FEATURE_FLAGS\":\"fast-refunds,split-tender\"},\"resources\":{\"cpu\":\"500m\",\"memory\":\"1Gi\"}},{\"name\":\"sidecar-proxy\",\"image\":\"registry.example.com/envoy:1.31.2\",\"ports\":[15001],\"env\":{},\"resources\":{\"cpu\":\"100m\",\"memory\":\"128Mi\"}}],\"healthCheck\":{\"path\":\"/healthz\",\"intervalSeconds\":10,\"timeoutSeconds\":2},\"rollout\":{\"strategy\":\"canary\",\"steps\":[10,50,100],\"autoPromote\":false}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-deployment": {
+  "stdout": "{\n  \"service\": \"checkout-api\",\n  \"environment\": \"production\",\n  \"release\": {\n    \"version\": \"2026.11.3\",\n    \"commit\": \"8f3c2a1\",\n    \"deployedAt\": \"2026-11-18T14:02:11Z\"\n  },\n  \"replicas\": 6,\n  \"containers\": [\n    {\n      \"name\": \"api\",\n      \"image\": \"registry.example.com/checkout-api:2026.11.3\",\n      \"ports\": [\n        8080,\n        9090\n      ],\n      \"env\": {\n        \"LOG_LEVEL\": \"info\",\n        \"DATABASE_URL\": \"postgres://checkout@db.internal:5432/checkout\",\n        \"FEATURE_FLAGS\": \"fast-refunds,split-tender\"\n      },\n      \"resources\": {\n        \"cpu\": \"500m\",\n        \"memory\": \"1Gi\"\n      }\n    },\n    {\n      \"name\": \"sidecar-proxy\",\n      \"image\": \"registry.example.com/envoy:1.31.2\",\n      \"ports\": [\n        15001\n      ],\n      \"env\": {},\n      \"resources\": {\n        \"cpu\": \"100m\",\n        \"memory\": \"128Mi\"\n      }\n    }\n  ],\n  \"healthCheck\": {\n    \"path\": \"/healthz\",\n    \"intervalSeconds\": 10,\n    \"timeoutSeconds\": 2\n  },\n  \"rollout\": {\n    \"strategy\": \"canary\",\n    \"steps\": [\n      10,\n      50,\n      100\n    ],\n    \"autoPromote\": false\n  }\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-deployment": {
+  "stdout": "{\"containers\":[{\"env\":{\"DATABASE_URL\":\"postgres://checkout@db.internal:5432/checkout\",\"FEATURE_FLAGS\":\"fast-refunds,split-tender\",\"LOG_LEVEL\":\"info\"},\"image\":\"registry.example.com/checkout-api:2026.11.3\",\"name\":\"api\",\"ports\":[8080,9090],\"resources\":{\"cpu\":\"500m\",\"memory\":\"1Gi\"}},{\"env\":{},\"image\":\"registry.example.com/envoy:1.31.2\",\"name\":\"sidecar-proxy\",\"ports\":[15001],\"resources\":{\"cpu\":\"100m\",\"memory\":\"128Mi\"}}],\"environment\":\"production\",\"healthCheck\":{\"intervalSeconds\":10,\"path\":\"/healthz\",\"timeoutSeconds\":2},\"release\":{\"commit\":\"8f3c2a1\",\"deployedAt\":\"2026-11-18T14:02:11Z\",\"version\":\"2026.11.3\"},\"replicas\":6,\"rollout\":{\"autoPromote\":false,\"steps\":[10,50,100],\"strategy\":\"canary\"},\"service\":\"checkout-api\"}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-deployment": {
+  "stdout": "{\n  \"containers\": [\n    {\n      \"env\": {\n        \"DATABASE_URL\": \"postgres://checkout@db.internal:5432/checkout\",\n        \"FEATURE_FLAGS\": \"fast-refunds,split-tender\",\n        \"LOG_LEVEL\": \"info\"\n      },\n      \"image\": \"registry.example.com/checkout-api:2026.11.3\",\n      \"name\": \"api\",\n      \"ports\": [\n        8080,\n        9090\n      ],\n      \"resources\": {\n        \"cpu\": \"500m\",\n        \"memory\": \"1Gi\"\n      }\n    },\n    {\n      \"env\": {},\n      \"image\": \"registry.example.com/envoy:1.31.2\",\n      \"name\": \"sidecar-proxy\",\n      \"ports\": [\n        15001\n      ],\n      \"resources\": {\n        \"cpu\": \"100m\",\n        \"memory\": \"128Mi\"\n      }\n    }\n  ],\n  \"environment\": \"production\",\n  \"healthCheck\": {\n    \"intervalSeconds\": 10,\n    \"path\": \"/healthz\",\n    \"timeoutSeconds\": 2\n  },\n  \"release\": {\n    \"commit\": \"8f3c2a1\",\n    \"deployedAt\": \"2026-11-18T14:02:11Z\",\n    \"version\": \"2026.11.3\"\n  },\n  \"replicas\": 6,\n  \"rollout\": {\n    \"autoPromote\": false,\n    \"steps\": [\n      10,\n      50,\n      100\n    ],\n    \"strategy\": \"canary\"\n  },\n  \"service\": \"checkout-api\"\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-events": {
+  "stdout": "[{\"id\":\"evt_01\",\"type\":\"checkout.completed\",\"ts\":\"2026-11-18T09:12:44Z\",\"user\":{\"id\":\"u_481\",\"plan\":\"pro\"},\"amount\":129.90,\"currency\":\"USD\"},{\"id\":\"evt_02\",\"type\":\"payment.failed\",\"ts\":\"2026-11-18T09:13:02Z\",\"user\":{\"id\":\"u_212\",\"plan\":\"free\"},\"error\":{\"code\":\"card_declined\",\"message\":\"Your card was declined.\",\"retryable\":false}},{\"id\":\"evt_03\",\"type\":\"checkout.completed\",\"ts\":\"2026-11-18T09:15:37Z\",\"user\":{\"id\":\"u_093\",\"plan\":\"team\"},\"amount\":48.00,\"currency\":\"EUR\"},{\"id\":\"evt_04\",\"type\":\"webhook.failed\",\"ts\":\"2026-11-18T09:16:10Z\",\"endpoint\":\"https://hooks.example.com/orders\",\"error\":{\"code\":\"timeout\",\"message\":\"No response after 10s\",\"retryable\":true},\"attempt\":3},{\"id\":\"evt_05\",\"type\":\"refund.created\",\"ts\":\"2026-11-18T09:20:51Z\",\"user\":{\"id\":\"u_481\",\"plan\":\"pro\"},\"amount\":-129.90,\"currency\":\"USD\",\"reason\":null}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-events": {
+  "stdout": "[\n  {\n    \"id\": \"evt_01\",\n    \"type\": \"checkout.completed\",\n    \"ts\": \"2026-11-18T09:12:44Z\",\n    \"user\": {\n      \"id\": \"u_481\",\n      \"plan\": \"pro\"\n    },\n    \"amount\": 129.90,\n    \"currency\": \"USD\"\n  },\n  {\n    \"id\": \"evt_02\",\n    \"type\": \"payment.failed\",\n    \"ts\": \"2026-11-18T09:13:02Z\",\n    \"user\": {\n      \"id\": \"u_212\",\n      \"plan\": \"free\"\n    },\n    \"error\": {\n      \"code\": \"card_declined\",\n      \"message\": \"Your card was declined.\",\n      \"retryable\": false\n    }\n  },\n  {\n    \"id\": \"evt_03\",\n    \"type\": \"checkout.completed\",\n    \"ts\": \"2026-11-18T09:15:37Z\",\n    \"user\": {\n      \"id\": \"u_093\",\n      \"plan\": \"team\"\n    },\n    \"amount\": 48.00,\n    \"currency\": \"EUR\"\n  },\n  {\n    \"id\": \"evt_04\",\n    \"type\": \"webhook.failed\",\n    \"ts\": \"2026-11-18T09:16:10Z\",\n    \"endpoint\": \"https://hooks.example.com/orders\",\n    \"error\": {\n      \"code\": \"timeout\",\n      \"message\": \"No response after 10s\",\n      \"retryable\": true\n    },\n    \"attempt\": 3\n  },\n  {\n    \"id\": \"evt_05\",\n    \"type\": \"refund.created\",\n    \"ts\": \"2026-11-18T09:20:51Z\",\n    \"user\": {\n      \"id\": \"u_481\",\n      \"plan\": \"pro\"\n    },\n    \"amount\": -129.90,\n    \"currency\": \"USD\",\n    \"reason\": null\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-events": {
+  "stdout": "[{\"amount\":129.90,\"currency\":\"USD\",\"id\":\"evt_01\",\"ts\":\"2026-11-18T09:12:44Z\",\"type\":\"checkout.completed\",\"user\":{\"id\":\"u_481\",\"plan\":\"pro\"}},{\"error\":{\"code\":\"card_declined\",\"message\":\"Your card was declined.\",\"retryable\":false},\"id\":\"evt_02\",\"ts\":\"2026-11-18T09:13:02Z\",\"type\":\"payment.failed\",\"user\":{\"id\":\"u_212\",\"plan\":\"free\"}},{\"amount\":48.00,\"currency\":\"EUR\",\"id\":\"evt_03\",\"ts\":\"2026-11-18T09:15:37Z\",\"type\":\"checkout.completed\",\"user\":{\"id\":\"u_093\",\"plan\":\"team\"}},{\"attempt\":3,\"endpoint\":\"https://hooks.example.com/orders\",\"error\":{\"code\":\"timeout\",\"message\":\"No response after 10s\",\"retryable\":true},\"id\":\"evt_04\",\"ts\":\"2026-11-18T09:16:10Z\",\"type\":\"webhook.failed\"},{\"amount\":-129.90,\"currency\":\"USD\",\"id\":\"evt_05\",\"reason\":null,\"ts\":\"2026-11-18T09:20:51Z\",\"type\":\"refund.created\",\"user\":{\"id\":\"u_481\",\"plan\":\"pro\"}}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-events": {
+  "stdout": "[\n  {\n    \"amount\": 129.90,\n    \"currency\": \"USD\",\n    \"id\": \"evt_01\",\n    \"ts\": \"2026-11-18T09:12:44Z\",\n    \"type\": \"checkout.completed\",\n    \"user\": {\n      \"id\": \"u_481\",\n      \"plan\": \"pro\"\n    }\n  },\n  {\n    \"error\": {\n      \"code\": \"card_declined\",\n      \"message\": \"Your card was declined.\",\n      \"retryable\": false\n    },\n    \"id\": \"evt_02\",\n    \"ts\": \"2026-11-18T09:13:02Z\",\n    \"type\": \"payment.failed\",\n    \"user\": {\n      \"id\": \"u_212\",\n      \"plan\": \"free\"\n    }\n  },\n  {\n    \"amount\": 48.00,\n    \"currency\": \"EUR\",\n    \"id\": \"evt_03\",\n    \"ts\": \"2026-11-18T09:15:37Z\",\n    \"type\": \"checkout.completed\",\n    \"user\": {\n      \"id\": \"u_093\",\n      \"plan\": \"team\"\n    }\n  },\n  {\n    \"attempt\": 3,\n    \"endpoint\": \"https://hooks.example.com/orders\",\n    \"error\": {\n      \"code\": \"timeout\",\n      \"message\": \"No response after 10s\",\n      \"retryable\": true\n    },\n    \"id\": \"evt_04\",\n    \"ts\": \"2026-11-18T09:16:10Z\",\n    \"type\": \"webhook.failed\"\n  },\n  {\n    \"amount\": -129.90,\n    \"currency\": \"USD\",\n    \"id\": \"evt_05\",\n    \"reason\": null,\n    \"ts\": \"2026-11-18T09:20:51Z\",\n    \"type\": \"refund.created\",\n    \"user\": {\n      \"id\": \"u_481\",\n      \"plan\": \"pro\"\n    }\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-ledger": {
+  "stdout": "{\"ledger\":\"acct-7731\",\"currency\":\"USD\",\"openingBalance\":1.10,\"entries\":[{\"id\":12345678901234567890,\"amount\":1.10,\"memo\":\"Coffee\"},{\"id\":12345678901234567891,\"amount\":-250.00,\"fx\":1.0850,\"memo\":\"Refund, EUR card\"},{\"id\":9007199254740993,\"amount\":1e3,\"memo\":\"Wire in\"},{\"id\":18446744073709551615,\"amount\":0.1,\"memo\":\"Interest\"}],\"closingBalance\":752.30}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-ledger": {
+  "stdout": "{\n  \"ledger\": \"acct-7731\",\n  \"currency\": \"USD\",\n  \"openingBalance\": 1.10,\n  \"entries\": [\n    {\n      \"id\": 12345678901234567890,\n      \"amount\": 1.10,\n      \"memo\": \"Coffee\"\n    },\n    {\n      \"id\": 12345678901234567891,\n      \"amount\": -250.00,\n      \"fx\": 1.0850,\n      \"memo\": \"Refund, EUR card\"\n    },\n    {\n      \"id\": 9007199254740993,\n      \"amount\": 1e3,\n      \"memo\": \"Wire in\"\n    },\n    {\n      \"id\": 18446744073709551615,\n      \"amount\": 0.1,\n      \"memo\": \"Interest\"\n    }\n  ],\n  \"closingBalance\": 752.30\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-ledger": {
+  "stdout": "{\"closingBalance\":752.30,\"currency\":\"USD\",\"entries\":[{\"amount\":1.10,\"id\":12345678901234567890,\"memo\":\"Coffee\"},{\"amount\":-250.00,\"fx\":1.0850,\"id\":12345678901234567891,\"memo\":\"Refund, EUR card\"},{\"amount\":1e3,\"id\":9007199254740993,\"memo\":\"Wire in\"},{\"amount\":0.1,\"id\":18446744073709551615,\"memo\":\"Interest\"}],\"ledger\":\"acct-7731\",\"openingBalance\":1.10}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-ledger": {
+  "stdout": "{\n  \"closingBalance\": 752.30,\n  \"currency\": \"USD\",\n  \"entries\": [\n    {\n      \"amount\": 1.10,\n      \"id\": 12345678901234567890,\n      \"memo\": \"Coffee\"\n    },\n    {\n      \"amount\": -250.00,\n      \"fx\": 1.0850,\n      \"id\": 12345678901234567891,\n      \"memo\": \"Refund, EUR card\"\n    },\n    {\n      \"amount\": 1e3,\n      \"id\": 9007199254740993,\n      \"memo\": \"Wire in\"\n    },\n    {\n      \"amount\": 0.1,\n      \"id\": 18446744073709551615,\n      \"memo\": \"Interest\"\n    }\n  ],\n  \"ledger\": \"acct-7731\",\n  \"openingBalance\": 1.10\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-config": {
+  "stdout": "{\"zeta\":true,\"server\":{\"port\":8443,\"host\":\"0.0.0.0\",\"tls\":{\"enabled\":true,\"cert\":\"/etc/ssl/app.pem\"}},\"Accept-Language\":\"en-US\",\"alpha\":[3,1,2],\"_internal\":{\"retries\":3,\"backoff\":\"exponential\"},\"feature.flags\":{\"newCheckout\":false,\"darkMode\":true},\"\":\"empty key\",\"café\":\"ünïcode\",\"path/escaped\":\"a/b\"}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-config": {
+  "stdout": "{\n  \"zeta\": true,\n  \"server\": {\n    \"port\": 8443,\n    \"host\": \"0.0.0.0\",\n    \"tls\": {\n      \"enabled\": true,\n      \"cert\": \"/etc/ssl/app.pem\"\n    }\n  },\n  \"Accept-Language\": \"en-US\",\n  \"alpha\": [\n    3,\n    1,\n    2\n  ],\n  \"_internal\": {\n    \"retries\": 3,\n    \"backoff\": \"exponential\"\n  },\n  \"feature.flags\": {\n    \"newCheckout\": false,\n    \"darkMode\": true\n  },\n  \"\": \"empty key\",\n  \"café\": \"ünïcode\",\n  \"path/escaped\": \"a/b\"\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-config": {
+  "stdout": "{\"\":\"empty key\",\"Accept-Language\":\"en-US\",\"_internal\":{\"backoff\":\"exponential\",\"retries\":3},\"alpha\":[3,1,2],\"café\":\"ünïcode\",\"feature.flags\":{\"darkMode\":true,\"newCheckout\":false},\"path/escaped\":\"a/b\",\"server\":{\"host\":\"0.0.0.0\",\"port\":8443,\"tls\":{\"cert\":\"/etc/ssl/app.pem\",\"enabled\":true}},\"zeta\":true}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-config": {
+  "stdout": "{\n  \"\": \"empty key\",\n  \"Accept-Language\": \"en-US\",\n  \"_internal\": {\n    \"backoff\": \"exponential\",\n    \"retries\": 3\n  },\n  \"alpha\": [\n    3,\n    1,\n    2\n  ],\n  \"café\": \"ünïcode\",\n  \"feature.flags\": {\n    \"darkMode\": true,\n    \"newCheckout\": false\n  },\n  \"path/escaped\": \"a/b\",\n  \"server\": {\n    \"host\": \"0.0.0.0\",\n    \"port\": 8443,\n    \"tls\": {\n      \"cert\": \"/etc/ssl/app.pem\",\n      \"enabled\": true\n    }\n  },\n  \"zeta\": true\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-scalars": {
+  "stdout": "[\"x\",42,-0,1E+2,0.000,1.10,12345678901234567890,true,false,null]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-scalars": {
+  "stdout": "[\n  \"x\",\n  42,\n  -0,\n  1E+2,\n  0.000,\n  1.10,\n  12345678901234567890,\n  true,\n  false,\n  null\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-scalars": {
+  "stdout": "[\"x\",42,-0,1E+2,0.000,1.10,12345678901234567890,true,false,null]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-scalars": {
+  "stdout": "[\n  \"x\",\n  42,\n  -0,\n  1E+2,\n  0.000,\n  1.10,\n  12345678901234567890,\n  true,\n  false,\n  null\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-topString": {
+  "stdout": "\"just a string\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-topString": {
+  "stdout": "\"just a string\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-topString": {
+  "stdout": "\"just a string\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-topString": {
+  "stdout": "\"just a string\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-topNumber": {
+  "stdout": "12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-topNumber": {
+  "stdout": "12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-topNumber": {
+  "stdout": "12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-topNumber": {
+  "stdout": "12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-topNull": {
+  "stdout": "null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-topNull": {
+  "stdout": "null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-topNull": {
+  "stdout": "null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-topNull": {
+  "stdout": "null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-unicode": {
+  "stdout": "{\"café\":\"naïve\",\"é\":\"raw é\",\"emoji\":\"😀 😀\",\"lone\":\"\\ud800\",\"ctl\":\"\\u0001\\b\\f\\n\\r\\t\",\"slash\":\"/\",\"quote\\\"key\":\"\\\"q\\\"\",\"back\\\\slash\":1,\"u2028\":\" \"}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-unicode": {
+  "stdout": "{\n  \"café\": \"naïve\",\n  \"é\": \"raw é\",\n  \"emoji\": \"😀 😀\",\n  \"lone\": \"\\ud800\",\n  \"ctl\": \"\\u0001\\b\\f\\n\\r\\t\",\n  \"slash\": \"/\",\n  \"quote\\\"key\": \"\\\"q\\\"\",\n  \"back\\\\slash\": 1,\n  \"u2028\": \" \"\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-unicode": {
+  "stdout": "{\"back\\\\slash\":1,\"café\":\"naïve\",\"ctl\":\"\\u0001\\b\\f\\n\\r\\t\",\"emoji\":\"😀 😀\",\"lone\":\"\\ud800\",\"quote\\\"key\":\"\\\"q\\\"\",\"slash\":\"/\",\"u2028\":\" \",\"é\":\"raw é\"}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-unicode": {
+  "stdout": "{\n  \"back\\\\slash\": 1,\n  \"café\": \"naïve\",\n  \"ctl\": \"\\u0001\\b\\f\\n\\r\\t\",\n  \"emoji\": \"😀 😀\",\n  \"lone\": \"\\ud800\",\n  \"quote\\\"key\": \"\\\"q\\\"\",\n  \"slash\": \"/\",\n  \"u2028\": \" \",\n  \"é\": \"raw é\"\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-duplicates": {
+  "stdout": "{\"b\":1,\"a\":2,\"b\":3,\"A\":4,\"_\":5,\"$x\":6,\"1\":7,\"10\":8,\"9\":9}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-duplicates": {
+  "stdout": "{\n  \"b\": 1,\n  \"a\": 2,\n  \"b\": 3,\n  \"A\": 4,\n  \"_\": 5,\n  \"$x\": 6,\n  \"1\": 7,\n  \"10\": 8,\n  \"9\": 9\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-duplicates": {
+  "stdout": "{\"$x\":6,\"1\":7,\"10\":8,\"9\":9,\"A\":4,\"_\":5,\"a\":2,\"b\":1,\"b\":3}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-duplicates": {
+  "stdout": "{\n  \"$x\": 6,\n  \"1\": 7,\n  \"10\": 8,\n  \"9\": 9,\n  \"A\": 4,\n  \"_\": 5,\n  \"a\": 2,\n  \"b\": 1,\n  \"b\": 3\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-longArray": {
+  "stdout": "[{\"i\":0,\"tag\":\"fizz\"},{\"i\":1,\"tag\":\"n\"},{\"i\":2,\"tag\":\"n\"},{\"i\":3,\"tag\":\"fizz\"},{\"i\":4,\"tag\":\"n\"},{\"i\":5,\"tag\":\"n\"},{\"i\":6,\"tag\":\"fizz\"},{\"i\":7,\"tag\":\"n\"},{\"i\":8,\"tag\":\"n\"},{\"i\":9,\"tag\":\"fizz\"},{\"i\":10,\"tag\":\"n\"},{\"i\":11,\"tag\":\"n\"},{\"i\":12,\"tag\":\"fizz\"},{\"i\":13,\"tag\":\"n\"},{\"i\":14,\"tag\":\"n\"},{\"i\":15,\"tag\":\"fizz\"},{\"i\":16,\"tag\":\"n\"},{\"i\":17,\"tag\":\"n\"},{\"i\":18,\"tag\":\"fizz\"},{\"i\":19,\"tag\":\"n\"},{\"i\":20,\"tag\":\"n\"},{\"i\":21,\"tag\":\"fizz\"},{\"i\":22,\"tag\":\"n\"}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-longArray": {
+  "stdout": "[\n  {\n    \"i\": 0,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 1,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 2,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 3,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 4,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 5,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 6,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 7,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 8,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 9,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 10,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 11,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 12,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 13,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 14,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 15,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 16,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 17,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 18,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 19,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 20,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 21,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 22,\n    \"tag\": \"n\"\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-longArray": {
+  "stdout": "[{\"i\":0,\"tag\":\"fizz\"},{\"i\":1,\"tag\":\"n\"},{\"i\":2,\"tag\":\"n\"},{\"i\":3,\"tag\":\"fizz\"},{\"i\":4,\"tag\":\"n\"},{\"i\":5,\"tag\":\"n\"},{\"i\":6,\"tag\":\"fizz\"},{\"i\":7,\"tag\":\"n\"},{\"i\":8,\"tag\":\"n\"},{\"i\":9,\"tag\":\"fizz\"},{\"i\":10,\"tag\":\"n\"},{\"i\":11,\"tag\":\"n\"},{\"i\":12,\"tag\":\"fizz\"},{\"i\":13,\"tag\":\"n\"},{\"i\":14,\"tag\":\"n\"},{\"i\":15,\"tag\":\"fizz\"},{\"i\":16,\"tag\":\"n\"},{\"i\":17,\"tag\":\"n\"},{\"i\":18,\"tag\":\"fizz\"},{\"i\":19,\"tag\":\"n\"},{\"i\":20,\"tag\":\"n\"},{\"i\":21,\"tag\":\"fizz\"},{\"i\":22,\"tag\":\"n\"}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-longArray": {
+  "stdout": "[\n  {\n    \"i\": 0,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 1,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 2,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 3,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 4,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 5,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 6,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 7,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 8,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 9,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 10,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 11,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 12,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 13,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 14,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 15,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 16,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 17,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 18,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 19,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 20,\n    \"tag\": \"n\"\n  },\n  {\n    \"i\": 21,\n    \"tag\": \"fizz\"\n  },\n  {\n    \"i\": 22,\n    \"tag\": \"n\"\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-nested": {
+  "stdout": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[{\"deep\":[1,{\"z\":0,\"a\":1}]}]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-nested": {
+  "stdout": "[\n  [\n    [\n      [\n        [\n          [\n            [\n              [\n                [\n                  [\n                    [\n                      [\n                        [\n                          [\n                            [\n                              [\n                                [\n                                  [\n                                    [\n                                      [\n                                        [\n                                          [\n                                            [\n                                              [\n                                                [\n                                                  [\n                                                    [\n                                                      [\n                                                        [\n                                                          [\n                                                            [\n                                                              [\n                                                                [\n                                                                  [\n                                                                    [\n                                                                      [\n                                                                        [\n                                                                          [\n                                                                            [\n                                                                              [\n                                                                                {\n                                                                                  \"deep\": [\n                                                                                    1,\n                                                                                    {\n                                                                                      \"z\": 0,\n                                                                                      \"a\": 1\n                                                                                    }\n                                                                                  ]\n                                                                                }\n                                                                              ]\n                                                                            ]\n                                                                          ]\n                                                                        ]\n                                                                      ]\n                                                                    ]\n                                                                  ]\n                                                                ]\n                                                              ]\n                                                            ]\n                                                          ]\n                                                        ]\n                                                      ]\n                                                    ]\n                                                  ]\n                                                ]\n                                              ]\n                                            ]\n                                          ]\n                                        ]\n                                      ]\n                                    ]\n                                  ]\n                                ]\n                              ]\n                            ]\n                          ]\n                        ]\n                      ]\n                    ]\n                  ]\n                ]\n              ]\n            ]\n          ]\n        ]\n      ]\n    ]\n  ]\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-nested": {
+  "stdout": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[{\"deep\":[1,{\"a\":1,\"z\":0}]}]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-nested": {
+  "stdout": "[\n  [\n    [\n      [\n        [\n          [\n            [\n              [\n                [\n                  [\n                    [\n                      [\n                        [\n                          [\n                            [\n                              [\n                                [\n                                  [\n                                    [\n                                      [\n                                        [\n                                          [\n                                            [\n                                              [\n                                                [\n                                                  [\n                                                    [\n                                                      [\n                                                        [\n                                                          [\n                                                            [\n                                                              [\n                                                                [\n                                                                  [\n                                                                    [\n                                                                      [\n                                                                        [\n                                                                          [\n                                                                            [\n                                                                              [\n                                                                                {\n                                                                                  \"deep\": [\n                                                                                    1,\n                                                                                    {\n                                                                                      \"a\": 1,\n                                                                                      \"z\": 0\n                                                                                    }\n                                                                                  ]\n                                                                                }\n                                                                              ]\n                                                                            ]\n                                                                          ]\n                                                                        ]\n                                                                      ]\n                                                                    ]\n                                                                  ]\n                                                                ]\n                                                              ]\n                                                            ]\n                                                          ]\n                                                        ]\n                                                      ]\n                                                    ]\n                                                  ]\n                                                ]\n                                              ]\n                                            ]\n                                          ]\n                                        ]\n                                      ]\n                                    ]\n                                  ]\n                                ]\n                              ]\n                            ]\n                          ]\n                        ]\n                      ]\n                    ]\n                  ]\n                ]\n              ]\n            ]\n          ]\n        ]\n      ]\n    ]\n  ]\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-emptyContainers": {
+  "stdout": "{\"a\":{},\"b\":[],\"c\":[{},[]],\"d\":{\"e\":{}}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-emptyContainers": {
+  "stdout": "{\n  \"a\": {},\n  \"b\": [],\n  \"c\": [\n    {},\n    []\n  ],\n  \"d\": {\n    \"e\": {}\n  }\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-emptyContainers": {
+  "stdout": "{\"a\":{},\"b\":[],\"c\":[{},[]],\"d\":{\"e\":{}}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-emptyContainers": {
+  "stdout": "{\n  \"a\": {},\n  \"b\": [],\n  \"c\": [\n    {},\n    []\n  ],\n  \"d\": {\n    \"e\": {}\n  }\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-whitespace": {
+  "stdout": "{\"a\":[1,2],\"b\":{}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-whitespace": {
+  "stdout": "{\n  \"a\": [\n    1,\n    2\n  ],\n  \"b\": {}\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-whitespace": {
+  "stdout": "{\"a\":[1,2],\"b\":{}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-whitespace": {
+  "stdout": "{\n  \"a\": [\n    1,\n    2\n  ],\n  \"b\": {}\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-recordsArray": {
+  "stdout": "[{\"id\":2,\"name\":\"b\",\"tags\":[\"x\",\"y\"]},{\"id\":1,\"name\":\"a\",\"meta\":{\"z\":1,\"a\":2}},{\"id\":3,\"name\":\"c\"}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-recordsArray": {
+  "stdout": "[\n  {\n    \"id\": 2,\n    \"name\": \"b\",\n    \"tags\": [\n      \"x\",\n      \"y\"\n    ]\n  },\n  {\n    \"id\": 1,\n    \"name\": \"a\",\n    \"meta\": {\n      \"z\": 1,\n      \"a\": 2\n    }\n  },\n  {\n    \"id\": 3,\n    \"name\": \"c\"\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-recordsArray": {
+  "stdout": "[{\"id\":2,\"name\":\"b\",\"tags\":[\"x\",\"y\"]},{\"id\":1,\"meta\":{\"a\":2,\"z\":1},\"name\":\"a\"},{\"id\":3,\"name\":\"c\"}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-recordsArray": {
+  "stdout": "[\n  {\n    \"id\": 2,\n    \"name\": \"b\",\n    \"tags\": [\n      \"x\",\n      \"y\"\n    ]\n  },\n  {\n    \"id\": 1,\n    \"meta\": {\n      \"a\": 2,\n      \"z\": 1\n    },\n    \"name\": \"a\"\n  },\n  {\n    \"id\": 3,\n    \"name\": \"c\"\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-deployment": {
+  "stdout": "{\"containers\":[{\"image\":\"registry.example.com/checkout-api:2026.11.3\"},{\"image\":\"registry.example.com/envoy:1.31.2\"}]}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-deployment": {
+  "stdout": "{\n  \"containers\": [\n    {\n      \"image\": \"registry.example.com/checkout-api:2026.11.3\"\n    },\n    {\n      \"image\": \"registry.example.com/envoy:1.31.2\"\n    }\n  ]\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-sorted-deployment": {
+  "stdout": "{\"containers\":[{\"image\":\"registry.example.com/checkout-api:2026.11.3\"},{\"image\":\"registry.example.com/envoy:1.31.2\"}]}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-sorted-deployment": {
+  "stdout": "{\n  \"containers\": [\n    {\n      \"image\": \"registry.example.com/checkout-api:2026.11.3\"\n    },\n    {\n      \"image\": \"registry.example.com/envoy:1.31.2\"\n    }\n  ]\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-events": {
+  "stdout": "[null,{\"type\":\"payment.failed\"},null,{\"type\":\"webhook.failed\"}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-events": {
+  "stdout": "[\n  null,\n  {\n    \"type\": \"payment.failed\"\n  },\n  null,\n  {\n    \"type\": \"webhook.failed\"\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-sorted-events": {
+  "stdout": "[null,{\"type\":\"payment.failed\"},null,{\"type\":\"webhook.failed\"}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-sorted-events": {
+  "stdout": "[\n  null,\n  {\n    \"type\": \"payment.failed\"\n  },\n  null,\n  {\n    \"type\": \"webhook.failed\"\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-ledger": {
+  "stdout": "{\"entries\":[{\"amount\":1.10},{\"amount\":-250.00},{\"amount\":1e3},{\"amount\":0.1}]}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-ledger": {
+  "stdout": "{\n  \"entries\": [\n    {\n      \"amount\": 1.10\n    },\n    {\n      \"amount\": -250.00\n    },\n    {\n      \"amount\": 1e3\n    },\n    {\n      \"amount\": 0.1\n    }\n  ]\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-sorted-ledger": {
+  "stdout": "{\"entries\":[{\"amount\":1.10},{\"amount\":-250.00},{\"amount\":1e3},{\"amount\":0.1}]}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-sorted-ledger": {
+  "stdout": "{\n  \"entries\": [\n    {\n      \"amount\": 1.10\n    },\n    {\n      \"amount\": -250.00\n    },\n    {\n      \"amount\": 1e3\n    },\n    {\n      \"amount\": 0.1\n    }\n  ]\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-config": {
+  "stdout": "{\"server\":{\"tls\":{\"enabled\":true}}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-config": {
+  "stdout": "{\n  \"server\": {\n    \"tls\": {\n      \"enabled\": true\n    }\n  }\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-sorted-config": {
+  "stdout": "{\"server\":{\"tls\":{\"enabled\":true}}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-sorted-config": {
+  "stdout": "{\n  \"server\": {\n    \"tls\": {\n      \"enabled\": true\n    }\n  }\n}\n",
+  "stderr": "",
+  "failed": false
+ }
+}

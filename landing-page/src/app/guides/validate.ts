@@ -9,6 +9,33 @@ export const titleMaxLength = 60;
 export const descriptionMinLength = 140;
 export const descriptionMaxLength = 160;
 
+/**
+ * Checks the search title and description of a page that is not a guide (the
+ * playground) against the same limits as a guide. Throws, so `npm run build`
+ * fails on copy that search results would truncate.
+ */
+export function validatePageSeo(
+  page: string,
+  title: string,
+  description: string,
+): void {
+  const problems: string[] = [];
+  if (title.length > titleMaxLength) {
+    problems.push(`title is ${title.length} characters; the limit is ${titleMaxLength}`);
+  }
+  if (
+    description.length < descriptionMinLength ||
+    description.length > descriptionMaxLength
+  ) {
+    problems.push(
+      `description is ${description.length} characters; it must be ${descriptionMinLength} to ${descriptionMaxLength}`,
+    );
+  }
+  if (problems.length > 0) {
+    throw new Error(`Invalid metadata for ${page}:\n- ${problems.join("\n- ")}`);
+  }
+}
+
 function isIsoDate(value: string): boolean {
   return (
     isoDatePattern.test(value) &&
@@ -36,10 +63,12 @@ function guideProblems(guide: Guide, registered: Set<string>): string[] {
     for (const href of linkHrefs(value)) {
       if (href.startsWith("#")) anchorLinks.push({ field, id: href.slice(1) });
       if (href.startsWith("/")) {
-        // The site has three kinds of page: the home page, /guides, and a guide.
-        const page = /^\/(?:guides(?:\/([^/#?]+))?)?(?:#[a-z0-9-]+)?$/.exec(
-          href,
-        );
+        // The site has four kinds of page: the home page, /guides, a guide,
+        // and the /playground.
+        const page =
+          /^\/(?:guides(?:\/([^/#?]+))?|playground)?(?:#[a-z0-9-]+)?$/.exec(
+            href,
+          );
         if (page === null) {
           report(field, `links to "${href}", which is not a page on this site`);
         } else if (page[1] !== undefined && !registered.has(page[1])) {

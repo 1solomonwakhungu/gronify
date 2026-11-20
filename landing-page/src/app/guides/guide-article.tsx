@@ -88,7 +88,7 @@ function Inline({
   return <>{renderNodes(parseInline(text), linkableSlugs)}</>;
 }
 
-function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
+export function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
   return (
     <nav aria-label="Breadcrumb">
       <ol className={styles.breadcrumb}>
@@ -206,15 +206,21 @@ function GuideBlockView({
   }
 }
 
-/** Header, `<main>`, the closing call to action, and footer for a guides page. */
-function GuideShell({
+/**
+ * Header, `<main>`, the closing call to action, and footer for a guides page,
+ * and for the playground, which shares the same frame.
+ */
+export function GuideShell({
   placement,
   guidesCurrent,
+  playgroundCurrent = false,
   children,
 }: {
   /** Passed to the header's Guides link as `aria-current`. */
-  guidesCurrent: "page" | "true";
-  /** Reported with the repository click so guides can be told apart. */
+  guidesCurrent?: "page" | "true";
+  /** Marks the header's Playground link as the current page. */
+  playgroundCurrent?: boolean;
+  /** Reported with the repository click so pages can be told apart. */
   placement: string;
   children: ReactNode;
 }) {
@@ -224,7 +230,10 @@ function GuideShell({
         Skip to main content
       </a>
 
-      <SiteHeader guidesCurrent={guidesCurrent} />
+      <SiteHeader
+        guidesCurrent={guidesCurrent}
+        playgroundCurrent={playgroundCurrent}
+      />
 
       <main id="top">
         <Box paddingBlockStart={64} />

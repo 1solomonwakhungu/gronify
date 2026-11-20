@@ -28,6 +28,10 @@ The project is open source under the MIT license and requires Node.js 20 or newe
 - [Build from source](https://gronify.vercel.app/#install): Clone the repository, run `npm ci && npm run build && npm link` in `src/packages/cli`.
 - [Frequently asked questions](https://gronify.vercel.app/#faq): What Gronify is, how to grep a JSON file, gron and jq compatibility, platforms, file size, number rounding, comparing two files, AI agents, privacy, invalid JSON, and speed.
 
+## Playground
+
+- [JSON playground: flatten, grep, and unflatten JSON online](https://gronify.vercel.app/playground): Paste JSON and run `flatten`, `search` (with `--regex`, `-c`, `-v`, `--count`, `-m`, `--sort`), or `unflatten` in the browser, with the same output as the CLI and the equivalent `gronify` command to copy. Input stays in the browser and is limited to 2 MB; use the CLI for bigger files.
+
 ## Guides
 
 - [All guides](https://gronify.vercel.app/guides): Index of the task guides below. Each guide answers one question with commands and real output.

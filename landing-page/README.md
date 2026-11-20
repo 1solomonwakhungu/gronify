@@ -55,6 +55,20 @@ Every command and output line in a transcript must be pasted from a real run of 
 
 A slug in `related`, or an inline link to `/guides/<slug>`, must name a registered guide. The build fails on any other slug, so register a new guide before another guide links to it.
 
+## Playground
+
+`/playground` runs `flatten`, `search`, and `unflatten` in the browser. The engine in `src/app/playground/` is a port of the CLI with no Node APIs: `gron-engine.ts` (tokenizer, flattener, `--sort`, search, and the CLI's messages), `ungron-engine.ts` (the document-order pass and the in-memory fallback), and `cli-command.ts` (the command shown on the page). Input is limited to 2 MB (`MAX_INPUT_BYTES`), and output to 16 MB (`MAX_OUTPUT_CHARS` in both engines), because every gron line repeats its full path: 40 KB of deeply nested arrays would flatten to 600 million characters. Past either limit the page shows an error that points to the CLI.
+
+`npm run test:playground` compares the engine with CLI output recorded in `scripts/playground-golden.json`, and CI runs it. After changing the engine, the samples, or the CLI's output, check against the built CLI (with seeded random documents too) and re-record:
+
+```bash
+(cd ../src/packages/cli && npm ci && npm run build)
+npm run test:playground -- --cli ../src/packages/cli/dist/index.js
+npm run test:playground -- --cli ../src/packages/cli/dist/index.js --write-golden
+```
+
+Each case runs the CLI with the arguments `cli-command.ts` builds, so the copied command is checked too. The page title and description are held to the guide limits by `validatePageSeo`, and guides may link to `/playground`.
+
 The header and footer live in `src/app/site-chrome.tsx` and are shared by the home page and the guides.
 
 ## Share images
