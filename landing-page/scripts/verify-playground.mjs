@@ -320,6 +320,53 @@ if (!ungron.unflatten(gron.stdoutOf(gron.flatten(samples.find((s) => s.id === "l
   failures.push("ledger round trip did not keep 12345678901234567890 and 1.10 as written");
 }
 
+// Adversarial input. These are playground limits, not CLI behavior, so they are checked against the engine alone:
+// each must come back as a clean error result quickly, never as a thrown RangeError or a hung tab.
+const deepArray = `${"[".repeat(20000)}${"]".repeat(20000)}`;
+const deepObject = `${'{"a":'.repeat(8000)}1${"}".repeat(8000)}`;
+const adversarial = [
+  ["flatten deep array", () => gron.flatten(deepArray)],
+  ["flatten --sort deep array", () => gron.flatten(deepArray, { sort: true })],
+  ["flatten --sort deep object", () => gron.flatten(deepObject, { sort: true })],
+  ["search deep array", () => gron.search(deepArray, { term: "x" })],
+  ["search --regex -v deep array", () => gron.search(deepArray, { term: "\\]$", regex: true, invert: true })],
+  ["search --count deep object", () => gron.search(deepObject, { term: "a", count: true })],
+  ["unflatten sparse index", () => ungron.unflatten("json = []\njson[4294967294] = 1")],
+];
+for (const [name, run] of adversarial) {
+  checked += 1;
+  const started = performance.now();
+  let result;
+  try {
+    result = run();
+  } catch (error) {
+    failures.push(`${name}: threw ${error?.name}: ${error?.message}`);
+    continue;
+  }
+  const elapsed = performance.now() - started;
+  if (result.error === null || !result.limitExceeded) {
+    failures.push(`${name}: expected the playground output limit error, got ${JSON.stringify(result.error)}`);
+  } else if (!/run 'gronify (flatten|search|unflatten)' in a terminal instead/.test(result.error)) {
+    failures.push(`${name}: the limit error does not point to the CLI: ${result.error}`);
+  }
+  if (elapsed > 3000) failures.push(`${name}: took ${Math.round(elapsed)} ms`);
+}
+// The output stays exact up to the limit: a deep document that fits is flattened in full.
+checked += 1;
+const fits = gron.flatten(`${"[".repeat(1000)}${"]".repeat(1000)}`);
+if (fits.error !== null || fits.lines.length !== 1000 || fits.lines[999] !== `json${"[0]".repeat(999)} = []`) {
+  failures.push(`a 1,000-deep array that fits the limit was not flattened in full: ${fits.error}`);
+}
+// A long malformed gron line full of "=" must not backtrack quadratically while choosing its error message.
+checked += 1;
+{
+  const started = performance.now();
+  const result = ungron.unflatten(`json = {}\njson.a[ ${"= ".repeat(100000)}`);
+  const elapsed = performance.now() - started;
+  if (result.error !== "line 2: unclosed bracket property") failures.push(`long malformed line: got ${result.error}`);
+  if (elapsed > 1000) failures.push(`long malformed line: took ${Math.round(elapsed)} ms`);
+}
+
 if (cliPath === null) {
   let golden;
   try {
