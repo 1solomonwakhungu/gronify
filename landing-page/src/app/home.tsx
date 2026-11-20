@@ -460,8 +460,8 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
                 <Button as="a" href="#install" variant="primary">
                   Install Gronify
                 </Button>
-                <Button as="a" href="#workflow" variant="secondary">
-                  See the workflow
+                <Button as="a" href="/playground" variant="secondary">
+                  Try it in the browser
                 </Button>
               </Hero.ButtonGroup>
             </Hero>

@@ -7,6 +7,7 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
+    "test:playground": "node --experimental-strip-types --no-warnings scripts/verify-playground.mjs",
     "audit": "audit-ci --config audit-ci.jsonc",
     "indexnow": "node scripts/submit-indexnow.mjs"
   },
