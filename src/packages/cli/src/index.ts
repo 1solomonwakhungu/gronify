@@ -24,6 +24,8 @@ interface GlobalOptions {
 interface FlattenOptions {
   limit?: number;
   sort?: boolean;
+  stream?: boolean;
+  jsonl?: boolean;
 }
 
 interface SearchOptions {
@@ -34,12 +36,30 @@ interface SearchOptions {
   maxCount?: number;
   sort?: boolean;
   exitStatus?: boolean;
+  stream?: boolean;
+  jsonl?: boolean;
 }
 
 const SORT_HELP =
   "Sort object keys at every level (UTF-16 order); arrays keep their order. Default: document order. " +
   "Memory: arrays at the top level stream; an object is held until it closes, up to 64 MiB (set GRONIFY_SORT_MEMORY, e.g. 256MiB) " +
   "before spilling to a temp file";
+
+const STREAM_HELP =
+  "Read JSON Lines / NDJSON: one JSON value per line, flattened as json[0], json[1], ... under json = [] (like gron -s). " +
+  "Blank lines are skipped; a record may not span lines. Records stream one at a time";
+const JSONL_HELP = "Same as --stream";
+
+/** Whether a syntax error came from a second value in single-document mode, which usually means JSON Lines input. */
+function isTrailingValueError(error: unknown): boolean {
+  return error instanceof SyntaxError && error.message.includes("after the top-level value");
+}
+
+function streamTip(formatter: OutputFormatter, error: unknown): void {
+  if (isTrailingValueError(error)) {
+    console.error(formatter.formatInfo("Tip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)"));
+  }
+}
 
 function isCount(value: string): boolean {
   return /^[1-9][0-9]*$/.test(value) && Number.isSafeInteger(Number(value));
@@ -169,13 +189,13 @@ function fail(formatter: OutputFormatter, context: string, error: unknown, exitC
 async function flattenCommand(file: string | undefined, options: FlattenOptions, globalOptions: GlobalOptions): Promise<void> {
   const formatter = await createFormatterFromOptions(globalOptions);
   try {
-    if (file && ![".json", ".jsonl"].includes(extname(file).toLowerCase())) {
+    if (file && ![".json", ".jsonl", ".ndjson"].includes(extname(file).toLowerCase())) {
       console.warn(formatter.formatWarning(`File '${file}' doesn't have a .json extension`));
     }
     const input = openInput(file, formatter, "Usage: gronify flatten <file> OR cat file.json | gronify flatten", true);
     if (!input) return;
     const output = createOutput(globalOptions.output, { format: formatter.createGronLineFormatter(), limit: options.limit });
-    await flattenStream(input, output, { sort: options.sort });
+    await flattenStream(input, output, { sort: options.sort, stream: options.stream || options.jsonl });
     reportStop(formatter, output, `Stopped after ${plural(options.limit!, "line", "lines")} (--limit)`);
     if (globalOptions.output) {
       console.error(formatter.formatSuccess(`Output written to ${globalOptions.output}`));
@@ -183,7 +203,9 @@ async function flattenCommand(file: string | undefined, options: FlattenOptions,
   } catch (error) {
     if (await isBrokenPipe(error, globalOptions.output)) return;
     fail(formatter, "flattening JSON", error);
-    if (error instanceof SyntaxError) {
+    if (isTrailingValueError(error)) {
+      streamTip(formatter, error);
+    } else if (error instanceof SyntaxError) {
       console.error(formatter.formatInfo("Tip: Validate your JSON with a linter like https://jsonlint.com"));
     }
   }
@@ -240,7 +262,7 @@ async function searchCommand(fileOrTerm: string, term: string | undefined, optio
       limit: options.maxCount
     });
     // Counting needs no order, so --sort is skipped with --count.
-    await flattenStream(input, output, { sort: options.sort && !options.count });
+    await flattenStream(input, output, { sort: options.sort && !options.count, stream: options.stream || options.jsonl });
     if (options.count) {
       reportStop(formatter, output, `Stopped counting at ${plural(options.maxCount!, "match", "matches")} (--max-count)`, false);
     } else {
@@ -263,6 +285,7 @@ async function searchCommand(fileOrTerm: string, term: string | undefined, optio
   } catch (error) {
     if (await isBrokenPipe(error, globalOptions.output)) return;
     fail(formatter, options.regex ? "searching JSON (invalid regex or JSON)" : "searching JSON", error, options.exitStatus ? 2 : 1);
+    streamTip(formatter, error);
   }
 }
 
@@ -297,6 +320,8 @@ async function runProgram(): Promise<void> {
     .argument("[file]", "JSON file to flatten (or read from stdin if not provided)")
     .option("--limit <n>", "Stop after n lines of output and stop reading the input", parseCount)
     .option("--sort", SORT_HELP)
+    .option("-s, --stream", STREAM_HELP)
+    .option("--jsonl", JSONL_HELP)
     .action((file: string | undefined, options: FlattenOptions, command: Command) => flattenCommand(file, options, globals(command)));
 
   program
@@ -317,6 +342,8 @@ async function runProgram(): Promise<void> {
     .option("-m, --max-count <n>", "Stop after n matching lines (n non-matching lines with -v) and stop reading the input", parseCount)
     .option("--sort", SORT_HELP)
     .option("--exit-status", "Exit 1 when nothing matches (like grep); errors then exit 2 instead of 1")
+    .option("-s, --stream", STREAM_HELP)
+    .option("--jsonl", JSONL_HELP)
     .action((fileOrTerm: string, term: string | undefined, options: SearchOptions, command: Command) =>
       searchCommand(fileOrTerm, term, options, globals(command)));
 
@@ -336,7 +363,7 @@ interface QuickCommand {
 
 const QUICK_COMMANDS: Record<string, QuickCommand> = {
   flatten: {
-    flags: { "--sort": "sort" },
+    flags: { "--sort": "sort", "-s": "stream", "--stream": "stream", "--jsonl": "stream" },
     counts: { "--limit": "limit" },
     min: 0,
     max: 1,
@@ -360,6 +387,9 @@ const QUICK_COMMANDS: Record<string, QuickCommand> = {
       "--invert-match": "invertMatch",
       "--sort": "sort",
       "--exit-status": "exitStatus",
+      "-s": "stream",
+      "--stream": "stream",
+      "--jsonl": "stream",
     },
     counts: { "-m": "maxCount", "--max-count": "maxCount" },
     min: 1,

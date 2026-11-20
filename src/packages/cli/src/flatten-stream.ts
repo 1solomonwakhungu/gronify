@@ -375,6 +375,11 @@ export interface FlattenOptions {
   sort?: boolean | undefined;
   /** Bytes of sorted lines to hold in memory before spilling to a temp file. Defaults to 64 MiB. */
   sortMemory?: number | undefined;
+  /**
+   * Read JSON Lines (NDJSON): each non-blank line is one record, flattened as `json[i]` under a leading `json = []`, the
+   * way `gron -s` does. Records stream one at a time, sorted ones too.
+   */
+  stream?: boolean | undefined;
 }
 
 /**
@@ -398,7 +403,7 @@ export async function flattenStream(
       sorter = new SortingSink(out, (lines) => new GronFlattener(lines), { memoryLimit: options.sortMemory });
     }
     const gate: JsonGate = sorter ?? out;
-    const tokenizer = new JsonTokenizer(sorter ?? new GronFlattener(out), gate);
+    const tokenizer = new JsonTokenizer(sorter ?? new GronFlattener(out), gate, { stream: options.stream });
     reading: for await (const piece of input) {
       const chunk = typeof piece === "string" ? Buffer.from(piece, "utf8") : piece;
       let pos = 0;
