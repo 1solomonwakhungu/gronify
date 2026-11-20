@@ -25,7 +25,15 @@ type ChromeProps = {
   onHome?: boolean;
 };
 
-export function SiteHeader({ onHome = false }: ChromeProps) {
+type HeaderProps = ChromeProps & {
+  /**
+   * `aria-current` for the Guides link: "page" on the `/guides` index, "true"
+   * on a single guide, which sits inside that section.
+   */
+  guidesCurrent?: "page" | "true";
+};
+
+export function SiteHeader({ onHome = false, guidesCurrent }: HeaderProps) {
   return (
     <header className={styles.navBar}>
       <div className={styles.navBarInner}>
@@ -44,15 +52,14 @@ export function SiteHeader({ onHome = false }: ChromeProps) {
             <span className={styles.wordmarkText}>Gronify</span>
           </NextLink>
         )}
-        <nav
-          className={styles.navLinks}
-          aria-label={onHome ? "Page sections" : "Home page sections"}
-        >
+        <nav className={styles.navLinks} aria-label="Main">
+          {/* Section links need room, so they appear from 48rem up. Guides is
+              a page of its own and stays visible at every width. */}
           {navSections.map((section) =>
             onHome ? (
               <a
                 key={section.id}
-                className={styles.navLink}
+                className={`${styles.navLink} ${styles.navSectionLink}`}
                 href={`#${section.id}`}
               >
                 {section.label}
@@ -60,13 +67,23 @@ export function SiteHeader({ onHome = false }: ChromeProps) {
             ) : (
               <NextLink
                 key={section.id}
-                className={styles.navLink}
+                className={`${styles.navLink} ${styles.navSectionLink}`}
                 href={`/#${section.id}`}
               >
                 {section.label}
               </NextLink>
             ),
           )}
+          <NextLink
+            className={styles.navLink}
+            href="/guides"
+            aria-current={guidesCurrent}
+            onClick={() =>
+              posthog.capture("guides_link_clicked", { placement: "header" })
+            }
+          >
+            Guides
+          </NextLink>
         </nav>
         <Button
           as="a"
@@ -77,7 +94,7 @@ export function SiteHeader({ onHome = false }: ChromeProps) {
             posthog.capture("repository_link_clicked", { placement: "header" })
           }
         >
-          View on GitHub
+          <span className={styles.navButtonLong}>View on </span>GitHub
         </Button>
       </div>
     </header>
