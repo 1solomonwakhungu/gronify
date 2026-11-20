@@ -12,7 +12,7 @@ Checked on 2026-11-20.
 - **Website:** <https://gronify.vercel.app> has the home page, a `/guides` index, and ten guides under `/guides/<slug>`, one per search intent. Guides are typed content files in `landing-page/src/app/guides/content/`; `registry.ts` lists them and the build validates them (see `landing-page/README.md`). `llms.txt` and `llms-full.txt` are served with `X-Robots-Tag: noindex`.
 - **One product:** the Node/npm CLI in `src/packages/cli`. The experimental Rust prototype (`native/`, its workflow, and its landing-page benchmarks) was removed on 2026-11-04.
 - **Benchmarks:** the landing page and `BENCHMARKS.md` report the 2026-11-05 sweep of npm `gronify@1.3.1`, run at the release commit `4c78c13e5ba299462e33a87e8a02be25fda1badd`. The published tarball's `dist/` is identical to the build that was measured. See [the evidence README](docs/benchmarks/2026-11-05-v1.3.1/README.md).
-- **CI:** Quality Check and Release workflows. Release workflow success does not mean a new version was published.
+- **CI:** Quality Check and Release workflows. The CLI job runs lint, build, tests, and audit on Linux, macOS, and Windows with Node 20 and 22 (since #148). Five POSIX-only tests skip on Windows: two `-o /dev/stdout` tests, two file-mode tests, and the SIGTERM temp-file cleanup test. Release workflow success does not mean a new version was published.
 - **Audits:** the CLI allowlist (`src/packages/cli/audit-ci.jsonc`) is empty. The landing allowlist (`landing-page/audit-ci.jsonc`) has one entry; see Open items.
 - **What 1.3.2 adds:** `flatten --pretty` (and `search --invert-match --pretty`) indents by path depth only, so dots and brackets in values or quoted keys no longer push a line deeper (#142).
 - **What 1.3.1 added:** faster flatten and search through byte-level tokenizer paths (#127), and faster streaming unflatten through reused frames and borrowed keys (#129). Output is byte-identical to 1.3.0; independent differential reviews of both PRs found no differences across tens of thousands of fuzzed inputs and chunk sizes.
@@ -37,6 +37,14 @@ Checked on 2026-11-20.
   - Product and growth: #12 (pro features), #13 (payments), #14 (team management), #15 (marketing campaigns), #16 (SEO content), #17 (referrals).
 
 ## History
+
+### 2026-11-20 — Windows in CI (#148)
+
+- The CLI matrix now includes `windows-latest`. On Node 22, Windows ran 671 tests and skipped 5, all of them POSIX-only. `.gitattributes` keeps text files as LF on checkout, so fixtures and Prettier checks match on every platform.
+- `-o` writes to Windows devices (`NUL`, `CON`, `\\.\…`) in place instead of renaming a temp file over them. On Windows the final rename retries for up to about 630 ms on `EPERM`/`EACCES`/`EBUSY`, which scanners and indexers cause. When a signal cannot be re-raised (`SIGHUP` on Windows), the CLI exits with 128+signal.
+- `sort.ts` still unlinks the spill file right after opening it, which works on Windows because Node opens files with `FILE_SHARE_DELETE`. If the unlink is refused, the file is closed before it is unlinked and is also removed on process exit.
+- Known limit: on Windows, `SIGTERM` from another process calls `TerminateProcess`, so no cleanup runs and an `-o` temp file can be left behind. Ctrl+C still cleans up.
+- The landing page, `llms.txt`, `llms-full.txt`, and the `grep-json` and `gron-alternative` guides now say CI tests Linux, macOS, and Windows.
 
 ### 2026-11-20 — 1.3.2 released
 
