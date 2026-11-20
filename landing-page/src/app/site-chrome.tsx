@@ -31,9 +31,15 @@ type HeaderProps = ChromeProps & {
    * on a single guide, which sits inside that section.
    */
   guidesCurrent?: "page" | "true";
+  /** Set on /playground, so its link carries `aria-current="page"`. */
+  playgroundCurrent?: boolean;
 };
 
-export function SiteHeader({ onHome = false, guidesCurrent }: HeaderProps) {
+export function SiteHeader({
+  onHome = false,
+  guidesCurrent,
+  playgroundCurrent = false,
+}: HeaderProps) {
   return (
     <header className={styles.navBar}>
       <div className={styles.navBarInner}>
@@ -53,8 +59,8 @@ export function SiteHeader({ onHome = false, guidesCurrent }: HeaderProps) {
           </NextLink>
         )}
         <nav className={styles.navLinks} aria-label="Main">
-          {/* Section links need room, so they appear from 48rem up. Guides is
-              a page of its own and stays visible at every width. */}
+          {/* Section links need room, so they appear from 48rem up. Guides and
+              Playground are pages of their own and stay visible at every width. */}
           {navSections.map((section) =>
             onHome ? (
               <a
@@ -83,6 +89,18 @@ export function SiteHeader({ onHome = false, guidesCurrent }: HeaderProps) {
             }
           >
             Guides
+          </NextLink>
+          <NextLink
+            className={styles.navLink}
+            href="/playground"
+            aria-current={playgroundCurrent ? "page" : undefined}
+            onClick={() =>
+              posthog.capture("playground_link_clicked", {
+                placement: "header",
+              })
+            }
+          >
+            Playground
           </NextLink>
         </nav>
         <Button
@@ -124,6 +142,9 @@ export function SiteFooter({ onHome = false }: ChromeProps) {
             arrowDirection="none"
           >
             FAQ
+          </Link>
+          <Link href="/playground" size="small" arrowDirection="none">
+            Playground
           </Link>
           <Link href="/guides" size="small" arrowDirection="none">
             Guides
