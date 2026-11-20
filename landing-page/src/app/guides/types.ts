@@ -59,6 +59,13 @@ export type TerminalBlock = {
   kind: "terminal";
   /** Accessible name of the figure: one phrase saying what the transcript shows. */
   label: string;
+  /**
+   * The prompt shown before each command, such as "PS>" for a PowerShell
+   * session. Leave it out for a POSIX shell; the default is "$". It changes
+   * only how the transcript is drawn: command lines still start with "$ "
+   * inside the `transcript` tag.
+   */
+  prompt?: string;
   lines: TerminalLine[];
 };
 
