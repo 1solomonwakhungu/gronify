@@ -44,7 +44,7 @@ Checked on 2026-11-20.
 - Release PR #143 was squash-merged. The `main` push run created tag and release `v1.3.2`; the tag push run built `gronify-v1.3.2.tar.gz`, `.zip`, and `checksums.txt` and published npm `gronify@1.3.2` with provenance. In the `main` run, "Build release artifacts" found the assets already uploaded and "Publish to npm" was skipped; that is expected when the tag run gets there first.
 - Checked on the registry: latest is 1.3.2, the description and homepage are the #138 values, there are 15 keywords, and the README logo is the absolute `raw.githubusercontent.com` URL with no relative images left.
 - The release tarball's sha256 (`1651535d9af0bc118a7f6fd24161d9dde4d68d893709ade0bb337640e6666e6e`) matches `checksums.txt`; its `gronify --version` prints 1.3.2 and `--pretty` indents `lag = 0.5` level with its siblings.
-- The tap's Update Formulae workflow was dispatched for `gronify` to bump, audit, install, test, and commit the formula.
+- The tap's Update Formulae workflow (run 44672101420, dispatched for `gronify`) bumped `Formula/gronify.rb` to the v1.3.2 tarball and that sha256, passed its install and test jobs on ubuntu-24.04 and macos-15, and committed the formula to the tap's `main`.
 - The landing page shows v1.3.2 (`site-config.ts`, `llms-full.txt`), with `lastReleaseIsoDate` 2026-11-20. The `flatten-json` guide now names 1.3.2 as the release with the path-depth `--pretty` fix. Benchmark copy still reports the 1.3.1 sweep; it reads its versions from `benchmark-results.json`.
 
 ### 2026-11-12 — `flatten --pretty` indents by path depth
