@@ -15,3 +15,11 @@ export const npmBuildRequirement = "10 or newer";
 export const lastReleaseIsoDate = "2026-11-20";
 /** Date of the last change to the home page copy. Bump it with the copy; the sitemap reads it. */
 export const homeUpdatedIsoDate = "2026-11-12";
+
+/**
+ * IndexNow key (https://www.indexnow.org). `public/<key>.txt` must contain
+ * exactly this value; `scripts/submit-indexnow.mjs` reads both and refuses to
+ * submit when they differ. To rotate it, replace this value and rename and
+ * rewrite the key file in the same commit.
+ */
+export const indexNowKey = "fcf9ec5a77e9058c6aeb871432ab03e8";
