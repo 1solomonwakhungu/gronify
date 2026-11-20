@@ -7,7 +7,9 @@ import { transcript, type Guide } from "../types";
 //   at commit bbd57e64767616df3b37792a1186166334043761.
 // - stripe.json: openapi/spec3.json from stripe/openapi at commit
 //   fae26264636d2d322b175ce01f6d09358078a466.
-// - package-lock.json: this repository's landing-page/package-lock.json.
+// - package-lock.json: this repository's landing-page/package-lock.json at
+//   commit abaca1d (next 16.4.6). The lockfile transcripts were rerun on
+//   gronify 1.3.2, with output identical to 1.3.1.
 // - ip-ranges.json: https://ip-ranges.amazonaws.com/ip-ranges.json, fetched on
 //   2026-11-19 (createDate 2026-11-19-22-07-05).
 export const searchOpenapiAndLockfiles: Guide = {
@@ -239,9 +241,9 @@ json.packages["node_modules/eslint-plugin-react"].dependencies.minimatch = "^3.1
             "Reading the version, tarball URL, and integrity hash of one package",
           lines: transcript`
 $ gronify search package-lock.json --regex '"node_modules/next"\]\.(version|resolved|integrity) = '
-json.packages["node_modules/next"].version = "16.4.3"
-json.packages["node_modules/next"].resolved = "https://registry.npmjs.org/next/-/next-16.4.3.tgz"
-json.packages["node_modules/next"].integrity = "sha512-OqxKTGi9u80FydydsMNYNjnuje9Au+kvHlt2GZ//ftdpDHm1dxKqAaENoOOTX5wKzn+9vaKUNIfZeyZUuLhCnA=="
+json.packages["node_modules/next"].version = "16.4.6"
+json.packages["node_modules/next"].resolved = "https://registry.npmjs.org/next/-/next-16.4.6.tgz"
+json.packages["node_modules/next"].integrity = "sha512-QZJiYhaZLJMo2KpkQGQIwvmd79WVsAWeYIU554a8d7zArS3si/IRy3lBNV/rtYhE70oLwdLYhPAXLPx8HwcwtA=="
 `,
         },
         {
