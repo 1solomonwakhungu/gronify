@@ -9,7 +9,7 @@ Checked on 2026-11-20.
   - npm: 1.3.2, published by the Release workflow with provenance. The npm page now carries the #138 README (absolute logo URL), description, 15 keywords, and `https://gronify.vercel.app` as homepage.
   - Homebrew: `Formula/gronify.rb` in `1solomonwakhungu/homebrew-tap` points at the v1.3.2 tarball and depends only on `node@22` (no `fastgron`).
   - Release archive and build from source, as described in the README.
-- **Website:** <https://gronify.vercel.app> has the home page, a `/guides` index, and ten guides under `/guides/<slug>`, one per search intent. Guides are typed content files in `landing-page/src/app/guides/content/`; `registry.ts` lists them and the build validates them (see `landing-page/README.md`). `llms.txt` and `llms-full.txt` are served with `X-Robots-Tag: noindex`. Since 2026-11-19 (branch `feat/guide-og-images-indexnow`), the home page, `/guides`, and every guide have their own share image, and `landing-page/scripts/submit-indexnow.mjs` submits the sitemap to IndexNow.
+- **Website:** <https://gronify.vercel.app> has the home page, a `/guides` index, and ten guides under `/guides/<slug>`, one per search intent. Guides are typed content files in `landing-page/src/app/guides/content/`; `registry.ts` lists them and the build validates them (see `landing-page/README.md`). `llms.txt` and `llms-full.txt` are served with `X-Robots-Tag: noindex`. Since 2026-11-19 (branch `feat/guide-og-images-indexnow`), the home page, `/guides`, and every guide have their own share image, and `landing-page/scripts/submit-indexnow.mjs` submits the sitemap to IndexNow. The header links to `/guides` at every width, and the home page links all ten guides. PostHog events for install intent: `install_command_copied` (hero, with `method`: `npm`, `npx`, or `brew`) and `command_copied` (any transcript's copy button).
 - **One product:** the Node/npm CLI in `src/packages/cli`. The experimental Rust prototype (`native/`, its workflow, and its landing-page benchmarks) was removed on 2026-11-04.
 - **Benchmarks:** the landing page and `BENCHMARKS.md` report the 2026-11-05 sweep of npm `gronify@1.3.1`, run at the release commit `4c78c13e5ba299462e33a87e8a02be25fda1badd`. The published tarball's `dist/` is identical to the build that was measured. See [the evidence README](docs/benchmarks/2026-11-05-v1.3.1/README.md).
 - **CI:** Quality Check and Release workflows. The CLI job runs lint, build, tests, and audit on Linux, macOS, and Windows with Node 20 and 22 (since #148). Five POSIX-only tests skip on Windows: two `-o /dev/stdout` tests, two file-mode tests, and the SIGTERM temp-file cleanup test. Release workflow success does not mean a new version was published.
@@ -33,6 +33,13 @@ Checked on 2026-11-20.
 - **Issue tracker:** checked on 2026-11-19, it has no open issues. The 19 speculative roadmap issues (VS Code extension, browser and web app, backend and SDKs, paid features, growth campaigns) were deleted; only four closed issues remain (#1, #2, #5, #21). File new issues for concrete bugs or features only.
 
 ## History
+
+### 2026-11-20 — Landing navigation and copy buttons
+
+- The header nav has Guides on every page. Below 48rem it is the only nav link, and the GitHub button reads "GitHub" below 24rem so the bar fits at 320px. On guide pages the link carries `aria-current`.
+- The home page links `/guides/json-number-precision` from the jq comparison card, so all ten guides are reachable from `/`.
+- Every transcript with a command line has a copy button that copies only the commands, without `$ `. The prompt cannot be selected by hand either.
+- The hero has an npm / npx / Homebrew switch over one copyable install command, mounted through Primer's `Hero` `trailingComponent` slot (the expressive variant drops other children).
 
 ### 2026-11-20 — `unflatten` fills in missing parents
 

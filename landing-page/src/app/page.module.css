@@ -46,6 +46,7 @@
 /* Terminal transcripts. Real CLI output, framed by the same hairline as the
    rest of the page — no imitation window chrome. */
 .terminal {
+  position: relative;
   padding: var(--base-size-20);
   background-color: var(--brand-color-canvas-default);
   border: var(--brand-borderWidth-thin) solid var(--brand-color-border-muted);
@@ -69,9 +70,142 @@
   overflow-wrap: anywhere;
 }
 
+/* Manual selection of a transcript must never pick up the `$ ` prompt. */
 .terminalPrompt {
   color: var(--brand-color-text-muted);
+  -webkit-user-select: none;
   user-select: none;
+}
+
+/* Reserve the top-right corner for the copy button so wrapped lines never
+   run underneath it. */
+.terminalCopyable .terminalBody {
+  padding-inline-end: var(--base-size-40);
+}
+
+.terminalCopy {
+  position: absolute;
+  inset-block-start: var(--base-size-12);
+  inset-inline-end: var(--base-size-12);
+}
+
+@media screen and (min-width: 48rem) {
+  .terminalCopy {
+    inset-block-start: var(--base-size-16);
+    inset-inline-end: var(--base-size-16);
+  }
+}
+
+/* Icon-only copy action. Quiet until hovered or focused, then confirms with
+   the success colour; the text announcement lives in a sibling live region. */
+.copyButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  inline-size: var(--base-size-32);
+  block-size: var(--base-size-32);
+  padding: 0;
+  border: var(--brand-borderWidth-thin) solid var(--brand-color-border-muted);
+  border-radius: var(--brand-borderRadius-medium);
+  background-color: var(--brand-color-canvas-default);
+  color: var(--brand-color-text-muted);
+  cursor: pointer;
+  transition:
+    color var(--duration-quick) var(--ease-smooth-out),
+    border-color var(--duration-quick) var(--ease-smooth-out);
+}
+
+.copyButton:hover {
+  color: var(--brand-color-text-default);
+  border-color: var(--brand-color-border-default);
+}
+
+.copyButton:focus-visible {
+  outline: var(--brand-borderWidth-thick) solid var(--brand-color-focus);
+  outline-offset: var(--base-size-2);
+}
+
+.copyButton[data-state="copied"] {
+  color: var(--brand-color-success-fg);
+  border-color: var(--brand-color-success-fg);
+}
+
+.copyButton[data-state="failed"] {
+  color: var(--brand-color-danger-fg);
+  border-color: var(--brand-color-danger-fg);
+}
+
+.copyButton svg {
+  display: block;
+}
+
+/* Hero install command: a method switch over one copyable command line. */
+.installBar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-8);
+  inline-size: 100%;
+  max-inline-size: 32rem;
+  margin-block-start: var(--base-size-24);
+}
+
+.installTabs {
+  display: flex;
+  gap: var(--base-size-4);
+}
+
+.installTab {
+  padding: var(--base-size-4) var(--base-size-12);
+  border: var(--brand-borderWidth-thin) solid transparent;
+  border-radius: var(--brand-borderRadius-medium);
+  background: none;
+  color: var(--brand-color-text-muted);
+  font-family: var(--brand-body-fontFamily);
+  font-size: var(--brand-text-size-100);
+  line-height: var(--brand-text-lineHeight-200);
+  cursor: pointer;
+  transition:
+    color var(--duration-quick) var(--ease-smooth-out),
+    border-color var(--duration-quick) var(--ease-smooth-out);
+}
+
+.installTab:hover {
+  color: var(--brand-color-text-default);
+}
+
+.installTab[aria-selected="true"] {
+  color: var(--brand-color-text-default);
+  border-color: var(--brand-color-border-default);
+  background-color: var(--brand-color-canvas-subtle);
+}
+
+.installTab:focus-visible {
+  outline: var(--brand-borderWidth-thick) solid var(--brand-color-focus);
+  outline-offset: var(--base-size-2);
+}
+
+.installCommand {
+  display: flex;
+  align-items: center;
+  gap: var(--base-size-12);
+  padding-block: var(--base-size-8);
+  padding-inline: var(--base-size-16) var(--base-size-8);
+  border: var(--brand-borderWidth-thin) solid var(--brand-color-border-default);
+  border-radius: var(--brand-borderRadius-medium);
+  background-color: var(--brand-color-canvas-default);
+  min-width: 0;
+}
+
+.installCommandText {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--brand-fontStack-monospace);
+  font-size: var(--brand-text-size-200);
+  line-height: var(--brand-text-lineHeight-200);
+  color: var(--brand-color-text-default);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .terminalPath {
@@ -250,21 +384,26 @@
 }
 
 .navLinks {
-  display: none;
+  display: flex;
   align-items: center;
   gap: var(--base-size-12);
   margin-inline-start: auto;
 }
 
+/* Below 48rem only Guides stays in the bar; section links need the room. */
+.navSectionLink {
+  display: none;
+}
+
 @media screen and (min-width: 48rem) {
-  .navLinks {
-    display: flex;
+  .navSectionLink {
+    display: inline;
   }
 }
 
 @media screen and (min-width: 64rem) {
   .navLinks {
-    gap: var(--base-size-28);
+    gap: var(--base-size-24);
   }
 }
 
@@ -284,19 +423,20 @@
   }
 }
 
-.navLink:hover {
+.navLink:hover,
+.navLink[aria-current] {
   color: var(--brand-color-text-default);
 }
 
 .navBarInner > :last-child {
-  margin-inline-start: auto;
   flex-shrink: 0;
   white-space: nowrap;
 }
 
-@media screen and (min-width: 48rem) {
-  .navBarInner > :last-child {
-    margin-inline-start: 0;
+/* "View on GitHub" shortens to "GitHub" where the bar would overflow. */
+@media screen and (max-width: 23.99rem) {
+  .navButtonLong {
+    display: none;
   }
 }
 

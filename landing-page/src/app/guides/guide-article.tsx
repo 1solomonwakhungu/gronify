@@ -209,8 +209,11 @@ function GuideBlockView({
 /** Header, `<main>`, the closing call to action, and footer for a guides page. */
 function GuideShell({
   placement,
+  guidesCurrent,
   children,
 }: {
+  /** Passed to the header's Guides link as `aria-current`. */
+  guidesCurrent: "page" | "true";
   /** Reported with the repository click so guides can be told apart. */
   placement: string;
   children: ReactNode;
@@ -221,7 +224,7 @@ function GuideShell({
         Skip to main content
       </a>
 
-      <SiteHeader />
+      <SiteHeader guidesCurrent={guidesCurrent} />
 
       <main id="top">
         <Box paddingBlockStart={64} />
@@ -309,7 +312,7 @@ export function GuideArticle({
   linkableSlugs: readonly string[];
 }) {
   return (
-    <GuideShell placement={`guide:${guide.slug}`}>
+    <GuideShell placement={`guide:${guide.slug}`} guidesCurrent="true">
       <Section paddingBlockStart="condensed" paddingBlockEnd="none">
         <Grid>
           <Grid.Column span={12}>
@@ -439,7 +442,7 @@ export function GuideArticle({
 
 export function GuidesIndex({ links }: { links: GuideLink[] }) {
   return (
-    <GuideShell placement="guides-index">
+    <GuideShell placement="guides-index" guidesCurrent="page">
       <Section paddingBlockStart="condensed" paddingBlockEnd="spacious">
         <Grid>
           <Grid.Column span={12}>
