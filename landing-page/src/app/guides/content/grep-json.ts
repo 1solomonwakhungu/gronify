@@ -10,7 +10,7 @@ export const grepJson: Guide = {
   h1: "How to grep nested JSON from the command line",
   lede: "To grep JSON, flatten it first so that every value sits on its own line next to its full path, then filter those lines. `gronify search orders.json pending` does both in one streaming pass and prints each match as `json.path = value`, so you can see where in the document the match lives.",
   published: "2026-11-12",
-  updated: "2026-11-19",
+  updated: "2026-11-20",
   sections: [
     {
       id: "why-grep-fails",

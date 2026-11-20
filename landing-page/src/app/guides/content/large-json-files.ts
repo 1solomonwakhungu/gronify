@@ -12,7 +12,7 @@ export const largeJsonFiles: Guide = {
   h1: "Search a multi-gigabyte JSON file from the command line",
   lede: "To search a JSON file that is too large to open, read it as a stream instead of loading it. `gronify search big.json timeout --count` tokenizes the file in chunks and tests each `json.path = value` line as it is produced, so memory does not grow with the number of records.",
   published: "2026-11-12",
-  updated: "2026-11-12",
+  updated: "2026-11-20",
   sections: [
     {
       id: "why-tools-fail",
@@ -120,7 +120,7 @@ Error: Cannot create a string longer than 0x1fffffe8 characters
         { kind: "subheading", text: "How to fix it" },
         {
           kind: "paragraph",
-          text: "Stop creating the string. [Fixing ERR_STRING_TOO_LONG in Node.js](/guides/fix-err-string-too-long-json) shows a streaming reader and writer for each failing call. In short:",
+          text: "Stop creating the string. [Fixing ERR_STRING_TOO_LONG in Node.js](/guides/fix-err-string-too-long-json) shows one streaming reader and one streaming writer that avoid the error. In short:",
         },
         {
           kind: "list",
