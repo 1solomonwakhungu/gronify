@@ -377,5 +377,10 @@ Stopped after 1 match (--max-count); there may be more
         "Not with Gronify, which reads one JSON document per run and stops with an error at the second line. jq reads a stream of documents, so `jq -c 'path(.. | select(. == \"x\"))' log.ndjson` prints the matching path for each line. `gron -s` and `fastgron -s` flatten every line under its own index, such as `json[0]` and `json[1]`.",
     },
   ],
-  related: ["grep-json", "jq-alternative", "flatten-json"],
+  related: [
+    "grep-json",
+    "jq-alternative",
+    "flatten-json",
+    "search-openapi-and-lockfiles",
+  ],
 };

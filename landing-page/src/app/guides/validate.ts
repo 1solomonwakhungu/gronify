@@ -145,6 +145,15 @@ function guideProblems(guide: Guide, registered: Set<string>): string[] {
           break;
         case "terminal":
           requirePlainText(`${field}.label`, block.label);
+          if (block.prompt !== undefined) {
+            requirePlainText(`${field}.prompt`, block.prompt);
+            if (/\s/.test(block.prompt) || block.prompt.length > 4) {
+              report(
+                `${field}.prompt`,
+                `"${block.prompt}" must be at most 4 characters with no spaces`,
+              );
+            }
+          }
           if (block.lines.length === 0) report(`${field}.lines`, "is empty");
           block.lines.forEach((line, lineIndex) => {
             if (line.text.trim() === "") {

@@ -365,7 +365,7 @@ alan@example.org
     {
       question: "How do I search JSON on Windows without grep?",
       answer:
-        "Install Gronify with `npm install -g gronify` on Node.js 20 or newer. `gronify search` does its own matching, so it needs neither grep nor `Select-String`. The project's CI runs the test suite on Windows, Linux, and macOS.",
+        "Install Gronify with `npm install -g gronify` on Node.js 20 or newer. `gronify search` does its own matching, so it needs neither grep nor `Select-String`. The project's CI runs the test suite on Windows, Linux, and macOS. [Searching JSON in PowerShell and cmd](/guides/grep-json-windows-powershell) covers quoting and the built-in alternatives.",
     },
     {
       question: "How do I match a value only under a specific key?",
@@ -378,5 +378,10 @@ alan@example.org
         "Yes. It reads the file as a stream and prints matches as it finds them, and `-m` stops at the cap without reading the rest. Measured time and memory for large inputs are in the [benchmarks](/#benchmarks) on the home page.",
     },
   ],
-  related: ["flatten-json", "find-json-path", "jq-alternative"],
+  related: [
+    "flatten-json",
+    "find-json-path",
+    "grep-json-windows-powershell",
+    "jq-alternative",
+  ],
 };
