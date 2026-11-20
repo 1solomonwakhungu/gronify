@@ -1,0 +1,3 @@
+# Check out text files with LF on every platform. Windows runners and clones default to core.autocrlf=true, which
+# would turn fixtures and package files into CRLF and break byte-exact tests and the Prettier checks.
+* text=auto eol=lf

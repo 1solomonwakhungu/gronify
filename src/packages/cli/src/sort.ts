@@ -68,11 +68,17 @@ interface Piece {
   length: number;
 }
 
-/** An anonymous temp file: unlinked right after it is opened, so a crash or a kill cannot leave it behind. */
+/**
+ * An anonymous temp file: unlinked right after it is opened, so a crash or a kill cannot leave it behind. That works on
+ * Windows too, because Node opens files with FILE_SHARE_DELETE: the name goes away at once (or when the last handle
+ * closes, on file systems without POSIX delete semantics), and the descriptor stays usable. Where the unlink is refused
+ * anyway, the file keeps its name until `close()` or, failing that, until the process exits.
+ */
 class SpillFile {
   private fd: number;
   private size = 0;
   private path: string | null;
+  private readonly onExit = (): void => this.removePath();
 
   constructor() {
     const path = join(tmpdir(), `gronify-sort-${process.pid}-${randomBytes(4).toString("hex")}.tmp`);
@@ -81,8 +87,8 @@ class SpillFile {
       unlinkSync(path);
       this.path = null;
     } catch {
-      // Platforms that refuse to unlink an open file: remove it in close().
       this.path = path;
+      process.on("exit", this.onExit);
     }
   }
 
@@ -103,14 +109,33 @@ class SpillFile {
   }
 
   close(): void {
-    closeSync(this.fd);
-    if (this.path !== null) {
-      try {
-        unlinkSync(this.path);
-      } catch {
-        // Already gone.
-      }
+    const fd = this.fd;
+    this.fd = -1;
+    try {
+      if (fd >= 0) closeSync(fd);
+    } finally {
+      this.removePath();
     }
+  }
+
+  /** Removes a file that could not be unlinked while open. Windows needs the handle closed first. */
+  private removePath(): void {
+    if (this.path === null) return;
+    if (this.fd >= 0) {
+      try {
+        closeSync(this.fd);
+      } catch {
+        // Already closed.
+      }
+      this.fd = -1;
+    }
+    try {
+      unlinkSync(this.path);
+    } catch {
+      // Already gone.
+    }
+    this.path = null;
+    process.removeListener("exit", this.onExit);
   }
 }
 
