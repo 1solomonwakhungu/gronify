@@ -173,7 +173,7 @@ export function unflattenGron(source: string): JsonValue {
         throw new Error(`line ${lineNumber}: path does not match its parent container`);
       }
       const container = parent as Record<string | number, JsonValue>;
-      let child = container[part];
+      let child = Object.hasOwn(container, part) ? container[part] : undefined;
       if (child === undefined) {
         child = containerFor(parts[index + 1]);
         assign(parent, part, child, lineNumber);
