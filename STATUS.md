@@ -2,19 +2,20 @@
 
 ## Current state
 
-Checked on 2026-11-12.
+Checked on 2026-11-20.
 
-- **Version:** 1.3.1, released 2026-11-05 through release-please PR #128. The GitHub release `v1.3.1` carries `gronify-v1.3.1.tar.gz`, `gronify-v1.3.1.zip`, and `checksums.txt`.
+- **Version:** 1.3.2, released 2026-11-20 through release-please PR #143. The GitHub release `v1.3.2` carries `gronify-v1.3.2.tar.gz`, `gronify-v1.3.2.zip`, and `checksums.txt`. (The CHANGELOG heading says 2026-11-13, the day release-please opened the PR.)
 - **Distribution:**
-  - npm: 1.3.1, published by the Release workflow with provenance.
-  - Homebrew: `Formula/gronify.rb` in `1solomonwakhungu/homebrew-tap` points at the v1.3.1 tarball and depends only on `node@22` (no `fastgron`).
+  - npm: 1.3.2, published by the Release workflow with provenance. The npm page now carries the #138 README (absolute logo URL), description, 15 keywords, and `https://gronify.vercel.app` as homepage.
+  - Homebrew: `Formula/gronify.rb` in `1solomonwakhungu/homebrew-tap` points at the v1.3.2 tarball and depends only on `node@22` (no `fastgron`).
   - Release archive and build from source, as described in the README.
 - **Website:** <https://gronify.vercel.app> has the home page, a `/guides` index, and ten guides under `/guides/<slug>`, one per search intent. Guides are typed content files in `landing-page/src/app/guides/content/`; `registry.ts` lists them and the build validates them (see `landing-page/README.md`). `llms.txt` and `llms-full.txt` are served with `X-Robots-Tag: noindex`.
 - **One product:** the Node/npm CLI in `src/packages/cli`. The experimental Rust prototype (`native/`, its workflow, and its landing-page benchmarks) was removed on 2026-11-04.
 - **Benchmarks:** the landing page and `BENCHMARKS.md` report the 2026-11-05 sweep of npm `gronify@1.3.1`, run at the release commit `4c78c13e5ba299462e33a87e8a02be25fda1badd`. The published tarball's `dist/` is identical to the build that was measured. See [the evidence README](docs/benchmarks/2026-11-05-v1.3.1/README.md).
 - **CI:** Quality Check and Release workflows. Release workflow success does not mean a new version was published.
 - **Audits:** the CLI allowlist (`src/packages/cli/audit-ci.jsonc`) is empty. The landing allowlist (`landing-page/audit-ci.jsonc`) has one entry; see Open items.
-- **What 1.3.1 adds:** faster flatten and search through byte-level tokenizer paths (#127), and faster streaming unflatten through reused frames and borrowed keys (#129). Output is byte-identical to 1.3.0; independent differential reviews of both PRs found no differences across tens of thousands of fuzzed inputs and chunk sizes.
+- **What 1.3.2 adds:** `flatten --pretty` (and `search --invert-match --pretty`) indents by path depth only, so dots and brackets in values or quoted keys no longer push a line deeper (#142).
+- **What 1.3.1 added:** faster flatten and search through byte-level tokenizer paths (#127), and faster streaming unflatten through reused frames and borrowed keys (#129). Output is byte-identical to 1.3.0; independent differential reviews of both PRs found no differences across tens of thousands of fuzzed inputs and chunk sizes.
 - **What 1.3.0 added:** faster flatten, tokenizer and long literal search (#110, #111), cheaper unflatten path handling (#112), bounded literal validation that recovers record-stream memory (#119), quiet exit when a socket stdout disconnects (#113), and the cross-tool benchmark (#104).
 - **What 1.2.0 added:**
   - `flatten`, `search`, and ordered `unflatten` stream without retaining a full document tree. Historical record-stream runs used about 100 MB; token size, path depth, sorting, and out-of-order input affect memory. `-o` writes atomically. (#95, #94)
@@ -24,7 +25,7 @@ Checked on 2026-11-12.
 ## Open items
 
 - **Search indexing (owner action).** On 2026-11-12 no search engine we could query returned a page from `gronify.vercel.app`; Google could not be checked from a script. In Search Console (the site already carries the verification tag), submit `https://gronify.vercel.app/sitemap.xml` and request indexing for the home page and `/guides`. Until pages are indexed, none of the copy work can show in results.
-- **npm page lags the repo.** The README, description, keywords, and homepage changed in #138 with `docs`/`chore` commits, which do not trigger a release. npmjs.com shows them only after the next release is published.
+- **Landing build fails on a Next.js advisory.** `next build` in `landing-page` compiles and prerenders every page, then exits 1 with a `SecurityFatalError`. `npm audit` reports a moderate advisory for `next` 16.0.0–16.4.4, and the page pins 16.4.3. This affects `main`, not only the 1.3.2 sync. Bump `next` (and `eslint-config-next`) in a separate PR.
 - **Links.** The repository has no stars, so Homebrew core is out of reach for now. Places that list tools like this one and accept submissions: `toolleeo/awesome-cli-apps-in-a-csv`, `burningtree/awesome-json`, `fiatjaf/awesome-jq`, AlternativeTo (as an alternative to gron and jq), and one Show HN. Nothing has been submitted.
 - **Domain.** `vercel.app` is on the Public Suffix List, so Search Console only offers a URL-prefix property. No documented ranking penalty was found. A later move to a custom domain needs redirects and canonicals.
 - **Landing audit exception `GHSA-g3hv-75wg-m249`** (minimatch, reached only through eslint and its plugins, dev-only). The only fix is minimatch 11, which the 3.x consumers cannot take. Remove the entry once the eslint plugin stack moves off minimatch 3 and `npm run audit` in `landing-page` passes with an empty allowlist.
@@ -37,6 +38,14 @@ Checked on 2026-11-12.
   - Product and growth: #12 (pro features), #13 (payments), #14 (team management), #15 (marketing campaigns), #16 (SEO content), #17 (referrals).
 
 ## History
+
+### 2026-11-20 — 1.3.2 released
+
+- Release PR #143 was squash-merged. The `main` push run created tag and release `v1.3.2`; the tag push run built `gronify-v1.3.2.tar.gz`, `.zip`, and `checksums.txt` and published npm `gronify@1.3.2` with provenance. In the `main` run, "Build release artifacts" found the assets already uploaded and "Publish to npm" was skipped; that is expected when the tag run gets there first.
+- Checked on the registry: latest is 1.3.2, the description and homepage are the #138 values, there are 15 keywords, and the README logo is the absolute `raw.githubusercontent.com` URL with no relative images left.
+- The release tarball's sha256 (`1651535d9af0bc118a7f6fd24161d9dde4d68d893709ade0bb337640e6666e6e`) matches `checksums.txt`; its `gronify --version` prints 1.3.2 and `--pretty` indents `lag = 0.5` level with its siblings.
+- The tap's Update Formulae workflow was dispatched for `gronify` to bump, audit, install, test, and commit the formula.
+- The landing page shows v1.3.2 (`site-config.ts`, `llms-full.txt`), with `lastReleaseIsoDate` 2026-11-20. The `flatten-json` guide now names 1.3.2 as the release with the path-depth `--pretty` fix. Benchmark copy still reports the 1.3.1 sweep; it reads its versions from `benchmark-results.json`.
 
 ### 2026-11-12 — `flatten --pretty` indents by path depth
 
