@@ -771,6 +771,13 @@ function runFlatten(bytes: Uint8Array, out: LineOutput, sort: boolean): RunState
   return { out, exhausted: out.stopped && !sort };
 }
 
+/** A second value in single-document mode, which usually means JSON Lines input. */
+function isTrailingValueError(error: unknown): boolean {
+  return error instanceof SyntaxError && error.message.includes("after the top-level value");
+}
+
+const STREAM_TIP = "Tip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)";
+
 function failure(context: string, error: unknown, tip: string | null): GronResult {
   const message = error instanceof Error ? error.message : String(error);
   const messages = [`Error: ${context}: ${message}`];
@@ -791,7 +798,11 @@ export function flatten(input: string, options: FlattenOptions = {}): GronResult
     return failure(
       "flattening JSON",
       error,
-      error instanceof SyntaxError ? "Tip: Validate your JSON with a linter like https://jsonlint.com" : null,
+      isTrailingValueError(error)
+        ? STREAM_TIP
+        : error instanceof SyntaxError
+          ? "Tip: Validate your JSON with a linter like https://jsonlint.com"
+          : null,
     );
   }
 }
@@ -825,7 +836,7 @@ export function search(input: string, options: SearchOptions): GronResult {
     }
     return { lines: out.lines, messages, error: null, matched: out.matched, stoppedEarly, limitExceeded: false };
   } catch (error) {
-    return failure(context, error, null);
+    return failure(context, error, isTrailingValueError(error) ? STREAM_TIP : null);
   }
 }
 

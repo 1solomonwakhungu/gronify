@@ -271,12 +271,12 @@
  },
  "flatten/twoValues": {
   "stdout": "",
-  "stderr": "Error: flattening JSON: Unexpected '[' after the top-level value at byte offset 3 (line 1, column 4)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "stderr": "Error: flattening JSON: Unexpected '[' after the top-level value at byte offset 3 (line 1, column 4)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
   "failed": true
  },
  "flatten-sort/twoValues": {
   "stdout": "",
-  "stderr": "Error: flattening JSON: Unexpected '[' after the top-level value at byte offset 3 (line 1, column 4)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "stderr": "Error: flattening JSON: Unexpected '[' after the top-level value at byte offset 3 (line 1, column 4)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
   "failed": true
  },
  "flatten/lonelyMinus": {
@@ -341,12 +341,12 @@
  },
  "flatten/afterValue": {
   "stdout": "",
-  "stderr": "Error: flattening JSON: Unexpected 'x' after the top-level value at byte offset 9 (line 1, column 10)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "stderr": "Error: flattening JSON: Unexpected 'x' after the top-level value at byte offset 9 (line 1, column 10)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
   "failed": true
  },
  "flatten-sort/afterValue": {
   "stdout": "",
-  "stderr": "Error: flattening JSON: Unexpected 'x' after the top-level value at byte offset 9 (line 1, column 10)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "stderr": "Error: flattening JSON: Unexpected 'x' after the top-level value at byte offset 9 (line 1, column 10)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
   "failed": true
  },
  "flatten/singleQuotes": {
@@ -1616,12 +1616,12 @@
  },
  "search/twoValues": {
   "stdout": "",
-  "stderr": "Error: searching JSON: Unexpected '[' after the top-level value at byte offset 3 (line 1, column 4)",
+  "stderr": "Error: searching JSON: Unexpected '[' after the top-level value at byte offset 3 (line 1, column 4)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
   "failed": true
  },
  "search-regex/twoValues": {
   "stdout": "",
-  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected '[' after the top-level value at byte offset 3 (line 1, column 4)",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected '[' after the top-level value at byte offset 3 (line 1, column 4)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
   "failed": true
  },
  "search/lonelyMinus": {
@@ -1686,12 +1686,12 @@
  },
  "search/afterValue": {
   "stdout": "",
-  "stderr": "Error: searching JSON: Unexpected 'x' after the top-level value at byte offset 9 (line 1, column 10)",
+  "stderr": "Error: searching JSON: Unexpected 'x' after the top-level value at byte offset 9 (line 1, column 10)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
   "failed": true
  },
  "search-regex/afterValue": {
   "stdout": "",
-  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected 'x' after the top-level value at byte offset 9 (line 1, column 10)",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected 'x' after the top-level value at byte offset 9 (line 1, column 10)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
   "failed": true
  },
  "search/singleQuotes": {
@@ -1825,14 +1825,14 @@
   "failed": false
  },
  "unflatten/noRoot": {
-  "stdout": "",
-  "stderr": "Error: unflattening gron: line 1: root must be assigned before child paths\nTip: Gron lines should look like: json.path = value",
-  "failed": true
+  "stdout": "{\"a\":1}\n",
+  "stderr": "",
+  "failed": false
  },
  "unflatten-pretty/noRoot": {
-  "stdout": "",
-  "stderr": "Error: unflattening gron: line 1: root must be assigned before child paths\nTip: Gron lines should look like: json.path = value",
-  "failed": true
+  "stdout": "{\n  \"a\": 1\n}\n",
+  "stderr": "",
+  "failed": false
  },
  "unflatten/notGron": {
   "stdout": "",
@@ -1905,14 +1905,14 @@
   "failed": true
  },
  "unflatten/missingParent": {
-  "stdout": "",
-  "stderr": "Error: unflattening gron: line 2: parent path must be assigned before its children\nTip: Gron lines should look like: json.path = value",
-  "failed": true
+  "stdout": "{\"a\":{\"b\":1}}\n",
+  "stderr": "",
+  "failed": false
  },
  "unflatten-pretty/missingParent": {
-  "stdout": "",
-  "stderr": "Error: unflattening gron: line 2: parent path must be assigned before its children\nTip: Gron lines should look like: json.path = value",
-  "failed": true
+  "stdout": "{\n  \"a\": {\n    \"b\": 1\n  }\n}\n",
+  "stderr": "",
+  "failed": false
  },
  "unflatten/scalarParent": {
   "stdout": "",
@@ -1982,6 +1982,106 @@
  "unflatten-pretty/junkAfterPath": {
   "stdout": "",
   "stderr": "Error: unflattening gron: line 2: invalid character in path\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/filteredDeep": {
+  "stdout": "{\"a\":{\"b\":[null,null,{\"c\":\"x\"},null,1],\"d\":true}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/filteredDeep": {
+  "stdout": "{\n  \"a\": {\n    \"b\": [\n      null,\n      null,\n      {\n        \"c\": \"x\"\n      },\n      null,\n      1\n    ],\n    \"d\": true\n  }\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/filteredRootArray": {
+  "stdout": "[null,{\"id\":7},null,{\"id\":9}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/filteredRootArray": {
+  "stdout": "[\n  null,\n  {\n    \"id\": 7\n  },\n  null,\n  {\n    \"id\": 9\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/filteredReopen": {
+  "stdout": "{\"a\":{\"x\":1,\"y\":3},\"b\":2}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/filteredReopen": {
+  "stdout": "{\n  \"a\": {\n    \"x\": 1,\n    \"y\": 3\n  },\n  \"b\": 2\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/filteredIntoExplicit": {
+  "stdout": "{\"a\":{\"k\":1,\"z\":3},\"b\":{\"c\":2}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/filteredIntoExplicit": {
+  "stdout": "{\n  \"a\": {\n    \"k\": 1,\n    \"z\": 3\n  },\n  \"b\": {\n    \"c\": 2\n  }\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/filteredMissingInFull": {
+  "stdout": "{\"x\":1,\"a\":{\"b\":2}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/filteredMissingInFull": {
+  "stdout": "{\n  \"x\": 1,\n  \"a\": {\n    \"b\": 2\n  }\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/filteredIndexBack": {
+  "stdout": "{\"a\":[null,2,null,1]}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/filteredIndexBack": {
+  "stdout": "{\n  \"a\": [\n    null,\n    2,\n    null,\n    1\n  ]\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/filteredScalarParent": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/filteredScalarParent": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/filteredKeyOnArray": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: array path requires a numeric index\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/filteredKeyOnArray": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: array path requires a numeric index\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/filteredIndexOnObject": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/filteredIndexOnObject": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten/filteredScalarRoot": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
+  "failed": true
+ },
+ "unflatten-pretty/filteredScalarRoot": {
+  "stdout": "",
+  "stderr": "Error: unflattening gron: line 2: property does not match its parent container\nTip: Gron lines should look like: json.path = value",
   "failed": true
  },
  "unflatten/flattened-deployment": {
@@ -2281,6 +2381,86 @@
  },
  "unflatten-pretty/sorted-recordsArray": {
   "stdout": "[\n  {\n    \"id\": 2,\n    \"name\": \"b\",\n    \"tags\": [\n      \"x\",\n      \"y\"\n    ]\n  },\n  {\n    \"id\": 1,\n    \"meta\": {\n      \"a\": 2,\n      \"z\": 1\n    },\n    \"name\": \"a\"\n  },\n  {\n    \"id\": 3,\n    \"name\": \"c\"\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-deployment": {
+  "stdout": "{\"containers\":[{\"image\":\"registry.example.com/checkout-api:2026.11.3\"},{\"image\":\"registry.example.com/envoy:1.31.2\"}]}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-deployment": {
+  "stdout": "{\n  \"containers\": [\n    {\n      \"image\": \"registry.example.com/checkout-api:2026.11.3\"\n    },\n    {\n      \"image\": \"registry.example.com/envoy:1.31.2\"\n    }\n  ]\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-sorted-deployment": {
+  "stdout": "{\"containers\":[{\"image\":\"registry.example.com/checkout-api:2026.11.3\"},{\"image\":\"registry.example.com/envoy:1.31.2\"}]}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-sorted-deployment": {
+  "stdout": "{\n  \"containers\": [\n    {\n      \"image\": \"registry.example.com/checkout-api:2026.11.3\"\n    },\n    {\n      \"image\": \"registry.example.com/envoy:1.31.2\"\n    }\n  ]\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-events": {
+  "stdout": "[null,{\"type\":\"payment.failed\"},null,{\"type\":\"webhook.failed\"}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-events": {
+  "stdout": "[\n  null,\n  {\n    \"type\": \"payment.failed\"\n  },\n  null,\n  {\n    \"type\": \"webhook.failed\"\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-sorted-events": {
+  "stdout": "[null,{\"type\":\"payment.failed\"},null,{\"type\":\"webhook.failed\"}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-sorted-events": {
+  "stdout": "[\n  null,\n  {\n    \"type\": \"payment.failed\"\n  },\n  null,\n  {\n    \"type\": \"webhook.failed\"\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-ledger": {
+  "stdout": "{\"entries\":[{\"amount\":1.10},{\"amount\":-250.00},{\"amount\":1e3},{\"amount\":0.1}]}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-ledger": {
+  "stdout": "{\n  \"entries\": [\n    {\n      \"amount\": 1.10\n    },\n    {\n      \"amount\": -250.00\n    },\n    {\n      \"amount\": 1e3\n    },\n    {\n      \"amount\": 0.1\n    }\n  ]\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-sorted-ledger": {
+  "stdout": "{\"entries\":[{\"amount\":1.10},{\"amount\":-250.00},{\"amount\":1e3},{\"amount\":0.1}]}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-sorted-ledger": {
+  "stdout": "{\n  \"entries\": [\n    {\n      \"amount\": 1.10\n    },\n    {\n      \"amount\": -250.00\n    },\n    {\n      \"amount\": 1e3\n    },\n    {\n      \"amount\": 0.1\n    }\n  ]\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-config": {
+  "stdout": "{\"server\":{\"tls\":{\"enabled\":true}}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-config": {
+  "stdout": "{\n  \"server\": {\n    \"tls\": {\n      \"enabled\": true\n    }\n  }\n}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-sorted-config": {
+  "stdout": "{\"server\":{\"tls\":{\"enabled\":true}}}\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-sorted-config": {
+  "stdout": "{\n  \"server\": {\n    \"tls\": {\n      \"enabled\": true\n    }\n  }\n}\n",
   "stderr": "",
   "failed": false
  }

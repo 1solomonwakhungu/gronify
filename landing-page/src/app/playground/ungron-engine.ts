@@ -650,12 +650,20 @@ class OutOfOrderError extends Error {}
 /**
  * Converts document-order gron in one pass, the way the CLI streams it. Repeated assignments to one object key are
  * written as they come (a JSON parser keeps the last), and array indexes must increase, with gaps filled by `null`.
+ *
+ * Parents that were never assigned (gron filtered with `grep` or `search`, the root included) are synthesized as the
+ * path opens them: a property segment implies an object, an index an array. A synthesized object must not repeat a
+ * key written earlier, since the two copies would not merge, so the member keys of every object the emitter
+ * synthesized (or synthesized into while it was still empty) are recorded, and a repeat goes to the in-memory builder.
  */
 class StreamEmitter {
   rootSeen = false;
   readonly writer: JsonWriter;
   /** The segment each open container was entered by; index 0 (the root) has none. */
   private readonly frames: Segment[] = [];
+  /** Member keys of the open object at each depth, for objects whose every member is known. */
+  private readonly tracked: Array<Set<string> | undefined> = [];
+  private lineNumber = 0;
 
   constructor(pretty: boolean) {
     this.writer = new JsonWriter(pretty);
@@ -665,34 +673,40 @@ class StreamEmitter {
     const writer = this.writer;
     const { segments, value } = parsed;
     const count = segments.length;
+    this.lineNumber = lineNumber;
     if (count === 0) {
       if (this.rootSeen) throw new OutOfOrderError();
       this.rootSeen = true;
       this.writeValue(value, 0, null);
       return;
     }
-    if (!this.rootSeen) throw lineError(lineNumber, "root must be assigned before child paths");
-    if (writer.depth < count) throw new OutOfOrderError();
-    for (let i = 0; i < count - 1; i += 1) {
-      if (!sameSegment(segments[i], this.frames[i + 1])) throw new OutOfOrderError();
-    }
-    writer.closeTo(count);
-
-    const last = segments[count - 1];
     const parent = count - 1;
-    if (writer.isArray[parent]) {
-      if (typeof last !== "number") throw lineError(lineNumber, "array path requires a numeric index");
-      if (last < writer.counts[parent]) throw new OutOfOrderError();
-      while (writer.counts[parent] < last) {
-        writer.memberPrefix();
-        writer.raw("null");
-      }
-    } else if (typeof last === "number") {
-      throw lineError(lineNumber, "property does not match its parent container");
+    let matched = 0;
+    if (this.rootSeen) {
+      // A scalar root has no members; the in-memory builder reports the conflict.
+      if (writer.depth === 0) throw new OutOfOrderError();
+      const limit = Math.min(writer.depth - 1, parent);
+      while (matched < limit && sameSegment(segments[matched], this.frames[matched + 1])) matched += 1;
+    } else {
+      // Filtered gron without its `json = ...` line: the first segment says what the root is.
+      this.rootSeen = true;
+      const array = typeof segments[0] === "number";
+      writer.open(array);
+      this.tracked[0] = array ? undefined : new Set();
     }
-    writer.memberPrefix();
-    if (typeof last !== "number") writer.key(last.key);
-    this.writeValue(value, count, last);
+
+    if (matched < parent) {
+      // Close down to the deepest open container on this path, then open the missing parents below it.
+      writer.closeTo(matched + 1);
+      for (let segment = matched; segment < parent; segment += 1) {
+        this.placeMember(segments, segment, true);
+        this.openSynthesized(segments, segment);
+      }
+    } else {
+      writer.closeTo(count);
+    }
+    this.placeMember(segments, parent, false);
+    this.finishLine(segments, value);
   }
 
   finish(): string {
@@ -700,15 +714,79 @@ class StreamEmitter {
     return this.writer.finish();
   }
 
+  /**
+   * Checks that `segments[segment]` can be the next member of the innermost open container (at depth `segment`) and
+   * writes any `null` slots before it. `parent` is set when the segment opens a synthesized container.
+   */
+  private placeMember(segments: Segment[], segment: number, parent: boolean): void {
+    const writer = this.writer;
+    const entry = segments[segment];
+    if (writer.isArray[segment]) {
+      if (typeof entry !== "number") {
+        throw lineError(this.lineNumber, parent ? "path does not match its parent container" : "array path requires a numeric index");
+      }
+      if (entry < writer.counts[segment]) throw new OutOfOrderError();
+      while (writer.counts[segment] < entry) {
+        writer.memberPrefix();
+        writer.raw("null");
+      }
+      return;
+    }
+    if (typeof entry === "number") {
+      throw lineError(
+        this.lineNumber,
+        parent ? "path does not match its parent container" : "property does not match its parent container",
+      );
+    }
+    if (parent) this.claimKey(segment, entry.key);
+  }
+
+  /** Records a synthesized member of the object at depth `segment`, whose key must be new to that object. */
+  private claimKey(segment: number, key: string): void {
+    let keys = this.tracked[segment];
+    if (keys === undefined) {
+      // An explicitly assigned object: its members are known only while it has none.
+      if (this.writer.counts[segment] !== 0) throw new OutOfOrderError();
+      keys = new Set();
+      this.tracked[segment] = keys;
+    } else if (keys.has(key)) {
+      throw new OutOfOrderError();
+    }
+    keys.add(key);
+  }
+
+  /** Writes `segments[segment]` as the next member of the innermost container and opens the container it implies. */
+  private openSynthesized(segments: Segment[], segment: number): void {
+    const writer = this.writer;
+    const entry = segments[segment];
+    writer.memberPrefix();
+    if (typeof entry !== "number") writer.key(entry.key);
+    const array = typeof segments[segment + 1] === "number";
+    writer.open(array);
+    this.frames[segment + 1] = entry;
+    this.tracked[segment + 1] = array ? undefined : new Set();
+  }
+
+  private finishLine(segments: Segment[], value: TreeNode): void {
+    const writer = this.writer;
+    const count = segments.length;
+    const last = segments[count - 1];
+    writer.memberPrefix();
+    if (typeof last !== "number") {
+      writer.key(last.key);
+      this.tracked[count - 1]?.add(last.key);
+    }
+    this.writeValue(value, count, last);
+  }
+
   private writeValue(value: TreeNode, depth: number, entry: Segment | null): void {
     if (typeof value === "string") {
       this.writer.raw(value);
-    } else if (value instanceof TreeObject && value.entries.size === 0) {
-      this.writer.open(false);
+    } else if ((value instanceof TreeObject && value.entries.size === 0) || (value instanceof TreeArray && value.items.length === 0)) {
+      this.writer.open(value instanceof TreeArray);
       if (entry !== null) this.frames[depth] = entry;
-    } else if (value instanceof TreeArray && value.items.length === 0) {
-      this.writer.open(true);
-      if (entry !== null) this.frames[depth] = entry;
+      // An explicitly assigned container: its members are not tracked.
+      this.tracked[depth] = undefined;
     } else {
       // A non-empty value written on one line is complete; nothing can be added to it later.
       writeTree(value, this.writer);
@@ -725,6 +803,11 @@ function sameSegment(a: Segment, b: Segment | undefined): boolean {
 // ---------------------------------------------------------------------------------------------------------------
 // In-memory fallback (tree.ts)
 
+/** The container a path segment implies for a parent that was never assigned: an array for an index, else an object. */
+function containerFor(next: Segment): TreeObject | TreeArray {
+  return typeof next === "number" ? new TreeArray() : new TreeObject();
+}
+
 function assign(root: TreeNode, parsed: ParsedLine, lineNumber: number): void {
   const { segments, value } = parsed;
   let parent: TreeNode = root;
@@ -733,12 +816,19 @@ function assign(root: TreeNode, parsed: ParsedLine, lineNumber: number): void {
     let child: TreeNode | undefined;
     if (parent instanceof TreeArray && typeof segment === "number") {
       child = parent.items[segment];
+      if (child === undefined) {
+        child = containerFor(segments[i + 1]);
+        parent.items[segment] = child;
+      }
     } else if (parent instanceof TreeObject && typeof segment !== "number") {
       child = parent.entries.get(segment.key);
+      if (child === undefined) {
+        child = containerFor(segments[i + 1]);
+        parent.entries.set(segment.key, child);
+      }
     } else {
       throw lineError(lineNumber, "path does not match its parent container");
     }
-    if (child === undefined) throw lineError(lineNumber, "parent path must be assigned before its children");
     parent = child;
   }
 
@@ -774,7 +864,8 @@ function buildTree(buf: Uint8Array, pretty: boolean): string {
       root = parsed.value;
       return;
     }
-    if (root === undefined) throw lineError(lineNumber, "root must be assigned before child paths");
+    // Filtered gron without its `json = ...` line: the first segment says what the root is.
+    root ??= containerFor(parsed.segments[0]);
     assign(root, parsed, lineNumber);
   });
   if (root === undefined) throw new Error("input contains no gron assignments");

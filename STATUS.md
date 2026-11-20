@@ -22,11 +22,11 @@ Checked on 2026-11-20.
   - Numbers are printed exactly as written (`12345678901234567890`, `1.10`), object keys keep document order, and JSON errors report byte offset, line, and column. (#95)
   - Result caps (`search -m/--max-count`, `flatten --limit`) stop reading early; `--sort` gives stable, diffable key order; `search --exit-status` exits 1 on no match and 2 on error. (#98)
 
-## Playground (branch `feat/browser-playground`, 2026-11-19)
+## Playground (branch `feat/browser-playground`, 2026-11-20)
 
-- **Done:** `/playground` flattens, searches, and unflattens JSON in the browser with output byte-identical to the CLI on `main` (1.3.2, `--no-color`). It has four samples, a mode switch, search flags (`--regex`, `-c`, `-v`, `--count`, `-m`, `--sort`), flatten `--sort`/`--limit`, unflatten `--pretty`, and a copyable `gronify`/`npx gronify` command (PostHog `playground_command_copied`). It is linked from the header, footer, home hero, sitemap, `llms.txt`, and `llms-full.txt`, and guides may link to it.
-- **Parity:** `npm run test:playground` (in CI) checks 476 cases against recorded CLI output. After rebasing on #149 (next 16.4.6), a live run against the built 1.3.2 CLI with 3,000 seeded random documents passed (3,476 checks); `audit`, `lint`, and `build` pass.
-- **Next:** after merge, request indexing for `/playground` in Search Console alongside the sitemap.
+- **Done:** `/playground` flattens, searches, and unflattens JSON in the browser with output byte-identical to the CLI on `main` (`--no-color`, including #150's `--stream` tip and #151's parent synthesis for filtered gron). It has four samples, a mode switch, search flags (`--regex`, `-c`, `-v`, `--count`, `-m`, `--sort`), flatten `--sort`/`--limit`, unflatten `--pretty`, and a copyable `gronify`/`npx gronify` command (PostHog `playground_command_copied`). It is linked from the header (next to Guides), footer, home hero, sitemap, `llms.txt`, and `llms-full.txt`, and guides may link to it. Input is capped at 2 MB and output at 16 MB, past which the page shows an error pointing to the CLI.
+- **Parity:** `npm run test:playground` (in CI) checks 521 cases against CLI output recorded at `main` after #151, plus adversarial inputs (depth-20,000 nesting, long malformed gron lines). A live run against that CLI with 4,000 seeded random documents, half the unflatten inputs being random line subsets, passed 4,521 checks. Re-record the golden file whenever CLI output changes (see `landing-page/README.md`).
+- **Next:** request indexing for `/playground` in Search Console alongside the sitemap. A `--stream` (JSON Lines) toggle is not in the playground yet; the CLI's tip for trailing values mentions it.
 
 ## Open items
 
