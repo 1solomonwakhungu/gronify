@@ -163,6 +163,10 @@ jobs:
         working-directory: landing-page
         run: npm run build
 
+      - name: Playground parity with the CLI
+        working-directory: landing-page
+        run: npm run test:playground
+
       - name: Audit
         working-directory: landing-page
         # Audit dev dependencies too. The sole exception is documented in audit-ci.jsonc;
