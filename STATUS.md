@@ -24,8 +24,8 @@ Checked on 2026-11-20.
 
 ## Playground (branch `feat/browser-playground`, 2026-11-19)
 
-- **Done:** `/playground` flattens, searches, and unflattens JSON in the browser with output byte-identical to CLI 1.3.1 (`--no-color`). It has four samples, a mode switch, search flags (`--regex`, `-c`, `-v`, `--count`, `-m`, `--sort`), flatten `--sort`/`--limit`, unflatten `--pretty`, and a copyable `gronify`/`npx gronify` command (PostHog `playground_command_copied`). It is linked from the header, footer, home hero, sitemap, `llms.txt`, and `llms-full.txt`, and guides may link to it.
-- **Parity:** `npm run test:playground` (in CI) checks 476 cases against recorded CLI output. A live run against the built CLI with 3,000 seeded random documents passed (3,476 checks).
+- **Done:** `/playground` flattens, searches, and unflattens JSON in the browser with output byte-identical to the CLI on `main` (1.3.2, `--no-color`). It has four samples, a mode switch, search flags (`--regex`, `-c`, `-v`, `--count`, `-m`, `--sort`), flatten `--sort`/`--limit`, unflatten `--pretty`, and a copyable `gronify`/`npx gronify` command (PostHog `playground_command_copied`). It is linked from the header, footer, home hero, sitemap, `llms.txt`, and `llms-full.txt`, and guides may link to it.
+- **Parity:** `npm run test:playground` (in CI) checks 476 cases against recorded CLI output. After rebasing on #149 (next 16.4.6), a live run against the built 1.3.2 CLI with 3,000 seeded random documents passed (3,476 checks); `audit`, `lint`, and `build` pass.
 - **Next:** after merge, request indexing for `/playground` in Search Console alongside the sitemap.
 
 ## Open items
