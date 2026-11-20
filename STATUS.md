@@ -25,7 +25,6 @@ Checked on 2026-11-20.
 ## Open items
 
 - **Search indexing (owner action).** On 2026-11-12 no search engine we could query returned a page from `gronify.vercel.app`; Google could not be checked from a script. In Search Console (the site already carries the verification tag), submit `https://gronify.vercel.app/sitemap.xml` and request indexing for the home page and `/guides`. Until pages are indexed, none of the copy work can show in results.
-- **Landing build fails on a Next.js advisory.** `next build` in `landing-page` compiles and prerenders every page, then exits 1 with a `SecurityFatalError`. `npm audit` reports a moderate advisory for `next` 16.0.0–16.4.4, and the page pins 16.4.3. This affects `main`, not only the 1.3.2 sync. Bump `next` (and `eslint-config-next`) in a separate PR.
 - **Links.** The repository has no stars, so Homebrew core is out of reach for now. Places that list tools like this one and accept submissions: `toolleeo/awesome-cli-apps-in-a-csv`, `burningtree/awesome-json`, `fiatjaf/awesome-jq`, AlternativeTo (as an alternative to gron and jq), and one Show HN. Nothing has been submitted.
 - **Domain.** `vercel.app` is on the Public Suffix List, so Search Console only offers a URL-prefix property. No documented ranking penalty was found. A later move to a custom domain needs redirects and canonicals.
 - **Landing audit exception `GHSA-g3hv-75wg-m249`** (minimatch, reached only through eslint and its plugins, dev-only). The only fix is minimatch 11, which the 3.x consumers cannot take. Remove the entry once the eslint plugin stack moves off minimatch 3 and `npm run audit` in `landing-page` passes with an empty allowlist.
@@ -46,6 +45,7 @@ Checked on 2026-11-20.
 - The release tarball's sha256 (`1651535d9af0bc118a7f6fd24161d9dde4d68d893709ade0bb337640e6666e6e`) matches `checksums.txt`; its `gronify --version` prints 1.3.2 and `--pretty` indents `lag = 0.5` level with its siblings.
 - The tap's Update Formulae workflow (run 44672101420, dispatched for `gronify`) bumped `Formula/gronify.rb` to the v1.3.2 tarball and that sha256, passed its install and test jobs on ubuntu-24.04 and macos-15, and committed the formula to the tap's `main`.
 - The landing page shows v1.3.2 (`site-config.ts`, `llms-full.txt`), with `lastReleaseIsoDate` 2026-11-20. The `flatten-json` guide now names 1.3.2 as the release with the path-depth `--pretty` fix. Benchmark copy still reports the 1.3.1 sweep; it reads its versions from `benchmark-results.json`.
+- `next build` had started failing with a `SecurityFatalError` for seven moderate advisories against `next` 16.0.0–16.4.4. #149 moved `next` and `eslint-config-next` to 16.4.6; on that base `npm run audit`, `lint`, and `build` in `landing-page` pass, with only the minimatch exception still allowlisted.
 
 ### 2026-11-12 — `flatten --pretty` indents by path depth
 
