@@ -1,4 +1,4 @@
-import type { Metadata, ResolvingMetadata } from "next";
+import type { Metadata } from "next";
 
 import { GuidesIndex } from "./guide-article";
 import {
@@ -6,41 +6,32 @@ import {
   guidesIndexUrl,
   serializeJsonLd,
 } from "./json-ld";
+import { guidesIndexDescription, guidesIndexTitle } from "./index-copy";
 import { guides } from "./registry";
 
-const title = "Gronify guides: work with JSON on the command line";
-const description =
-  "Guides for searching, flattening, and rebuilding JSON from the command line with Gronify. Each one answers a single question with commands and real output.";
+const title = guidesIndexTitle;
+const description = guidesIndexDescription;
 
-export async function generateMetadata(
-  _props: unknown,
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
-  // Setting `openGraph` or `twitter` here replaces the root layout's objects
-  // whole, so the site-wide share image is carried over from the parent.
-  const inherited = await parent;
-
-  return {
-    title: { absolute: title },
+// `images` is left unset on purpose: `opengraph-image.tsx` in this segment
+// supplies the index's own share image for both Open Graph and Twitter.
+export const metadata: Metadata = {
+  title: { absolute: title },
+  description,
+  alternates: { canonical: guidesIndexUrl },
+  openGraph: {
+    type: "website",
+    url: guidesIndexUrl,
+    title,
     description,
-    alternates: { canonical: guidesIndexUrl },
-    openGraph: {
-      type: "website",
-      url: guidesIndexUrl,
-      title,
-      description,
-      siteName: "Gronify",
-      locale: "en_US",
-      images: inherited.openGraph?.images,
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: inherited.twitter?.images,
-    },
-  };
-}
+    siteName: "Gronify",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+  },
+};
 
 export default function GuidesPage() {
   return (
