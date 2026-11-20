@@ -276,12 +276,15 @@ gronify search demo.json version | gronify unflatten
 Longer walkthroughs for specific tasks are on the website:
 
 - [How to grep JSON from the command line](https://gronify.vercel.app/guides/grep-json)
+- [Search JSON on Windows in PowerShell and cmd](https://gronify.vercel.app/guides/grep-json-windows-powershell)
 - [Flatten nested JSON on the command line](https://gronify.vercel.app/guides/flatten-json)
 - [Find the path to a key or value in JSON](https://gronify.vercel.app/guides/find-json-path)
 - [Gronify as a gron and fastgron alternative](https://gronify.vercel.app/guides/gron-alternative)
 - [Gronify vs jq](https://gronify.vercel.app/guides/jq-alternative)
 - [Compare two JSON files with `diff`](https://gronify.vercel.app/guides/compare-json-files)
 - [Search large JSON files](https://gronify.vercel.app/guides/large-json-files)
+- [Fix `ERR_STRING_TOO_LONG` / `Invalid string length` in Node.js](https://gronify.vercel.app/guides/fix-err-string-too-long-json)
+- [Search OpenAPI specs, `package-lock.json`, and Kubernetes JSON](https://gronify.vercel.app/guides/search-openapi-and-lockfiles)
 - [Turn gron output back into JSON](https://gronify.vercel.app/guides/unflatten-json)
 - [JSON exploration for AI coding agents](https://gronify.vercel.app/guides/json-for-ai-agents)
 - [Keep big numbers exact](https://gronify.vercel.app/guides/json-number-precision)

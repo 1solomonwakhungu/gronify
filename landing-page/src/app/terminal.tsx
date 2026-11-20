@@ -14,10 +14,13 @@ export function Terminal({
   lines,
   label,
   className,
+  prompt = "$",
 }: {
   lines: TerminalLine[];
   label: string;
   className?: string;
+  /** Shown before each command line. Defaults to a POSIX shell's "$". */
+  prompt?: string;
 }) {
   // Only what a reader would paste into a shell: the command lines, without
   // the `$ ` prompt (which is rendered separately and never part of `text`).
@@ -43,7 +46,7 @@ export function Terminal({
             {line.kind === "command" ? (
               <>
                 <span className={styles.terminalPrompt} aria-hidden="true">
-                  ${" "}
+                  {prompt}{" "}
                 </span>
                 {line.text}
               </>

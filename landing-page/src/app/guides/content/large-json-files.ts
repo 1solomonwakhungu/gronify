@@ -120,7 +120,7 @@ Error: Cannot create a string longer than 0x1fffffe8 characters
         { kind: "subheading", text: "How to fix it" },
         {
           kind: "paragraph",
-          text: "Stop creating the string:",
+          text: "Stop creating the string. [Fixing ERR_STRING_TOO_LONG in Node.js](/guides/fix-err-string-too-long-json) shows a streaming reader and writer for each failing call. In short:",
         },
         {
           kind: "list",
@@ -339,5 +339,10 @@ $ jq -cn --stream 'fromstream(1 | truncate_stream(inputs)) | select(.level == "e
         "Stream the elements out as JSON Lines and split on line count: `jq -cn --stream 'fromstream(1 | truncate_stream(inputs))' events.json | split -l 1000000 - part-` wrote four files from the 3.2 million records above, each line one complete record. Gronify does not write JSON Lines, so this is a job for jq.",
     },
   ],
-  related: ["grep-json", "json-for-ai-agents", "jq-alternative"],
+  related: [
+    "fix-err-string-too-long-json",
+    "grep-json",
+    "json-for-ai-agents",
+    "jq-alternative",
+  ],
 };
