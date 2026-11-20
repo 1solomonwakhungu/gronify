@@ -8,7 +8,7 @@ The CLI reads from files or stdin and writes to stdout or atomically to `-o <fil
 
 Use Gronify when a large or unfamiliar JSON payload turns up in a CI log, an API response, a support bundle, or generated config, and you need to find a key or value before you know the schema. Use `jq` once you know the path and want to transform data.
 
-The project is open source under the MIT license. The current release is 1.3.1 (2026-11-05). Official website: <https://gronify.vercel.app>.
+The project is open source under the MIT license. The current release is 1.3.2 (2026-11-20). Official website: <https://gronify.vercel.app>.
 
 ## Features
 
