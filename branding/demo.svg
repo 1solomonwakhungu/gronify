@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="458" viewBox="0 0 800 458" role="img" aria-labelledby="title desc">
 <title id="title">Gronify terminal demo: count matches, cap matches with full paths, and compare two JSON files with diff</title>
-<desc id="desc">Real output from gronify 1.3.1.
+<desc id="desc">Real output from gronify 1.3.2.
 $ gronify search events.json --count error
 4
 
@@ -48,7 +48,7 @@ text{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",mo
 </style>
 <rect width="800" height="458" rx="14" fill="#0e0d14"/>
 <rect x="8" y="8" width="784" height="442" rx="12" fill="#15141d" stroke="#262534"/>
-<text x="772" y="30" text-anchor="end" fill="#9a9cbd" style="font-size:12px">real output · gronify 1.3.1</text>
+<text x="772" y="30" text-anchor="end" fill="#9a9cbd" style="font-size:12px">real output · gronify 1.3.2</text>
 <clipPath id="inside"><rect x="9" y="9" width="782" height="440" rx="11"/></clipPath>
 <g class="cycle" clip-path="url(#inside)">
 <g class="a" style="animation-name:l0"><text x="28" y="52"><tspan fill="#8583ff">$</tspan> <tspan fill="#e6e7f2">gronify search events.json --count error</tspan></text><rect class="mask" style="animation-name:m1;animation-timing-function:steps(40,end)" x="44.2" y="36" width="356" height="23" fill="#15141d"/></g>
