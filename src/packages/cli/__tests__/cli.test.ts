@@ -207,16 +207,24 @@ describe("Gronify CLI", () => {
       rmSync(dir, { recursive: true, force: true });
     });
 
-    /** Runs a shell pipeline in which `G` is the built CLI. */
-    function pipeline(command: string, env: NodeJS.ProcessEnv = {}) {
-      return spawnSync("sh", ["-c", command], {
-        encoding: "utf8",
-        env: { ...process.env, G: `node ${join(process.cwd(), "dist/index.js")}`, F: file, ...env },
-      });
+    /** Runs the built CLI with `input` on stdin. Stages are chained in Node rather than a shell, so this runs on Windows too. */
+    function cli(args: string[], input?: string) {
+      const result = spawnSync("node", ["dist/index.js", "--no-color", ...args], { input, encoding: "utf8" });
+      expect(result.stderr).toBe("");
+      return result;
+    }
+
+    /** Keeps the lines that contain `term`, as `grep term` would. */
+    function grep(text: string, term: string): string {
+      return text
+        .split("\n")
+        .filter((line) => line.includes(term))
+        .map((line) => `${line}\n`)
+        .join("");
     }
 
     test("flatten | grep | unflatten rebuilds the matching branches", () => {
-      const result = pipeline('$G --no-color flatten "$F" | grep regions | $G --no-color unflatten');
+      const result = cli(["unflatten"], grep(cli(["flatten", file]).stdout, "regions"));
 
       expect(result.status).toBe(0);
       expect(result.stdout).toBe(
@@ -225,14 +233,14 @@ describe("Gronify CLI", () => {
     });
 
     test("search | unflatten rebuilds leaf matches with their parents", () => {
-      const result = pipeline('$G --no-color search "$F" eu-west | $G --no-color unflatten');
+      const result = cli(["unflatten"], cli(["search", file, "eu-west"]).stdout);
 
       expect(result.status).toBe(0);
       expect(result.stdout).toBe('{"service":{"regions":[null,{"id":"eu-west"}]}}\n');
     });
 
     test("--pretty matches JSON.stringify", () => {
-      const result = pipeline('$G --no-color search "$F" --regex "owner|us-east" | $G --no-color --pretty unflatten');
+      const result = cli(["--pretty", "unflatten"], cli(["search", file, "--regex", "owner|us-east"]).stdout);
 
       expect(result.status).toBe(0);
       expect(result.stdout).toBe(

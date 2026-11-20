@@ -42,7 +42,7 @@ Checked on 2026-11-20.
 - Measured on this machine: full 285 MB gron is unchanged (0.67–0.70 s, 91–121 MB peak RSS, base and branch alike; sha256 output checks pass), and output is byte-identical to the base build, compact and pretty. A 118 MB leaf-only array subset streams at 135 MB peak; 1.5M synthesized object keys peak at 256 MB (about 80 bytes per key).
 - Fixed alongside: colored `unflatten` output was garbled because `formatJson` re-colored the `[` inside escape codes it had already inserted. It now colors in one pass.
 - README and the skill describe the new behavior. The landing-page guides (`unflatten-json`, `grep-json`, `gron-alternative`) and `llms-full.txt` still describe the released behavior (1.3.2) and should be updated when the release that contains this change is published.
-- Tests: 692 pass, up from 649. New cases are in `unflatten-stream.test.ts` and `cli.test.ts`; the tests that asserted the old missing-parent rejection now assert synthesis.
+- Tests: 764 pass on the branch rebased onto #150 (JSON Lines), and `flatten -s | grep | unflatten` rebuilds the matching records. New cases are in `unflatten-stream.test.ts` and `cli.test.ts`; the tests that asserted the old missing-parent rejection now assert synthesis. The pipeline tests chain CLI runs in Node instead of `sh`, so they also run on Windows.
 
 ### 2026-11-20 — JSON Lines input: `flatten`/`search -s, --stream` (alias `--jsonl`)
 
