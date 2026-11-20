@@ -131,7 +131,13 @@ function GuideBlockView({
         </Heading>
       );
     case "terminal":
-      return <Terminal label={block.label} lines={block.lines} />;
+      return (
+        <Terminal
+          label={block.label}
+          lines={block.lines}
+          prompt={block.prompt}
+        />
+      );
     case "list": {
       const List = block.style === "numbered" ? "ol" : "ul";
       return (

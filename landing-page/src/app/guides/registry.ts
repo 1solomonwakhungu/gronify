@@ -1,12 +1,15 @@
 import { compareJsonFiles } from "./content/compare-json-files";
 import { findJsonPath } from "./content/find-json-path";
+import { fixErrStringTooLongJson } from "./content/fix-err-string-too-long-json";
 import { flattenJson } from "./content/flatten-json";
 import { grepJson } from "./content/grep-json";
+import { grepJsonWindowsPowershell } from "./content/grep-json-windows-powershell";
 import { gronAlternative } from "./content/gron-alternative";
 import { jqAlternative } from "./content/jq-alternative";
 import { jsonForAiAgents } from "./content/json-for-ai-agents";
 import { jsonNumberPrecision } from "./content/json-number-precision";
 import { largeJsonFiles } from "./content/large-json-files";
+import { searchOpenapiAndLockfiles } from "./content/search-openapi-and-lockfiles";
 import { unflattenJson } from "./content/unflatten-json";
 import type { Guide } from "./types";
 import { validateGuides } from "./validate";
@@ -19,11 +22,14 @@ import { validateGuides } from "./validate";
 export const guides: Guide[] = validateGuides([
   // One guide per line, in index order.
   grepJson,
+  grepJsonWindowsPowershell,
   flattenJson,
   findJsonPath,
   unflattenJson,
   compareJsonFiles,
   largeJsonFiles,
+  fixErrStringTooLongJson,
+  searchOpenapiAndLockfiles,
   gronAlternative,
   jqAlternative,
   jsonNumberPrecision,

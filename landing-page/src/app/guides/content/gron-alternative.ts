@@ -398,5 +398,10 @@ Tip: Validate your JSON with a linter like https://jsonlint.com
         'For plain ASCII keys, yes, minus the `;`. The orders differ once an object mixes bare and bracketed keys: gron 0.7.1 puts every bare key such as `json.b` before every bracketed key such as `json["10"]`.',
     },
   ],
-  related: ["jq-alternative", "unflatten-json", "large-json-files"],
+  related: [
+    "jq-alternative",
+    "unflatten-json",
+    "large-json-files",
+    "grep-json-windows-powershell",
+  ],
 };

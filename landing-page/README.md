@@ -51,7 +51,7 @@ Rules the build enforces (`src/app/guides/validate.ts` fails `npm run build` and
 - Inline markup is well formed, and every link starts with `/`, `#`, or `https://`.
 - Table rows have one cell per column.
 
-Every command and output line in a transcript must be pasted from a real run of the built CLI (`cd src/packages/cli && npm ci && npm run build`, then `node dist/index.js ...`).
+Every command and output line in a transcript must be pasted from a real run of the built CLI (`cd src/packages/cli && npm ci && npm run build`, then `node dist/index.js ...`). A PowerShell session keeps `$ ` before each command inside the `transcript` tag and sets `prompt: "PS>"` on the block, so the page draws the right prompt.
 
 A slug in `related`, or an inline link to `/guides/<slug>`, must name a registered guide. The build fails on any other slug, so register a new guide before another guide links to it.
 
