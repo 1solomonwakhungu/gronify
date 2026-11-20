@@ -24,6 +24,7 @@ Checked on 2026-11-20.
 
 ## Open items
 
+- **Guides lag `unflatten`.** After the next release, update the `unflatten-json`, `grep-json` and `gron-alternative` guides and `llms-full.txt`: `unflatten` now fills in missing parents, so the `root must be assigned before child paths` transcripts and the advice to keep container lines are out of date.
 - **Search indexing (owner action).** On 2026-11-12 no search engine we could query returned a page from `gronify.vercel.app`; Google could not be checked from a script. In Search Console (the site already carries the verification tag), submit `https://gronify.vercel.app/sitemap.xml` and request indexing for the home page and `/guides`. Until pages are indexed, none of the copy work can show in results.
 - **Links.** The repository has no stars, so Homebrew core is out of reach for now. Places that list tools like this one and accept submissions: `toolleeo/awesome-cli-apps-in-a-csv`, `burningtree/awesome-json`, `fiatjaf/awesome-jq`, AlternativeTo (as an alternative to gron and jq), and one Show HN. Nothing has been submitted.
 - **Domain.** `vercel.app` is on the Public Suffix List, so Search Console only offers a URL-prefix property. No documented ranking penalty was found. A later move to a custom domain needs redirects and canonicals.
@@ -32,6 +33,16 @@ Checked on 2026-11-20.
 - **Issue tracker:** checked on 2026-11-19, it has no open issues. The 19 speculative roadmap issues (VS Code extension, browser and web app, backend and SDKs, paid features, growth campaigns) were deleted; only four closed issues remain (#1, #2, #5, #21). File new issues for concrete bugs or features only.
 
 ## History
+
+### 2026-11-20 — `unflatten` fills in missing parents
+
+- Filtered gron (`flatten | grep term | unflatten`, `search file term | unflatten`) used to fail with `root must be assigned before child paths`. Missing containers, the root included, are now synthesized from the next path segment, as `gron -u` and `fastgron -u` do: a key means an object, an index an array, and skipped indexes are padded with `null`.
+- Streaming (`src/unflatten/emitter.ts`): when a parent segment does not match an open container, the emitter closes down to the match and opens synthesized containers. Arrays rely on the ascending-index check. Objects the emitter synthesizes (or synthesizes into while empty) record their member keys, so a key reused after its container closed is out of order and goes to the in-memory rebuild instead of producing a duplicate that would not merge. Explicit objects that already have members are not tracked, so full gron does no extra work.
+- In-memory (`src/unflatten/tree.ts`) and the reference `unflattenGron` (`src/gron.ts`) synthesize the same way. Conflicts are still errors: a child under a scalar, a key on an array, an index on an object.
+- Measured on this machine: full 285 MB gron is unchanged (0.67–0.70 s, 91–121 MB peak RSS, base and branch alike; sha256 output checks pass), and output is byte-identical to the base build, compact and pretty. A 118 MB leaf-only array subset streams at 135 MB peak; 1.5M synthesized object keys peak at 256 MB (about 80 bytes per key).
+- Fixed alongside: colored `unflatten` output was garbled because `formatJson` re-colored the `[` inside escape codes it had already inserted. It now colors in one pass.
+- README and the skill describe the new behavior. The landing-page guides (`unflatten-json`, `grep-json`, `gron-alternative`) and `llms-full.txt` still describe the released behavior (1.3.2) and should be updated when the release that contains this change is published.
+- Tests: 764 pass on the branch rebased onto #150 (JSON Lines), and `flatten -s | grep | unflatten` rebuilds the matching records. New cases are in `unflatten-stream.test.ts` and `cli.test.ts`; the tests that asserted the old missing-parent rejection now assert synthesis. The pipeline tests chain CLI runs in Node instead of `sh`, so they also run on Windows.
 
 ### 2026-11-20 — JSON Lines input: `flatten`/`search -s, --stream` (alias `--jsonl`)
 
