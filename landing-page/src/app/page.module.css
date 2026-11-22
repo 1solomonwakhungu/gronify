@@ -152,6 +152,7 @@
 
 .installTabs {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--base-size-4);
 }
 
@@ -164,6 +165,7 @@
   font-family: var(--brand-body-fontFamily);
   font-size: var(--brand-text-size-100);
   line-height: var(--brand-text-lineHeight-200);
+  white-space: nowrap;
   cursor: pointer;
   transition:
     color var(--duration-quick) var(--ease-smooth-out),
