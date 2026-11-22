@@ -1,19 +1,20 @@
 import { transcript, type Guide } from "../types";
 
 // Every transcript below is pasted from gron 0.7.1, fastgron 0.7.7 (both from
-// Homebrew), and gronify 1.3.1, run on 2026-11-12 against the service.json and
-// events.jsonl shown in the transcripts. Release, commit, and issue dates come
-// from the GitHub API and the npm registry on the same day. Benchmark figures
-// are copied from src/packages/cli/BENCHMARKS.md (generated 2026-11-05).
+// Homebrew, run on 2026-11-12), and gronify 1.4.0 (run on 2026-11-22) against
+// the service.json and events.jsonl shown in the transcripts. gron and fastgron
+// release, commit, and issue dates come from the GitHub API on 2026-11-12.
+// Benchmark figures are copied from src/packages/cli/BENCHMARKS.md (generated
+// 2026-11-05 on Gronify 1.3.1).
 export const gronAlternative: Guide = {
   slug: "gron-alternative",
   title: "gron alternatives: gron vs fastgron vs Gronify compared",
   description:
     "gron, fastgron and Gronify compared with dates: latest releases, install methods, output format, speed, memory on large files, npm and Windows support.",
   h1: "gron alternatives: gron, fastgron and Gronify compared",
-  lede: "This page compares gron with two alternatives that print the same `json.path = value` lines. [fastgron](https://github.com/adamritter/fastgron) is a C++ tool that flattened every record file from 1 MB to 1 GB faster than the other two in our benchmark. Gronify is a Node.js CLI that installs with `npm install -g gronify` and streams its input, so its memory use barely moves between a 1 MB file and a 1 GB one. [gron](https://github.com/tomnomnom/gron) still runs and has the widest packaging; its latest release is from April 2022. The facts below were checked on 2026-11-12 against gron 0.7.1, fastgron 0.7.7, and Gronify 1.3.1.",
+  lede: "This page compares gron with two alternatives that print the same `json.path = value` lines. [fastgron](https://github.com/adamritter/fastgron) is a C++ tool that flattened every record file from 1 MB to 1 GB faster than the other two in our benchmark. Gronify is a Node.js CLI that installs with `npm install -g gronify` and streams its input, so its memory use barely moves between a 1 MB file and a 1 GB one. [gron](https://github.com/tomnomnom/gron) still runs and has the widest packaging; its latest release is from April 2022. The facts below were checked against gron 0.7.1, fastgron 0.7.7, and Gronify 1.4.0 (benchmark figures are from the 2026-11-05 sweep on Gronify 1.3.1).",
   published: "2026-11-12",
-  updated: "2026-11-19",
+  updated: "2026-11-22",
   sections: [
     {
       id: "comparison-table",
@@ -26,7 +27,7 @@ export const gronAlternative: Guide = {
         {
           kind: "table",
           caption:
-            "gron 0.7.1, fastgron 0.7.7, and Gronify 1.3.1, checked on 2026-11-12. Memory is peak RSS while flattening, from the benchmark run on 2026-11-05.",
+            "gron 0.7.1, fastgron 0.7.7, and Gronify 1.4.0. Memory is peak RSS while flattening, from the benchmark run on 2026-11-05 (Gronify 1.3.1).",
           columns: ["Property", "gron", "fastgron", "Gronify"],
           rows: [
             [
@@ -39,7 +40,7 @@ export const gronAlternative: Guide = {
               "Latest release",
               "v0.7.1, 2022-04-13",
               "v0.7.7, 2023-12-06",
-              "1.3.1, 2026-11-05",
+              "1.4.0, 2026-11-22",
             ],
             [
               "Install methods",
@@ -63,13 +64,13 @@ export const gronAlternative: Guide = {
               "Ungron of grep-filtered lines",
               "Yes, `-u`",
               "Yes, `-u`",
-              "No, `unflatten` needs every container line",
+              "Yes, `unflatten`",
             ],
             [
               "JSON Lines input",
               "Yes, `-s`",
               "Yes, `-s`",
-              "No, one document per run",
+              "Yes, `-s` / `--stream` / `--jsonl`",
             ],
             [
               "URL input",
@@ -99,7 +100,7 @@ export const gronAlternative: Guide = {
       blocks: [
         {
           kind: "paragraph",
-          text: "These are the dates on 2026-11-12, read from each project's GitHub repository and from the npm registry.",
+          text: "gron and fastgron repository dates were read from GitHub on 2026-11-12; Gronify's release date is current as of 2026-11-22.",
         },
         {
           kind: "list",
@@ -107,7 +108,7 @@ export const gronAlternative: Guide = {
           items: [
             "gron: latest release v0.7.1 on 2022-04-13, latest commit on 2025-05-31, 57 open issues and pull requests. Two of the issues concern memory: [#50, Inexplicably high memory usage](https://github.com/tomnomnom/gron/issues/50), opened in September 2018, and [#61, Issues processing large JSON files](https://github.com/tomnomnom/gron/issues/61), opened in February 2019.",
             "fastgron: latest release v0.7.7 on 2023-12-06, latest commit on 2026-07-04.",
-            "Gronify: latest release 1.3.1 on 2026-11-05.",
+            "Gronify: latest release 1.4.0 on 2026-11-22.",
           ],
         },
         {
@@ -298,16 +299,18 @@ json.owner.id = 12345678901234567890
           kind: "list",
           style: "bullet",
           items: [
-            "JSON Lines. `gron -s` and `fastgron -s` read one JSON document per line and number them as elements of one array. Gronify reads one document per run and stops with an error at the second.",
             "URLs. `gron https://api.github.com/repos/tomnomnom/gron` fetches the URL itself, and so does fastgron outside Windows. Gronify reads files and stdin only, so pipe the response in: `curl -s https://api.github.com/repos/tomnomnom/gron | gronify flatten`.",
-            "Ungron of a filtered subset. `gron -u` and `fastgron -u` rebuild JSON from whatever lines grep left and pad skipped array positions with `null`. `gronify unflatten` needs every container line and fails without them. The ways around that are in the guide to [turning gron lines back into JSON](/guides/unflatten-json).",
             "Path queries. `fastgron service.json .owner.team` prints only that path, and its README documents wildcards and slices. Gronify has no query language; `search` filters the flattened lines by text or regex, as shown in [how to grep JSON](/guides/grep-json).",
           ],
         },
         {
+          kind: "paragraph",
+          text: "Two features that used to belong only to gron and fastgron shipped in Gronify 1.4.0: rebuilding JSON from grep-filtered lines (`unflatten` fills in missing parents automatically; see [turning gron lines back into JSON](/guides/unflatten-json)) and reading JSON Lines with `-s`, `--stream`, or `--jsonl`:",
+        },
+        {
           kind: "terminal",
           label:
-            "Subset ungron in gron, Gronify, and fastgron, and a fastgron path query",
+            "Subset ungron in gron and Gronify, plus a fastgron path query",
           lines: transcript`
 $ gron service.json | grep regions | gron -u
 {
@@ -316,10 +319,7 @@ $ gron service.json | grep regions | gron -u
     "eu-west-1"
   ]
 }
-$ gronify flatten service.json | grep regions | gronify unflatten
-Error: unflattening gron: line 1: root must be assigned before child paths
-Tip: Gron lines should look like: json.path = value
-$ gronify flatten service.json | grep regions | fastgron -u
+$ gronify flatten service.json | grep regions | gronify --pretty unflatten
 {
   "regions": [
     "us-east-1",
@@ -329,10 +329,6 @@ $ gronify flatten service.json | grep regions | fastgron -u
 $ fastgron service.json .owner.team
 json.owner.team = "payments"
 `,
-        },
-        {
-          kind: "paragraph",
-          text: "In the third command Gronify flattens the file with its low memory use, and fastgron rebuilds the small filtered result.",
         },
         {
           kind: "terminal",
@@ -349,10 +345,19 @@ json[0].status = "ok";
 json[1] = {};
 json[1].id = 2;
 json[1].status = "failed";
-$ gronify flatten events.jsonl
-Error: flattening JSON: Unexpected '{' after the top-level value at byte offset 23 (line 2, column 1)
-Tip: Validate your JSON with a linter like https://jsonlint.com
+$ gronify flatten -s events.jsonl
+json = []
+json[0] = {}
+json[0].id = 1
+json[0].status = "ok"
+json[1] = {}
+json[1].id = 2
+json[1].status = "failed"
 `,
+        },
+        {
+          kind: "paragraph",
+          text: "Without `-s` (or `--stream` / `--jsonl`), Gronify expects one JSON document per run and prints a tip pointing to `--stream` if it sees a second top-level value.",
         },
       ],
     },
@@ -365,8 +370,8 @@ Tip: Validate your JSON with a linter like https://jsonlint.com
           style: "bullet",
           items: [
             "If your files are a few megabytes and you want one binary with no runtime and sorted output, installed from Homebrew, Scoop, or `go install`, use gron.",
-            "If speed matters most and the file fits in RAM about twice over, or you need JSON Lines, path queries, or ungron of filtered lines, use fastgron.",
-            "If you want an npm install, regex search in one command, the original key order, or files larger than your RAM, use Gronify.",
+            "If speed matters most and the file fits in RAM about twice over, or you want built-in URL fetching or path queries, use fastgron.",
+            "If you want an npm install, regex search in one command, JSON Lines streaming (`--stream`), the original key order, or files larger than your RAM, use Gronify.",
           ],
         },
         {
@@ -380,7 +385,7 @@ Tip: Validate your JSON with a linter like https://jsonlint.com
     {
       question: "Does gron --stream lower memory use on a large file?",
       answer:
-        "No. gron's help describes `-s, --stream` as \"Treat each line of input as a separate JSON object\", which means JSON Lines input. gron still decodes one large document whole. fastgron's `-s` flag has the same meaning.",
+        "No. gron's help describes `-s, --stream` as \"Treat each line of input as a separate JSON object\", which means JSON Lines input. gron still decodes one large document whole. fastgron's `-s` flag has the same meaning. Gronify's `-s, --stream` (also `--jsonl`) reads JSON Lines too, and Gronify streams both single documents and JSON Lines one record at a time.",
     },
     {
       question: "Does gron --no-sort keep the original key order?",

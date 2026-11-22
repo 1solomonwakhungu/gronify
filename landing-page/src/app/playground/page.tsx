@@ -15,7 +15,7 @@ export async function generateMetadata(_props: unknown, parent: ResolvingMetadat
   return {
     title: { absolute: playgroundTitle },
     description: playgroundDescription,
-    keywords: ["flatten JSON online", "grep JSON online", "gron online", "search JSON online", "ungron online", "JSON to gron"],
+    keywords: ["flatten JSON online", "grep JSON online", "gron online", "search JSON online", "ungron online", "JSON to gron", "JSON Lines online", "NDJSON online"],
     alternates: { canonical: url },
     openGraph: {
       type: "website",
@@ -53,8 +53,9 @@ const structuredData = {
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
       featureList: [
         "Flatten JSON into json.path = value lines",
+        "Read JSON Lines / NDJSON with --stream",
         "Search flattened JSON by substring or JavaScript regex",
-        "Unflatten gron lines back into JSON",
+        "Unflatten full or filtered gron lines back into JSON",
         "Sort keys by UTF-16 code unit",
         "Keep big integers and decimals exactly as written",
       ],

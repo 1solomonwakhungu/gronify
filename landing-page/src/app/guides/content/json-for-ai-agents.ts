@@ -12,7 +12,7 @@ export const jsonForAiAgents: Guide = {
   h1: "Let a coding agent search large JSON without reading it all",
   lede: "A coding agent that opens a large JSON file whole fills its context window with records it never needed. Have it run `gronify search events.json error --count` and then `gronify search events.json error -m 5` instead: the first prints one number, and the second prints five `path = value` lines and stops reading the file.",
   published: "2026-11-12",
-  updated: "2026-11-12",
+  updated: "2026-11-22",
   sections: [
     {
       id: "why-not-read-whole",
@@ -303,7 +303,7 @@ $ npx skills add https://github.com/1solomonwakhungu/gronify --skill gronify-jso
           kind: "list",
           style: "bullet",
           items: [
-            "Run `command -v gronify` and check the version first: the caps, `--sort`, and `--exit-status` need 1.2.0 or newer.",
+            "Run `command -v gronify` and check the version first: the caps, `--sort`, and `--exit-status` need 1.2.0 or newer, and `--stream` / `--jsonl` needs 1.4.0 or newer.",
             "Pass `--no-color` in every captured command.",
             "Go from cheap to specific on an unfamiliar file: `--count`, then `-m 20`, then `flatten --limit 50`, then a narrower regex that still has a cap.",
             "Never `cat` a large JSON file or rerun without a cap on an unknown one.",
@@ -373,19 +373,18 @@ $ jq -r '.events[].error.code // empty' events.json | sort | uniq -c
         },
         {
           kind: "paragraph",
-          text: "JSON Lines logs need another tool too. Gronify reads one JSON document per run, so a log with one object per line fails at line 2. jq reads a stream of values, and line tools such as [ripgrep](https://github.com/BurntSushi/ripgrep) work because each line is one record:",
+          text: "For JSON Lines (NDJSON) logs with one JSON value per line, pass `-s`, `--stream`, or `--jsonl` to `gronify flatten` or `gronify search`; records stream one at a time and work with `--count` and `-m`. When the agent needs whole matching JSON objects back or wants to search across a directory of many log files, jq or [ripgrep](https://github.com/BurntSushi/ripgrep) is often more direct:",
         },
         {
           kind: "terminal",
-          label: "Gronify rejects a JSON Lines log that jq 1.8.2 filters",
+          label: "Searching a JSON Lines log with gronify --stream and with jq 1.8.2",
           lines: transcript`
 $ cat app.jsonl
 {"level":"info","msg":"started"}
 {"level":"error","msg":"db timeout"}
 {"level":"info","msg":"stopped"}
-$ gronify --no-color search app.jsonl error; echo $?
-Error: searching JSON: Unexpected '{' after the top-level value at byte offset 33 (line 2, column 1)
-1
+$ gronify --no-color search --stream app.jsonl error
+json[1].level = "error"
 $ jq -c 'select(.level == "error")' app.jsonl
 {"level":"error","msg":"db timeout"}
 `,

@@ -11,7 +11,7 @@ export const findJsonPath: Guide = {
   h1: "Find the path to any key or value in a JSON file",
   lede: 'To find where a key or value sits in a JSON file, flatten the file so that every value prints next to its full path, then filter those lines. `gronify search account.json grace@example.com` prints `json.users[1].email = "grace@example.com"`, and the same path without the leading `json` is the jq filter `.users[1].email`.',
   published: "2026-11-12",
-  updated: "2026-11-12",
+  updated: "2026-11-22",
   sections: [
     {
       id: "find-key",
@@ -374,7 +374,7 @@ Stopped after 1 match (--max-count); there may be more
     {
       question: "Can I find paths in a JSON Lines (NDJSON) file?",
       answer:
-        "Not with Gronify, which reads one JSON document per run and stops with an error at the second line. jq reads a stream of documents, so `jq -c 'path(.. | select(. == \"x\"))' log.ndjson` prints the matching path for each line. `gron -s` and `fastgron -s` flatten every line under its own index, such as `json[0]` and `json[1]`.",
+        "Yes. Pass `-s`, `--stream`, or `--jsonl`: `gronify search --stream log.ndjson error` flattens each non-blank line under `json[0]`, `json[1]`, and so on, printing the record index and full path for every match. Without the flag, Gronify expects one JSON document per run. jq reads a stream of documents by default (`jq -c 'path(.. | select(. == \"x\"))' log.ndjson`), and `gron -s` and `fastgron -s` use the same `json[0]` numbering.",
     },
   ],
   related: [

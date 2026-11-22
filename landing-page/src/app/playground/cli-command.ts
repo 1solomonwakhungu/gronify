@@ -18,6 +18,8 @@ export interface CommandSettings {
   sort: boolean;
   /** `--limit` for flatten; null when off. */
   limit: number | null;
+  /** `--stream` for flatten and search (JSON Lines / NDJSON). */
+  stream: boolean;
   /** `--pretty` for unflatten. */
   pretty: boolean;
 }
@@ -38,6 +40,7 @@ export function shellQuote(argument: string): string {
 export function commandArguments(settings: CommandSettings): string[] {
   if (settings.mode === "flatten") {
     const args = ["flatten", settings.file];
+    if (settings.stream) args.push("--stream");
     if (settings.sort) args.push("--sort");
     if (settings.limit !== null) args.push("--limit", String(settings.limit));
     return args;
@@ -46,6 +49,7 @@ export function commandArguments(settings: CommandSettings): string[] {
     return settings.pretty ? ["--pretty", "unflatten", settings.file] : ["unflatten", settings.file];
   }
   const options: string[] = [];
+  if (settings.stream) options.push("--stream");
   if (settings.regex) options.push("--regex");
   if (settings.caseSensitive) options.push("-c");
   if (settings.invert) options.push("-v");

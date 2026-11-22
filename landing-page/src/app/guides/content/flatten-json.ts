@@ -13,7 +13,7 @@ export const flattenJson: Guide = {
   h1: "Flatten nested JSON to one line per value",
   lede: "To flatten nested JSON on the command line, run `gronify flatten file.json`, or pipe JSON into `gronify flatten`. It prints one `json.path = value` line for every value, with array positions in brackets, so each value carries its full path and the output works with grep, sort, diff, and awk.",
   published: "2026-11-12",
-  updated: "2026-11-12",
+  updated: "2026-11-22",
   sections: [
     {
       id: "flatten-file-or-stdin",
@@ -251,7 +251,7 @@ $ gronify flatten config.json | gronify unflatten
         },
         {
           kind: "paragraph",
-          text: "`unflatten` needs every container line, such as `json = {}` and `json.tags = []`, ahead of the values inside it, so deleting lines takes more care than changing them. The guide to [unflattening gron lines back into JSON](/guides/unflatten-json) covers filtered input, line order, and indented output.",
+          text: "`unflatten` also fills in missing parent containers automatically, so piping a filtered subset such as `gronify search config.json replicas | gronify unflatten` rebuilds valid JSON without keeping `json = {}` or `json.db = {}`. The guide to [unflattening gron lines back into JSON](/guides/unflatten-json) covers filtered input, line order, and indented output.",
         },
       ],
     },
@@ -345,7 +345,7 @@ json.a.b = 2
             [
               "Flatten a JSON Lines log with one object per line",
               "One line per value",
-              "`gron -s` or `fastgron -s`",
+              "`gronify flatten -s`, `gron -s`, or `fastgron -s`",
             ],
           ],
         },
@@ -361,7 +361,7 @@ json.a.b = 2
     {
       question: "Can I flatten a JSON Lines or NDJSON file?",
       answer:
-        "No. Each Gronify run reads one JSON document, and a second object on the next line stops it with `Unexpected '{' after the top-level value`. `gron -s` and [fastgron](https://github.com/adamritter/fastgron) with `-s` read one object per line and print them as elements of a root array.",
+        "Yes. Pass `-s`, `--stream`, or `--jsonl`: `gronify flatten --stream events.jsonl` reads one JSON value per line and prints each record under `json[0]`, `json[1]`, and so on, under `json = []`, matching `gron -s` and [fastgron](https://github.com/adamritter/fastgron) with `-s`. Without the flag, a second value on the next line stops with `Unexpected '{' after the top-level value` and a tip to pass `--stream`.",
     },
     {
       question: "How do I flatten only one part of a JSON document?",
