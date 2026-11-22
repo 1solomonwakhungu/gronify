@@ -47,6 +47,11 @@ describe("createLineMatcher", () => {
   test("an empty term matches every line", () => {
     expect(matches("anything", "")).toBe(true);
     expect(matches("", "")).toBe(true);
+    expect(matches("anything", "", { caseSensitive: true })).toBe(true);
+    expect(matches("anything", "", { regex: true })).toBe(true);
+    expect(matches("anything", "", { regex: true, caseSensitive: true })).toBe(true);
+    expect(matches("x".repeat(2048), "")).toBe(true);
+    expect(matches("x".repeat(2048), "", { caseSensitive: true })).toBe(true);
   });
 
   test("agrees with the regex implementation on a spread of inputs", () => {

@@ -43,6 +43,7 @@ class SubstringMatcher implements LineMatcher {
   }
 
   test(buf: Buffer, start: number, end: number): boolean {
+    if (this.needle.length === 0) return true;
     // Native search pays off on long lines; keep the allocation-free loop for short ones.
     // Bound the native search to this line, including when the needle is absent.
     if (end - start >= 512 && (this.fold === IDENTITY || this.longPattern !== null)) {
