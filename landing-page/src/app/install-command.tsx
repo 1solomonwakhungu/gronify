@@ -14,6 +14,11 @@ const installMethods = [
     label: "Homebrew",
     command: "brew install 1solomonwakhungu/tap/gronify",
   },
+  {
+    id: "skills",
+    label: "Agent Skills",
+    command: "npx skills add 1solomonwakhungu/gronify",
+  },
 ] as const;
 
 type InstallMethod = (typeof installMethods)[number]["id"];

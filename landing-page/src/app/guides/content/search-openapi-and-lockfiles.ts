@@ -20,7 +20,7 @@ export const searchOpenapiAndLockfiles: Guide = {
   h1: "Search OpenAPI specs, package-lock.json, and Kubernetes JSON from the command line",
   lede: 'OpenAPI specs, `package-lock.json`, and `kubectl get -o json` output are too large to read and too deeply nested to grep. Each recipe here is one `gronify search` with a regex anchored on the JSON path, such as `\'^json\\.paths\\["[^"]+"\\]\\.[a-z]+\\.deprecated = true$\'` for every deprecated endpoint, and each prints matches with their full paths.',
   published: "2026-11-20",
-  updated: "2026-11-20",
+  updated: "2026-11-22",
   sections: [
     {
       id: "path-patterns",
@@ -421,6 +421,23 @@ $ jq -r '.prefixes[] | select(.region == "eu-west-1" and .service == "S3") | .ip
         {
           kind: "paragraph",
           text: "Each Gronify run reads one JSON document, so a stream of objects, such as `kubectl get -w -o json`, needs jq. For files in the gigabytes, see [searching large JSON files](/guides/large-json-files).",
+        },
+      ],
+    },
+    {
+      id: "agent-skill",
+      heading: "Use these recipes with a coding agent",
+      blocks: [
+        {
+          kind: "paragraph",
+          text: "To load these OpenAPI, `package-lock.json`, Kubernetes, and cloud JSON patterns directly into Claude Code, Cursor, Codex, or another supported agent, install the [`openapi-lockfile-json-search`](https://skills.sh/1solomonwakhungu/gronify/openapi-lockfile-json-search) skill (see [JSON exploration for AI coding agents](/guides/json-for-ai-agents)):",
+        },
+        {
+          kind: "terminal",
+          label: "Installing the openapi-lockfile-json-search agent skill",
+          lines: transcript`
+$ npx skills add 1solomonwakhungu/gronify --skill openapi-lockfile-json-search
+`,
         },
       ],
     },

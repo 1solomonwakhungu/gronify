@@ -17,6 +17,11 @@
     "cli",
     "command-line",
     "streaming",
+    "jsonl",
+    "ndjson",
+    "ai-agents",
+    "agent-skills",
+    "claude-code",
     "developer-tools"
   ],
   "homepage": "https://gronify.vercel.app",

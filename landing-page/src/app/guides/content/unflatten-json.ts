@@ -11,7 +11,7 @@ export const unflattenJson: Guide = {
   h1: "Unflatten gron lines back into JSON (ungron)",
   lede: "To turn gron lines back into JSON, pipe them into `gronify unflatten` or pass a file: `gronify unflatten data.gron`. It reads the `json.path = value` lines written by `gronify flatten`, gron, or fastgron and writes one JSON document with numbers and key order unchanged. It needs every container line and does not create missing parents, so a grep-filtered subset that `gron --ungron` accepts is rejected here; see [filtered lines](#filtered-lines) for the two ways around that.",
   published: "2026-11-12",
-  updated: "2026-11-12",
+  updated: "2026-11-22",
   sections: [
     {
       id: "round-trip",
@@ -306,6 +306,23 @@ $ gronify unflatten strings.gron
         {
           kind: "paragraph",
           text: "The flatten and search side of big inputs has its own page, [large JSON files](/guides/large-json-files). Measured time and peak memory are in the [benchmarks](/#benchmarks) on the home page. The full table in [BENCHMARKS.md](https://github.com/1solomonwakhungu/gronify/blob/main/src/packages/cli/BENCHMARKS.md) lists unflatten next to gron and fastgron, including the 1 MB and 10 MB inputs where `fastgron -u` is faster.",
+        },
+      ],
+    },
+    {
+      id: "agent-skill",
+      heading: "Use this workflow with a coding agent",
+      blocks: [
+        {
+          kind: "paragraph",
+          text: "To teach Claude Code, Cursor, Codex, or another supported agent safe `unflatten` round-tripping, exact number handling, and path-to-`jq` translation, install the [`json-path-to-jq-and-unflatten`](https://skills.sh/1solomonwakhungu/gronify/json-path-to-jq-and-unflatten) skill (see [JSON exploration for AI coding agents](/guides/json-for-ai-agents)):",
+        },
+        {
+          kind: "terminal",
+          label: "Installing the json-path-to-jq-and-unflatten agent skill",
+          lines: transcript`
+$ npx skills add 1solomonwakhungu/gronify --skill json-path-to-jq-and-unflatten
+`,
         },
       ],
     },

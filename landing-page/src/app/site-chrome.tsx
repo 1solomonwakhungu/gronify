@@ -172,7 +172,7 @@ export function SiteFooter({ onHome = false }: ChromeProps) {
               posthog.capture("skill_link_clicked", { placement: "footer" })
             }
           >
-            Agent Skill
+            Agent Skills
           </Link>
           <Link
             href={`${repositoryUrl}/issues`}
