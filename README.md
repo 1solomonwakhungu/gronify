@@ -11,7 +11,7 @@
 
 # Gronify
 
-[Website & Command Reference](https://gronify.vercel.app) · [npm Package](https://www.npmjs.com/package/gronify) · [Agent Skill](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search)
+[Website & Command Reference](https://gronify.vercel.app) · [npm Package](https://www.npmjs.com/package/gronify) · [Agent Skills](https://skills.sh/1solomonwakhungu/gronify)
 
 Gronify lets you grep JSON from the command line. It flattens nested JSON into one `json.path = value` line per value, searches those lines with plain text or a regex, and turns the lines back into JSON. It is a gron-style command-line tool that you install with npm.
 
@@ -55,13 +55,25 @@ Use Gronify when a large or unfamiliar JSON payload turns up in a CI log, an API
 
 ## Agent skills
 
-Install the Gronify agent skill with the open `skills` CLI:
+Install the Gronify agent skills for Claude Code, Cursor, Codex, Windsurf, GitHub Copilot, and other supported agents with the open `skills` CLI:
 
 ```bash
-npx skills add https://github.com/1solomonwakhungu/gronify --skill gronify-json-flatten-search
+npx skills add 1solomonwakhungu/gronify
+# or preview / install a single skill
+npx skills add 1solomonwakhungu/gronify --list
+npx skills add 1solomonwakhungu/gronify --skill gronify-json-flatten-search
 ```
 
-The skill teaches supported coding agents when to flatten, search, and round-trip JSON with the Gronify CLI. Browse it on [skills.sh](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search).
+| Skill                                                                                                       | Focus                                                                                         |
+| ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [`gronify-json-flatten-search`](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search)     | Complete Gronify CLI workflow: flatten, search, JSONL, `--sort`, exit codes, and `unflatten`  |
+| [`large-json-search`](https://skills.sh/1solomonwakhungu/gronify/large-json-search)                         | Context-safe exploration of >50 KB, minified, compressed, or multi-GB JSON files              |
+| [`jsonl-ndjson-log-search`](https://skills.sh/1solomonwakhungu/gronify/jsonl-ndjson-log-search)             | Streaming `.jsonl` / `.ndjson` log and transcript search with `--jsonl` / `-s`                |
+| [`json-compare-sorted-diff`](https://skills.sh/1solomonwakhungu/gronify/json-compare-sorted-diff)           | Key-order-independent JSON comparison with `flatten --sort`, system `diff`, and `git diff`    |
+| [`openapi-lockfile-json-search`](https://skills.sh/1solomonwakhungu/gronify/openapi-lockfile-json-search)   | Path-anchored recipes for OpenAPI/Swagger specs, `package-lock.json`, `kubectl`, and AWS JSON |
+| [`json-path-to-jq-and-unflatten`](https://skills.sh/1solomonwakhungu/gronify/json-path-to-jq-and-unflatten) | Find JSON paths for `jq` / JSONPath, keep 64-bit numbers exact, and unflatten subsets         |
+
+Browse all skills and security audits on [skills.sh](https://skills.sh/1solomonwakhungu/gronify).
 
 ## Features
 
@@ -539,7 +551,8 @@ The [Homebrew tap](https://github.com/1solomonwakhungu/homebrew-tap) formula ins
 |-- docs/                  # Benchmark receipts and review notes
 |-- landing-page/          # Next.js marketing/demo page
 |-- scripts/               # Validation, package discovery, and the demo.svg generator
-|-- skills/gronify-json-flatten-search/  # Installable agent skill indexed by skills.sh
+|-- skills/                # Installable agent skills suite indexed by skills.sh
+|-- skills.sh.json         # Repository skill groupings for skills.sh
 |-- src/
 |   |-- README.md          # Source tree orientation
 |   `-- packages/cli/      # TypeScript CLI package

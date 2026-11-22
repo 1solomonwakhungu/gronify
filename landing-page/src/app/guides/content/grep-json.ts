@@ -10,7 +10,7 @@ export const grepJson: Guide = {
   h1: "How to grep nested JSON from the command line",
   lede: "To grep JSON, flatten it first so that every value sits on its own line next to its full path, then filter those lines. `gronify search orders.json pending` does both in one streaming pass and prints each match as `json.path = value`, so you can see where in the document the match lives.",
   published: "2026-11-12",
-  updated: "2026-11-20",
+  updated: "2026-11-22",
   sections: [
     {
       id: "why-grep-fails",
@@ -352,6 +352,23 @@ alan@example.org
               "No JSON parsing is needed",
             ],
           ],
+        },
+      ],
+    },
+    {
+      id: "agent-skill",
+      heading: "Use this workflow with a coding agent",
+      blocks: [
+        {
+          kind: "paragraph",
+          text: "To teach Claude Code, Cursor, Codex, or another supported agent to grep nested JSON with `--no-color`, `--count`, and `-m` instead of reading large files whole, install the [`gronify-json-flatten-search`](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search) skill (see [JSON exploration for AI coding agents](/guides/json-for-ai-agents)):",
+        },
+        {
+          kind: "terminal",
+          label: "Installing the gronify-json-flatten-search agent skill",
+          lines: transcript`
+$ npx skills add 1solomonwakhungu/gronify --skill gronify-json-flatten-search
+`,
         },
       ],
     },

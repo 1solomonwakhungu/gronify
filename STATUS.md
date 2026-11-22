@@ -41,6 +41,13 @@ Checked on 2026-11-20.
 
 ## History
 
+### 2026-11-22 — Expanded agent skills suite and skills.sh cross-linking
+
+- Expanded `skills/` from 1 to 6 focused skills (`gronify-json-flatten-search`, `large-json-search`, `jsonl-ndjson-log-search`, `json-compare-sorted-diff`, `openapi-lockfile-json-search`, `json-path-to-jq-and-unflatten`) grouped in `skills.sh.json`, each with `<= 250`-char trigger-first descriptions, full Agent Skills frontmatter, CLI guardrails (empty-term stdin hang, `--` hyphen terms, uncapped vs. capped `pipefail`/SIGPIPE, PowerShell/cmd quoting), and honest version notes (`1.2.0+` vs. `> 1.3.2`).
+- Hardened `scripts/validate-metadata.mjs` to validate frontmatter YAML safety, key allowlist, description budget (`<= 250` chars, no angle brackets), `compatibility` length, stale claims, and `skills.sh.json` 1:1 parity; broadened Prettier in `.github/workflows/quality-check.yaml` to cover `skills.sh.json` and `'skills/**/*.md'`.
+- Added an **Agent Skills** tab to the hero install bar (`install-command.tsx`), a 6-card skills grid under `#agents` (`home.tsx`), copyable `npx skills add` sections across 7 matching guides (`json-for-ai-agents`, `large-json-files`, `compare-json-files`, `search-openapi-and-lockfiles`, `find-json-path`, `unflatten-json`, `grep-json`), clickable links in `README.md` / `llms*.txt`, and discovery keywords (`jsonl`, `ndjson`, `ai-agents`, `agent-skills`, `claude-code`) in `src/packages/cli/package.json`.
+- **Follow-up after PR #154 (`1.4.0` release):** replace `"newer than 1.3.2"` with `>= 1.4.0` in the skills and README, and run `npx skills add 1solomonwakhungu/gronify` once after merging to `main` so `skills.sh` indexes all 5 new slugs.
+
 ### 2026-11-20 — Three more guides: Windows, ERR_STRING_TOO_LONG, OpenAPI and lockfiles (#153)
 
 - New guides: `grep-json-windows-powershell` (`Select-String` and `ConvertFrom-Json` against `gronify search`, and PowerShell/cmd quoting), `fix-err-string-too-long-json` (which Node calls throw `ERR_STRING_TOO_LONG` or `RangeError: Invalid string length`, a streaming reader and writer, and inspecting the file with Gronify), and `search-openapi-and-lockfiles` (path-anchored recipes for the GitHub and Stripe OpenAPI descriptions, `package-lock.json`, kubectl JSON, and AWS `ip-ranges.json`). Registered, cross-linked from `grep-json`, `large-json-files`, `find-json-path`, and `gron-alternative`, and listed in `llms.txt`, `llms-full.txt`, and the README. The home page does not link them yet.

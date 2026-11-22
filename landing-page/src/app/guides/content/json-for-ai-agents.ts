@@ -12,7 +12,7 @@ export const jsonForAiAgents: Guide = {
   h1: "Let a coding agent search large JSON without reading it all",
   lede: "A coding agent that opens a large JSON file whole fills its context window with records it never needed. Have it run `gronify search events.json error --count` and then `gronify search events.json error -m 5` instead: the first prints one number, and the second prints five `path = value` lines and stops reading the file.",
   published: "2026-11-12",
-  updated: "2026-11-12",
+  updated: "2026-11-22",
   sections: [
     {
       id: "why-not-read-whole",
@@ -278,41 +278,39 @@ $ wc -l payment.gron
     },
     {
       id: "install-skill",
-      heading: "Install the Gronify agent skill",
+      heading: "Install the Gronify agent skills",
       blocks: [
         {
           kind: "paragraph",
-          text: "The repository ships a skill named `gronify-json-flatten-search` that teaches an agent this routine. Install it with the open [skills CLI](https://github.com/vercel-labs/skills):",
+          text: "The repository ships six focused skills on [skills.sh](https://skills.sh/1solomonwakhungu/gronify) — led by `gronify-json-flatten-search` and `large-json-search` — that teach an agent this routine and its task-specific recipes. Install the suite or pick one skill with the open [skills CLI](https://github.com/vercel-labs/skills):",
         },
         {
           kind: "terminal",
-          label: "Installing the Gronify skill with the skills CLI",
+          label: "Installing the Gronify skills with the skills CLI",
           lines: transcript`
-$ npx skills add https://github.com/1solomonwakhungu/gronify --skill gronify-json-flatten-search
+$ npx skills add 1solomonwakhungu/gronify
+$ npx skills add 1solomonwakhungu/gronify --skill gronify-json-flatten-search
 `,
         },
         {
           kind: "paragraph",
-          text: "With skills 1.8.1, that command wrote `.agents/skills/gronify-json-flatten-search/SKILL.md` into the project and linked it under `.claude/skills/`. The CLI's help lists `-a` to choose agents (its examples use `claude-code` and `cursor`), `-g` to install at user level, and `--list` to preview a repository without installing. The skill has a page on [skills.sh](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search).",
-        },
-        {
-          kind: "paragraph",
-          text: "The skill is one Markdown file. It tells the agent to:",
+          text: "The CLI writes each skill under `.agents/skills/<name>/SKILL.md` and links it into detected agent directories such as `.claude/skills/`. Pass `-a` to choose agents (for example `claude-code` or `cursor`), `-g` to install at user level, or `--list` to preview every skill in the repository without installing:",
         },
         {
           kind: "list",
           style: "bullet",
           items: [
-            "Run `command -v gronify` and check the version first: the caps, `--sort`, and `--exit-status` need 1.2.0 or newer.",
-            "Pass `--no-color` in every captured command.",
-            "Go from cheap to specific on an unfamiliar file: `--count`, then `-m 20`, then `flatten --limit 50`, then a narrower regex that still has a cap.",
-            "Never `cat` a large JSON file or rerun without a cap on an unknown one.",
-            "Check the exit status, and never treat output as complete when it is not 0.",
+            "[`gronify-json-flatten-search`](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search): complete Gronify workflow — check availability and version, pass `--no-color`, go from `--count` to `-m` to `flatten --limit`, check exit codes, and round-trip with `unflatten`.",
+            "[`large-json-search`](https://skills.sh/1solomonwakhungu/gronify/large-json-search): strict size gate (`wc -c`), 5-step narrowing loop, and compressed stream pipes for files over 50 KB to multi-GB exports.",
+            "[`jsonl-ndjson-log-search`](https://skills.sh/1solomonwakhungu/gronify/jsonl-ndjson-log-search): streaming `.jsonl` / `.ndjson` log and transcript exploration with `--jsonl` / `-s` (requires a release newer than 1.3.2; falls back to `jq -c` on 1.3.2 and older).",
+            "[`json-compare-sorted-diff`](https://skills.sh/1solomonwakhungu/gronify/json-compare-sorted-diff): key-order-independent JSON comparison using `flatten --sort` with system `diff` and `git diff` textconv.",
+            "[`openapi-lockfile-json-search`](https://skills.sh/1solomonwakhungu/gronify/openapi-lockfile-json-search): path-anchored search recipes for OpenAPI/Swagger specs, `package-lock.json`, `kubectl -o json`, and cloud JSON.",
+            "[`json-path-to-jq-and-unflatten`](https://skills.sh/1solomonwakhungu/gronify/json-path-to-jq-and-unflatten): translate Gronify paths to `jq` or JSONPath, preserve 64-bit numbers verbatim, and unflatten filtered subsets.",
           ],
         },
         {
           kind: "paragraph",
-          text: "The skill lists the count before the shape, the reverse of the loop above. Count first when the agent already has a search term, and look at the shape first when it does not. The skill does not install the CLI. That comes from npm or Homebrew, as the [install section](/#install) shows.",
+          text: "The skills do not install the CLI automatically. They tell the agent to run `command -v gronify` first and either use `npx gronify` or ask before installing from npm or Homebrew, as the [install section](/#install) shows.",
         },
       ],
     },
@@ -400,9 +398,9 @@ $ jq -c 'select(.level == "error")' app.jsonl
         "No. Gronify is a command-line program that an agent runs through its shell tool, the same way it runs `git`. The skill is a Markdown file of instructions, so there is no server to configure.",
     },
     {
-      question: "What does the skill put on my machine?",
+      question: "What do the skills put on my machine?",
       answer:
-        "One `SKILL.md` file with no scripts. A project install with skills 1.8.1 put it in `.agents/skills/gronify-json-flatten-search/` and also wrote `skills-lock.json`. The skill tells the agent to install the Gronify CLI only when it is missing and you want it.",
+        "Plain `SKILL.md` Markdown files with no executable scripts. Each installed skill goes under `.agents/skills/<name>/SKILL.md` (linked into detected agent directories) alongside `skills-lock.json`. The skills tell the agent to install the Gronify CLI only when it is missing and you want it.",
     },
     {
       question: "Does the agent need jq or grep installed too?",

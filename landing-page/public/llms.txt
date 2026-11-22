@@ -16,7 +16,7 @@ The project is open source under the MIT license and requires Node.js 20 or newe
 
 - [Core workflow: flatten, search, unflatten](https://gronify.vercel.app/#workflow): Print JSON as greppable `path = value` lines, filter them, and rebuild valid JSON.
 - [Comparison: jq, gron, fastgron, and grep](https://gronify.vercel.app/#compare): When to use Gronify, `jq`, `gron`, `fastgron`, plain `grep`, or system `diff`, and where each of the others is the better tool.
-- [AI coding agents](https://gronify.vercel.app/#agents): Count matches first (`--count`), stop reading early (`-m`, `--limit`), branch on `--exit-status`, and install the `gronify-json-flatten-search` agent skill.
+- [AI coding agents](https://gronify.vercel.app/#agents): Count matches first (`--count`), stop reading early (`-m`, `--limit`), branch on `--exit-status`, and install the Gronify agent skills (`gronify-json-flatten-search`, `large-json-search`, `jsonl-ndjson-log-search`, `json-compare-sorted-diff`, `openapi-lockfile-json-search`, `json-path-to-jq-and-unflatten`).
 - [Command: flatten](https://gronify.vercel.app/#commands): `gronify flatten [file]` prints JSON from a file or stdin as one line per value, in document order. Options: `--limit <n>` (stop after n lines and stop reading the input), `--sort` (sort object keys at every level by UTF-16 code unit; arrays keep their order; not the same order as gron).
 - [Command: search](https://gronify.vercel.app/#commands): `gronify search <file_or_term> [term]` flattens and filters in one pass. A term is a case-insensitive substring match on the whole line, path and value. Options: `-r, --regex` (JavaScript regular expression; `\d` works, POSIX classes such as `[[:digit:]]` do not), `-c, --case-sensitive`, `--count` (print the match count only), `-v, --invert-match`, `-m, --max-count <n>` (stop after n matches and stop reading the input), `--sort` (as for flatten; ignored with `--count`), `--exit-status` (exit 1 when nothing matches; errors then exit 2).
 - [Command: unflatten](https://gronify.vercel.app/#commands): `gronify unflatten [file]` turns gron lines from a file or stdin back into JSON. Lines in document order, which is what `flatten` and `flatten --sort` write, convert in one streaming pass.
@@ -52,7 +52,7 @@ The project is open source under the MIT license and requires Node.js 20 or newe
 ## Optional
 
 - [Full documentation](https://gronify.vercel.app/llms-full.txt): Complete reference with all commands, options, exit codes, benchmarks, tool comparisons, AI agent workflows, guide summaries, pipeline recipes, and troubleshooting.
-- [Agent skill](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search): Install with `npx skills add https://github.com/1solomonwakhungu/gronify --skill gronify-json-flatten-search`.
+- [Agent skills](https://skills.sh/1solomonwakhungu/gronify): Install all six Gronify skills with `npx skills add 1solomonwakhungu/gronify` (or `--skill gronify-json-flatten-search`).
 - [GitHub repository](https://github.com/1solomonwakhungu/gronify): Source code, CI, and contribution guidelines.
 - [Issues](https://github.com/1solomonwakhungu/gronify/issues): Bug reports and feature requests.
 - [License](https://github.com/1solomonwakhungu/gronify/blob/main/LICENSE): MIT License.

@@ -11,7 +11,7 @@ export const findJsonPath: Guide = {
   h1: "Find the path to any key or value in a JSON file",
   lede: 'To find where a key or value sits in a JSON file, flatten the file so that every value prints next to its full path, then filter those lines. `gronify search account.json grace@example.com` prints `json.users[1].email = "grace@example.com"`, and the same path without the leading `json` is the jq filter `.users[1].email`.',
   published: "2026-11-12",
-  updated: "2026-11-12",
+  updated: "2026-11-22",
   sections: [
     {
       id: "find-key",
@@ -351,6 +351,23 @@ Stopped after 1 match (--max-count); there may be more
         {
           kind: "paragraph",
           text: "Measured time and memory for large inputs are in the [benchmarks](/#benchmarks). [gron](https://github.com/tomnomnom/gron) and [fastgron](https://github.com/adamritter/fastgron) print the same `json.users[1].email` paths, so if either is already installed, piping its output through grep finds the same paths (gron ends each line with `;`, so a pattern anchored with `$` needs `;$`), and the jq conversion above applies unchanged. To browse a document by hand, a terminal viewer such as [jless](https://github.com/PaulJuliusMartinez/jless) is the better fit.",
+        },
+      ],
+    },
+    {
+      id: "agent-skill",
+      heading: "Use this workflow with a coding agent",
+      blocks: [
+        {
+          kind: "paragraph",
+          text: "To teach Claude Code, Cursor, Codex, or another supported agent to anchor key and value searches and translate printed paths into `jq` or JSONPath, install the [`json-path-to-jq-and-unflatten`](https://skills.sh/1solomonwakhungu/gronify/json-path-to-jq-and-unflatten) skill (see [JSON exploration for AI coding agents](/guides/json-for-ai-agents)):",
+        },
+        {
+          kind: "terminal",
+          label: "Installing the json-path-to-jq-and-unflatten agent skill",
+          lines: transcript`
+$ npx skills add 1solomonwakhungu/gronify --skill json-path-to-jq-and-unflatten
+`,
         },
       ],
     },
