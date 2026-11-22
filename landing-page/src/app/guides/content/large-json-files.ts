@@ -12,7 +12,7 @@ export const largeJsonFiles: Guide = {
   h1: "Search a multi-gigabyte JSON file from the command line",
   lede: "To search a JSON file that is too large to open, read it as a stream instead of loading it. `gronify search big.json timeout --count` tokenizes the file in chunks and tests each `json.path = value` line as it is produced, so memory does not grow with the number of records.",
   published: "2026-11-12",
-  updated: "2026-11-20",
+  updated: "2026-11-22",
   sections: [
     {
       id: "why-tools-fail",
@@ -312,6 +312,23 @@ $ jq -cn --stream 'fromstream(1 | truncate_stream(inputs)) | select(.level == "e
             "Colored `unflatten` output builds the whole document in memory, so pass `--no-color` for large inputs.",
             "Errors can arrive late. Output is written while the input is read, so a truncated file prints lines before the error. Check the exit status.",
           ],
+        },
+      ],
+    },
+    {
+      id: "agent-skill",
+      heading: "Use this workflow with a coding agent",
+      blocks: [
+        {
+          kind: "paragraph",
+          text: "To teach Claude Code, Cursor, Codex, or another supported agent to check file size first and stream large JSON with `--limit`, `--count`, and `-m`, install the [`large-json-search`](https://skills.sh/1solomonwakhungu/gronify/large-json-search) skill (see [JSON exploration for AI coding agents](/guides/json-for-ai-agents)):",
+        },
+        {
+          kind: "terminal",
+          label: "Installing the large-json-search agent skill",
+          lines: transcript`
+$ npx skills add 1solomonwakhungu/gronify --skill large-json-search
+`,
         },
       ],
     },

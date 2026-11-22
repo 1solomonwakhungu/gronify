@@ -6,15 +6,14 @@ export const repositoryUrl = "https://github.com/1solomonwakhungu/gronify";
 export const npmPackageUrl = "https://www.npmjs.com/package/gronify";
 export const homebrewTapUrl =
   "https://github.com/1solomonwakhungu/homebrew-tap";
-export const skillsUrl =
-  "https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search";
+export const skillsUrl = "https://skills.sh/1solomonwakhungu/gronify";
 
 export const cliVersion = "1.3.2";
 export const nodeRequirement = "20 or newer";
 export const npmBuildRequirement = "10 or newer";
 export const lastReleaseIsoDate = "2026-11-20";
 /** Date of the last change to the home page copy. Bump it with the copy; the sitemap reads it. */
-export const homeUpdatedIsoDate = "2026-11-20";
+export const homeUpdatedIsoDate = "2026-11-22";
 
 /** Date of the last change to the /playground page or its engine. The sitemap reads it. */
 export const playgroundUpdatedIsoDate = "2026-11-20";

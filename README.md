@@ -9,7 +9,7 @@
     <a href="https://gronify.vercel.app/playground"><strong>Try Live Playground</strong></a> ·
     <a href="https://gronify.vercel.app">Docs &amp; Guides</a> ·
     <a href="https://www.npmjs.com/package/gronify">npm</a> ·
-    <a href="https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search">AI Agent Skill</a> ·
+    <a href="https://skills.sh/1solomonwakhungu/gronify">AI Agent Skills</a> ·
     <a href="https://github.com/1solomonwakhungu/gronify/blob/main/src/packages/cli/BENCHMARKS.md">Benchmarks</a>
   </p>
 
@@ -117,17 +117,23 @@ gronify -o restored.json unflatten archive.gron
 
 ## Use with AI Coding Agents (Claude Code, Codex, Cursor)
 
-Stop coding agents from reading 50 MB `package-lock.json` files, OpenAPI specs, or JSONL transcripts whole into context. Install the official agent skill via [skills.sh](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search):
+Stop coding agents from reading 50 MB `package-lock.json` files, OpenAPI specs, or JSONL transcripts whole into context. Install the Gronify agent skills suite via [skills.sh](https://skills.sh/1solomonwakhungu/gronify):
 
 ```bash
-npx skills add https://github.com/1solomonwakhungu/gronify --skill gronify-json-flatten-search
+npx skills add 1solomonwakhungu/gronify
+# or preview / install a single skill
+npx skills add 1solomonwakhungu/gronify --list
+npx skills add 1solomonwakhungu/gronify --skill gronify-json-flatten-search
 ```
 
-The skill teaches agents the context-safe workflow:
-
-1. Count first: `gronify --no-color search file.json term --count`
-2. Cap reads: `gronify --no-color search file.json term -m 20` or `flatten --limit 50`
-3. Stream JSONL logs with `--jsonl` and branch cleanly with `--exit-status`
+| Skill                                                                                                       | Focus                                                                                         |
+| :---------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- |
+| [`gronify-json-flatten-search`](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search)     | Complete Gronify CLI workflow: flatten, search, JSONL, `--sort`, exit codes, and `unflatten`  |
+| [`large-json-search`](https://skills.sh/1solomonwakhungu/gronify/large-json-search)                         | Context-safe exploration of >50 KB, minified, compressed, or multi-GB JSON files              |
+| [`jsonl-ndjson-log-search`](https://skills.sh/1solomonwakhungu/gronify/jsonl-ndjson-log-search)             | Streaming `.jsonl` / `.ndjson` log and transcript search with `--jsonl` / `-s`                |
+| [`json-compare-sorted-diff`](https://skills.sh/1solomonwakhungu/gronify/json-compare-sorted-diff)           | Key-order-independent JSON comparison with `flatten --sort`, system `diff`, and `git diff`    |
+| [`openapi-lockfile-json-search`](https://skills.sh/1solomonwakhungu/gronify/openapi-lockfile-json-search)   | Path-anchored recipes for OpenAPI/Swagger specs, `package-lock.json`, `kubectl`, and AWS JSON |
+| [`json-path-to-jq-and-unflatten`](https://skills.sh/1solomonwakhungu/gronify/json-path-to-jq-and-unflatten) | Find JSON paths for `jq` / JSONPath, keep 64-bit numbers exact, and unflatten subsets         |
 
 ---
 
@@ -246,11 +252,12 @@ Useful scripts inside `src/packages/cli`:
 - `npm run bench:compare` — full cross-tool benchmark against `gron`, `fastgron`, `jq`, and `jaq` (regenerates `BENCHMARKS.md` and `landing-page/src/app/benchmark-results.json`)
 
 ```text
-branding/                          Logo, icons, and animated demo.svg
-docs/                              Benchmark receipts and review notes
-landing-page/                      Next.js docs, guides, and /playground
-skills/gronify-json-flatten-search/ Agent skill indexed by skills.sh
-src/packages/cli/                  TypeScript streaming CLI package
+branding/          Logo, icons, and animated demo.svg
+docs/              Benchmark receipts and review notes
+landing-page/      Next.js docs, guides, and /playground
+skills/            Installable agent skills suite (6 skills indexed by skills.sh)
+skills.sh.json     Repository skill groupings for skills.sh
+src/packages/cli/  TypeScript streaming CLI package
 ```
 
 ## Troubleshooting
