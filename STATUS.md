@@ -2,19 +2,21 @@
 
 ## Current state
 
-Checked on 2026-11-20.
+Checked on 2026-11-22.
 
-- **Version:** 1.3.2, released 2026-11-20 through release-please PR #143. The GitHub release `v1.3.2` carries `gronify-v1.3.2.tar.gz`, `gronify-v1.3.2.zip`, and `checksums.txt`. (The CHANGELOG heading says 2026-11-13, the day release-please opened the PR.)
+- **Version:** 1.4.0, released 2026-11-22 through release-please PR #154 (shipping `-s/--stream/--jsonl` from #150 and subset `unflatten` parent synthesis from #151). The GitHub release `v1.4.0` carries `gronify-v1.4.0.tar.gz`, `gronify-v1.4.0.zip`, and `checksums.txt`.
 - **Distribution:**
-  - npm: 1.3.2, published by the Release workflow with provenance. The npm page now carries the #138 README (absolute logo URL), description, 15 keywords, and `https://gronify.vercel.app` as homepage.
-  - Homebrew: `Formula/gronify.rb` in `1solomonwakhungu/homebrew-tap` points at the v1.3.2 tarball and depends only on `node@22` (no `fastgron`).
+  - npm: 1.4.0, published by the Release workflow with provenance. Package keywords now include `jsonl`, `ndjson`, and `ai-agents`.
+  - Homebrew: `Formula/gronify.rb` in `1solomonwakhungu/homebrew-tap` (updated on release) depends only on `node@22` (no `fastgron`).
   - Release archive and build from source, as described in the README.
+- **Repository & README:** `README.md` was refreshed with a sharper top fold (`Try Live Playground` -> `https://gronify.vercel.app/playground`), the 1 GiB / 65 MiB RSS & 2.24 GiB `unflatten` vs `fastgron` benchmark wedge, honest trade-offs, a 30-second tour, and concise command/agent sections while preserving all required CI metadata headings. GitHub repository metadata (description, topics, and Discussions) was updated.
 - **Website:** <https://gronify.vercel.app> has the home page, a `/guides` index, and thirteen guides under `/guides/<slug>`, one per search intent. Guides are typed content files in `landing-page/src/app/guides/content/`; `registry.ts` lists them and the build validates them (see `landing-page/README.md`). `llms.txt` and `llms-full.txt` are served with `X-Robots-Tag: noindex`. Since 2026-11-19 (branch `feat/guide-og-images-indexnow`), the home page, `/guides`, and every guide have their own share image, and `landing-page/scripts/submit-indexnow.mjs` submits the sitemap to IndexNow. The header links to `/guides` at every width, and the home page links the first ten guides. PostHog events for install intent: `install_command_copied` (hero, with `method`: `npm`, `npx`, or `brew`) and `command_copied` (any transcript's copy button).
 - **One product:** the Node/npm CLI in `src/packages/cli`. The experimental Rust prototype (`native/`, its workflow, and its landing-page benchmarks) was removed on 2026-11-04.
 - **Benchmarks:** the landing page and `BENCHMARKS.md` report the 2026-11-05 sweep of npm `gronify@1.3.1`, run at the release commit `4c78c13e5ba299462e33a87e8a02be25fda1badd`. The published tarball's `dist/` is identical to the build that was measured. See [the evidence README](docs/benchmarks/2026-11-05-v1.3.1/README.md).
 - **CI:** Quality Check and Release workflows. The CLI job runs lint, build, tests, and audit on Linux, macOS, and Windows with Node 20 and 22 (since #148). Five POSIX-only tests skip on Windows: two `-o /dev/stdout` tests, two file-mode tests, and the SIGTERM temp-file cleanup test. Release workflow success does not mean a new version was published.
 - **Audits:** the CLI allowlist (`src/packages/cli/audit-ci.jsonc`) is empty. The landing allowlist (`landing-page/audit-ci.jsonc`) has one entry; see Open items.
-- **What 1.3.2 adds:** `flatten --pretty` (and `search --invert-match --pretty`) indents by path depth only, so dots and brackets in values or quoted keys no longer push a line deeper (#142).
+- **What 1.4.0 added:** JSON Lines / NDJSON input (`-s`, `--stream`, `--jsonl`) for `flatten` and `search` (#150) and automatic parent container synthesis in `unflatten` for filtered gron subsets (#151).
+- **What 1.3.2 added:** `flatten --pretty` (and `search --invert-match --pretty`) indents by path depth only, so dots and brackets in values or quoted keys no longer push a line deeper (#142).
 - **What 1.3.1 added:** faster flatten and search through byte-level tokenizer paths (#127), and faster streaming unflatten through reused frames and borrowed keys (#129). Output is byte-identical to 1.3.0; independent differential reviews of both PRs found no differences across tens of thousands of fuzzed inputs and chunk sizes.
 - **What 1.3.0 added:** faster flatten, tokenizer and long literal search (#110, #111), cheaper unflatten path handling (#112), bounded literal validation that recovers record-stream memory (#119), quiet exit when a socket stdout disconnects (#113), and the cross-tool benchmark (#104).
 - **What 1.2.0 added:**
@@ -30,7 +32,6 @@ Checked on 2026-11-20.
 
 ## Open items
 
-- **CLI: empty search term.** `gronify search file.json ''` does not search for the empty string. The empty argument is dropped, `file.json` becomes the term, and stdin is read instead. The playground asks for a term instead of showing that command.
 - **Guides lag `unflatten`.** After the next release, update the `unflatten-json`, `grep-json` and `gron-alternative` guides and `llms-full.txt`: `unflatten` now fills in missing parents, so the `root must be assigned before child paths` transcripts and the advice to keep container lines are out of date.
 - **Search indexing (owner action).** On 2026-11-12 no search engine we could query returned a page from `gronify.vercel.app`; Google could not be checked from a script. In Search Console (the site already carries the verification tag), submit `https://gronify.vercel.app/sitemap.xml` and request indexing for the home page and `/guides`. Until pages are indexed, none of the copy work can show in results. Once the IndexNow branch is deployed and `https://gronify.vercel.app/<indexNowKey>.txt` returns the key, run `node scripts/submit-indexnow.mjs` from `landing-page/` to notify Bing and Yandex; nothing has been submitted yet.
 - **Links.** The repository has no stars, so Homebrew core is out of reach for now. Places that list tools like this one and accept submissions: `toolleeo/awesome-cli-apps-in-a-csv`, `burningtree/awesome-json`, `fiatjaf/awesome-jq`, AlternativeTo (as an alternative to gron and jq), and one Show HN. Nothing has been submitted.
@@ -40,6 +41,14 @@ Checked on 2026-11-20.
 - **Issue tracker:** checked on 2026-11-19, it has no open issues. The 19 speculative roadmap issues (VS Code extension, browser and web app, backend and SDKs, paid features, growth campaigns) were deleted; only four closed issues remain (#1, #2, #5, #21). File new issues for concrete bugs or features only.
 
 ## History
+
+### 2026-11-22 — v1.4.0 released (#154), README growth refresh, and CLI empty search term fix
+
+- Merged release-please PR #154 (`v1.4.0`), shipping JSON Lines (`-s/--stream/--jsonl`, #150) and subset `unflatten` parent synthesis (#151).
+- Updated GitHub repository metadata (description, topics, and Discussions).
+- Refreshed `README.md` with the top `Try Live Playground` link (`https://gronify.vercel.app/playground`), the 1 GiB / 65 MiB RSS & 2.24 GiB `unflatten` vs `fastgron` benchmark comparison wedge, honest trade-offs, 30-second tour, AI coding agents (`skills.sh`) section, and concise command reference while preserving all `scripts/validate-metadata.mjs` required H2 headings.
+- Fixed the CLI empty search term bug: `searchCommand` now checks `term !== undefined` instead of truthiness, `openInput` checks `file !== undefined` so an explicit empty filename fails cleanly instead of falling back to stdin, `parseQuick` accepts empty positional arguments on the fast path, `SubstringMatcher.test` short-circuits immediately on empty needles, and `OutputFormatter.createSearchLineFormatter` skips regex highlighting for `""` so `--color` never corrupts ANSI escape codes. Added regression tests across `cli.test.ts`, `matcher.test.ts`, and `formatter.test.ts`.
+- Added `jsonl`, `ndjson`, and `ai-agents` to `src/packages/cli/package.json` keywords.
 
 ### 2026-11-20 — Three more guides: Windows, ERR_STRING_TOO_LONG, OpenAPI and lockfiles (#153)
 
