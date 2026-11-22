@@ -20,7 +20,7 @@ export const searchOpenapiAndLockfiles: Guide = {
   h1: "Search OpenAPI specs, package-lock.json, and Kubernetes JSON from the command line",
   lede: 'OpenAPI specs, `package-lock.json`, and `kubectl get -o json` output are too large to read and too deeply nested to grep. Each recipe here is one `gronify search` with a regex anchored on the JSON path, such as `\'^json\\.paths\\["[^"]+"\\]\\.[a-z]+\\.deprecated = true$\'` for every deprecated endpoint, and each prints matches with their full paths.',
   published: "2026-11-20",
-  updated: "2026-11-20",
+  updated: "2026-11-22",
   sections: [
     {
       id: "path-patterns",
@@ -420,7 +420,7 @@ $ jq -r '.prefixes[] | select(.region == "eu-west-1" and .service == "S3") | .ip
         },
         {
           kind: "paragraph",
-          text: "Each Gronify run reads one JSON document, so a stream of objects, such as `kubectl get -w -o json`, needs jq. For files in the gigabytes, see [searching large JSON files](/guides/large-json-files).",
+          text: "For JSON Lines logs (one compact JSON value per line), pass `-s`, `--stream`, or `--jsonl`. A multi-line stream of pretty-printed objects, such as `kubectl get -w -o json`, still needs jq (or `jq -c` piped into `gronify search --stream`). For files in the gigabytes, see [searching large JSON files](/guides/large-json-files).",
         },
       ],
     },

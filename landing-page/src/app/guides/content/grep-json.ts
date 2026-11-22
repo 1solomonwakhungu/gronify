@@ -10,7 +10,7 @@ export const grepJson: Guide = {
   h1: "How to grep nested JSON from the command line",
   lede: "To grep JSON, flatten it first so that every value sits on its own line next to its full path, then filter those lines. `gronify search orders.json pending` does both in one streaming pass and prints each match as `json.path = value`, so you can see where in the document the match lives.",
   published: "2026-11-12",
-  updated: "2026-11-20",
+  updated: "2026-11-22",
   sections: [
     {
       id: "why-grep-fails",
@@ -252,7 +252,7 @@ Stopped after 1 match (--max-count); there may be more
         },
         {
           kind: "paragraph",
-          text: "Input is parsed as it arrives and is not loaded whole, so memory does not grow with the number of records. With `-m`, Gronify closes the pipe once it has enough matches. Each run reads exactly one JSON document. Given a log with one object per line (NDJSON), Gronify exits with an error at the second object. Use ripgrep or jq for those. For files in the gigabytes, see [searching large JSON files](/guides/large-json-files).",
+          text: "Input is parsed as it arrives and is not loaded whole, so memory does not grow with the number of records. With `-m`, Gronify closes the pipe once it has enough matches. By default each run reads one JSON document. For JSON Lines (NDJSON) logs with one JSON value per line, pass `-s`, `--stream`, or `--jsonl`: `gronify search --stream app.jsonl error` flattens each line under `json[0]`, `json[1]`, and so on. For files in the gigabytes, see [searching large JSON files](/guides/large-json-files).",
         },
       ],
     },
@@ -262,11 +262,37 @@ Stopped after 1 match (--max-count); there may be more
       blocks: [
         {
           kind: "paragraph",
-          text: "[`gronify unflatten`](/guides/unflatten-json) reads flattened lines and writes JSON. It needs every container line, such as `json = {}` and `json.orders = []`, before the values inside it. A narrow search prints only leaf lines, so piping it straight into `unflatten` fails with `root must be assigned before child paths`. There are two ways to keep the containers.",
+          text: "[`gronify unflatten`](/guides/unflatten-json) reads flattened lines and writes JSON. Missing parent containers (including the root `json = {}` and any enclosing objects or arrays) are filled in automatically, so you can pipe `gronify search` straight into `gronify unflatten`:",
+        },
+        {
+          kind: "terminal",
+          label:
+            "Piping filtered search matches straight into gronify unflatten",
+          lines: transcript`
+$ gronify search orders.json service | gronify --pretty unflatten
+{
+  "service": {
+    "name": "checkout",
+    "status": "degraded"
+  }
+}
+$ gronify search orders.json pending | gronify --pretty unflatten
+{
+  "orders": [
+    null,
+    {
+      "status": "Pending"
+    },
+    {
+      "status": "pending"
+    }
+  ]
+}
+`,
         },
         {
           kind: "paragraph",
-          text: "The first is to remove what you do not want with `-v`, which leaves every parent in place. This drops the customer records and rebuilds the rest:",
+          text: "Skipped array indexes are padded with `null` so each match keeps its original position. To drop one subtree and rebuild everything else instead, use an inverted search (`-v`):",
         },
         {
           kind: "terminal",
@@ -275,24 +301,6 @@ Stopped after 1 match (--max-count); there may be more
           lines: transcript`
 $ gronify search orders.json -v customer | gronify unflatten
 {"service":{"name":"checkout","status":"degraded"},"orders":[{"id":1001,"status":"shipped"},{"id":1002,"status":"Pending"},{"id":1003,"status":"pending","error":{"code":"CARD_DECLINED"}}]}
-`,
-        },
-        {
-          kind: "paragraph",
-          text: "The second is to name the parents in the pattern. Here `^json = ` keeps the root line, and `service` keeps the `json.service` container along with its values:",
-        },
-        {
-          kind: "terminal",
-          label:
-            "Extracting one object by keeping its parent lines in the regex",
-          lines: transcript`
-$ gronify search orders.json --regex '^json = |service' | gronify --pretty unflatten
-{
-  "service": {
-    "name": "checkout",
-    "status": "degraded"
-  }
-}
 `,
         },
       ],
@@ -319,7 +327,7 @@ alan@example.org
         },
         {
           kind: "paragraph",
-          text: "[ripgrep](https://github.com/BurntSushi/ripgrep) is the right choice for many files at once, for NDJSON logs where each line is already one record, and for a plain test of whether a string occurs anywhere. It does not parse JSON, so it cannot report a path.",
+          text: "[ripgrep](https://github.com/BurntSushi/ripgrep) is the right choice for searching a directory of many files at once, or for a plain test of whether a string occurs anywhere. It does not parse JSON, so it cannot report a path. For a single NDJSON log where you want the path inside each record, pass `--stream` to `gronify search`; for raw line matches across many log files, ripgrep is faster.",
         },
         {
           kind: "table",
@@ -332,6 +340,11 @@ alan@example.org
               "Each match prints with its full path",
             ],
             [
+              "Search a JSON Lines (NDJSON) file by path",
+              "`gronify search --stream`",
+              "Numbers each line as `json[0]`, `json[1]`, ... with full paths",
+            ],
+            [
               "Read a field whose path you already know",
               "`jq`",
               "`.orders[2].status` is the whole query",
@@ -342,7 +355,7 @@ alan@example.org
               "It has `select`, `map`, and arithmetic",
             ],
             [
-              "Search a directory of files or an NDJSON log",
+              "Search a directory of many files",
               "ripgrep (`rg`)",
               "It walks directories and matches line by line",
             ],

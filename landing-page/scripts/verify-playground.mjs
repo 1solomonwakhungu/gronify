@@ -47,7 +47,7 @@ if (writeGolden && cliPath === null) {
 // Fixtures
 
 const jsonFixtures = {
-  ...Object.fromEntries(samples.map((sample) => [sample.id, sample.json])),
+  ...Object.fromEntries(samples.filter((sample) => !sample.stream).map((sample) => [sample.id, sample.json])),
   scalars: '["x", 42, -0, 1E+2, 0.000, 1.10, 12345678901234567890, true, false, null]',
   topString: '"just a string"',
   topNumber: "12345678901234567890",
@@ -61,6 +61,28 @@ const jsonFixtures = {
   whitespace: ' \r\n\t{ "a" :\r\n [ 1 ,2 ] , "b" : { } }\n\n',
   recordsArray:
     '[{"id": 2, "name": "b", "tags": ["x", "y"]}, {"id": 1, "name": "a", "meta": {"z": 1, "a": 2}}, {"id": 3, "name": "c"}]',
+};
+
+const jsonlFixtures = {
+  ...Object.fromEntries(samples.filter((sample) => sample.stream).map((sample) => [sample.id, sample.json])),
+  mixed: '{"a":1}\n[2,[3]]\n"just a string"\n42\ntrue\nfalse\nnull\n',
+  blankAndCrlf: '\n\r\n  \t\r\n{"a":1}\r\n\r\n \n7\r\n\n',
+  noTrailingNewline: '{"a":1}\n12345678901234567890',
+  numbers: '{"big":12345678901234567890,"small":1.10,"negZero":-0,"exp":1E+2}\n[1.10,-0,1e2]\n',
+  reorderedKeys: '{"z":1,"a":{"d":4,"c":3},"10":0,"2":0,"caf\\u00e9":"\\u00e9"}\n{"b":1,"a":2}\n',
+  empty: "",
+  onlyBlank: "\n \r\n\t\n",
+};
+
+const invalidJsonl = {
+  twoOnOneLine: '{"a":1}\n{"b":2} {"c":3}\n',
+  multiLineRecord: '{"a":1}\n{"b":\n2}\n',
+  newlineInString: '{"a":"x\n"}\n',
+  badFourthLine: '{"a":1}\r\n\r\n{"b":2}\r\n{"c":tru}\r\n',
+  incompleteLast: '{"a":1}\n{"b":[1,2',
+  strayBracket: "]\n",
+  loneCrBetween: '{"a":1}\r{"b":2}\n',
+  trailingComma: '{"a":1}\n\n{"b":2,}\n',
 };
 
 const invalidJson = {
@@ -141,6 +163,7 @@ const base = {
   maxCount: null,
   sort: false,
   limit: null,
+  stream: false,
   pretty: false,
 };
 
@@ -164,6 +187,22 @@ add("flatten-sort-limit/stops-before-error", "[1, 2, 3, oops", { mode: "flatten"
 add("flatten-limit/last-line", "[1, 2]", { mode: "flatten", limit: 3 });
 add("flatten-limit/scalar", "7", { mode: "flatten", limit: 1 });
 
+// JSON Lines (--stream) flatten cases, valid and invalid, plus caps and sorting.
+for (const [id, jsonl] of Object.entries({ ...jsonlFixtures, ...invalidJsonl })) {
+  add(`flatten-stream/${id}`, jsonl, { mode: "flatten", file: "input.jsonl", stream: true });
+  add(`flatten-stream-sort/${id}`, jsonl, { mode: "flatten", file: "input.jsonl", stream: true, sort: true });
+}
+for (const [id, jsonl] of Object.entries(jsonlFixtures)) {
+  for (const limit of [1, 3, 7]) {
+    add(`flatten-stream-limit-${limit}/${id}`, jsonl, { mode: "flatten", file: "input.jsonl", stream: true, limit });
+    add(`flatten-stream-sort-limit-${limit}/${id}`, jsonl, { mode: "flatten", file: "input.jsonl", stream: true, sort: true, limit });
+  }
+}
+add("flatten-stream-limit/stops-before-error", '{"a":1}\n{"a":2}\noops\n', { mode: "flatten", file: "input.jsonl", stream: true, limit: 3 });
+add("flatten-stream-sort-limit/stops-before-error", '{"b":1,"a":2}\noops\n', { mode: "flatten", file: "input.jsonl", stream: true, sort: true, limit: 3 });
+// Without --stream, JSON Lines fails at line 2 with the --stream tip.
+add("flatten-no-stream/jsonl", '{"a":1}\n{"b":2}\n', { mode: "flatten", file: "input.jsonl" });
+
 const searchVariants = [
   {},
   { regex: true },
@@ -180,7 +219,13 @@ const searchVariants = [
 ];
 for (const sample of samples) {
   searchVariants.forEach((variant, index) =>
-    add(`search-${index}/${sample.id}`, sample.json, { mode: "search", term: sample.term, ...variant }),
+    add(`search-${index}/${sample.id}`, sample.json, {
+      mode: "search",
+      file: sample.file,
+      term: sample.term,
+      stream: Boolean(sample.stream),
+      ...variant,
+    }),
   );
 }
 const searchTerms = {
@@ -203,25 +248,43 @@ const searchTerms = {
   regexBigInt: { term: "= \\d{17,}$", regex: true },
 };
 for (const [id, settings] of Object.entries(searchTerms)) {
-  for (const sample of samples) add(`search-${id}/${sample.id}`, sample.json, { mode: "search", ...settings });
+  for (const sample of samples) {
+    add(`search-${id}/${sample.id}`, sample.json, {
+      mode: "search",
+      file: sample.file,
+      stream: Boolean(sample.stream),
+      ...settings,
+    });
+  }
   add(`search-${id}/unicode`, jsonFixtures.unicode, { mode: "search", ...settings });
 }
 for (const [id, json] of Object.entries(invalidJson)) {
   add(`search/${id}`, json, { mode: "search", term: "a" });
   add(`search-regex/${id}`, json, { mode: "search", term: "a", regex: true });
 }
+for (const [id, jsonl] of Object.entries(invalidJsonl)) {
+  add(`search-stream/${id}`, jsonl, { mode: "search", file: "input.jsonl", stream: true, term: "a" });
+  add(`search-stream-regex/${id}`, jsonl, { mode: "search", file: "input.jsonl", stream: true, term: "a", regex: true });
+}
 add("search-m/stops-before-error", '[{"a": 1}, {"a": 2}, oops', { mode: "search", term: "a", maxCount: 1 });
 add("search-sort-m/records", jsonFixtures.recordsArray, { mode: "search", term: "id", sort: true, maxCount: 2 });
+add("search-stream-m/stops-before-error", '{"a":1}\n{"a":2}\noops\n', { mode: "search", file: "input.jsonl", stream: true, term: "a", maxCount: 1 });
+add("search-stream-sort-m/stops-before-error", '{"b":1,"a":2}\n{"a":3}\noops\n', { mode: "search", file: "input.jsonl", stream: true, sort: true, term: "a", maxCount: 1 });
+add("search-no-stream/jsonl", '{"a":1}\n{"b":2}\n', { mode: "search", file: "input.jsonl", term: "a" });
 
 const gronInputs = { ...gronFixtures };
 for (const [id, json] of Object.entries(jsonFixtures)) {
   gronInputs[`flattened-${id}`] = gron.stdoutOf(gron.flatten(json));
   gronInputs[`sorted-${id}`] = gron.stdoutOf(gron.flatten(json, { sort: true }));
 }
+for (const [id, jsonl] of Object.entries(jsonlFixtures)) {
+  gronInputs[`flattened-stream-${id}`] = gron.stdoutOf(gron.flatten(jsonl, { stream: true }));
+  gronInputs[`sorted-stream-${id}`] = gron.stdoutOf(gron.flatten(jsonl, { stream: true, sort: true }));
+}
 // What `gronify search file term | gronify unflatten` sees: only the matching lines.
 for (const sample of samples) {
-  gronInputs[`searched-${sample.id}`] = gron.stdoutOf(gron.search(sample.json, { term: sample.term }));
-  gronInputs[`searched-sorted-${sample.id}`] = gron.stdoutOf(gron.search(sample.json, { term: sample.term, sort: true }));
+  gronInputs[`searched-${sample.id}`] = gron.stdoutOf(gron.search(sample.json, { term: sample.term, stream: Boolean(sample.stream) }));
+  gronInputs[`searched-sorted-${sample.id}`] = gron.stdoutOf(gron.search(sample.json, { term: sample.term, sort: true, stream: Boolean(sample.stream) }));
 }
 for (const [id, text] of Object.entries(gronInputs)) {
   add(`unflatten/${id}`, text, { mode: "unflatten", file: "input.gron" });
@@ -239,7 +302,7 @@ function runEngine({ input, settings }) {
   }
   const result =
     settings.mode === "flatten"
-      ? gron.flatten(input, { sort: settings.sort, limit: settings.limit })
+      ? gron.flatten(input, { sort: settings.sort, limit: settings.limit, stream: settings.stream })
       : gron.search(input, settings);
   return { stdout: gron.stdoutOf(result), stderr: result.messages.join("\n"), failed: result.error !== null };
 }
@@ -289,16 +352,27 @@ function* randomCases(count) {
     return `{${space()}${Array.from({ length: size }, () => `"${pick(keys)}"${space()}:${space()}${value(depth + 1)}`).join(`,${space()}`)}${space()}}`;
   };
   for (let i = 0; i < count; i += 1) {
-    let json = `${space()}${value(0)}${space()}`;
-    // Break about one in eight documents.
-    if (random() < 0.125) {
-      const at = Math.floor(random() * json.length);
-      json = json.slice(0, at) + pick([",", "]", "}", "x", '"', ":", "\\"]) + json.slice(at + 1);
-    }
     const mode = pick(["flatten", "search", "unflatten"]);
+    const stream = mode !== "unflatten" && random() < 0.25;
+    const inlineSpace = () => pick(["", "", " ", "\t "]);
+    const inlineValue = (depth) => {
+      const roll = random();
+      if (depth > 3 || roll < 0.45) return pick(scalars);
+      const size = Math.floor(random() * 4);
+      if (roll < 0.7) return `[${inlineSpace()}${Array.from({ length: size }, () => inlineValue(depth + 1)).join(`,${inlineSpace()}`)}${inlineSpace()}]`;
+      return `{${inlineSpace()}${Array.from({ length: size }, () => `"${pick(keys)}"${inlineSpace()}:${inlineSpace()}${inlineValue(depth + 1)}`).join(`,${inlineSpace()}`)}${inlineSpace()}}`;
+    };
+    let json = stream
+      ? Array.from({ length: Math.floor(random() * 5) }, () => (random() < 0.2 ? "" : `${inlineSpace()}${inlineValue(0)}${inlineSpace()}`)).join(pick(["\n", "\r\n"]))
+      : `${space()}${value(0)}${space()}`;
+    // Break about one in eight documents.
+    if (json.length > 0 && random() < 0.125) {
+      const at = Math.floor(random() * json.length);
+      json = json.slice(0, at) + pick([",", "]", "}", "x", '"', ":", "\\", "\n"]) + json.slice(at + 1);
+    }
     const settings = {
       mode,
-      file: mode === "unflatten" ? "input.gron" : "input.json",
+      file: mode === "unflatten" ? "input.gron" : stream ? "input.jsonl" : "input.json",
       term: pick(["a", "1", "\\d", "E", "é", "null", "[0]"]),
       regex: random() < 0.3,
       caseSensitive: random() < 0.3,
@@ -307,6 +381,7 @@ function* randomCases(count) {
       maxCount: random() < 0.3 ? 1 + Math.floor(random() * 4) : null,
       sort: random() < 0.4,
       limit: random() < 0.3 ? 1 + Math.floor(random() * 6) : null,
+      stream,
       pretty: random() < 0.5,
     };
     let input = json;
@@ -342,6 +417,13 @@ for (const [id, json] of Object.entries(jsonFixtures)) {
   const roundTrip = ungron.unflatten(lines);
   if (roundTrip.error !== null) failures.push(`${id}: round trip failed: ${roundTrip.error}`);
   else if (gron.stdoutOf(gron.flatten(roundTrip.output)) !== lines) failures.push(`${id}: round trip changed the document`);
+}
+for (const [id, jsonl] of Object.entries(jsonlFixtures)) {
+  checked += 1;
+  const lines = gron.stdoutOf(gron.flatten(jsonl, { stream: true }));
+  const roundTrip = ungron.unflatten(lines);
+  if (roundTrip.error !== null) failures.push(`jsonl/${id}: round trip failed: ${roundTrip.error}`);
+  else if (gron.stdoutOf(gron.flatten(roundTrip.output)) !== lines) failures.push(`jsonl/${id}: round trip changed the document`);
 }
 checked += 1;
 if (!ungron.unflatten(gron.stdoutOf(gron.flatten(samples.find((s) => s.id === "ledger").json))).output.includes('"id":12345678901234567890,"amount":1.10')) {

@@ -1,17 +1,17 @@
 import { transcript, type Guide } from "../types";
 
-// Every transcript below is pasted from gronify 1.3.1 (plus gron 0.7.1,
-// fastgron 0.7.7, jq 1.8.2, grep, and sed) run against the deploy.json shown
-// in the first transcript.
+// Every transcript below is pasted from gronify 1.4.0 (with historical 1.3.1
+// notes where noted, plus gron 0.7.1, fastgron 0.7.7, jq 1.8.2, grep, and sed)
+// run against the deploy.json shown in the first transcript.
 export const unflattenJson: Guide = {
   slug: "unflatten-json",
   title: "Ungron: unflatten gron lines back into JSON | Gronify",
   description:
-    "gronify unflatten turns json.path = value lines back into JSON. See the round trip, which gron and fastgron output it reads, and why filtered lines can fail.",
+    "gronify unflatten turns json.path = value lines back into JSON. See the round trip, filtered search subsets, which gron output it reads, and sed edits.",
   h1: "Unflatten gron lines back into JSON (ungron)",
-  lede: "To turn gron lines back into JSON, pipe them into `gronify unflatten` or pass a file: `gronify unflatten data.gron`. It reads the `json.path = value` lines written by `gronify flatten`, gron, or fastgron and writes one JSON document with numbers and key order unchanged. It needs every container line and does not create missing parents, so a grep-filtered subset that `gron --ungron` accepts is rejected here; see [filtered lines](#filtered-lines) for the two ways around that.",
+  lede: "To turn gron lines back into JSON, pipe them into `gronify unflatten` or pass a file: `gronify unflatten data.gron`. It reads the `json.path = value` lines written by `gronify flatten`, gron, or fastgron and writes one JSON document with numbers and key order unchanged. Missing parent containers are filled in automatically, so filtered subsets from `gronify search` or `grep` rebuild valid JSON directly; see [filtered lines](#filtered-lines).",
   published: "2026-11-12",
-  updated: "2026-11-12",
+  updated: "2026-11-22",
   sections: [
     {
       id: "round-trip",
@@ -88,33 +88,33 @@ $ gronify --pretty unflatten deploy.gron
     },
     {
       id: "filtered-lines",
-      heading: "Why filtered lines fail, and how to keep a subset",
+      heading: "Unflatten filtered lines to keep a subset",
       blocks: [
         {
           kind: "paragraph",
-          text: "The usual gron habit is to flatten, grep for a few lines, and ungron what is left. `gronify unflatten` rejects that input. Every line needs its container lines before it, starting with the root `json = {}`, and a filter that keeps only leaf lines has removed them:",
+          text: "A common gron workflow is to search or grep for a few lines and turn what is left back into JSON. `gronify unflatten` fills in any missing parent containers from the path segments, starting at the root: a key (`.image` or `[\"a.b\"]`) creates an object, an index (`[1]`) creates an array, and skipped array indexes become `null`:",
         },
         {
           kind: "terminal",
           label:
-            "Unflatten errors for a missing root line and a missing nested parent",
+            "Unflattening filtered lines from gronify search and grep",
           lines: transcript`
-$ gronify flatten deploy.json | grep tag | gronify unflatten
-Error: unflattening gron: line 1: root must be assigned before child paths
-Tip: Gron lines should look like: json.path = value
-$ gronify search deploy.json --regex '^json = |tag' | gronify unflatten
-Error: unflattening gron: line 2: parent path must be assigned before its children
-Tip: Gron lines should look like: json.path = value
+$ gronify search deploy.json tag | gronify unflatten
+{"image":{"tag":"1.4.2"}}
+$ gronify flatten deploy.json | grep REGION | gronify unflatten
+{"env":[null,{"name":"REGION"}]}
+$ gronify search deploy.json 'env[1]' | gronify unflatten
+{"env":[null,{"name":"REGION","value":"eu-west-1"}]}
 `,
         },
         {
           kind: "paragraph",
-          text: "The second command keeps the root line and still fails, because `json.image = {}` is missing. Both runs exit with status 1 and print no JSON. Two approaches keep the parents in place.",
+          text: "The array keeps its positions. Index 0 has no lines, so it is written as `null` and the entry stays at index 1. Filtered lines in document order (which is what `gronify search` and `gronify flatten | grep` write) stream in a single pass just like full gron. (Gronify 1.3.2 and earlier did not synthesize missing parents and stopped with `root must be assigned before child paths`.)",
         },
         { kind: "subheading", text: "Remove what you do not want" },
         {
           kind: "paragraph",
-          text: "`gronify search -v` prints every line that does not match, so the containers of whatever remains are still there. This drops the `env` array and rebuilds the rest:",
+          text: "To drop one subtree and keep everything else, invert the search with `-v` and pipe into `unflatten`. This removes the `env` array and rebuilds the rest:",
         },
         {
           kind: "terminal",
@@ -125,62 +125,26 @@ $ gronify search deploy.json -v env | gronify unflatten
 {"service":"api","build":12345678901234567890,"ratio":1.10,"image":{"repo":"registry.example.com/api","tag":"1.4.2"}}
 `,
         },
-        { kind: "subheading", text: "Keep every ancestor in the pattern" },
+        { kind: "subheading", text: "Conflicting lines still fail" },
         {
           kind: "paragraph",
-          text: "To extract one nested branch, a `--regex` has to match the root line and each container on the way down. For the second `env` entry that takes three alternatives:",
+          text: "Synthesizing missing containers does not hide contradictions. Putting a child under a scalar, or using both a property and an array index on the same container, stops with exit status 1 and prints no JSON:",
         },
         {
           kind: "terminal",
-          label:
-            "Extracting a nested array element by matching each ancestor line",
+          label: "Unflatten errors when two lines disagree on a container type",
           lines: transcript`
-$ gronify search deploy.json --regex '^json = |^json\.env = |^json\.env\[1\]'
-json = {}
-json.env = []
-json.env[1] = {}
-json.env[1].name = "REGION"
-json.env[1].value = "eu-west-1"
-$ gronify search deploy.json --regex '^json = |^json\.env = |^json\.env\[1\]' | gronify unflatten
-{"env":[null,{"name":"REGION","value":"eu-west-1"}]}
+$ printf 'json.a = 1\njson.a.b = 2\n' | gronify unflatten
+Error: unflattening gron: line 2: property does not match its parent container
+Tip: Gron lines should look like: json.path = value
+$ printf 'json.a = 1\njson[0] = 2\n' | gronify unflatten
+Error: unflattening gron: line 2: property does not match its parent container
+Tip: Gron lines should look like: json.path = value
 `,
         },
         {
           kind: "paragraph",
-          text: "The array keeps its positions. Index 0 has no lines, so it is written as `null` and the entry stays at index 1. The search flags and regex syntax are explained in [how to grep JSON](/guides/grep-json).",
-        },
-        {
-          kind: "subheading",
-          text: "When gron or fastgron is the better fit",
-        },
-        {
-          kind: "paragraph",
-          text: '`gron --ungron` and `fastgron -u` create the missing parents themselves, and [gron\'s README](https://github.com/tomnomnom/gron#ungronning) says "arrays are padded with `null` when values are missing". If you want to grep a few lines and rebuild a partial document, those tools do it in one step:',
-        },
-        {
-          kind: "terminal",
-          label: "gron and fastgron rebuilding JSON from grep-filtered lines",
-          lines: transcript`
-$ gron deploy.json | grep tag | gron --ungron
-{
-  "image": {
-    "tag": "1.4.2"
-  }
-}
-$ gronify flatten deploy.json | grep REGION | fastgron -u
-{
-  "env": [
-    null,
-    {
-      "name": "REGION"
-    }
-  ]
-}
-`,
-        },
-        {
-          kind: "paragraph",
-          text: "Those runs used gron 0.7.1 and [fastgron](https://github.com/adamritter/fastgron) 0.7.7. gron 0.7.1 parses only lines that end in `;`, so it rejects Gronify's output with `statement has no value` until you add the semicolons. fastgron reads Gronify's lines as they are.",
+          text: "The search flags and regex syntax are explained in [how to grep JSON](/guides/grep-json). `gron --ungron` and [fastgron](https://github.com/adamritter/fastgron) (`fastgron -u`) synthesize missing parents and pad skipped array positions with `null` in the same way. gron 0.7.1 parses only lines that end in `;`, so it rejects Gronify's output with `statement has no value` until you add semicolons, whereas `gronify unflatten` and `fastgron -u` accept lines with or without them.",
         },
       ],
     },
@@ -190,16 +154,20 @@ $ gronify flatten deploy.json | grep REGION | fastgron -u
       blocks: [
         {
           kind: "paragraph",
-          text: "The root must be named `json`. Blank lines are skipped, a trailing `;` is ignored, and the spaces around `=` are optional. These inputs were run through Gronify 1.3.1:",
+          text: "The root must be named `json`. Blank lines are skipped, a trailing `;` is ignored, and the spaces around `=` are optional. These inputs were run through Gronify 1.4.0:",
         },
         {
           kind: "table",
-          caption: "What gronify unflatten 1.3.1 does with each kind of input",
+          caption: "What gronify unflatten 1.4.0 does with each kind of input",
           columns: ["Input", "Result"],
           rows: [
             [
               "`gronify flatten` output, with or without `--sort`",
               "Accepted and converted in one streaming pass. With `--sort` the keys come back sorted.",
+            ],
+            [
+              "Filtered subsets from `gronify search` or `grep`, missing root or parent lines",
+              "Accepted. Missing containers are filled in from the path, and document-order subsets stream in one pass.",
             ],
             [
               "gron 0.7.1 output, where every line ends in `;`",
@@ -210,16 +178,16 @@ $ gronify flatten deploy.json | grep REGION | fastgron -u
               "Accepted.",
             ],
             [
-              "Shuffled lines where each container still precedes its children",
+              "Shuffled or out-of-order lines within the first 16 MiB",
               "Accepted. The document is rebuilt in memory.",
             ],
             [
               "Lines run through `sort`, so `json.ids[10]` precedes `json.ids[2]`",
-              "Accepted. The array comes back in index order.",
+              "Accepted within the first 16 MiB. The array comes back in index order.",
             ],
             [
-              "A child line before its container, such as reversed input",
-              "Rejected with `parent path must be assigned before its children` or `root must be assigned before child paths`.",
+              "Conflicting container types (a child under a scalar, or a key and an index on one container)",
+              "Rejected with `property does not match its parent container` or `path does not match its parent container`.",
             ],
             [
               "A root other than `json`, as `fastgron --root data` writes",
@@ -320,7 +288,7 @@ $ gronify unflatten strings.gron
       question:
         "Can I convert gron output back to JSON without installing gron?",
       answer:
-        "Yes. `gronify unflatten` reads the lines gron 0.7.1 writes, trailing semicolons included, and installs with `npm install -g gronify` on Node.js 20 or newer. The file has to be complete, because a subset that gron itself would rebuild by creating the missing parents is rejected.",
+        "Yes. `gronify unflatten` reads the lines gron 0.7.1 writes, trailing semicolons included, and installs with `npm install -g gronify` on Node.js 20 or newer. Filtered subsets work too: `gronify unflatten` creates missing parent containers automatically, as `gron --ungron` does.",
     },
     {
       question: "How do I delete an array element without leaving null behind?",
