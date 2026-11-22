@@ -39,7 +39,7 @@ gronify --no-color search --jsonl app.jsonl --count '.level = "error"'
 gronify --no-color search --jsonl app.jsonl -m 20 '.level = "error"'
 
 # 4. Pull every field of a specific matched record (e.g. record 42)
-gronify --no-color search --jsonl app.jsonl --regex '^json\[42\]\.' -m 50
+gronify --no-color search --jsonl app.jsonl --regex '^json\[42\](\.|\[| = )' -m 50
 ```
 
 ## Tail streams, filters, and log triage
@@ -68,7 +68,7 @@ fi
 gronify --no-color flatten --jsonl app.jsonl | gronify --no-color unflatten -o records.json
 
 # Only matching paths -> sparse JSON array (missing parents synthesized, skipped indexes null)
-gronify --no-color search --jsonl app.jsonl --regex '^json\[42\]\.' | gronify --no-color unflatten --pretty
+gronify --no-color search --jsonl app.jsonl --regex '^json\[42\](\.|\[| = )' | gronify --no-color unflatten --pretty
 ```
 
 To convert a reconstructed JSON array back into JSON Lines, pipe through `jq -c '.[]'`.

@@ -51,7 +51,7 @@ gronify --no-color search payload.json --regex '^json\.events\[(611|1874)\]\.(ts
 
 - Only drop `-m` after `--count` proves the match count fits comfortably in context.
 - Leave `--sort` off exploratory commands on large root objects: sorting a root object buffers until EOF, which disables early stopping on `-m` and `--limit`.
-- Never pass an empty search term (`''`): Gronify treats the filename as the term and hangs on stdin. Prefix hyphenated terms with `--` (`gronify --no-color search payload.json -- -500`).
+- Never pass an empty search term (`''`): Gronify ignores the file argument and reads stdin instead (hanging on an open pipe). Prefix hyphenated terms with `--` (`gronify --no-color search payload.json -- -500`).
 
 ## Compressed exports and pipes
 

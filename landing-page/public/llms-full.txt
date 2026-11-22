@@ -235,10 +235,10 @@ Included skills on [skills.sh](https://skills.sh/1solomonwakhungu/gronify):
 
 - [`gronify-json-flatten-search`](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search): Complete Gronify CLI workflow (flatten, search, JSONL, `--sort`, exit codes, `unflatten`).
 - [`large-json-search`](https://skills.sh/1solomonwakhungu/gronify/large-json-search): Context-safe exploration of over 50 KB, minified, compressed, or multi-GB JSON files.
-- [`jsonl-ndjson-log-search`](https://skills.sh/1solomonwakhungu/gronify/jsonl-ndjson-log-search): Streaming `.jsonl` / `.ndjson` log and transcript search with `--jsonl` / `-s`.
+- [`jsonl-ndjson-log-search`](https://skills.sh/1solomonwakhungu/gronify/jsonl-ndjson-log-search): Streaming `.jsonl` / `.ndjson` log and transcript search with `--jsonl` / `-s` (requires a release newer than 1.3.2; falls back to `jq -c` on 1.3.2 and older).
 - [`json-compare-sorted-diff`](https://skills.sh/1solomonwakhungu/gronify/json-compare-sorted-diff): Key-order-independent JSON comparison using `flatten --sort` with system `diff` and `git diff`.
 - [`openapi-lockfile-json-search`](https://skills.sh/1solomonwakhungu/gronify/openapi-lockfile-json-search): Path-anchored regex recipes for OpenAPI/Swagger specs, `package-lock.json`, `kubectl -o json`, and cloud JSON.
-- [`json-path-to-jq-and-unflatten`](https://skills.sh/1solomonwakhungu/gronify/json-path-to-jq-and-unflatten): Find exact JSON paths for `jq` / JSONPath, keep 64-bit numbers exact, and unflatten subsets.
+- [`json-path-to-jq-and-unflatten`](https://skills.sh/1solomonwakhungu/gronify/json-path-to-jq-and-unflatten): Find exact JSON paths for `jq` / JSONPath, keep 64-bit numbers exact, and unflatten subsets (automatic parent synthesis requires a release newer than 1.3.2).
 
 When exploring unknown or multi-gigabyte JSON files inside an LLM session, always pass `--no-color` and narrow progressively from cheap to specific so the prompt context window is never flooded:
 

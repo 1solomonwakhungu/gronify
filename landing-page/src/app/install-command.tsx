@@ -24,9 +24,10 @@ const installMethods = [
 type InstallMethod = (typeof installMethods)[number]["id"];
 
 /**
- * One-line install command with an npm / npx / Homebrew switch and a copy
- * button. The switch follows the WAI-ARIA tabs pattern: one tab stop, arrow
- * keys move between methods, and the command below is the tab panel.
+ * One-line install command with an npm / npx / Homebrew / Agent Skills switch
+ * and a copy button. The switch follows the WAI-ARIA tabs pattern: one tab
+ * stop, arrow keys move between methods, and the command below is the tab
+ * panel.
  */
 export function HeroInstallCommand() {
   const [selected, setSelected] = useState<InstallMethod>("npm");

@@ -173,19 +173,25 @@ function checkScalarYamlSafety(key, rawVal, yamlErrors) {
   if (!rawVal) {
     return "";
   }
-  if (/^[>|][+-]?$/.test(rawVal)) {
+  if (/^[>|](?:[+-][1-9]?|[1-9][+-]?)?$/.test(rawVal)) {
     yamlErrors.push(`unsupported multiline block scalar for "${key}"`);
     return "";
   }
-  const startsQuote = rawVal[0] === '"' || rawVal[0] === "'";
-  const endsQuote =
-    rawVal.length >= 2 && rawVal[rawVal.length - 1] === rawVal[0];
-  if (startsQuote && !endsQuote) {
-    yamlErrors.push(`unclosed quote in YAML value for "${key}"`);
-    return rawVal.slice(1);
+  if (rawVal[0] === '"') {
+    const match = rawVal.match(/^"((?:[^"\\]|\\.)*)"(?:\s+#.*)?$/);
+    if (!match) {
+      yamlErrors.push(`malformed double-quoted YAML value for "${key}"`);
+      return rawVal.slice(1);
+    }
+    return match[1];
   }
-  if (startsQuote && endsQuote) {
-    return rawVal.slice(1, -1);
+  if (rawVal[0] === "'") {
+    const match = rawVal.match(/^'((?:[^']|'')*)'(?:\s+#.*)?$/);
+    if (!match) {
+      yamlErrors.push(`malformed single-quoted YAML value for "${key}"`);
+      return rawVal.slice(1);
+    }
+    return match[1].replace(/''/g, "'");
   }
   if (/(?:^|\s)#/.test(rawVal)) {
     yamlErrors.push(`unquoted YAML comment marker (#) in "${key}"`);
@@ -193,7 +199,7 @@ function checkScalarYamlSafety(key, rawVal, yamlErrors) {
   if (/:\s|:$/.test(rawVal)) {
     yamlErrors.push(`unquoted colon in YAML value for "${key}"`);
   }
-  if (/^[[\]{}*&!%@`]|^[-?]\s/.test(rawVal)) {
+  if (/^[\[\]{},|>*&!%@`]|^[-?](?:\s|$)/.test(rawVal)) {
     yamlErrors.push(`unquoted YAML indicator at start of "${key}"`);
   }
   return rawVal;
@@ -330,6 +336,8 @@ if (existsSync("skills.sh.json")) {
     } else {
       for (const group of manifest.groupings) {
         if (
+          !group ||
+          typeof group !== "object" ||
           typeof group.title !== "string" ||
           group.title.length === 0 ||
           group.title.length > 120 ||

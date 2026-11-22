@@ -64,7 +64,7 @@ curl -sS https://example.com/api/status | gronify --no-color search version -m 5
 
 Critical CLI traps to avoid:
 
-- **Never pass an empty search term (`''`):** `gronify search file.json ''` drops the empty argument, treats `file.json` as the term, and hangs waiting on stdin. Use `flatten` to list lines or `'= ""'` to match empty strings.
+- **Never pass an empty search term (`''`):** `gronify search file.json ''` ignores the file argument and reads stdin instead (hanging on an open pipe). Use `flatten` to list lines or `'= ""'` to match empty strings.
 - **Hyphen-prefixed search terms:** Put `--` before terms starting with `-` (for example `gronify --no-color search file.json -- -500`), otherwise the term is parsed as an unknown option.
 - **Shell quoting:** In bash/zsh and PowerShell 7+, wrap patterns containing `$`, `[`, `]`, or `"` in single quotes (`'\$ref'`). In Windows PowerShell 5.1, escape embedded double quotes inside single quotes (`'\"error\"'`). In `cmd.exe`, use double quotes.
 
