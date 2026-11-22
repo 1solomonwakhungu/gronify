@@ -260,7 +260,7 @@ const agentSkills = [
   {
     slug: "jsonl-ndjson-log-search",
     description:
-      "Stream-search .jsonl and .ndjson logs, pull records by index, and convert to a JSON array.",
+      "Stream-search .jsonl and .ndjson logs, pull records by index, and convert to a JSON array (needs a release newer than 1.3.2).",
   },
   {
     slug: "json-compare-sorted-diff",
@@ -275,7 +275,7 @@ const agentSkills = [
   {
     slug: "json-path-to-jq-and-unflatten",
     description:
-      "Turn printed paths into jq filters or JSONPath, keep 64-bit numbers exact, and unflatten subsets.",
+      "Turn printed paths into jq filters or JSONPath, keep 64-bit numbers exact, and unflatten subsets (parent synthesis needs > 1.3.2).",
   },
 ];
 
@@ -450,8 +450,11 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
     posthog.capture("issue_report_link_clicked", { placement: "cta" });
   };
 
-  const captureSkillLinkClick = (placement: "agents" | "footer") => {
-    posthog.capture("skill_link_clicked", { placement });
+  const captureSkillLinkClick = (skill?: string) => {
+    posthog.capture("skill_link_clicked", {
+      placement: "agents",
+      ...(skill ? { skill } : {}),
+    });
   };
 
   return (
@@ -669,7 +672,7 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
                     isExternal={river.isExternal}
                     onClick={
                       river.isExternal
-                        ? () => captureSkillLinkClick("agents")
+                        ? () => captureSkillLinkClick()
                         : undefined
                     }
                   >
@@ -697,9 +700,7 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
                       <a
                         className={styles.inlineLink}
                         href={`${skillsUrl}/${skill.slug}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={() => captureSkillLinkClick("agents")}
+                        onClick={() => captureSkillLinkClick(skill.slug)}
                       >
                         {skill.slug}
                       </a>

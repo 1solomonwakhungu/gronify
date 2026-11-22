@@ -67,7 +67,7 @@ gronify --no-color search package-lock.json --regex '^json\.lockfileVersion'
 gronify --no-color search package-lock.json --regex 'node_modules/minimatch"\]\.version = '
 
 # See which packages declare a dependency (all dependency sections; use \["@scope/pkg"\] for scoped packages)
-gronify --no-color search package-lock.json -m 30 --regex '\.(dev|optional|peer)?dependencies\.minimatch = '
+gronify --no-color search package-lock.json -m 30 --regex '\.(dev|optional|peer)?[Dd]ependencies\.minimatch = '
 
 # Read version, resolved tarball URL, and integrity hash for one package
 gronify --no-color search package-lock.json --regex '"node_modules/next"\]\.(version|resolved|integrity) = '
