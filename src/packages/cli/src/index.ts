@@ -130,7 +130,7 @@ async function* readRegularFile(open: () => number, close: boolean, size: number
  * `reuse` allows one reused block for regular files; only pass it for consumers that never keep a chunk.
  */
 function openInput(file: string | undefined, formatter: OutputFormatter, usage: string, reuse = false): AsyncIterable<Buffer> | undefined {
-  if (file) {
+  if (file !== undefined) {
     validateFile(file);
     // Pipes, devices and FIFOs keep the asynchronous stream, which never blocks while waiting for a writer.
     if (reuse && statSync(file, { throwIfNoEntry: false })?.isFile()) return readRegularFile(() => openSync(file, "r"), true, INPUT_BLOCK_SIZE);
@@ -241,7 +241,7 @@ async function unflattenCommand(file: string | undefined, globalOptions: GlobalO
 
 async function searchCommand(fileOrTerm: string, term: string | undefined, options: SearchOptions, globalOptions: GlobalOptions): Promise<void> {
   const formatter = await createFormatterFromOptions(globalOptions);
-  const file = term ? fileOrTerm : undefined;
+  const file = term !== undefined ? fileOrTerm : undefined;
   const searchTerm = term ?? fileOrTerm;
 
   try {
@@ -428,7 +428,7 @@ function parseQuick(args: string[]): (() => Promise<void>) | null {
       const value = args[(i += 1)];
       if (value === undefined || !isCount(value)) return null;
       options[command.counts[arg]!] = Number(value);
-    } else if (arg === "" || arg.startsWith("-")) {
+    } else if (arg.startsWith("-")) {
       return null;
     } else {
       positionals.push(arg);

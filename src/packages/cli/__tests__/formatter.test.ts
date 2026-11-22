@@ -249,6 +249,16 @@ describe("OutputFormatter", () => {
       expect(format).toBeInstanceOf(Function);
       expect(gron.map(format).join("\n")).toBe(fmt.formatSearchResults(gron.join("\n"), "name"));
     });
+
+    test("search formatter handles an empty search term cleanly when color is on", () => {
+      // @ts-expect-error: writable for tests
+      process.stdout.isTTY = true;
+      delete process.env.NO_COLOR;
+      const fmt = new OutputFormatter({ color: true });
+      const format = fmt.createSearchLineFormatter("")!;
+      const colored = format('json.users[0].name = "Alice"');
+      expect(colored.replace(/\u001b\[[0-9;]*m/g, "")).toBe('json.users[0].name = "Alice"');
+    });
   });
 
   describe("pretty indentation", () => {
