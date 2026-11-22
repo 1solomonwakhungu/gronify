@@ -7,6 +7,7 @@ import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from "r
 
 import { Breadcrumb, GuideShell } from "../guides/guide-article";
 import pageStyles from "../page.module.css";
+import { cliVersion } from "../site-config";
 import { buildCommand, type PlaygroundMode, type Runner } from "./cli-command";
 import { flatten, MAX_INPUT_BYTES, search, stdoutOf, utf8ByteLength } from "./gron-engine";
 import styles from "./playground.module.css";
@@ -65,6 +66,7 @@ type EngineSettings = {
   limitOn: boolean;
   limit: string;
   sort: boolean;
+  stream: boolean;
   pretty: boolean;
   tooLarge: boolean;
 };
@@ -93,7 +95,7 @@ function runEngine(d: EngineSettings): Outcome {
   }
   const result =
     d.mode === "flatten"
-      ? flatten(d.input, { sort: d.sort, limit: d.limitOn ? positiveInteger(d.limit) : null })
+      ? flatten(d.input, { sort: d.sort, limit: d.limitOn ? positiveInteger(d.limit) : null, stream: d.stream })
       : search(d.input, {
           term: d.term,
           regex: d.regex,
@@ -102,6 +104,7 @@ function runEngine(d: EngineSettings): Outcome {
           count: d.count,
           maxCount: d.maxCountOn ? positiveInteger(d.maxCount) : null,
           sort: d.sort,
+          stream: d.stream,
         });
   return {
     ...empty,
@@ -113,7 +116,9 @@ function runEngine(d: EngineSettings): Outcome {
       ? "Too large for the browser"
       : d.mode === "search" && d.regex
         ? "Invalid JSON or regex"
-        : "Invalid JSON",
+        : d.stream
+          ? "Invalid JSON Lines"
+          : "Invalid JSON",
     matched: d.mode === "search" ? result.matched : null,
   };
 }
@@ -124,12 +129,12 @@ function runEngine(d: EngineSettings): Outcome {
  * over the input limit (2 MB of JSON can flatten to far more gron), or when the engine throws, so a mode switch never
  * hangs the tab or takes the page down.
  */
-function convertForMode(text: string, target: PlaygroundMode): string | null {
+function convertForMode(text: string, target: PlaygroundMode, stream = false): string | null {
   if (utf8ByteLength(text) > MAX_INPUT_BYTES) return null;
   try {
     let converted: string;
     if (target === "unflatten") {
-      const flattened = flatten(text);
+      const flattened = flatten(text, { stream });
       if (flattened.error !== null) return null;
       converted = stdoutOf(flattened);
     } else {
@@ -278,6 +283,7 @@ export function Playground() {
   const [limitOn, setLimitOn] = useState(false);
   const [limit, setLimit] = useState("10");
   const [sort, setSort] = useState(false);
+  const [stream, setStream] = useState(false);
   const [pretty, setPretty] = useState(false);
   const [runner, setRunner] = useState<Runner>("gronify");
 
@@ -288,8 +294,8 @@ export function Playground() {
 
   // Typing stays responsive on large inputs: the engine runs on the deferred values.
   const settings = useMemo(
-    () => ({ input, mode, term, regex, caseSensitive, invert, count, maxCountOn, maxCount, limitOn, limit, sort, pretty, tooLarge }),
-    [input, mode, term, regex, caseSensitive, invert, count, maxCountOn, maxCount, limitOn, limit, sort, pretty, tooLarge],
+    () => ({ input, mode, term, regex, caseSensitive, invert, count, maxCountOn, maxCount, limitOn, limit, sort, stream, pretty, tooLarge }),
+    [input, mode, term, regex, caseSensitive, invert, count, maxCountOn, maxCount, limitOn, limit, sort, stream, pretty, tooLarge],
   );
   const deferred = useDeferredValue(settings);
   const stale = deferred !== settings;
@@ -313,8 +319,8 @@ export function Playground() {
     }
   }, [deferred]);
 
-  const baseFile = sample?.file ?? "input.json";
-  const file = mode === "unflatten" ? baseFile.replace(/\.json$/, ".gron") : baseFile;
+  const baseFile = sample?.file ?? (stream ? "input.jsonl" : "input.json");
+  const file = mode === "unflatten" ? baseFile.replace(/\.(?:json|jsonl|ndjson)$/, ".gron") : baseFile;
   const numbersValid =
     (mode !== "search" || !maxCountOn || positiveInteger(maxCount) !== null) &&
     (mode !== "flatten" || !limitOn || positiveInteger(limit) !== null);
@@ -331,13 +337,15 @@ export function Playground() {
     maxCount: maxCountOn ? positiveInteger(maxCount) ?? 0 : null,
     sort,
     limit: limitOn ? positiveInteger(limit) ?? 0 : null,
+    stream,
     pretty,
   });
 
   function activeFlags(): string[] {
-    if (mode === "flatten") return [sort && "--sort", limitOn && "--limit"].filter(Boolean) as string[];
+    if (mode === "flatten") return [stream && "--stream", sort && "--sort", limitOn && "--limit"].filter(Boolean) as string[];
     if (mode === "unflatten") return pretty ? ["--pretty"] : [];
     return [
+      stream && "--stream",
       regex && "--regex",
       caseSensitive && "-c",
       invert && "-v",
@@ -350,12 +358,14 @@ export function Playground() {
   function selectSample(id: string) {
     const next = samples.find((candidate) => candidate.id === id);
     if (!next) return;
+    const nextStream = Boolean(next.stream);
     setSampleId(next.id);
     setJsonInput(next.json);
     setTerm(next.term);
+    setStream(nextStream);
     // Unflatten mode works on gron, so give it this sample's gron.
     if (mode === "unflatten") {
-      const gron = convertForMode(next.json, "unflatten");
+      const gron = convertForMode(next.json, "unflatten", nextStream);
       if (gron !== null) setGronInput(gron);
     }
     posthog.capture("playground_sample_selected", { sample: next.id, mode });
@@ -365,11 +375,14 @@ export function Playground() {
     if (next === mode) return;
     if (next === "unflatten") {
       // Carry the current JSON over as gron, so the round trip is one click.
-      const gron = convertForMode(jsonInput, "unflatten");
+      const gron = convertForMode(jsonInput, "unflatten", stream);
       if (gron !== null) setGronInput(gron);
     } else if (mode === "unflatten") {
       const json = convertForMode(gronInput, next);
-      if (json !== null && json !== jsonInput) setJsonInput(json);
+      if (json !== null && json !== jsonInput) {
+        setJsonInput(json);
+        if (stream) setStream(false);
+      }
     }
     setMode(next);
     posthog.capture("playground_mode_changed", { mode: next });
@@ -449,6 +462,7 @@ export function Playground() {
               />
             </div>
             <div className={styles.flags}>
+              <FlagToggle flag="--stream" description="JSON Lines (NDJSON)" checked={stream} onChange={setStream} />
               <FlagToggle flag="--regex" description="regex" checked={regex} onChange={setRegex} />
               <FlagToggle flag="-c" description="case-sensitive" checked={caseSensitive} onChange={setCaseSensitive} />
               <FlagToggle flag="-v" description="invert" checked={invert} onChange={setInvert} />
@@ -467,6 +481,7 @@ export function Playground() {
         )}
         {mode === "flatten" && (
           <div className={styles.flags}>
+            <FlagToggle flag="--stream" description="JSON Lines (NDJSON)" checked={stream} onChange={setStream} />
             <FlagToggle flag="--sort" description="sort keys (UTF-16 order)" checked={sort} onChange={setSort} />
             <CountOption
               flag="--limit"
@@ -523,7 +538,7 @@ export function Playground() {
         <section className={styles.pane} aria-labelledby={`${inputId}-label`}>
           <div className={styles.paneHeader}>
             <label id={`${inputId}-label`} htmlFor={inputId} className={styles.paneTitle}>
-              {mode === "unflatten" ? "Input gron" : "Input JSON"}
+              {mode === "unflatten" ? "Input gron" : stream ? "Input JSON Lines" : "Input JSON"}
             </label>
             <span className={styles.stat} data-warning={tooLarge || undefined}>
               {formatBytes(inputBytes)} / {formatBytes(MAX_INPUT_BYTES)}
@@ -635,10 +650,11 @@ export function PlaygroundPage() {
                     Same output as the CLI
                   </Heading>
                   <Text as="p" size="200" variant="muted">
-                    The playground is a browser port of <code>gronify</code> 1.3. The output panel shows what the CLI
-                    prints to stdout for the command above, and the notes under it are what it prints to stderr. Numbers
-                    stay as written (<code>12345678901234567890</code>, <code>1.10</code>), <code>--sort</code> orders
-                    keys by UTF-16 code unit, and invalid JSON is reported with its byte offset, line, and column.
+                    The playground is a browser port of <code>gronify</code> {cliVersion}. The output panel shows what
+                    the CLI prints to stdout for the command above, and the notes under it are what it prints to stderr.
+                    Numbers stay as written (<code>12345678901234567890</code>, <code>1.10</code>), <code>--sort</code>{" "}
+                    orders keys by UTF-16 code unit, <code>--stream</code> reads JSON Lines (NDJSON), and invalid JSON
+                    is reported with its byte offset, line, and column.
                   </Text>
                 </section>
                 <section className={pageStyles.guideSection} aria-labelledby="playground-limits">

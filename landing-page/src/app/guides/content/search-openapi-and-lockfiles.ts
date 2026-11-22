@@ -420,7 +420,7 @@ $ jq -r '.prefixes[] | select(.region == "eu-west-1" and .service == "S3") | .ip
         },
         {
           kind: "paragraph",
-          text: "Each Gronify run reads one JSON document, so a stream of objects, such as `kubectl get -w -o json`, needs jq. For files in the gigabytes, see [searching large JSON files](/guides/large-json-files).",
+          text: "For JSON Lines logs (one compact JSON value per line), pass `-s`, `--stream`, or `--jsonl`. A multi-line stream of pretty-printed objects, such as `kubectl get -w -o json`, still needs jq (or `jq -c` piped into `gronify search --stream`). For files in the gigabytes, see [searching large JSON files](/guides/large-json-files).",
         },
       ],
     },

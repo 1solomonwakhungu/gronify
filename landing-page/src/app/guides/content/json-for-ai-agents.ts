@@ -300,7 +300,7 @@ $ npx skills add 1solomonwakhungu/gronify --skill gronify-json-flatten-search
           kind: "list",
           style: "bullet",
           items: [
-            "[`gronify-json-flatten-search`](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search): complete Gronify workflow — check availability and version, pass `--no-color`, go from `--count` to `-m` to `flatten --limit`, check exit codes, and round-trip with `unflatten`.",
+            "[`gronify-json-flatten-search`](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search): complete Gronify workflow — check availability and version (1.2.0+ for caps/`--sort`/`--exit-status`, 1.4.0+ for `--stream`/`--jsonl`), pass `--no-color`, go from `--count` to `-m` to `flatten --limit`, check exit codes, and round-trip with `unflatten`.",
             "[`large-json-search`](https://skills.sh/1solomonwakhungu/gronify/large-json-search): strict size gate (`wc -c`), 5-step narrowing loop, and compressed stream pipes for files over 50 KB to multi-GB exports.",
             "[`jsonl-ndjson-log-search`](https://skills.sh/1solomonwakhungu/gronify/jsonl-ndjson-log-search): streaming `.jsonl` / `.ndjson` log and transcript exploration with `--jsonl` / `-s` (Gronify 1.4.0+; falls back to `jq -c` on 1.3.2 and older).",
             "[`json-compare-sorted-diff`](https://skills.sh/1solomonwakhungu/gronify/json-compare-sorted-diff): key-order-independent JSON comparison using `flatten --sort` with system `diff` and `git diff` textconv.",
@@ -371,19 +371,18 @@ $ jq -r '.events[].error.code // empty' events.json | sort | uniq -c
         },
         {
           kind: "paragraph",
-          text: "JSON Lines logs need another tool too. Gronify reads one JSON document per run, so a log with one object per line fails at line 2. jq reads a stream of values, and line tools such as [ripgrep](https://github.com/BurntSushi/ripgrep) work because each line is one record:",
+          text: "For JSON Lines (NDJSON) logs with one JSON value per line, pass `-s`, `--stream`, or `--jsonl` to `gronify flatten` or `gronify search`; records stream one at a time and work with `--count` and `-m`. When the agent needs whole matching JSON objects back or wants to search across a directory of many log files, jq or [ripgrep](https://github.com/BurntSushi/ripgrep) is often more direct:",
         },
         {
           kind: "terminal",
-          label: "Gronify rejects a JSON Lines log that jq 1.8.2 filters",
+          label: "Searching a JSON Lines log with gronify --stream and with jq 1.8.2",
           lines: transcript`
 $ cat app.jsonl
 {"level":"info","msg":"started"}
 {"level":"error","msg":"db timeout"}
 {"level":"info","msg":"stopped"}
-$ gronify --no-color search app.jsonl error; echo $?
-Error: searching JSON: Unexpected '{' after the top-level value at byte offset 33 (line 2, column 1)
-1
+$ gronify --no-color search --stream app.jsonl error
+json[1].level = "error"
 $ jq -c 'select(.level == "error")' app.jsonl
 {"level":"error","msg":"db timeout"}
 `,

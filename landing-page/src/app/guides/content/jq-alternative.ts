@@ -12,7 +12,7 @@ export const jqAlternative: Guide = {
   h1: "A jq alternative for exploring JSON you do not know yet",
   lede: 'Gronify does not replace jq: [jq](https://github.com/jqlang/jq) is the right tool for reshaping, filtering, and computing over JSON whose structure you already know. The alternative is for the step before that, when a payload is new to you and you need to learn where things are. `gronify search deploys.json failed` prints `json.data.projects[0].envs[0].deploy.status = "failed"`, the full path next to the value, and that path is what the jq filter is written from.',
   published: "2026-11-12",
-  updated: "2026-11-12",
+  updated: "2026-11-22",
   sections: [
     {
       id: "other-jq-alternatives",
@@ -273,7 +273,7 @@ ada@example.com
     {
       question: "Can Gronify read JSON Lines or NDJSON the way jq does?",
       answer:
-        "No. Gronify reads one JSON document per run and stops with an error at the second line of an NDJSON file. jq reads a sequence of documents by default, so `jq -c .a lines.ndjson` handles every line. gron and fastgron accept the same input with `-s`.",
+        "Yes, with `-s`, `--stream`, or `--jsonl`. `gronify flatten --stream lines.ndjson` and `gronify search --stream lines.ndjson term` read one JSON value per line and number them `json[0]`, `json[1]`, and so on under `json = []`, matching `gron -s` and `fastgron -s`. Without the flag Gronify expects one JSON document per run, while jq reads a sequence of documents by default (`jq -c .a lines.ndjson`).",
     },
     {
       question: "Can Gronify change a value in a JSON file?",

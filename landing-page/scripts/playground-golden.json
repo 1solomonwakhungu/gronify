@@ -829,6 +829,421 @@
   "stderr": "",
   "failed": false
  },
+ "flatten-stream/jsonl": {
+  "stdout": "json = []\njson[0] = {}\njson[0].ts = \"2026-11-22T09:12:01Z\"\njson[0].level = \"info\"\njson[0].service = \"api\"\njson[0].path = \"/v1/orders\"\njson[0].status = 200\njson[0].ms = 18\njson[1] = {}\njson[1].ts = \"2026-11-22T09:12:04Z\"\njson[1].level = \"error\"\njson[1].service = \"payments\"\njson[1].orderId = 12345678901234567890\njson[1].error = {}\njson[1].error.code = \"upstream_timeout\"\njson[1].error.retryable = true\njson[2] = {}\njson[2].ts = \"2026-11-22T09:12:07Z\"\njson[2].level = \"warn\"\njson[2].service = \"api\"\njson[2].path = \"/v1/search\"\njson[2].status = 429\njson[2].ms = 4\njson[3] = {}\njson[3].ts = \"2026-11-22T09:12:11Z\"\njson[3].level = \"error\"\njson[3].service = \"webhooks\"\njson[3].endpoint = \"https://hooks.example.com/events\"\njson[3].error = {}\njson[3].error.code = \"connection_reset\"\njson[3].error.attempt = 3\njson[4] = {}\njson[4].ts = \"2026-11-22T09:12:15Z\"\njson[4].level = \"info\"\njson[4].service = \"api\"\njson[4].path = \"/healthz\"\njson[4].status = 200\njson[4].ms = 1\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort/jsonl": {
+  "stdout": "json = []\njson[0] = {}\njson[0].level = \"info\"\njson[0].ms = 18\njson[0].path = \"/v1/orders\"\njson[0].service = \"api\"\njson[0].status = 200\njson[0].ts = \"2026-11-22T09:12:01Z\"\njson[1] = {}\njson[1].error = {}\njson[1].error.code = \"upstream_timeout\"\njson[1].error.retryable = true\njson[1].level = \"error\"\njson[1].orderId = 12345678901234567890\njson[1].service = \"payments\"\njson[1].ts = \"2026-11-22T09:12:04Z\"\njson[2] = {}\njson[2].level = \"warn\"\njson[2].ms = 4\njson[2].path = \"/v1/search\"\njson[2].service = \"api\"\njson[2].status = 429\njson[2].ts = \"2026-11-22T09:12:07Z\"\njson[3] = {}\njson[3].endpoint = \"https://hooks.example.com/events\"\njson[3].error = {}\njson[3].error.attempt = 3\njson[3].error.code = \"connection_reset\"\njson[3].level = \"error\"\njson[3].service = \"webhooks\"\njson[3].ts = \"2026-11-22T09:12:11Z\"\njson[4] = {}\njson[4].level = \"info\"\njson[4].ms = 1\njson[4].path = \"/healthz\"\njson[4].service = \"api\"\njson[4].status = 200\njson[4].ts = \"2026-11-22T09:12:15Z\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream/mixed": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\njson[1] = []\njson[1][0] = 2\njson[1][1] = []\njson[1][1][0] = 3\njson[2] = \"just a string\"\njson[3] = 42\njson[4] = true\njson[5] = false\njson[6] = null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort/mixed": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\njson[1] = []\njson[1][0] = 2\njson[1][1] = []\njson[1][1][0] = 3\njson[2] = \"just a string\"\njson[3] = 42\njson[4] = true\njson[5] = false\njson[6] = null\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream/blankAndCrlf": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\njson[1] = 7\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort/blankAndCrlf": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\njson[1] = 7\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream/noTrailingNewline": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\njson[1] = 12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort/noTrailingNewline": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\njson[1] = 12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream/numbers": {
+  "stdout": "json = []\njson[0] = {}\njson[0].big = 12345678901234567890\njson[0].small = 1.10\njson[0].negZero = -0\njson[0].exp = 1E+2\njson[1] = []\njson[1][0] = 1.10\njson[1][1] = -0\njson[1][2] = 1e2\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort/numbers": {
+  "stdout": "json = []\njson[0] = {}\njson[0].big = 12345678901234567890\njson[0].exp = 1E+2\njson[0].negZero = -0\njson[0].small = 1.10\njson[1] = []\njson[1][0] = 1.10\njson[1][1] = -0\njson[1][2] = 1e2\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream/reorderedKeys": {
+  "stdout": "json = []\njson[0] = {}\njson[0].z = 1\njson[0].a = {}\njson[0].a.d = 4\njson[0].a.c = 3\njson[0][\"10\"] = 0\njson[0][\"2\"] = 0\njson[0][\"café\"] = \"é\"\njson[1] = {}\njson[1].b = 1\njson[1].a = 2\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort/reorderedKeys": {
+  "stdout": "json = []\njson[0] = {}\njson[0][\"10\"] = 0\njson[0][\"2\"] = 0\njson[0].a = {}\njson[0].a.c = 3\njson[0].a.d = 4\njson[0][\"café\"] = \"é\"\njson[0].z = 1\njson[1] = {}\njson[1].a = 2\njson[1].b = 1\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream/empty": {
+  "stdout": "json = []\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort/empty": {
+  "stdout": "json = []\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream/onlyBlank": {
+  "stdout": "json = []\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort/onlyBlank": {
+  "stdout": "json = []\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream/twoOnOneLine": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected '{' after the record on this line (JSON Lines allows one value per line) at byte offset 16 (line 2, column 9)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream-sort/twoOnOneLine": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected '{' after the record on this line (JSON Lines allows one value per line) at byte offset 16 (line 2, column 9)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream/multiLineRecord": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected end of line inside a JSON Lines record (each record must be on one line) at byte offset 13 (line 2, column 6)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream-sort/multiLineRecord": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected end of line inside a JSON Lines record (each record must be on one line) at byte offset 13 (line 2, column 6)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream/newlineInString": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unterminated string: the line ends inside it (JSON Lines records must be on one line) at byte offset 7 (line 1, column 8)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream-sort/newlineInString": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unterminated string: the line ends inside it (JSON Lines records must be on one line) at byte offset 7 (line 1, column 8)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream/badFourthLine": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected token 'tru', expected true, false or null at byte offset 25 (line 4, column 6)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream-sort/badFourthLine": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected token 'tru', expected true, false or null at byte offset 25 (line 4, column 6)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream/incompleteLast": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\njson[1] = {}\njson[1].b = []\njson[1].b[0] = 1\n",
+  "stderr": "Error: flattening JSON: Unexpected end of input inside a JSON Lines record at byte offset 17 (line 2, column 10)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream-sort/incompleteLast": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\n",
+  "stderr": "Error: flattening JSON: Unexpected end of input inside a JSON Lines record at byte offset 17 (line 2, column 10)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream/strayBracket": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected ']', expected a value at byte offset 0 (line 1, column 1)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream-sort/strayBracket": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected ']', expected a value at byte offset 0 (line 1, column 1)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream/loneCrBetween": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected '{' after the record on this line (JSON Lines allows one value per line) at byte offset 8 (line 1, column 9)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream-sort/loneCrBetween": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected '{' after the record on this line (JSON Lines allows one value per line) at byte offset 8 (line 1, column 9)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream/trailingComma": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 16 (line 3, column 8)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream-sort/trailingComma": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 16 (line 3, column 8)\nTip: Validate your JSON with a linter like https://jsonlint.com",
+  "failed": true
+ },
+ "flatten-stream-limit-1/jsonl": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-1/jsonl": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-3/jsonl": {
+  "stdout": "json = []\njson[0] = {}\njson[0].ts = \"2026-11-22T09:12:01Z\"\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-3/jsonl": {
+  "stdout": "json = []\njson[0] = {}\njson[0].level = \"info\"\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-7/jsonl": {
+  "stdout": "json = []\njson[0] = {}\njson[0].ts = \"2026-11-22T09:12:01Z\"\njson[0].level = \"info\"\njson[0].service = \"api\"\njson[0].path = \"/v1/orders\"\njson[0].status = 200\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-7/jsonl": {
+  "stdout": "json = []\njson[0] = {}\njson[0].level = \"info\"\njson[0].ms = 18\njson[0].path = \"/v1/orders\"\njson[0].service = \"api\"\njson[0].status = 200\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-1/mixed": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-1/mixed": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-3/mixed": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-3/mixed": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-7/mixed": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\njson[1] = []\njson[1][0] = 2\njson[1][1] = []\njson[1][1][0] = 3\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-7/mixed": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\njson[1] = []\njson[1][0] = 2\njson[1][1] = []\njson[1][1][0] = 3\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-1/blankAndCrlf": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-1/blankAndCrlf": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-3/blankAndCrlf": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-3/blankAndCrlf": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-7/blankAndCrlf": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\njson[1] = 7\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-7/blankAndCrlf": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\njson[1] = 7\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-limit-1/noTrailingNewline": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-1/noTrailingNewline": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-3/noTrailingNewline": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-3/noTrailingNewline": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-7/noTrailingNewline": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\njson[1] = 12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-7/noTrailingNewline": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\njson[1] = 12345678901234567890\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-limit-1/numbers": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-1/numbers": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-3/numbers": {
+  "stdout": "json = []\njson[0] = {}\njson[0].big = 12345678901234567890\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-3/numbers": {
+  "stdout": "json = []\njson[0] = {}\njson[0].big = 12345678901234567890\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-7/numbers": {
+  "stdout": "json = []\njson[0] = {}\njson[0].big = 12345678901234567890\njson[0].small = 1.10\njson[0].negZero = -0\njson[0].exp = 1E+2\njson[1] = []\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-7/numbers": {
+  "stdout": "json = []\njson[0] = {}\njson[0].big = 12345678901234567890\njson[0].exp = 1E+2\njson[0].negZero = -0\njson[0].small = 1.10\njson[1] = []\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-1/reorderedKeys": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-1/reorderedKeys": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-3/reorderedKeys": {
+  "stdout": "json = []\njson[0] = {}\njson[0].z = 1\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-3/reorderedKeys": {
+  "stdout": "json = []\njson[0] = {}\njson[0][\"10\"] = 0\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-7/reorderedKeys": {
+  "stdout": "json = []\njson[0] = {}\njson[0].z = 1\njson[0].a = {}\njson[0].a.d = 4\njson[0].a.c = 3\njson[0][\"10\"] = 0\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-7/reorderedKeys": {
+  "stdout": "json = []\njson[0] = {}\njson[0][\"10\"] = 0\njson[0][\"2\"] = 0\njson[0].a = {}\njson[0].a.c = 3\njson[0].a.d = 4\n",
+  "stderr": "Stopped after 7 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-1/empty": {
+  "stdout": "json = []\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-1/empty": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-3/empty": {
+  "stdout": "json = []\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-3/empty": {
+  "stdout": "json = []\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-limit-7/empty": {
+  "stdout": "json = []\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-7/empty": {
+  "stdout": "json = []\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-limit-1/onlyBlank": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-1/onlyBlank": {
+  "stdout": "json = []\n",
+  "stderr": "Stopped after 1 line (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-limit-3/onlyBlank": {
+  "stdout": "json = []\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-3/onlyBlank": {
+  "stdout": "json = []\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-limit-7/onlyBlank": {
+  "stdout": "json = []\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-sort-limit-7/onlyBlank": {
+  "stdout": "json = []\n",
+  "stderr": "",
+  "failed": false
+ },
+ "flatten-stream-limit/stops-before-error": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 1\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-stream-sort-limit/stops-before-error": {
+  "stdout": "json = []\njson[0] = {}\njson[0].a = 2\n",
+  "stderr": "Stopped after 3 lines (--limit); there may be more",
+  "failed": false
+ },
+ "flatten-no-stream/jsonl": {
+  "stdout": "",
+  "stderr": "Error: flattening JSON: Unexpected '{' after the top-level value at byte offset 8 (line 2, column 1)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
+  "failed": true
+ },
  "search-0/deployment": {
   "stdout": "json.containers[0].image = \"registry.example.com/checkout-api:2026.11.3\"\njson.containers[1].image = \"registry.example.com/envoy:1.31.2\"\n",
   "stderr": "",
@@ -946,6 +1361,66 @@
  },
  "search-11/events": {
   "stdout": "json = []\njson[0] = {}\njson[0].amount = 129.90\njson[0].currency = \"USD\"\njson[0].id = \"evt_01\"\njson[0].ts = \"2026-11-18T09:12:44Z\"\njson[0].type = \"checkout.completed\"\njson[0].user = {}\njson[0].user.id = \"u_481\"\njson[0].user.plan = \"pro\"\njson[1] = {}\njson[1].error = {}\njson[1].error.code = \"card_declined\"\njson[1].error.message = \"Your card was declined.\"\njson[1].error.retryable = false\njson[1].id = \"evt_02\"\njson[1].ts = \"2026-11-18T09:13:02Z\"\njson[1].user = {}\njson[1].user.id = \"u_212\"\njson[1].user.plan = \"free\"\njson[2] = {}\njson[2].amount = 48.00\njson[2].currency = \"EUR\"\njson[2].id = \"evt_03\"\njson[2].ts = \"2026-11-18T09:15:37Z\"\njson[2].type = \"checkout.completed\"\njson[2].user = {}\njson[2].user.id = \"u_093\"\njson[2].user.plan = \"team\"\njson[3] = {}\njson[3].attempt = 3\njson[3].endpoint = \"https://hooks.example.com/orders\"\njson[3].error = {}\njson[3].error.code = \"timeout\"\njson[3].error.message = \"No response after 10s\"\njson[3].error.retryable = true\njson[3].id = \"evt_04\"\njson[3].ts = \"2026-11-18T09:16:10Z\"\njson[4] = {}\njson[4].amount = -129.90\njson[4].currency = \"USD\"\njson[4].id = \"evt_05\"\njson[4].reason = null\njson[4].ts = \"2026-11-18T09:20:51Z\"\njson[4].type = \"refund.created\"\njson[4].user = {}\njson[4].user.id = \"u_481\"\njson[4].user.plan = \"pro\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-0/jsonl": {
+  "stdout": "json[1].level = \"error\"\njson[1].error = {}\njson[1].error.code = \"upstream_timeout\"\njson[1].error.retryable = true\njson[3].level = \"error\"\njson[3].error = {}\njson[3].error.code = \"connection_reset\"\njson[3].error.attempt = 3\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-1/jsonl": {
+  "stdout": "json[1].level = \"error\"\njson[1].error = {}\njson[1].error.code = \"upstream_timeout\"\njson[1].error.retryable = true\njson[3].level = \"error\"\njson[3].error = {}\njson[3].error.code = \"connection_reset\"\njson[3].error.attempt = 3\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-2/jsonl": {
+  "stdout": "json[1].level = \"error\"\njson[1].error = {}\njson[1].error.code = \"upstream_timeout\"\njson[1].error.retryable = true\njson[3].level = \"error\"\njson[3].error = {}\njson[3].error.code = \"connection_reset\"\njson[3].error.attempt = 3\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-3/jsonl": {
+  "stdout": "json = []\njson[0] = {}\njson[0].ts = \"2026-11-22T09:12:01Z\"\njson[0].level = \"info\"\njson[0].service = \"api\"\njson[0].path = \"/v1/orders\"\njson[0].status = 200\njson[0].ms = 18\njson[1] = {}\njson[1].ts = \"2026-11-22T09:12:04Z\"\njson[1].service = \"payments\"\njson[1].orderId = 12345678901234567890\njson[2] = {}\njson[2].ts = \"2026-11-22T09:12:07Z\"\njson[2].level = \"warn\"\njson[2].service = \"api\"\njson[2].path = \"/v1/search\"\njson[2].status = 429\njson[2].ms = 4\njson[3] = {}\njson[3].ts = \"2026-11-22T09:12:11Z\"\njson[3].service = \"webhooks\"\njson[3].endpoint = \"https://hooks.example.com/events\"\njson[4] = {}\njson[4].ts = \"2026-11-22T09:12:15Z\"\njson[4].level = \"info\"\njson[4].service = \"api\"\njson[4].path = \"/healthz\"\njson[4].status = 200\njson[4].ms = 1\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-4/jsonl": {
+  "stdout": "8\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-5/jsonl": {
+  "stdout": "json[1].level = \"error\"\njson[1].error = {}\n",
+  "stderr": "Stopped after 2 matches (--max-count); there may be more",
+  "failed": false
+ },
+ "search-6/jsonl": {
+  "stdout": "json[1].error = {}\njson[1].error.code = \"upstream_timeout\"\njson[1].error.retryable = true\njson[1].level = \"error\"\njson[3].error = {}\njson[3].error.attempt = 3\njson[3].error.code = \"connection_reset\"\njson[3].level = \"error\"\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-7/jsonl": {
+  "stdout": "json[1].error = {}\njson[1].error.code = \"upstream_timeout\"\n",
+  "stderr": "Stopped after 2 matches (--max-count); there may be more",
+  "failed": false
+ },
+ "search-8/jsonl": {
+  "stdout": "json = []\njson[0] = {}\njson[0].ts = \"2026-11-22T09:12:01Z\"\n",
+  "stderr": "Stopped after 3 lines (--max-count); there may be more",
+  "failed": false
+ },
+ "search-9/jsonl": {
+  "stdout": "2\n",
+  "stderr": "Stopped counting at 2 matches (--max-count)",
+  "failed": false
+ },
+ "search-10/jsonl": {
+  "stdout": "8\n",
+  "stderr": "",
+  "failed": false
+ },
+ "search-11/jsonl": {
+  "stdout": "json = []\njson[0] = {}\njson[0].level = \"info\"\njson[0].ms = 18\njson[0].path = \"/v1/orders\"\njson[0].service = \"api\"\njson[0].status = 200\njson[0].ts = \"2026-11-22T09:12:01Z\"\njson[1] = {}\njson[1].orderId = 12345678901234567890\njson[1].service = \"payments\"\njson[1].ts = \"2026-11-22T09:12:04Z\"\njson[2] = {}\njson[2].level = \"warn\"\njson[2].ms = 4\njson[2].path = \"/v1/search\"\njson[2].service = \"api\"\njson[2].status = 429\njson[2].ts = \"2026-11-22T09:12:07Z\"\njson[3] = {}\njson[3].endpoint = \"https://hooks.example.com/events\"\njson[3].service = \"webhooks\"\njson[3].ts = \"2026-11-22T09:12:11Z\"\njson[4] = {}\njson[4].level = \"info\"\njson[4].ms = 1\njson[4].path = \"/healthz\"\njson[4].service = \"api\"\njson[4].status = 200\njson[4].ts = \"2026-11-22T09:12:15Z\"\n",
   "stderr": "",
   "failed": false
  },
@@ -1079,6 +1554,11 @@
   "stderr": "",
   "failed": false
  },
+ "search-regexDigits/jsonl": {
+  "stdout": "json[0].ts = \"2026-11-22T09:12:01Z\"\njson[1].ts = \"2026-11-22T09:12:04Z\"\njson[1].orderId = 12345678901234567890\njson[2].ts = \"2026-11-22T09:12:07Z\"\njson[3].ts = \"2026-11-22T09:12:11Z\"\njson[4].ts = \"2026-11-22T09:12:15Z\"\n",
+  "stderr": "",
+  "failed": false
+ },
  "search-regexDigits/ledger": {
   "stdout": "json.ledger = \"acct-7731\"\njson.entries[0].id = 12345678901234567890\njson.entries[1].id = 12345678901234567891\njson.entries[1].fx = 1.0850\njson.entries[2].id = 9007199254740993\njson.entries[3].id = 18446744073709551615\n",
   "stderr": "",
@@ -1100,6 +1580,11 @@
   "failed": false
  },
  "search-regexAnchored/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '^json\\.entries\\[\\d+\\]\\.id = '\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-regexAnchored/jsonl": {
   "stdout": "",
   "stderr": "Warning: No matches found for '^json\\.entries\\[\\d+\\]\\.id = '\nTip: Search is a case-insensitive substring match; use --regex for patterns",
   "failed": false
@@ -1129,6 +1614,11 @@
   "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /(/i: Unterminated group",
   "failed": true
  },
+ "search-regexInvalid/jsonl": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /(/i: Unterminated group",
+  "failed": true
+ },
  "search-regexInvalid/ledger": {
   "stdout": "",
   "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /(/i: Unterminated group",
@@ -1150,6 +1640,11 @@
   "failed": true
  },
  "search-regexInvalidCount/events": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /[/i: Unterminated character class",
+  "failed": true
+ },
+ "search-regexInvalidCount/jsonl": {
   "stdout": "",
   "stderr": "Error: searching JSON (invalid regex or JSON): Invalid regular expression: /[/i: Unterminated character class",
   "failed": true
@@ -1179,6 +1674,11 @@
   "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
   "failed": false
  },
+ "search-upperCase/jsonl": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
  "search-upperCase/ledger": {
   "stdout": "",
   "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
@@ -1200,6 +1700,11 @@
   "failed": false
  },
  "search-upperCaseSensitive/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-upperCaseSensitive/jsonl": {
   "stdout": "",
   "stderr": "Warning: No matches found for 'IMAGE'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
   "failed": false
@@ -1229,6 +1734,11 @@
   "stderr": "Warning: No matches found for '-250'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
   "failed": false
  },
+ "search-dash/jsonl": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '-250'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
  "search-dash/ledger": {
   "stdout": "json.entries[1].amount = -250.00\n",
   "stderr": "",
@@ -1254,6 +1764,11 @@
   "stderr": "",
   "failed": false
  },
+ "search-dashRegex/jsonl": {
+  "stdout": "json[0].ts = \"2026-11-22T09:12:01Z\"\njson[1].ts = \"2026-11-22T09:12:04Z\"\njson[2].ts = \"2026-11-22T09:12:07Z\"\njson[3].ts = \"2026-11-22T09:12:11Z\"\njson[4].ts = \"2026-11-22T09:12:15Z\"\n",
+  "stderr": "",
+  "failed": false
+ },
  "search-dashRegex/ledger": {
   "stdout": "json.ledger = \"acct-7731\"\njson.entries[1].amount = -250.00\n",
   "stderr": "",
@@ -1275,6 +1790,11 @@
   "failed": false
  },
  "search-noMatch/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'definitely-not-here'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-noMatch/jsonl": {
   "stdout": "",
   "stderr": "Warning: No matches found for 'definitely-not-here'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
   "failed": false
@@ -1304,6 +1824,11 @@
   "stderr": "",
   "failed": false
  },
+ "search-noMatchCount/jsonl": {
+  "stdout": "0\n",
+  "stderr": "",
+  "failed": false
+ },
  "search-noMatchCount/ledger": {
   "stdout": "0\n",
   "stderr": "",
@@ -1325,6 +1850,11 @@
   "failed": false
  },
  "search-quote/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'it's'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-quote/jsonl": {
   "stdout": "",
   "stderr": "Warning: No matches found for 'it's'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
   "failed": false
@@ -1354,6 +1884,11 @@
   "stderr": "",
   "failed": false
  },
+ "search-spaces/jsonl": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'card was'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
  "search-spaces/ledger": {
   "stdout": "",
   "stderr": "Warning: No matches found for 'card was'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
@@ -1375,6 +1910,11 @@
   "failed": false
  },
  "search-unicodeFold/events": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'É'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-unicodeFold/jsonl": {
   "stdout": "",
   "stderr": "Warning: No matches found for 'É'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
   "failed": false
@@ -1404,6 +1944,11 @@
   "stderr": "Warning: No matches found for 'é'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
   "failed": false
  },
+ "search-unicodeExact/jsonl": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for 'é'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
  "search-unicodeExact/ledger": {
   "stdout": "",
   "stderr": "Warning: No matches found for 'é'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
@@ -1427,6 +1972,11 @@
  "search-bigInt/events": {
   "stdout": "",
   "stderr": "Warning: No matches found for '12345678901234567890'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-bigInt/jsonl": {
+  "stdout": "json[1].orderId = 12345678901234567890\n",
+  "stderr": "",
   "failed": false
  },
  "search-bigInt/ledger": {
@@ -1454,6 +2004,11 @@
   "stderr": "Warning: No matches found for '1.10'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
   "failed": false
  },
+ "search-decimal/jsonl": {
+  "stdout": "",
+  "stderr": "Warning: No matches found for '1.10'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
  "search-decimal/ledger": {
   "stdout": "json.openingBalance = 1.10\njson.entries[0].amount = 1.10\n",
   "stderr": "",
@@ -1477,6 +2032,11 @@
  "search-regexBigInt/events": {
   "stdout": "",
   "stderr": "Warning: No matches found for '= \\d{17,}$'\nTip: Search is a case-insensitive substring match; use --regex for patterns",
+  "failed": false
+ },
+ "search-regexBigInt/jsonl": {
+  "stdout": "json[1].orderId = 12345678901234567890\n",
+  "stderr": "",
   "failed": false
  },
  "search-regexBigInt/ledger": {
@@ -1704,6 +2264,86 @@
   "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected ''', expected a string key at byte offset 1 (line 1, column 2)",
   "failed": true
  },
+ "search-stream/twoOnOneLine": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected '{' after the record on this line (JSON Lines allows one value per line) at byte offset 16 (line 2, column 9)",
+  "failed": true
+ },
+ "search-stream-regex/twoOnOneLine": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected '{' after the record on this line (JSON Lines allows one value per line) at byte offset 16 (line 2, column 9)",
+  "failed": true
+ },
+ "search-stream/multiLineRecord": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected end of line inside a JSON Lines record (each record must be on one line) at byte offset 13 (line 2, column 6)",
+  "failed": true
+ },
+ "search-stream-regex/multiLineRecord": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected end of line inside a JSON Lines record (each record must be on one line) at byte offset 13 (line 2, column 6)",
+  "failed": true
+ },
+ "search-stream/newlineInString": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unterminated string: the line ends inside it (JSON Lines records must be on one line) at byte offset 7 (line 1, column 8)",
+  "failed": true
+ },
+ "search-stream-regex/newlineInString": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unterminated string: the line ends inside it (JSON Lines records must be on one line) at byte offset 7 (line 1, column 8)",
+  "failed": true
+ },
+ "search-stream/badFourthLine": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected token 'tru', expected true, false or null at byte offset 25 (line 4, column 6)",
+  "failed": true
+ },
+ "search-stream-regex/badFourthLine": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected token 'tru', expected true, false or null at byte offset 25 (line 4, column 6)",
+  "failed": true
+ },
+ "search-stream/incompleteLast": {
+  "stdout": "json[0].a = 1\n",
+  "stderr": "Error: searching JSON: Unexpected end of input inside a JSON Lines record at byte offset 17 (line 2, column 10)",
+  "failed": true
+ },
+ "search-stream-regex/incompleteLast": {
+  "stdout": "json[0].a = 1\n",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected end of input inside a JSON Lines record at byte offset 17 (line 2, column 10)",
+  "failed": true
+ },
+ "search-stream/strayBracket": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected ']', expected a value at byte offset 0 (line 1, column 1)",
+  "failed": true
+ },
+ "search-stream-regex/strayBracket": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected ']', expected a value at byte offset 0 (line 1, column 1)",
+  "failed": true
+ },
+ "search-stream/loneCrBetween": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected '{' after the record on this line (JSON Lines allows one value per line) at byte offset 8 (line 1, column 9)",
+  "failed": true
+ },
+ "search-stream-regex/loneCrBetween": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected '{' after the record on this line (JSON Lines allows one value per line) at byte offset 8 (line 1, column 9)",
+  "failed": true
+ },
+ "search-stream/trailingComma": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 16 (line 3, column 8)",
+  "failed": true
+ },
+ "search-stream-regex/trailingComma": {
+  "stdout": "",
+  "stderr": "Error: searching JSON (invalid regex or JSON): Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 16 (line 3, column 8)",
+  "failed": true
+ },
  "search-m/stops-before-error": {
   "stdout": "json[0].a = 1\n",
   "stderr": "Stopped after 1 match (--max-count); there may be more",
@@ -1713,6 +2353,21 @@
   "stdout": "json[0].id = 2\njson[1].id = 1\n",
   "stderr": "Stopped after 2 matches (--max-count); there may be more",
   "failed": false
+ },
+ "search-stream-m/stops-before-error": {
+  "stdout": "json[0].a = 1\n",
+  "stderr": "Stopped after 1 match (--max-count); there may be more",
+  "failed": false
+ },
+ "search-stream-sort-m/stops-before-error": {
+  "stdout": "json[0].a = 2\n",
+  "stderr": "Stopped after 1 match (--max-count); there may be more",
+  "failed": false
+ },
+ "search-no-stream/jsonl": {
+  "stdout": "",
+  "stderr": "Error: searching JSON: Unexpected '{' after the top-level value at byte offset 8 (line 2, column 1)\nTip: For JSON Lines / NDJSON (one value per line), pass --stream (or --jsonl)",
+  "failed": true
  },
  "unflatten/outOfOrder": {
   "stdout": "{\"b\":2,\"a\":{\"y\":\"y\",\"x\":1.10},\"c\":[12345678901234567890,true]}\n",
@@ -2384,6 +3039,166 @@
   "stderr": "",
   "failed": false
  },
+ "unflatten/flattened-stream-jsonl": {
+  "stdout": "[{\"ts\":\"2026-11-22T09:12:01Z\",\"level\":\"info\",\"service\":\"api\",\"path\":\"/v1/orders\",\"status\":200,\"ms\":18},{\"ts\":\"2026-11-22T09:12:04Z\",\"level\":\"error\",\"service\":\"payments\",\"orderId\":12345678901234567890,\"error\":{\"code\":\"upstream_timeout\",\"retryable\":true}},{\"ts\":\"2026-11-22T09:12:07Z\",\"level\":\"warn\",\"service\":\"api\",\"path\":\"/v1/search\",\"status\":429,\"ms\":4},{\"ts\":\"2026-11-22T09:12:11Z\",\"level\":\"error\",\"service\":\"webhooks\",\"endpoint\":\"https://hooks.example.com/events\",\"error\":{\"code\":\"connection_reset\",\"attempt\":3}},{\"ts\":\"2026-11-22T09:12:15Z\",\"level\":\"info\",\"service\":\"api\",\"path\":\"/healthz\",\"status\":200,\"ms\":1}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-stream-jsonl": {
+  "stdout": "[\n  {\n    \"ts\": \"2026-11-22T09:12:01Z\",\n    \"level\": \"info\",\n    \"service\": \"api\",\n    \"path\": \"/v1/orders\",\n    \"status\": 200,\n    \"ms\": 18\n  },\n  {\n    \"ts\": \"2026-11-22T09:12:04Z\",\n    \"level\": \"error\",\n    \"service\": \"payments\",\n    \"orderId\": 12345678901234567890,\n    \"error\": {\n      \"code\": \"upstream_timeout\",\n      \"retryable\": true\n    }\n  },\n  {\n    \"ts\": \"2026-11-22T09:12:07Z\",\n    \"level\": \"warn\",\n    \"service\": \"api\",\n    \"path\": \"/v1/search\",\n    \"status\": 429,\n    \"ms\": 4\n  },\n  {\n    \"ts\": \"2026-11-22T09:12:11Z\",\n    \"level\": \"error\",\n    \"service\": \"webhooks\",\n    \"endpoint\": \"https://hooks.example.com/events\",\n    \"error\": {\n      \"code\": \"connection_reset\",\n      \"attempt\": 3\n    }\n  },\n  {\n    \"ts\": \"2026-11-22T09:12:15Z\",\n    \"level\": \"info\",\n    \"service\": \"api\",\n    \"path\": \"/healthz\",\n    \"status\": 200,\n    \"ms\": 1\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-stream-jsonl": {
+  "stdout": "[{\"level\":\"info\",\"ms\":18,\"path\":\"/v1/orders\",\"service\":\"api\",\"status\":200,\"ts\":\"2026-11-22T09:12:01Z\"},{\"error\":{\"code\":\"upstream_timeout\",\"retryable\":true},\"level\":\"error\",\"orderId\":12345678901234567890,\"service\":\"payments\",\"ts\":\"2026-11-22T09:12:04Z\"},{\"level\":\"warn\",\"ms\":4,\"path\":\"/v1/search\",\"service\":\"api\",\"status\":429,\"ts\":\"2026-11-22T09:12:07Z\"},{\"endpoint\":\"https://hooks.example.com/events\",\"error\":{\"attempt\":3,\"code\":\"connection_reset\"},\"level\":\"error\",\"service\":\"webhooks\",\"ts\":\"2026-11-22T09:12:11Z\"},{\"level\":\"info\",\"ms\":1,\"path\":\"/healthz\",\"service\":\"api\",\"status\":200,\"ts\":\"2026-11-22T09:12:15Z\"}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-stream-jsonl": {
+  "stdout": "[\n  {\n    \"level\": \"info\",\n    \"ms\": 18,\n    \"path\": \"/v1/orders\",\n    \"service\": \"api\",\n    \"status\": 200,\n    \"ts\": \"2026-11-22T09:12:01Z\"\n  },\n  {\n    \"error\": {\n      \"code\": \"upstream_timeout\",\n      \"retryable\": true\n    },\n    \"level\": \"error\",\n    \"orderId\": 12345678901234567890,\n    \"service\": \"payments\",\n    \"ts\": \"2026-11-22T09:12:04Z\"\n  },\n  {\n    \"level\": \"warn\",\n    \"ms\": 4,\n    \"path\": \"/v1/search\",\n    \"service\": \"api\",\n    \"status\": 429,\n    \"ts\": \"2026-11-22T09:12:07Z\"\n  },\n  {\n    \"endpoint\": \"https://hooks.example.com/events\",\n    \"error\": {\n      \"attempt\": 3,\n      \"code\": \"connection_reset\"\n    },\n    \"level\": \"error\",\n    \"service\": \"webhooks\",\n    \"ts\": \"2026-11-22T09:12:11Z\"\n  },\n  {\n    \"level\": \"info\",\n    \"ms\": 1,\n    \"path\": \"/healthz\",\n    \"service\": \"api\",\n    \"status\": 200,\n    \"ts\": \"2026-11-22T09:12:15Z\"\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-stream-mixed": {
+  "stdout": "[{\"a\":1},[2,[3]],\"just a string\",42,true,false,null]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-stream-mixed": {
+  "stdout": "[\n  {\n    \"a\": 1\n  },\n  [\n    2,\n    [\n      3\n    ]\n  ],\n  \"just a string\",\n  42,\n  true,\n  false,\n  null\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-stream-mixed": {
+  "stdout": "[{\"a\":1},[2,[3]],\"just a string\",42,true,false,null]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-stream-mixed": {
+  "stdout": "[\n  {\n    \"a\": 1\n  },\n  [\n    2,\n    [\n      3\n    ]\n  ],\n  \"just a string\",\n  42,\n  true,\n  false,\n  null\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-stream-blankAndCrlf": {
+  "stdout": "[{\"a\":1},7]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-stream-blankAndCrlf": {
+  "stdout": "[\n  {\n    \"a\": 1\n  },\n  7\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-stream-blankAndCrlf": {
+  "stdout": "[{\"a\":1},7]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-stream-blankAndCrlf": {
+  "stdout": "[\n  {\n    \"a\": 1\n  },\n  7\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-stream-noTrailingNewline": {
+  "stdout": "[{\"a\":1},12345678901234567890]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-stream-noTrailingNewline": {
+  "stdout": "[\n  {\n    \"a\": 1\n  },\n  12345678901234567890\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-stream-noTrailingNewline": {
+  "stdout": "[{\"a\":1},12345678901234567890]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-stream-noTrailingNewline": {
+  "stdout": "[\n  {\n    \"a\": 1\n  },\n  12345678901234567890\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-stream-numbers": {
+  "stdout": "[{\"big\":12345678901234567890,\"small\":1.10,\"negZero\":-0,\"exp\":1E+2},[1.10,-0,1e2]]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-stream-numbers": {
+  "stdout": "[\n  {\n    \"big\": 12345678901234567890,\n    \"small\": 1.10,\n    \"negZero\": -0,\n    \"exp\": 1E+2\n  },\n  [\n    1.10,\n    -0,\n    1e2\n  ]\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-stream-numbers": {
+  "stdout": "[{\"big\":12345678901234567890,\"exp\":1E+2,\"negZero\":-0,\"small\":1.10},[1.10,-0,1e2]]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-stream-numbers": {
+  "stdout": "[\n  {\n    \"big\": 12345678901234567890,\n    \"exp\": 1E+2,\n    \"negZero\": -0,\n    \"small\": 1.10\n  },\n  [\n    1.10,\n    -0,\n    1e2\n  ]\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-stream-reorderedKeys": {
+  "stdout": "[{\"z\":1,\"a\":{\"d\":4,\"c\":3},\"10\":0,\"2\":0,\"café\":\"é\"},{\"b\":1,\"a\":2}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-stream-reorderedKeys": {
+  "stdout": "[\n  {\n    \"z\": 1,\n    \"a\": {\n      \"d\": 4,\n      \"c\": 3\n    },\n    \"10\": 0,\n    \"2\": 0,\n    \"café\": \"é\"\n  },\n  {\n    \"b\": 1,\n    \"a\": 2\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-stream-reorderedKeys": {
+  "stdout": "[{\"10\":0,\"2\":0,\"a\":{\"c\":3,\"d\":4},\"café\":\"é\",\"z\":1},{\"a\":2,\"b\":1}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-stream-reorderedKeys": {
+  "stdout": "[\n  {\n    \"10\": 0,\n    \"2\": 0,\n    \"a\": {\n      \"c\": 3,\n      \"d\": 4\n    },\n    \"café\": \"é\",\n    \"z\": 1\n  },\n  {\n    \"a\": 2,\n    \"b\": 1\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-stream-empty": {
+  "stdout": "[]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-stream-empty": {
+  "stdout": "[]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-stream-empty": {
+  "stdout": "[]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-stream-empty": {
+  "stdout": "[]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/flattened-stream-onlyBlank": {
+  "stdout": "[]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/flattened-stream-onlyBlank": {
+  "stdout": "[]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/sorted-stream-onlyBlank": {
+  "stdout": "[]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/sorted-stream-onlyBlank": {
+  "stdout": "[]\n",
+  "stderr": "",
+  "failed": false
+ },
  "unflatten/searched-deployment": {
   "stdout": "{\"containers\":[{\"image\":\"registry.example.com/checkout-api:2026.11.3\"},{\"image\":\"registry.example.com/envoy:1.31.2\"}]}\n",
   "stderr": "",
@@ -2421,6 +3236,26 @@
  },
  "unflatten-pretty/searched-sorted-events": {
   "stdout": "[\n  null,\n  {\n    \"type\": \"payment.failed\"\n  },\n  null,\n  {\n    \"type\": \"webhook.failed\"\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-jsonl": {
+  "stdout": "[null,{\"level\":\"error\",\"error\":{\"code\":\"upstream_timeout\",\"retryable\":true}},null,{\"level\":\"error\",\"error\":{\"code\":\"connection_reset\",\"attempt\":3}}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-jsonl": {
+  "stdout": "[\n  null,\n  {\n    \"level\": \"error\",\n    \"error\": {\n      \"code\": \"upstream_timeout\",\n      \"retryable\": true\n    }\n  },\n  null,\n  {\n    \"level\": \"error\",\n    \"error\": {\n      \"code\": \"connection_reset\",\n      \"attempt\": 3\n    }\n  }\n]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten/searched-sorted-jsonl": {
+  "stdout": "[null,{\"error\":{\"code\":\"upstream_timeout\",\"retryable\":true},\"level\":\"error\"},null,{\"error\":{\"attempt\":3,\"code\":\"connection_reset\"},\"level\":\"error\"}]\n",
+  "stderr": "",
+  "failed": false
+ },
+ "unflatten-pretty/searched-sorted-jsonl": {
+  "stdout": "[\n  null,\n  {\n    \"error\": {\n      \"code\": \"upstream_timeout\",\n      \"retryable\": true\n    },\n    \"level\": \"error\"\n  },\n  null,\n  {\n    \"error\": {\n      \"attempt\": 3,\n      \"code\": \"connection_reset\"\n    },\n    \"level\": \"error\"\n  }\n]\n",
   "stderr": "",
   "failed": false
  },

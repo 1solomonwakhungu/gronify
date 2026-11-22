@@ -80,7 +80,7 @@ const rivers = [
     heading: "Unflatten gron lines back into JSON (ungron)",
     guide: { href: "/guides/unflatten-json", text: "ungron guide" },
     description:
-      "gronify unflatten rebuilds JSON from the lines flatten writes, and streams as it goes. Numbers come out with the digits they went in with, 64-bit IDs and trailing zeros included.",
+      "gronify unflatten rebuilds JSON from full or grep-filtered gron lines, filling in missing parent containers automatically, and streams as it goes. Numbers come out with the digits they went in with, 64-bit IDs and trailing zeros included.",
     label: "Flattening a JSON file and unflattening it back to JSON",
     lines: [
       {
@@ -96,8 +96,12 @@ const rivers = [
       href: "/guides/large-json-files",
       text: "guide to searching large JSON files",
     },
+    secondaryGuide: {
+      href: "/guides/fix-err-string-too-long-json",
+      text: "fixing ERR_STRING_TOO_LONG in Node.js",
+    },
     description:
-      "All three commands read a file or stdin in chunks and write output as they go, so the file does not have to fit in memory. With -m or --limit, Gronify stops reading at the cap, prints a notice to stderr (the last line here), and exits 0.",
+      "All three commands read a file or stdin in chunks and write output as they go, so the file does not have to fit in memory. Pass --stream for JSON Lines (NDJSON) logs. With -m or --limit, Gronify stops reading at the cap, prints a notice to stderr (the last line here), and exits 0.",
     label:
       "Piping a compressed JSON export into gronify search with a two-match cap",
     lines: [
@@ -307,10 +311,10 @@ const commands = [
     name: "flatten",
     signature: "gronify flatten [file]",
     description:
-      "Print JSON from a file or stdin as one path = value line per value. Numbers keep the digits they have in the source.",
+      "Print JSON or JSON Lines (--stream) from a file or stdin as one path = value line per value. Numbers keep the digits they have in the source.",
     examples: [
       "gronify flatten data.json",
-      "cat data.json | gronify flatten",
+      "gronify flatten --stream events.jsonl",
       "gronify flatten --sort --limit 100 data.json",
     ],
   },
@@ -318,10 +322,10 @@ const commands = [
     name: "search",
     signature: "gronify search <file_or_term> [term]",
     description:
-      "Flatten and filter in one pass. Match plain text or a regex, cap the results, or print only the count.",
+      "Flatten and filter JSON or JSON Lines (--stream) in one pass. Match plain text or a regex, cap the results, or print only the count.",
     examples: [
       'gronify search data.json "service"',
-      'gronify search data.json --regex "users\\[[0-9]+\\]"',
+      'gronify search --stream events.jsonl "timeout"',
       'gronify search --exit-status data.json -m 1 "debug = true"',
     ],
   },
@@ -329,10 +333,11 @@ const commands = [
     name: "unflatten",
     signature: "gronify unflatten [file]",
     description:
-      "Turn gron lines from a file or stdin back into JSON. Input in the order flatten writes it streams in a single pass.",
+      "Turn full or filtered gron lines from a file or stdin back into JSON. Missing parent containers are filled in automatically.",
     examples: [
       "gronify unflatten data.gron",
       "gronify flatten data.json | gronify unflatten",
+      'gronify search data.json "status" | gronify unflatten',
     ],
   },
 ];
@@ -360,6 +365,10 @@ const optionGroups = [
         "--sort",
         "Sort object keys at every level by UTF-16 code unit; arrays keep their order",
       ],
+      [
+        "-s, --stream, --jsonl",
+        "Read JSON Lines / NDJSON (one JSON value per line)",
+      ],
     ],
   },
   {
@@ -375,6 +384,10 @@ const optionGroups = [
       ],
       ["--sort", "Sort matching lines by object key, as flatten --sort does"],
       ["--exit-status", "Exit 1 when nothing matches; errors then exit 2"],
+      [
+        "-s, --stream, --jsonl",
+        "Read JSON Lines / NDJSON (one JSON value per line)",
+      ],
     ],
   },
 ];
@@ -552,6 +565,18 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
                     >
                       {river.guide.text}
                     </NextLink>
+                    {river.secondaryGuide ? (
+                      <>
+                        {" "}
+                        or see{" "}
+                        <NextLink
+                          className={styles.inlineLink}
+                          href={river.secondaryGuide.href}
+                        >
+                          {river.secondaryGuide.text}
+                        </NextLink>
+                      </>
+                    ) : null}
                     .
                   </Text>
                 </River.Content>
@@ -739,7 +764,16 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
             <SectionIntro.Description>
               Gronify reads a file or stdin and writes to stdout, so it fits
               anywhere a pipe does. When the JSON is broken, the error gives the
-              byte offset, line, and column.
+              byte offset, line, and column. For worked recipes on real specs
+              and manifests, read the{" "}
+              <NextLink
+                className={styles.inlineLink}
+                href="/guides/search-openapi-and-lockfiles"
+              >
+                guide to searching OpenAPI specs, package-lock.json, and
+                Kubernetes JSON
+              </NextLink>
+              .
             </SectionIntro.Description>
           </SectionIntro>
         </Section>
@@ -861,7 +895,15 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
               Install with npm on macOS, Linux, or Windows, or use Homebrew, a
               GitHub release archive, or a source build. Gronify needs Node.js
               20 or newer. Result caps, --sort, and --exit-status need v1.2.0 or
-              later.
+              later; JSON Lines (--stream) and filtered unflatten need v1.4.0 or
+              later. On Windows, read the{" "}
+              <NextLink
+                className={styles.inlineLink}
+                href="/guides/grep-json-windows-powershell"
+              >
+                PowerShell and cmd guide
+              </NextLink>
+              .
             </SectionIntro.Description>
           </SectionIntro>
         </Section>

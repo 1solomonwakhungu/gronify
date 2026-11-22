@@ -1,6 +1,6 @@
 /** Sample inputs for the playground. Plain data with no imports, so the verification script can load it. */
 
-export type SampleId = "deployment" | "events" | "ledger" | "config";
+export type SampleId = "deployment" | "events" | "jsonl" | "ledger" | "config";
 
 export interface Sample {
   id: SampleId;
@@ -11,6 +11,8 @@ export interface Sample {
   term: string;
   /** One sentence on what this sample shows. */
   note: string;
+  /** Whether this sample is JSON Lines / NDJSON (one value per line). */
+  stream?: boolean;
   json: string;
 }
 
@@ -86,6 +88,13 @@ const config = `{
 }
 `;
 
+const jsonl =
+  '{"ts":"2026-11-22T09:12:01Z","level":"info","service":"api","path":"/v1/orders","status":200,"ms":18}\n' +
+  '{"ts":"2026-11-22T09:12:04Z","level":"error","service":"payments","orderId":12345678901234567890,"error":{"code":"upstream_timeout","retryable":true}}\n' +
+  '{"ts":"2026-11-22T09:12:07Z","level":"warn","service":"api","path":"/v1/search","status":429,"ms":4}\n' +
+  '{"ts":"2026-11-22T09:12:11Z","level":"error","service":"webhooks","endpoint":"https://hooks.example.com/events","error":{"code":"connection_reset","attempt":3}}\n' +
+  '{"ts":"2026-11-22T09:12:15Z","level":"info","service":"api","path":"/healthz","status":200,"ms":1}\n';
+
 export const samples: readonly Sample[] = [
   {
     id: "deployment",
@@ -102,6 +111,15 @@ export const samples: readonly Sample[] = [
     term: "failed",
     note: "One minified line. Plain grep would print the whole line; search prints each match with its path.",
     json: events,
+  },
+  {
+    id: "jsonl",
+    label: "JSON Lines request log (NDJSON)",
+    file: "requests.jsonl",
+    term: "error",
+    note: "One JSON object per line. With --stream on, each line flattens under json[0], json[1], ... like gron -s.",
+    stream: true,
+    json: jsonl,
   },
   {
     id: "ledger",
