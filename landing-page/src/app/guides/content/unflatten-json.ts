@@ -277,6 +277,23 @@ $ gronify unflatten strings.gron
         },
       ],
     },
+    {
+      id: "agent-skill",
+      heading: "Use this workflow with a coding agent",
+      blocks: [
+        {
+          kind: "paragraph",
+          text: "To teach Claude Code, Cursor, Codex, or another supported agent safe `unflatten` round-tripping, exact number handling, and path-to-`jq` translation, install the [`json-path-to-jq-and-unflatten`](https://skills.sh/1solomonwakhungu/gronify/json-path-to-jq-and-unflatten) skill (see [JSON exploration for AI coding agents](/guides/json-for-ai-agents)):",
+        },
+        {
+          kind: "terminal",
+          label: "Installing the json-path-to-jq-and-unflatten agent skill",
+          lines: transcript`
+$ npx skills add 1solomonwakhungu/gronify --skill json-path-to-jq-and-unflatten
+`,
+        },
+      ],
+    },
   ],
   faqs: [
     {

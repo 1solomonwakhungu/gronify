@@ -424,6 +424,23 @@ $ jq -r '.prefixes[] | select(.region == "eu-west-1" and .service == "S3") | .ip
         },
       ],
     },
+    {
+      id: "agent-skill",
+      heading: "Use these recipes with a coding agent",
+      blocks: [
+        {
+          kind: "paragraph",
+          text: "To load these OpenAPI, `package-lock.json`, Kubernetes, and cloud JSON patterns directly into Claude Code, Cursor, Codex, or another supported agent, install the [`openapi-lockfile-json-search`](https://skills.sh/1solomonwakhungu/gronify/openapi-lockfile-json-search) skill (see [JSON exploration for AI coding agents](/guides/json-for-ai-agents)):",
+        },
+        {
+          kind: "terminal",
+          label: "Installing the openapi-lockfile-json-search agent skill",
+          lines: transcript`
+$ npx skills add 1solomonwakhungu/gronify --skill openapi-lockfile-json-search
+`,
+        },
+      ],
+    },
   ],
   faqs: [
     {

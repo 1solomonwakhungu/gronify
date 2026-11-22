@@ -680,6 +680,125 @@ describe("Gronify CLI", () => {
       expect(result.stdout).toContain("json.posts");
       expect(result.stdout).not.toContain("json.user");
     });
+
+    describe("empty search term", () => {
+      let emptyDir: string;
+      let sampleFile: string;
+      let jsonlFile: string;
+
+      beforeAll(() => {
+        emptyDir = mkdtempSync(join(tmpdir(), "gronify-empty-term-"));
+        sampleFile = join(emptyDir, "sample.json");
+        jsonlFile = join(emptyDir, "sample.jsonl");
+        writeFileSync(sampleFile, '{"b":2,"a":1}');
+        writeFileSync(jsonlFile, '{"b":2}\n{"a":1}\n');
+      });
+
+      afterAll(() => {
+        rmSync(emptyDir, { recursive: true, force: true });
+      });
+
+      test("search file '' reads the file (not stdin) and matches all flattened lines", async () => {
+        const expected = await runCLI(["flatten", sampleFile]);
+        // Pass different data on stdin to prove the file is read, not stdin.
+        const result = await runCLI(["search", sampleFile, ""], '{"from":"stdin"}');
+
+        expect(result.exitCode).toBe(0);
+        expect(result.stderr).toBe("");
+        expect(result.stdout).toBe(expected.stdout);
+      });
+
+      test("search '' reads stdin and matches all flattened lines", async () => {
+        const result = await runCLI(["search", ""], '{"a":1}');
+
+        expect(result.exitCode).toBe(0);
+        expect(result.stderr).toBe("");
+        expect(result.stdout).toBe("json = {}\njson.a = 1");
+      });
+
+      test("works with --count, -m, -v, -r, -c, --exit-status, -s/--jsonl, --sort, and -o", async () => {
+        const outFile = join(emptyDir, "empty-term-out.gron");
+
+        const count = await runCLI(["search", sampleFile, "", "--count"]);
+        expect(count).toEqual({ stdout: "3", stderr: "", exitCode: 0 });
+
+        const capped = await runCLI(["search", sampleFile, "", "-m", "2"]);
+        expect(capped.exitCode).toBe(0);
+        expect(capped.stdout).toBe("json = {}\njson.b = 2");
+        expect(capped.stderr).toContain("Stopped after 2 matches (--max-count)");
+
+        const inverted = await runCLI(["search", sampleFile, "", "-v"]);
+        expect(inverted.exitCode).toBe(0);
+        expect(inverted.stdout).toBe("");
+        expect(inverted.stderr).toContain("All lines matched '' (nothing to invert)");
+
+        const invertedExit = await runCLI(["search", sampleFile, "", "-v", "--exit-status"]);
+        expect(invertedExit.exitCode).toBe(1);
+        expect(invertedExit.stdout).toBe("");
+
+        const regex = await runCLI(["search", sampleFile, "", "-r"]);
+        expect(regex.exitCode).toBe(0);
+        expect(regex.stdout).toBe("json = {}\njson.b = 2\njson.a = 1");
+
+        const caseSensitive = await runCLI(["search", sampleFile, "", "-c"]);
+        expect(caseSensitive.exitCode).toBe(0);
+        expect(caseSensitive.stdout).toBe("json = {}\njson.b = 2\njson.a = 1");
+
+        const exitOk = await runCLI(["search", sampleFile, "", "--exit-status"]);
+        expect(exitOk.exitCode).toBe(0);
+        expect(exitOk.stdout).toBe("json = {}\njson.b = 2\njson.a = 1");
+
+        const streamShort = await runCLI(["search", "-s", jsonlFile, ""]);
+        const streamJsonl = await runCLI(["search", "--jsonl", jsonlFile, ""]);
+        const expectedJsonl = "json = []\njson[0] = {}\njson[0].b = 2\njson[1] = {}\njson[1].a = 1";
+        expect(streamShort).toEqual({ stdout: expectedJsonl, stderr: "", exitCode: 0 });
+        expect(streamJsonl).toEqual({ stdout: expectedJsonl, stderr: "", exitCode: 0 });
+
+        const sorted = await runCLI(["search", sampleFile, "", "--sort"]);
+        expect(sorted).toEqual({
+          stdout: "json = {}\njson.a = 1\njson.b = 2",
+          stderr: "",
+          exitCode: 0,
+        });
+
+        const toFile = await runCLI(["-o", outFile, "search", sampleFile, ""]);
+        expect(toFile.exitCode).toBe(0);
+        expect(toFile.stdout).toBe("");
+        expect(readFileSync(outFile, "utf8")).toBe("json = {}\njson.b = 2\njson.a = 1\n");
+      });
+
+      test("works with --color without corrupting ANSI escape codes", () => {
+        const child = spawnSync(
+          "node",
+          ["--import", "data:text/javascript,process.stdout.isTTY=true", "dist/index.js", "--color", "search", sampleFile, ""],
+          { encoding: "utf8", env: { ...process.env, FORCE_COLOR: "1", NO_COLOR: "" } },
+        );
+
+        expect(child.status).toBe(0);
+        expect(child.stdout).toContain("\u001b[");
+        expect(child.stdout.replace(/\u001b\[[0-9;]*m/g, "").trim()).toBe("json = {}\njson.b = 2\njson.a = 1");
+      });
+
+      test("treats an empty file path as a missing file rather than stdin", async () => {
+        const withTerm = await runCLI(["search", "", "a"], '{"a":1}');
+        expect(withTerm.exitCode).toBe(1);
+        expect(withTerm.stderr).toContain("File '' does not exist");
+
+        const bothEmpty = await runCLI(["search", "", "", "--exit-status"], '{"a":1}');
+        expect(bothEmpty.exitCode).toBe(2);
+        expect(bothEmpty.stderr).toContain("File '' does not exist");
+      });
+
+      test("still rejects search with no positional arguments (exit 1, or 2 with --exit-status)", async () => {
+        const plain = await runCLI(["search"], '{"a":1}');
+        expect(plain.exitCode).toBe(1);
+        expect(plain.stderr).toContain("missing required argument");
+
+        const withExitStatus = await runCLI(["search", "--exit-status"], '{"a":1}');
+        expect(withExitStatus.exitCode).toBe(2);
+        expect(withExitStatus.stderr).toContain("missing required argument");
+      });
+    });
   });
 
   describe("output file option", () => {
@@ -1393,6 +1512,8 @@ describe("Gronify CLI", () => {
       [["flatten", "--sort", json], ["flatten", "--sort", "--", json]],
       [["unflatten", gron], ["unflatten", "--", gron]],
       [["search", json, "TIMEOUT"], ["search", "--", json, "TIMEOUT"]],
+      [["search", json, ""], ["search", "--", json, ""]],
+      [["search", "--count", json, ""], ["search", "--count", "--", json, ""]],
       [["search", "-c", json, "TIMEOUT", "--exit-status"], ["search", "-c", "--exit-status", "--", json, "TIMEOUT"]],
       [["search", "-m", "2", json, "a"], ["search", "-m2", json, "a"]],
       [["search", "--max-count", "1", "--count", json, "a"], ["search", "--max-count=1", "--count", json, "a"]],

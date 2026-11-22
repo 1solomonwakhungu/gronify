@@ -74,7 +74,7 @@ export const faqs: FaqItem[] = [
   {
     question: "How do AI coding agents use Gronify on large JSON files?",
     answer:
-      "They count first, then read a capped sample. gronify --no-color search file.json term --count prints how many lines match. search -m 20 prints the first 20 matches and stops reading the file, and flatten --limit 50 shows the shape of the document. A large file never enters the model's context whole. The gronify-json-flatten-search skill on skills.sh teaches supported agents this routine.",
+      "They count first, then read a capped sample. gronify --no-color search file.json term --count prints how many lines match. search -m 20 prints the first 20 matches and stops reading the file, and flatten --limit 50 shows the shape of the document. A large file never enters the model's context whole. The Gronify agent skills on skills.sh (gronify-json-flatten-search, large-json-search, and four task-focused skills) teach supported agents this routine.",
   },
   {
     question: "Does Gronify send my JSON data anywhere?",
