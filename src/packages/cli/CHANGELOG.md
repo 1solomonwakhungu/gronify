@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/1solomonwakhungu/gronify/compare/v1.3.2...v1.4.0) (2026-11-20)
+
+
+### Features
+
+* **cli:** read JSON Lines / NDJSON with flatten and search -s, --stream ([#150](https://github.com/1solomonwakhungu/gronify/issues/150)) ([19709fa](https://github.com/1solomonwakhungu/gronify/commit/19709fad356658377fa22aadecd13fd2550dca1a))
+* **cli:** unflatten fills in parents missing from filtered gron ([#151](https://github.com/1solomonwakhungu/gronify/issues/151)) ([403c375](https://github.com/1solomonwakhungu/gronify/commit/403c37526a2cd766fb5e856028ef380cd9365477))
+
 ## [1.3.2](https://github.com/1solomonwakhungu/gronify/compare/v1.3.1...v1.3.2) (2026-11-13)
 
 
