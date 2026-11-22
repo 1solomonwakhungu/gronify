@@ -168,6 +168,10 @@ export class OutputFormatter {
       return null;
     }
 
+    if (searchTerm === "") {
+      return (line: string): string => this.colorizeGronLine(line);
+    }
+
     // Highlight the search term in results
     const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`(${escapedTerm})`, 'gi');

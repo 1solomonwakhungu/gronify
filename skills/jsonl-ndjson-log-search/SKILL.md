@@ -2,7 +2,7 @@
 name: jsonl-ndjson-log-search
 description: Streams and searches JSON Lines (.jsonl, .ndjson) logs, webhook dumps, and agent transcripts with Gronify --jsonl / -s caps. Use when grepping structured JSONL logs, pulling one record by index, or converting JSONL to a JSON array.
 license: MIT
-compatibility: Requires Node.js 20+ and a gronify release newer than 1.3.2 with -s/--stream/--jsonl support (verify with gronify flatten --help | grep -e --jsonl).
+compatibility: Requires Node.js 20+ and the gronify CLI >= 1.4.0 with -s/--stream/--jsonl support (verify with gronify flatten --help | grep -e --jsonl).
 metadata:
   author: 1solomonwakhungu
   homepage: https://gronify.vercel.app
@@ -15,7 +15,7 @@ Gronify's `-s` / `--stream` / `--jsonl` mode streams JSON Lines (NDJSON) one rec
 
 ## Check CLI availability and `--jsonl` support
 
-`-s`, `--stream`, and `--jsonl` require a Gronify release newer than `1.3.2` (1.3.2 and older exit `1` with `error: unknown option '-s'`). Always check first:
+`-s`, `--stream`, and `--jsonl` require Gronify `1.4.0` or newer (1.3.2 and older exit `1` with `error: unknown option '-s'`). Always check first:
 
 ```bash
 command -v gronify && gronify flatten --help | grep -e --jsonl
