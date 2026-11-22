@@ -33,7 +33,7 @@ Gronify requires Node.js 20 or newer. To build from a local checkout: `cd src/pa
 Verify feature support on older installs before relying on newer flags:
 
 - **1.2.0+** (`-m`, `--limit`, `--sort`, `--exit-status`): check `gronify search --help | grep -e --max-count`. On 1.1.0 or older, update (`npm install -g gronify@latest`) or cap with `| head -n 20` and skip `--sort`.
-- **Newer than 1.3.2** (`-s`/`--stream`/`--jsonl` and parent-synthesizing `unflatten`): check `gronify flatten --help | grep -e --jsonl`. On 1.3.2 or older, use `jq -c` on JSON Lines files and keep ancestor lines when unflattening filtered output.
+- **1.4.0+** (`-s`/`--stream`/`--jsonl` and parent-synthesizing `unflatten`): check `gronify flatten --help | grep -e --jsonl`. On 1.3.2 or older, update (`npm install -g gronify@latest`) or use `jq -c` on JSON Lines files and keep ancestor lines when unflattening filtered output.
 
 ## Explore without flooding context
 
@@ -64,7 +64,7 @@ curl -sS https://example.com/api/status | gronify --no-color search version -m 5
 
 Critical CLI traps to avoid:
 
-- **Never pass an empty search term (`''`):** `gronify search file.json ''` ignores the file argument and reads stdin instead (hanging on an open pipe). Use `flatten` to list lines or `'= ""'` to match empty strings.
+- **Avoid an empty search term (`''`) on 1.4.0 and older:** `gronify search file.json ''` ignores the file argument and reads stdin instead (hanging on an open pipe). Use `flatten` to list lines or `'= ""'` to match empty strings.
 - **Hyphen-prefixed search terms:** Put `--` before terms starting with `-` (for example `gronify --no-color search file.json -- -500`), otherwise the term is parsed as an unknown option.
 - **Shell quoting:** In bash/zsh and PowerShell 7+, wrap patterns containing `$`, `[`, `]`, or `"` in single quotes (`'\$ref'`). In Windows PowerShell 5.1, escape embedded double quotes inside single quotes (`'\"error\"'`). In `cmd.exe`, use double quotes.
 
@@ -121,7 +121,7 @@ gronify --no-color flatten payload.json | gronify --no-color unflatten
 gronify --no-color search payload.json region | gronify --no-color unflatten
 ```
 
-- On releases newer than 1.3.2, `unflatten` synthesizes missing root and parent containers from filtered output (skipped array indexes become `null`). On 1.3.2 and older, keep container lines (`search -v` or `--regex '^json = |...'`).
+- On 1.4.0+, `unflatten` synthesizes missing root and parent containers from filtered output (skipped array indexes become `null`). On 1.3.2 and older, keep container lines (`search -v` or `--regex '^json = |...'`).
 - Never overwrite source JSON in place during exploration: write to a new file with `-o reconstructed.json` and validate before replacing.
 - Conflicting types (`json.a = 1` then `json.a.b = 2`) fail with `line N: ...`. Input must be strict JSON (no comments or trailing commas).
 

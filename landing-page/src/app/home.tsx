@@ -260,7 +260,7 @@ const agentSkills = [
   {
     slug: "jsonl-ndjson-log-search",
     description:
-      "Stream-search .jsonl and .ndjson logs, pull records by index, and convert to a JSON array (needs a release newer than 1.3.2).",
+      "Stream-search .jsonl and .ndjson logs, pull records by index, and convert to a JSON array (Gronify 1.4.0+).",
   },
   {
     slug: "json-compare-sorted-diff",
@@ -275,7 +275,7 @@ const agentSkills = [
   {
     slug: "json-path-to-jq-and-unflatten",
     description:
-      "Turn printed paths into jq filters or JSONPath, keep 64-bit numbers exact, and unflatten subsets (parent synthesis needs > 1.3.2).",
+      "Turn printed paths into jq filters or JSONPath, keep 64-bit numbers exact, and unflatten subsets (parent synthesis in 1.4.0+).",
   },
 ];
 

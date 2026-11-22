@@ -51,7 +51,7 @@ gronify --no-color search payload.json --regex '^json\.events\[(611|1874)\]\.(ts
 
 - Only drop `-m` after `--count` proves the match count fits comfortably in context.
 - Leave `--sort` off exploratory commands on large root objects: sorting a root object buffers until EOF, which disables early stopping on `-m` and `--limit`.
-- Never pass an empty search term (`''`): Gronify ignores the file argument and reads stdin instead (hanging on an open pipe). Prefix hyphenated terms with `--` (`gronify --no-color search payload.json -- -500`).
+- Avoid an empty search term (`''`) on 1.4.0 and older: Gronify ignores the file argument and reads stdin instead (hanging on an open pipe). Prefix hyphenated terms with `--` (`gronify --no-color search payload.json -- -500`).
 
 ## Compressed exports and pipes
 
@@ -83,6 +83,6 @@ echo $?
 
 - Numbers above `2^53` (64-bit IDs, nanosecond timestamps) and trailing decimals (`1.10`) print verbatim, never rounded.
 - Once the narrowing loop reveals the exact path and you need aggregation (group, count by key, sum, join), switch to `jq` or `jq --stream` (for files exceeding memory).
-- For `.jsonl` / `.ndjson` files (one JSON object per line), pass `--jsonl` (releases newer than 1.3.2) or use `jq -c` / `rg`.
+- For `.jsonl` / `.ndjson` files (one JSON object per line), pass `--jsonl` (1.4.0+) or use `jq -c` / `rg`.
 
 Reference: [Large JSON guide](https://gronify.vercel.app/guides/large-json-files) · [AI agents guide](https://gronify.vercel.app/guides/json-for-ai-agents) · [ERR_STRING_TOO_LONG guide](https://gronify.vercel.app/guides/fix-err-string-too-long-json)
