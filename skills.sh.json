@@ -3,9 +3,22 @@
   "notGrouped": "bottom",
   "groupings": [
     {
-      "title": "JSON",
-      "description": "Skills for flattening, searching, and inspecting JSON from the terminal.",
-      "skills": ["gronify-json-flatten-search"]
+      "title": "JSON & Log Exploration",
+      "description": "Flatten, search, and explore nested JSON, multi-gigabyte files, and JSON Lines logs without flooding agent context.",
+      "skills": [
+        "gronify-json-flatten-search",
+        "large-json-search",
+        "jsonl-ndjson-log-search"
+      ]
+    },
+    {
+      "title": "Specs, Comparison & jq Workflows",
+      "description": "Compare key-sorted JSON with diff, audit OpenAPI specs and lockfiles, derive jq filters from paths, and unflatten subsets.",
+      "skills": [
+        "json-compare-sorted-diff",
+        "openapi-lockfile-json-search",
+        "json-path-to-jq-and-unflatten"
+      ]
     }
   ]
 }

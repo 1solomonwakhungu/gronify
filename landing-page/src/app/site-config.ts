@@ -6,8 +6,7 @@ export const repositoryUrl = "https://github.com/1solomonwakhungu/gronify";
 export const npmPackageUrl = "https://www.npmjs.com/package/gronify";
 export const homebrewTapUrl =
   "https://github.com/1solomonwakhungu/homebrew-tap";
-export const skillsUrl =
-  "https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search";
+export const skillsUrl = "https://skills.sh/1solomonwakhungu/gronify";
 
 export const cliVersion = "1.4.0";
 export const nodeRequirement = "20 or newer";

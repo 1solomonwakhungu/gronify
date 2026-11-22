@@ -315,6 +315,23 @@ $ jq -cn --stream 'fromstream(1 | truncate_stream(inputs)) | select(.level == "e
         },
       ],
     },
+    {
+      id: "agent-skill",
+      heading: "Use this workflow with a coding agent",
+      blocks: [
+        {
+          kind: "paragraph",
+          text: "To teach Claude Code, Cursor, Codex, or another supported agent to check file size first and stream large JSON with `--limit`, `--count`, and `-m`, install the [`large-json-search`](https://skills.sh/1solomonwakhungu/gronify/large-json-search) skill (see [JSON exploration for AI coding agents](/guides/json-for-ai-agents)):",
+        },
+        {
+          kind: "terminal",
+          label: "Installing the large-json-search agent skill",
+          lines: transcript`
+$ npx skills add 1solomonwakhungu/gronify --skill large-json-search
+`,
+        },
+      ],
+    },
   ],
   faqs: [
     {

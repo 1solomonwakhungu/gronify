@@ -228,15 +228,15 @@ const buildAgentRivers = (facts: ComparisonFacts) => [
     isExternal: false,
   },
   {
-    heading: "Use exit codes in scripts and install the agent skill",
+    heading: "Use exit codes in scripts and install the agent skills",
     description:
-      "With --exit-status, search exits 0 on a match, 1 on no match, and 2 on an error, as grep does. -o writes to a temp file and replaces the target only after the run succeeds. The gronify-json-flatten-search skill teaches supported coding agents the count-then-cap routine above.",
+      "With --exit-status, search exits 0 on a match, 1 on no match, and 2 on an error, as grep does. -o writes to a temp file and replaces the target only after the run succeeds. The Gronify agent skills on skills.sh teach supported coding agents the count-then-cap routine, large JSON exploration, JSONL log search, key-sorted comparison with diff, OpenAPI and lockfile audits, and path-to-jq workflows.",
     label:
-      "Installing the Gronify agent skill and branching on the exit status",
+      "Installing the Gronify agent skills and branching on the exit status",
     lines: [
       {
         kind: "command",
-        text: "npx skills add https://github.com/1solomonwakhungu/gronify --skill gronify-json-flatten-search",
+        text: "npx skills add 1solomonwakhungu/gronify",
       },
       {
         kind: "command",
@@ -244,9 +244,42 @@ const buildAgentRivers = (facts: ComparisonFacts) => [
       },
       { kind: "output", text: "debug is on" },
     ] satisfies TerminalLine[],
-    linkText: "View agent skill on skills.sh",
+    linkText: "View agent skills on skills.sh",
     linkHref: skillsUrl,
     isExternal: true,
+  },
+];
+
+const agentSkills = [
+  {
+    slug: "gronify-json-flatten-search",
+    description:
+      "Core CLI workflow for flattening, searching, shell branching with --exit-status, and unflattening.",
+  },
+  {
+    slug: "large-json-search",
+    description:
+      "Size gate, 5-step narrowing loop, and gzipped pipes for files over 50 KB or multi-GB exports.",
+  },
+  {
+    slug: "jsonl-ndjson-log-search",
+    description:
+      "Stream-search .jsonl and .ndjson logs, pull records by index, and convert to a JSON array (Gronify 1.4.0+).",
+  },
+  {
+    slug: "json-compare-sorted-diff",
+    description:
+      "Key-sorted path comparison using flatten --sort with system diff, PowerShell, or git textconv.",
+  },
+  {
+    slug: "openapi-lockfile-json-search",
+    description:
+      "Path-anchored regex recipes for OpenAPI specs, package-lock.json, kubectl JSON, and AWS exports.",
+  },
+  {
+    slug: "json-path-to-jq-and-unflatten",
+    description:
+      "Turn printed paths into jq filters or JSONPath, keep 64-bit numbers exact, and unflatten subsets (parent synthesis in 1.4.0+).",
   },
 ];
 
@@ -430,8 +463,11 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
     posthog.capture("issue_report_link_clicked", { placement: "cta" });
   };
 
-  const captureSkillLinkClick = (placement: "agents" | "footer") => {
-    posthog.capture("skill_link_clicked", { placement });
+  const captureSkillLinkClick = (skill?: string) => {
+    posthog.capture("skill_link_clicked", {
+      placement: "agents",
+      ...(skill ? { skill } : {}),
+    });
   };
 
   return (
@@ -661,7 +697,7 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
                     isExternal={river.isExternal}
                     onClick={
                       river.isExternal
-                        ? () => captureSkillLinkClick("agents")
+                        ? () => captureSkillLinkClick()
                         : undefined
                     }
                   >
@@ -671,6 +707,48 @@ export function Home({ faqs, facts, benchmarks }: HomeProps) {
               </River>
             ))}
           </Stack>
+        </Section>
+
+        <Section paddingBlockStart="normal" paddingBlockEnd="none">
+          <Grid>
+            <Grid.Column span={12}>
+              <div className={`${styles.gridFrame} ${styles.gridFrameThreeUp}`}>
+                {agentSkills.map((skill) => (
+                  <div key={skill.slug} className={styles.gridCell}>
+                    <Heading
+                      as="h3"
+                      size="subhead-medium"
+                      font="monospace"
+                      weight="semibold"
+                      className={styles.wrapAnywhere}
+                    >
+                      <a
+                        className={styles.inlineLink}
+                        href={`${skillsUrl}/${skill.slug}`}
+                        onClick={() => captureSkillLinkClick(skill.slug)}
+                      >
+                        {skill.slug}
+                      </a>
+                    </Heading>
+                    <Text as="p" variant="muted" size="200">
+                      {skill.description}
+                    </Text>
+                    <Box paddingBlockStart={16} className={styles.cellFooter}>
+                      <Terminal
+                        label={`Install the ${skill.slug} agent skill`}
+                        lines={[
+                          {
+                            kind: "command" as const,
+                            text: `npx skills add 1solomonwakhungu/gronify --skill ${skill.slug}`,
+                          },
+                        ]}
+                      />
+                    </Box>
+                  </div>
+                ))}
+              </div>
+            </Grid.Column>
+          </Grid>
         </Section>
 
         <Section

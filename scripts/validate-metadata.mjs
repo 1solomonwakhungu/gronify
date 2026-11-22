@@ -1,11 +1,13 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 
 const guideContentDir = "landing-page/src/app/guides/content";
+const skillsDir = "skills";
 
 const requiredFiles = [
   "README.md",
   "src/README.md",
   "landing-page/README.md",
+  "skills.sh.json",
   "skills/gronify-json-flatten-search/SKILL.md",
   "landing-page/public/robots.txt",
   "landing-page/public/llms.txt",
@@ -145,7 +147,6 @@ if (existsSync("README.md")) {
 
 scanForStaleClaims("PRODUCT.md");
 scanForStaleClaims("landing-page/README.md");
-scanForStaleClaims("skills/gronify-json-flatten-search/SKILL.md");
 scanForStaleClaims("landing-page/public/llms.txt");
 scanForStaleClaims("landing-page/public/llms-full.txt");
 scanForStaleClaims("landing-page/src/app/layout.tsx");
@@ -158,6 +159,234 @@ scanForStaleClaims("landing-page/src/app/opengraph-image.tsx");
 scanForStaleClaims("landing-page/src/app/site-chrome.tsx");
 scanForStaleClaims("landing-page/src/app/guides/page.tsx");
 scanForStaleClaims("landing-page/src/app/guides/guide-article.tsx");
+
+const allowedFrontmatterKeys = new Set([
+  "name",
+  "description",
+  "license",
+  "compatibility",
+  "metadata",
+  "allowed-tools",
+]);
+
+function checkScalarYamlSafety(key, rawVal, yamlErrors) {
+  if (!rawVal) {
+    return "";
+  }
+  if (/^[>|](?:[+-][1-9]?|[1-9][+-]?)?$/.test(rawVal)) {
+    yamlErrors.push(`unsupported multiline block scalar for "${key}"`);
+    return "";
+  }
+  if (rawVal[0] === '"') {
+    const match = rawVal.match(/^"((?:[^"\\]|\\.)*)"(?:\s+#.*)?$/);
+    if (!match) {
+      yamlErrors.push(`malformed double-quoted YAML value for "${key}"`);
+      return rawVal.slice(1);
+    }
+    return match[1];
+  }
+  if (rawVal[0] === "'") {
+    const match = rawVal.match(/^'((?:[^']|'')*)'(?:\s+#.*)?$/);
+    if (!match) {
+      yamlErrors.push(`malformed single-quoted YAML value for "${key}"`);
+      return rawVal.slice(1);
+    }
+    return match[1].replace(/''/g, "'");
+  }
+  if (/(?:^|\s)#/.test(rawVal)) {
+    yamlErrors.push(`unquoted YAML comment marker (#) in "${key}"`);
+  }
+  if (/:\s|:$/.test(rawVal)) {
+    yamlErrors.push(`unquoted colon in YAML value for "${key}"`);
+  }
+  if (/^[\[\]{},|>*&!%@`]|^[-?](?:\s|$)/.test(rawVal)) {
+    yamlErrors.push(`unquoted YAML indicator at start of "${key}"`);
+  }
+  return rawVal;
+}
+
+function parseFrontmatter(contents) {
+  const match = contents.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+  if (!match) {
+    return null;
+  }
+  const fields = {};
+  const metadata = {};
+  const yamlErrors = [];
+  let inMetadata = false;
+
+  for (const rawLine of match[1].split(/\r?\n/)) {
+    if (!rawLine.trim()) {
+      continue;
+    }
+    if (inMetadata && /^\s+/.test(rawLine)) {
+      const nested = rawLine.match(/^\s+([a-zA-Z0-9_-]+):\s*(.*)$/);
+      if (!nested) {
+        yamlErrors.push(`invalid nested metadata line: ${rawLine.trim()}`);
+      } else {
+        metadata[nested[1]] = checkScalarYamlSafety(
+          `metadata.${nested[1]}`,
+          nested[2].trim(),
+          yamlErrors,
+        );
+      }
+      continue;
+    }
+    inMetadata = false;
+    const kv = rawLine.match(/^([a-zA-Z0-9_-]+):\s*(.*)$/);
+    if (!kv) {
+      yamlErrors.push(`invalid frontmatter line: ${rawLine}`);
+      continue;
+    }
+    const [, key, rawVal] = kv;
+    if (!allowedFrontmatterKeys.has(key)) {
+      yamlErrors.push(`unknown frontmatter key "${key}"`);
+    }
+    if (key === "metadata" && !rawVal.trim()) {
+      inMetadata = true;
+      continue;
+    }
+    fields[key] = checkScalarYamlSafety(key, rawVal.trim(), yamlErrors);
+  }
+  return { fields, metadata, yamlErrors };
+}
+
+const skillSlugSet = new Set();
+
+if (existsSync(skillsDir)) {
+  const skillDirs = readdirSync(skillsDir)
+    .filter((entry) => statSync(`${skillsDir}/${entry}`).isDirectory())
+    .sort();
+  for (const slug of skillDirs) {
+    skillSlugSet.add(slug);
+  }
+
+  for (const slug of skillDirs) {
+    const skillFile = `${skillsDir}/${slug}/SKILL.md`;
+    if (!existsSync(skillFile)) {
+      errors.push(`Missing SKILL.md in ${skillsDir}/${slug}`);
+      continue;
+    }
+
+    const contents = readFileSync(skillFile, "utf8");
+    const parsed = parseFrontmatter(contents);
+    if (!parsed) {
+      errors.push(`${skillFile} is missing YAML frontmatter`);
+    } else {
+      const { fields: fm, yamlErrors } = parsed;
+      for (const yamlError of yamlErrors) {
+        errors.push(`${skillFile} frontmatter ${yamlError}`);
+      }
+      if (fm.name !== slug) {
+        errors.push(
+          `${skillFile} frontmatter name (${fm.name ?? "missing"}) must match directory name (${slug})`,
+        );
+      }
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 64) {
+        errors.push(
+          `${skillFile} name (${slug}) must be 1-64 lowercase alphanumeric hyphenated characters`,
+        );
+      }
+      if (!fm.description) {
+        errors.push(`${skillFile} frontmatter is missing description`);
+      } else {
+        if (fm.description.length > 250) {
+          errors.push(
+            `${skillFile} frontmatter description exceeds 250-char agent listing budget (${fm.description.length})`,
+          );
+        }
+        if (/[<>]/.test(fm.description)) {
+          errors.push(
+            `${skillFile} frontmatter description must not contain angle brackets (< or >)`,
+          );
+        }
+      }
+      if (fm.compatibility && fm.compatibility.length > 500) {
+        errors.push(
+          `${skillFile} frontmatter compatibility exceeds 500 characters (${fm.compatibility.length})`,
+        );
+      }
+      if (!fm.license) {
+        errors.push(`${skillFile} frontmatter is missing license`);
+      }
+    }
+
+    scanForStaleClaims(skillFile);
+  }
+}
+
+if (existsSync("skills.sh.json")) {
+  let manifest = null;
+  try {
+    manifest = JSON.parse(readFileSync("skills.sh.json", "utf8"));
+  } catch (error) {
+    errors.push(`skills.sh.json is not valid JSON: ${error.message}`);
+  }
+  if (manifest) {
+    if (
+      manifest.notGrouped !== undefined &&
+      !["top", "bottom"].includes(manifest.notGrouped)
+    ) {
+      errors.push('skills.sh.json notGrouped must be "top" or "bottom"');
+    }
+    const grouped = new Set();
+    const titles = new Set();
+    if (!Array.isArray(manifest.groupings) || manifest.groupings.length === 0) {
+      errors.push("skills.sh.json must define a non-empty groupings array");
+    } else {
+      for (const group of manifest.groupings) {
+        if (
+          !group ||
+          typeof group !== "object" ||
+          typeof group.title !== "string" ||
+          group.title.length === 0 ||
+          group.title.length > 120 ||
+          !Array.isArray(group.skills) ||
+          group.skills.length === 0
+        ) {
+          errors.push(
+            "skills.sh.json grouping must have a non-empty title (<=120 chars) and skills array",
+          );
+          continue;
+        }
+        if (titles.has(group.title)) {
+          errors.push(
+            `skills.sh.json has duplicate group title "${group.title}"`,
+          );
+        }
+        titles.add(group.title);
+        if (
+          group.description !== undefined &&
+          (typeof group.description !== "string" ||
+            group.description.length > 500)
+        ) {
+          errors.push(
+            `skills.sh.json grouping "${group.title}" description must be a string <=500 chars`,
+          );
+        }
+        for (const slug of group.skills) {
+          if (!skillSlugSet.has(slug)) {
+            errors.push(
+              `skills.sh.json references unknown skill "${slug}" (no ${skillsDir}/${slug}/SKILL.md)`,
+            );
+          }
+          if (grouped.has(slug)) {
+            errors.push(`skills.sh.json lists skill "${slug}" more than once`);
+          }
+          grouped.add(slug);
+        }
+      }
+    }
+
+    for (const slug of skillSlugSet) {
+      if (!grouped.has(slug)) {
+        errors.push(
+          `skills.sh.json is missing grouping entry for skill "${slug}"`,
+        );
+      }
+    }
+  }
+}
 
 // A guide may explain comparing two JSON files with the system diff tool, so the claim-shaped diff phrases are skipped.
 if (existsSync(guideContentDir)) {

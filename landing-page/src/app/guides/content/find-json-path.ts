@@ -354,6 +354,23 @@ Stopped after 1 match (--max-count); there may be more
         },
       ],
     },
+    {
+      id: "agent-skill",
+      heading: "Use this workflow with a coding agent",
+      blocks: [
+        {
+          kind: "paragraph",
+          text: "To teach Claude Code, Cursor, Codex, or another supported agent to anchor key and value searches and translate printed paths into `jq` or JSONPath, install the [`json-path-to-jq-and-unflatten`](https://skills.sh/1solomonwakhungu/gronify/json-path-to-jq-and-unflatten) skill (see [JSON exploration for AI coding agents](/guides/json-for-ai-agents)):",
+        },
+        {
+          kind: "terminal",
+          label: "Installing the json-path-to-jq-and-unflatten agent skill",
+          lines: transcript`
+$ npx skills add 1solomonwakhungu/gronify --skill json-path-to-jq-and-unflatten
+`,
+        },
+      ],
+    },
   ],
   faqs: [
     {

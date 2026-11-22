@@ -11,7 +11,7 @@ export const compareJsonFiles: Guide = {
   h1: "Compare two JSON files with diff, ignoring key order",
   lede: "To compare two JSON files whose keys are in different orders, flatten each one with `gronify flatten --sort` and hand the two outputs to the system `diff`. Gronify has no compare command. It writes one `json.path = value` line per value with object keys sorted at every level, and `diff` does the comparing, so every changed line carries the full path to its value.",
   published: "2026-11-12",
-  updated: "2026-11-12",
+  updated: "2026-11-22",
   sections: [
     {
       id: "sort-then-diff",
@@ -334,6 +334,23 @@ $ diff <(gronify --no-color search --sort old.json services.worker) <(gronify --
         {
           kind: "paragraph",
           text: "Search terms and patterns are covered in the guide on [how to grep JSON](/guides/grep-json), and memory use on multi-gigabyte input in the guide on [searching large JSON files](/guides/large-json-files). Measured figures are under [benchmarks](/#benchmarks).",
+        },
+      ],
+    },
+    {
+      id: "agent-skill",
+      heading: "Use this workflow with a coding agent",
+      blocks: [
+        {
+          kind: "paragraph",
+          text: "To give Claude Code, Cursor, Codex, or another supported agent these sorted comparison and `git diff` textconv recipes, install the [`json-compare-sorted-diff`](https://skills.sh/1solomonwakhungu/gronify/json-compare-sorted-diff) skill (see [JSON exploration for AI coding agents](/guides/json-for-ai-agents)):",
+        },
+        {
+          kind: "terminal",
+          label: "Installing the json-compare-sorted-diff agent skill",
+          lines: transcript`
+$ npx skills add 1solomonwakhungu/gronify --skill json-compare-sorted-diff
+`,
         },
       ],
     },

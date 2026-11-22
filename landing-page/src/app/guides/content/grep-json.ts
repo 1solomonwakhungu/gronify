@@ -368,6 +368,23 @@ alan@example.org
         },
       ],
     },
+    {
+      id: "agent-skill",
+      heading: "Use this workflow with a coding agent",
+      blocks: [
+        {
+          kind: "paragraph",
+          text: "To teach Claude Code, Cursor, Codex, or another supported agent to grep nested JSON with `--no-color`, `--count`, and `-m` instead of reading large files whole, install the [`gronify-json-flatten-search`](https://skills.sh/1solomonwakhungu/gronify/gronify-json-flatten-search) skill (see [JSON exploration for AI coding agents](/guides/json-for-ai-agents)):",
+        },
+        {
+          kind: "terminal",
+          label: "Installing the gronify-json-flatten-search agent skill",
+          lines: transcript`
+$ npx skills add 1solomonwakhungu/gronify --skill gronify-json-flatten-search
+`,
+        },
+      ],
+    },
   ],
   faqs: [
     {
