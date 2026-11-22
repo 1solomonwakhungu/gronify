@@ -51,6 +51,8 @@ export interface FlattenOptions {
   sort?: boolean;
   /** `--limit <n>`: stop after n lines. */
   limit?: number | null;
+  /** `-s, --stream, --jsonl`: read JSON Lines / NDJSON, one JSON value per line. */
+  stream?: boolean;
 }
 
 export interface SearchOptions {
@@ -67,6 +69,8 @@ export interface SearchOptions {
   maxCount?: number | null;
   /** `--sort` (ignored with `--count`, as in the CLI) */
   sort?: boolean;
+  /** `-s, --stream, --jsonl`: read JSON Lines / NDJSON, one JSON value per line. */
+  stream?: boolean;
 }
 
 export interface GronResult {
@@ -106,6 +110,7 @@ interface JsonSink {
 
 const OBJECT = 0;
 const ARRAY = 1;
+const STREAM = 2;
 
 const TOP_VALUE = 0;
 const DONE = 1;
@@ -117,7 +122,11 @@ const OBJECT_KEY = 6;
 const OBJECT_COLON = 7;
 const OBJECT_VALUE = 8;
 const OBJECT_NEXT = 9;
-const IN_BARE = 10;
+const STREAM_VALUE = 10;
+const STREAM_NEXT = 11;
+const IN_BARE = 12;
+
+const NEXT_STATE = [OBJECT_NEXT, ARRAY_NEXT, STREAM_NEXT];
 
 const MAX_LITERAL_LENGTH = 5;
 const MAX_TOKEN_PREVIEW = 40;
@@ -185,10 +194,13 @@ interface Gate {
   blocked: boolean;
 }
 
-/** Strict (RFC 8259) JSON tokenizer over the bytes of one complete input. */
+/** Strict (RFC 8259) JSON tokenizer over the bytes of one complete input (or JSON Lines when `stream` is true). */
 class JsonTokenizer {
   private state = TOP_VALUE;
   private readonly containers: number[] = [];
+  private readonly stream: boolean;
+  /** Whether the implicit records array was announced to the sink (JSON Lines only). */
+  private opened = false;
   private line = 1;
   private lineStart = 0;
   private tokenOffset = 0;
@@ -197,10 +209,21 @@ class JsonTokenizer {
   private readonly sink: JsonSink;
   private readonly gate: Gate;
 
-  constructor(buf: Uint8Array, sink: JsonSink, gate: Gate) {
+  constructor(buf: Uint8Array, sink: JsonSink, gate: Gate, stream = false) {
     this.buf = buf;
     this.sink = sink;
     this.gate = gate;
+    this.stream = stream;
+    if (this.stream) {
+      this.containers.push(STREAM);
+      this.state = STREAM_VALUE;
+    }
+  }
+
+  /** In JSON Lines mode, announces the records array to the sink once, before anything else. */
+  private open(): void {
+    this.opened = true;
+    this.sink.startArray();
   }
 
   /**
@@ -208,6 +231,7 @@ class JsonTokenizer {
    * length when everything was read (call `end` next).
    */
   write(): number {
+    if (this.stream && !this.opened) this.open();
     const { buf, gate } = this;
     const len = buf.length;
     let pos = 0;
@@ -220,6 +244,12 @@ class JsonTokenizer {
         continue;
       }
       if (c === 0x0a) {
+        if (this.stream) {
+          if (state === STREAM_NEXT) this.state = STREAM_VALUE;
+          else if (state !== STREAM_VALUE) {
+            this.fail("Unexpected end of line inside a JSON Lines record (each record must be on one line)", pos);
+          }
+        }
         pos += 1;
         this.line += 1;
         this.lineStart = pos;
@@ -269,6 +299,9 @@ class JsonTokenizer {
         case DONE:
           this.fail(`Unexpected ${describeByte(c)} after the top-level value`, pos);
           break;
+        case STREAM_NEXT:
+          this.fail(`Unexpected ${describeByte(c)} after the record on this line (JSON Lines allows one value per line)`, pos);
+          break;
         default:
           pos = this.startValue(pos, c, state);
       }
@@ -276,9 +309,19 @@ class JsonTokenizer {
     return pos;
   }
 
-  /** Throws unless exactly one complete JSON value was read. */
+  /** Throws unless exactly one complete JSON value was read (or complete JSON Lines records in stream mode). */
   end(): void {
     if (this.state === IN_BARE) this.completeBare(this.tokenOffset, this.buf.length);
+    if (this.stream && (this.state === STREAM_VALUE || this.state === STREAM_NEXT)) {
+      if (!this.opened) this.open();
+      this.containers.length = 0;
+      this.state = DONE;
+      this.sink.endArray();
+      return;
+    }
+    if (this.stream && this.state !== DONE) {
+      this.failAt("Unexpected end of input inside a JSON Lines record", this.buf.length);
+    }
     if (this.state !== DONE) {
       this.failAt(
         this.containers.length === 0 ? "Unexpected end of input (empty document)" : "Unexpected end of input",
@@ -292,7 +335,7 @@ class JsonTokenizer {
    * the rest of it cannot add a line. It does not validate the closers.
    */
   finishesAt(pos: number): boolean {
-    if (this.state === IN_BARE) return false;
+    if (this.stream || this.state === IN_BARE) return false;
     const buf = this.buf;
     let open = this.containers.length;
     for (; pos < buf.length; pos += 1) {
@@ -352,7 +395,7 @@ class JsonTokenizer {
   private nextState(): number {
     const depth = this.containers.length;
     if (depth === 0) return DONE;
-    return this.containers[depth - 1] === ARRAY ? ARRAY_NEXT : OBJECT_NEXT;
+    return NEXT_STATE[this.containers[depth - 1]];
   }
 
   private scanString(start: number, isKey: boolean): number {
@@ -382,6 +425,9 @@ class JsonTokenizer {
         }
         i += 1;
         continue;
+      }
+      if (c === 0x0a && this.stream) {
+        this.fail("Unterminated string: the line ends inside it (JSON Lines records must be on one line)", i);
       }
       if (c < 0x20) this.fail(`Unescaped control character ${describeByte(c)} in string`, i);
       if (c >= 0x80) high = true;
@@ -759,10 +805,10 @@ interface RunState {
 }
 
 /** Runs the tokenizer over `bytes` into `out`, honoring the cap the way `flattenStream` does. */
-function runFlatten(bytes: Uint8Array, out: LineOutput, sort: boolean): RunState {
+function runFlatten(bytes: Uint8Array, out: LineOutput, sort: boolean, stream: boolean): RunState {
   const target = sort ? new SortingTarget(out) : new DirectTarget(out);
-  const tokenizer = new JsonTokenizer(bytes, new GronFlattener(target), out);
-  const pos = tokenizer.write();
+  const tokenizer = new JsonTokenizer(bytes, new GronFlattener(target), out, stream);
+  const pos = bytes.length > 0 ? tokenizer.write() : 0;
   if (out.stopped) {
     // Sorted output may still be held back, so only a document-order run can tell nothing is left.
     return { out, exhausted: !sort && tokenizer.finishesAt(pos) };
@@ -785,11 +831,16 @@ function failure(context: string, error: unknown, tip: string | null): GronResul
   return { lines: [], messages, error: message, matched: 0, stoppedEarly: false, limitExceeded: error instanceof OutputTooLargeError };
 }
 
-/** `gronify --no-color flatten [--sort] [--limit n]` */
+/** `gronify --no-color flatten [--stream] [--sort] [--limit n]` */
 export function flatten(input: string, options: FlattenOptions = {}): GronResult {
   const limit = options.limit ?? Infinity;
   try {
-    const { out, exhausted } = runFlatten(encodeInput(input), new LineOutput(null, false, false, limit, "flatten"), Boolean(options.sort));
+    const { out, exhausted } = runFlatten(
+      encodeInput(input),
+      new LineOutput(null, false, false, limit, "flatten"),
+      Boolean(options.sort),
+      Boolean(options.stream),
+    );
     const messages: string[] = [];
     const stoppedEarly = out.stopped && !exhausted;
     if (stoppedEarly) messages.push(`Stopped after ${plural(limit, "line", "lines")} (--limit); there may be more`);
@@ -807,7 +858,7 @@ export function flatten(input: string, options: FlattenOptions = {}): GronResult
   }
 }
 
-/** `gronify --no-color search <term> [-r] [-c] [-v] [--count] [-m n] [--sort]` */
+/** `gronify --no-color search <term> [--stream] [-r] [-c] [-v] [--count] [-m n] [--sort]` */
 export function search(input: string, options: SearchOptions): GronResult {
   const limit = options.maxCount ?? Infinity;
   const context = options.regex ? "searching JSON (invalid regex or JSON)" : "searching JSON";
@@ -815,7 +866,12 @@ export function search(input: string, options: SearchOptions): GronResult {
     const matcher = createLineMatcher(options.term, options);
     const out = new LineOutput(matcher, Boolean(options.invert), Boolean(options.count), limit, "search");
     // Counting needs no order, so --sort is skipped with --count.
-    const { exhausted } = runFlatten(encodeInput(input), out, Boolean(options.sort) && !options.count);
+    const { exhausted } = runFlatten(
+      encodeInput(input),
+      out,
+      Boolean(options.sort) && !options.count,
+      Boolean(options.stream),
+    );
     const messages: string[] = [];
     const stoppedEarly = out.stopped && !exhausted;
     if (options.count) {

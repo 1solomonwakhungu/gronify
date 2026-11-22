@@ -305,7 +305,7 @@ $ jq -cn --stream 'fromstream(1 | truncate_stream(inputs)) | select(.level == "e
           kind: "list",
           style: "bullet",
           items: [
-            "One JSON document per run. A JSON Lines file stops at its second object with `Unexpected '{' after the top-level value` and exit status 1. jq, `gron -s`, and `fastgron -s` read JSON Lines.",
+            "One JSON document per run by default. For JSON Lines / NDJSON (one JSON value per line), pass `-s`, `--stream`, or `--jsonl` on `flatten` or `search`; records stream one at a time, so memory stays flat however many lines the file has. Without the flag, a second value stops with `Unexpected '{' after the top-level value` and a tip to pass `--stream`.",
             "Memory follows the largest single token and the nesting depth. One string or number must fit in memory, and the output of a very deep document grows with the square of the depth.",
             "`--sort` buffers the members of one object until it closes, and spills to a temporary file in `$TMPDIR` past 64 MiB. A top-level array is still written one record at a time.",
             "`unflatten` streams only input in document order. Out-of-order lines within the first 16 MiB make it rebuild the whole document in memory. After that they are an error.",

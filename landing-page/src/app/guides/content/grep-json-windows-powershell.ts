@@ -16,7 +16,7 @@ export const grepJsonWindowsPowershell: Guide = {
   h1: "Search nested JSON in PowerShell and cmd without grep",
   lede: 'Windows has no grep, and the closest built-ins each miss half the job: `Select-String` matches lines without knowing where they sit in the JSON, and `ConvertFrom-Json` loads the document so you can navigate it once you know the path. `gronify search orders.json pending` prints every match with its full path, such as `json.orders[2].status = "pending"`, and runs the same way in PowerShell, cmd, and a Unix shell.',
   published: "2026-11-20",
-  updated: "2026-11-20",
+  updated: "2026-11-22",
   sections: [
     {
       id: "select-string",
@@ -316,7 +316,7 @@ json.orders[2].error.code = "CARD_DECLINED"
         },
         {
           kind: "paragraph",
-          text: "To get JSON back, pipe lines into [`gronify unflatten`](/guides/unflatten-json). `-v` drops what you do not want and keeps the parent lines that `unflatten` needs:",
+          text: "To get JSON back, pipe lines into [`gronify unflatten`](/guides/unflatten-json). `unflatten` fills in missing parent containers automatically, so both filtered searches and inverted `-v` searches rebuild valid JSON. Here `-v` drops `orders` and keeps the rest:",
         },
         {
           kind: "terminal",

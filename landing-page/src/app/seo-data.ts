@@ -45,7 +45,7 @@ export const faqs: FaqItem[] = [
   {
     question: "Is Gronify a drop-in replacement for gron?",
     answer:
-      "No. Gronify uses the same path = value lines, but the commands and the output differ. The commands are gronify flatten and gronify unflatten, where gron uses gron and gron --ungron. Lines have no trailing semicolon. Keys stay in document order unless you pass --sort, while gron sorts by default. --sort compares keys by UTF-16 code unit; gron puts bare keys before bracketed ones and compares UTF-8 bytes. Gronify unflatten reads gron's output, but it needs every parent line, so it rejects grep-filtered lines that gron --ungron accepts. gron --ungron does not read Gronify's output, which lacks the semicolons.",
+      "No. Gronify uses the same path = value lines, but the commands and the output differ. The commands are gronify flatten and gronify unflatten, where gron uses gron and gron --ungron. Lines have no trailing semicolon. Keys stay in document order unless you pass --sort, while gron sorts by default. --sort compares keys by UTF-16 code unit; gron puts bare keys before bracketed ones and compares UTF-8 bytes. Gronify unflatten reads gron's output and fills in parents missing from grep-filtered lines, just as gron --ungron does. gron --ungron does not read Gronify's output, which lacks the semicolons.",
   },
   {
     question: "Is Gronify an alternative to jq?",
@@ -84,7 +84,7 @@ export const faqs: FaqItem[] = [
   {
     question: "What does Gronify do with invalid JSON?",
     answer:
-      "It stops with exit code 1 (2 with search --exit-status) and an error that names the byte offset, line, and column, such as: Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 7 (line 1, column 8). Gronify accepts strict JSON only, so trailing commas, comments, single quotes, invalid UTF-8, and JSON Lines input are errors. Lines before the error may already be printed, so check the exit code in scripts.",
+      "It stops with exit code 1 (2 with search --exit-status) and an error that names the byte offset, line, and column, such as: Unexpected '}' after ',' (trailing commas are not allowed) at byte offset 7 (line 1, column 8). Gronify accepts strict JSON only, so trailing commas, comments, single quotes, and invalid UTF-8 are errors. By default each run expects one JSON document; pass -s, --stream, or --jsonl to read JSON Lines (NDJSON). Lines before the error may already be printed, so check the exit code in scripts.",
   },
   {
     question: "How fast is Gronify compared with gron and fastgron?",
@@ -136,8 +136,9 @@ export const siteStructuredData = {
       softwareRequirements: `Node.js ${nodeRequirement}`,
       featureList: [
         "Flatten nested JSON into one path = value line per value, in document order",
+        "Read JSON Lines (NDJSON) with -s, --stream, or --jsonl on flatten and search",
         "Search keys and values with plain text or a regular expression, with no separate grep",
-        "Rebuild JSON from gron lines (unflatten, also called ungron)",
+        "Rebuild JSON from full or grep-filtered gron lines (unflatten, also called ungron)",
         "Stream files and stdin, so multi-gigabyte input works",
         "Print numbers exactly as written, including integers above 2^53",
         "Stop reading the input once a result cap is reached (-m, --limit)",
