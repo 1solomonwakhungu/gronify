@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires Node.js 20+ and the gronify CLI >= 1.2.0 (npm install -g gronify, brew install 1solomonwakhungu/tap/gronify, or npx gronify), plus optional yq for YAML OpenAPI/K8s files.
 metadata:
   author: 1solomonwakhungu
-  homepage: https://gronify.vercel.app
+  homepage: https://gronify.harlo.dev
   repository: https://github.com/1solomonwakhungu/gronify
 ---
 
@@ -102,4 +102,4 @@ gronify --no-color search ip-ranges.json --regex '^json\.prefixes\[(1340|8790)\]
 - **Installed dependency tree explanation:** use `npm ls <pkg>` or `npm explain <pkg>` when `node_modules` is present.
 - **Schema linting:** Gronify validates strict JSON syntax, not OpenAPI or Kubernetes schemas.
 
-Reference: [OpenAPI, lockfiles & K8s guide](https://gronify.vercel.app/guides/search-openapi-and-lockfiles) · [Website & CLI docs](https://gronify.vercel.app)
+Reference: [OpenAPI, lockfiles & K8s guide](https://gronify.harlo.dev/guides/search-openapi-and-lockfiles) · [Website & CLI docs](https://gronify.harlo.dev)

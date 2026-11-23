@@ -1,5 +1,5 @@
 export const siteUrl = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://gronify.vercel.app"
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://gronify.harlo.dev"
 ).replace(/\/+$/, "");
 
 export const repositoryUrl = "https://github.com/1solomonwakhungu/gronify";

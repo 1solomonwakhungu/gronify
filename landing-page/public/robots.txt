@@ -1,4 +1,4 @@
-# Gronify — https://gronify.vercel.app
+# Gronify — https://gronify.harlo.dev
 # LLM-readable documentation:
 #   /llms.txt       — concise project summary and documentation links
 #   /llms-full.txt  — exhaustive reference with examples and troubleshooting
@@ -40,4 +40,4 @@ Allow: /
 User-agent: cohere-ai
 Allow: /
 
-Sitemap: https://gronify.vercel.app/sitemap.xml
+Sitemap: https://gronify.harlo.dev/sitemap.xml

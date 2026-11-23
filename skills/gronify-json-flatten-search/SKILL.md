@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires Node.js 20+ and the gronify CLI (npm install -g gronify, brew install 1solomonwakhungu/tap/gronify, or npx gronify).
 metadata:
   author: 1solomonwakhungu
-  homepage: https://gronify.vercel.app
+  homepage: https://gronify.harlo.dev
   repository: https://github.com/1solomonwakhungu/gronify
 ---
 
@@ -125,4 +125,4 @@ gronify --no-color search payload.json region | gronify --no-color unflatten
 - Never overwrite source JSON in place during exploration: write to a new file with `-o reconstructed.json` and validate before replacing.
 - Conflicting types (`json.a = 1` then `json.a.b = 2`) fail with `line N: ...`. Input must be strict JSON (no comments or trailing commas).
 
-Reference: [Website & CLI docs](https://gronify.vercel.app) · [Full LLM reference](https://gronify.vercel.app/llms-full.txt) · [GitHub](https://github.com/1solomonwakhungu/gronify)
+Reference: [Website & CLI docs](https://gronify.harlo.dev) · [Full LLM reference](https://gronify.harlo.dev/llms-full.txt) · [GitHub](https://github.com/1solomonwakhungu/gronify)
