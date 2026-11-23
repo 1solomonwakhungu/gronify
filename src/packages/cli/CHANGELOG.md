@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/1solomonwakhungu/gronify/compare/v1.4.0...v1.4.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **cli:** support empty search terms and refresh README growth positioning ([#156](https://github.com/1solomonwakhungu/gronify/issues/156)) ([feac98d](https://github.com/1solomonwakhungu/gronify/commit/feac98dd3916f7de5808d1c2616e210d76d346bf))
+
 ## [1.4.0](https://github.com/1solomonwakhungu/gronify/compare/v1.3.2...v1.4.0) (2026-11-20)
 
 
