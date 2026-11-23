@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires Node.js 20+ and the gronify CLI >= 1.2.0 (npm install -g gronify, brew install 1solomonwakhungu/tap/gronify, or npx gronify).
 metadata:
   author: 1solomonwakhungu
-  homepage: https://gronify.vercel.app
+  homepage: https://gronify.harlo.dev
   repository: https://github.com/1solomonwakhungu/gronify
 ---
 
@@ -85,4 +85,4 @@ echo $?
 - Once the narrowing loop reveals the exact path and you need aggregation (group, count by key, sum, join), switch to `jq` or `jq --stream` (for files exceeding memory).
 - For `.jsonl` / `.ndjson` files (one JSON object per line), pass `--jsonl` (1.4.0+) or use `jq -c` / `rg`.
 
-Reference: [Large JSON guide](https://gronify.vercel.app/guides/large-json-files) · [AI agents guide](https://gronify.vercel.app/guides/json-for-ai-agents) · [ERR_STRING_TOO_LONG guide](https://gronify.vercel.app/guides/fix-err-string-too-long-json)
+Reference: [Large JSON guide](https://gronify.harlo.dev/guides/large-json-files) · [AI agents guide](https://gronify.harlo.dev/guides/json-for-ai-agents) · [ERR_STRING_TOO_LONG guide](https://gronify.harlo.dev/guides/fix-err-string-too-long-json)

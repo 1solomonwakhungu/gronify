@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires Node.js 20+ and the gronify CLI >= 1.4.0 with -s/--stream/--jsonl support (verify with gronify flatten --help | grep -e --jsonl).
 metadata:
   author: 1solomonwakhungu
-  homepage: https://gronify.vercel.app
+  homepage: https://gronify.harlo.dev
   repository: https://github.com/1solomonwakhungu/gronify
 ---
 
@@ -82,4 +82,4 @@ To convert a reconstructed JSON array back into JSON Lines, pipe through `jq -c 
 - **Exact numbers:** 64-bit trace/event IDs and nanosecond timestamps print verbatim without floating-point rounding.
 - **Multi-field predicates:** A line search sees one field per line. To select records where two different fields match simultaneously (e.g. `level == "error"` AND `service == "billing"`), use `gronify` to discover the exact field paths, then run `jq -c 'select(.level == "error" and .service == "billing")' app.jsonl`.
 
-Reference: [Gronify README — JSON Lines](https://github.com/1solomonwakhungu/gronify#json-lines-ndjson) · [Website & CLI docs](https://gronify.vercel.app)
+Reference: [Gronify README — JSON Lines](https://github.com/1solomonwakhungu/gronify#json-lines-ndjson) · [Website & CLI docs](https://gronify.harlo.dev)

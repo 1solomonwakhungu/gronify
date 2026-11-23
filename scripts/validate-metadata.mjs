@@ -138,7 +138,7 @@ if (existsSync("README.md")) {
     errors.push("README.md still contains the duplicated Gronify heading");
   }
 
-  if (!readme.includes("https://gronify.vercel.app")) {
+  if (!readme.includes("https://gronify.harlo.dev")) {
     errors.push("README.md missing canonical landing-page URL");
   }
 
@@ -434,7 +434,7 @@ if (existsSync("src/packages/cli/package.json")) {
   const expected = {
     license: "MIT",
     author: "Solomon Wakhungu",
-    homepage: "https://gronify.vercel.app",
+    homepage: "https://gronify.harlo.dev",
   };
 
   for (const [field, value] of Object.entries(expected)) {

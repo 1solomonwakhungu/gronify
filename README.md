@@ -6,8 +6,8 @@
   <p><strong>Grep multi-gigabyte JSON &amp; JSONL in constant memory — no <code>jq</code> syntax, no <code>grep</code> required.</strong></p>
 
   <p>
-    <a href="https://gronify.vercel.app/playground"><strong>Try Live Playground</strong></a> ·
-    <a href="https://gronify.vercel.app">Docs &amp; Guides</a> ·
+    <a href="https://gronify.harlo.dev/playground"><strong>Try Live Playground</strong></a> ·
+    <a href="https://gronify.harlo.dev">Docs &amp; Guides</a> ·
     <a href="https://www.npmjs.com/package/gronify">npm</a> ·
     <a href="https://skills.sh/1solomonwakhungu/gronify">AI Agent Skills</a> ·
     <a href="https://github.com/1solomonwakhungu/gronify/blob/main/src/packages/cli/BENCHMARKS.md">Benchmarks</a>
@@ -60,7 +60,7 @@ Measured on an Apple M5 Pro (Node v22.23.1, 8 GiB memory guard, 60 s timeout —
 
 ## Demo
 
-A 30-second tour of the core workflows (or try them directly in the [Live Playground](https://gronify.vercel.app/playground)):
+A 30-second tour of the core workflows (or try them directly in the [Live Playground](https://gronify.harlo.dev/playground)):
 
 ### 1. Find paths in unfamiliar or minified JSON
 
@@ -220,15 +220,15 @@ Rebuild gron lines (from `gronify`, `gron`, or `fastgron`) back into JSON in a s
 
 ## Task Guides
 
-Detailed walkthroughs with verified transcripts are on [gronify.vercel.app/guides](https://gronify.vercel.app/guides):
+Detailed walkthroughs with verified transcripts are on [gronify.harlo.dev/guides](https://gronify.harlo.dev/guides):
 
-- [Interactive Browser Playground](https://gronify.vercel.app/playground) (no install, up to 2 MB in-browser)
-- [How to grep JSON from the command line](https://gronify.vercel.app/guides/grep-json) · [Windows PowerShell & cmd](https://gronify.vercel.app/guides/grep-json-windows-powershell)
-- [Search large JSON files](https://gronify.vercel.app/guides/large-json-files) · [Fix Node.js `ERR_STRING_TOO_LONG`](https://gronify.vercel.app/guides/fix-err-string-too-long-json)
-- [Search OpenAPI specs, `package-lock.json`, and Kubernetes JSON](https://gronify.vercel.app/guides/search-openapi-and-lockfiles)
-- [Gronify vs `gron` & `fastgron`](https://gronify.vercel.app/guides/gron-alternative) · [Gronify vs `jq`](https://gronify.vercel.app/guides/jq-alternative)
-- [JSON exploration for AI coding agents](https://gronify.vercel.app/guides/json-for-ai-agents) · [Compare JSON files with `diff`](https://gronify.vercel.app/guides/compare-json-files)
-- [Unflatten gron output](https://gronify.vercel.app/guides/unflatten-json) · [Keep 64-bit integers exact](https://gronify.vercel.app/guides/json-number-precision)
+- [Interactive Browser Playground](https://gronify.harlo.dev/playground) (no install, up to 2 MB in-browser)
+- [How to grep JSON from the command line](https://gronify.harlo.dev/guides/grep-json) · [Windows PowerShell & cmd](https://gronify.harlo.dev/guides/grep-json-windows-powershell)
+- [Search large JSON files](https://gronify.harlo.dev/guides/large-json-files) · [Fix Node.js `ERR_STRING_TOO_LONG`](https://gronify.harlo.dev/guides/fix-err-string-too-long-json)
+- [Search OpenAPI specs, `package-lock.json`, and Kubernetes JSON](https://gronify.harlo.dev/guides/search-openapi-and-lockfiles)
+- [Gronify vs `gron` & `fastgron`](https://gronify.harlo.dev/guides/gron-alternative) · [Gronify vs `jq`](https://gronify.harlo.dev/guides/jq-alternative)
+- [JSON exploration for AI coding agents](https://gronify.harlo.dev/guides/json-for-ai-agents) · [Compare JSON files with `diff`](https://gronify.harlo.dev/guides/compare-json-files)
+- [Unflatten gron output](https://gronify.harlo.dev/guides/unflatten-json) · [Keep 64-bit integers exact](https://gronify.harlo.dev/guides/json-number-precision)
 
 ---
 
