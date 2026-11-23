@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires Node.js 20+ and the gronify CLI (npm install -g gronify, brew install 1solomonwakhungu/tap/gronify, or npx gronify). Parent synthesis on filtered unflatten requires >= 1.4.0.
 metadata:
   author: 1solomonwakhungu
-  homepage: https://gronify.vercel.app
+  homepage: https://gronify.harlo.dev
   repository: https://github.com/1solomonwakhungu/gronify
 ---
 
@@ -76,4 +76,4 @@ gronify --no-color search payload.json -v debugInfo | gronify --no-color unflatt
 - **Document order for streaming:** `unflatten` streams in flat memory when lines are in document order (`flatten`, `flatten --sort`, and filtered subsets of them). Out-of-order input (such as plain `sort` output where `[10]` precedes `[2]`) is rebuilt in memory only if disorder appears within the first 16 MiB; past 16 MiB it exits `1` with `line N: ...`.
 - **Type conflicts fail:** Conflicting lines (`json.a = 1` then `json.a.b = 2`, or object key + array index on one container) are rejected rather than silently merged.
 
-Reference: [Find JSON path guide](https://gronify.vercel.app/guides/find-json-path) · [Unflatten guide](https://gronify.vercel.app/guides/unflatten-json) · [Number precision guide](https://gronify.vercel.app/guides/json-number-precision)
+Reference: [Find JSON path guide](https://gronify.harlo.dev/guides/find-json-path) · [Unflatten guide](https://gronify.harlo.dev/guides/unflatten-json) · [Number precision guide](https://gronify.harlo.dev/guides/json-number-precision)

@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires Node.js 20+ and the gronify CLI >= 1.2.0 (for --sort), plus system diff or git.
 metadata:
   author: 1solomonwakhungu
-  homepage: https://gronify.vercel.app
+  homepage: https://gronify.harlo.dev
   repository: https://github.com/1solomonwakhungu/gronify
 ---
 
@@ -92,4 +92,4 @@ git diff -U0 config.json
 - **Memory on huge root objects:** Top-level arrays sort one record at a time; a huge root object buffers up to 64 MiB (override with `GRONIFY_SORT_MEMORY`, e.g. `256MiB`) before spilling to `$TMPDIR`.
 - **Array insertions/reordering:** Arrays compare by index, so inserting at index `0` renumbers every following line. When array insertions or set-like array comparisons matter, use `diff <(jq -S . old.json) <(jq -S . new.json)` or a structural tool such as `jd` (`jd -set`) or `dyff`.
 
-Reference: [Compare JSON files guide](https://gronify.vercel.app/guides/compare-json-files) · [Website & CLI docs](https://gronify.vercel.app)
+Reference: [Compare JSON files guide](https://gronify.harlo.dev/guides/compare-json-files) · [Website & CLI docs](https://gronify.harlo.dev)
