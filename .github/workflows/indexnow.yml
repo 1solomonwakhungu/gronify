@@ -1,0 +1,26 @@
+name: Submit to IndexNow
+
+on:
+  deployment_status:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  indexnow:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment.environment == 'Production' &&
+       github.event.deployment_status.state == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Submit sitemap URLs to IndexNow
+        working-directory: landing-page
+        run: node scripts/submit-indexnow.mjs --sitemap https://gronify.harlo.dev/sitemap.xml
