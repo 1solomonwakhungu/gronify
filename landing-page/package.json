@@ -12,7 +12,7 @@
     "indexnow": "node scripts/submit-indexnow.mjs"
   },
   "dependencies": {
-    "@primer/react-brand": "^0.80.1",
+    "@primer/react-brand": "^0.81.1",
     "next": "^16.4.6",
     "posthog-js": "^1.444.0",
     "react": "19.3.1",
